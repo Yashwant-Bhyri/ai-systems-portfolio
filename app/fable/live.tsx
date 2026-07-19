@@ -147,3 +147,119 @@ export function Wave({
 export function fmtMs(v: number): string {
   return `${Math.round(v)} ms`;
 }
+
+/**
+ * Live layered neural net (V2 SignalMesh topology, clock-driven):
+ * inputs → hidden layer → core → outputs, edges firing in waves,
+ * pulses traveling, core glow accumulating. Pure function of t.
+ */
+export function LiveNet({
+  x,
+  y,
+  w,
+  h,
+  inputs,
+  hidden = 5,
+  core,
+  outputs,
+  t,
+  start = 0,
+}: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  inputs: { label: string; value?: string }[];
+  hidden?: number;
+  core: string;
+  outputs: string[];
+  t: number;
+  start?: number;
+}) {
+  const inX = x + 54;
+  const hidX = x + w * 0.44;
+  const coreX = x + w * 0.66;
+  const outX = x + w - 52;
+  const coreY = y + h / 2;
+  const inY = (i: number) => y + (h * (i + 0.5)) / inputs.length;
+  const hidY = (j: number) => y + (h * (j + 0.5)) / hidden;
+  const outY = (k: number) => y + (h * (k + 0.5)) / outputs.length;
+  const on = t > start;
+  const glow = eph(t, start + 400, start + 2200);
+
+  return (
+    <g className="lv-net">
+      {/* input → hidden edges, firing in waves */}
+      {inputs.map((_, i) =>
+        Array.from({ length: hidden }).map((_, j) => {
+          const fire = on ? 0.3 + 0.7 * noise(i * 7 + j * 3, t / 1.6) : 0.1;
+          return (
+            <line
+              key={`ih${i}-${j}`}
+              x1={inX + 46}
+              y1={q(inY(i))}
+              x2={q(hidX)}
+              y2={q(hidY(j))}
+              className="lv-netedge"
+              style={{ opacity: 0.06 + 0.3 * fire }}
+            />
+          );
+        }),
+      )}
+      {/* hidden → core */}
+      {Array.from({ length: hidden }).map((_, j) => (
+        <line key={`hc${j}`} x1={q(hidX)} y1={q(hidY(j))} x2={q(coreX - 24)} y2={q(coreY)} className="lv-netedge" style={{ opacity: on ? 0.12 + 0.4 * noise(j * 5 + 2, t / 1.4) : 0.08 }} />
+      ))}
+      {/* traveling pulses on a rotating pair of edges */}
+      {on &&
+        [0, 1].map((k) => {
+          const which = (Math.floor(t / 700) + k * 3) % (inputs.length * hidden);
+          const i = which % inputs.length;
+          const j = Math.floor(which / inputs.length) % hidden;
+          const p = (t % 700) / 700;
+          return (
+            <circle
+              key={`pl${k}`}
+              cx={q(inX + 46 + (hidX - inX - 46) * p)}
+              cy={q(inY(i) + (hidY(j) - inY(i)) * p)}
+              r={3}
+              className="lv-pulse"
+              style={{ opacity: 0.8 }}
+            />
+          );
+        })}
+      {/* input chips */}
+      {inputs.map((inp, i) => (
+        <g key={inp.label} className="lv-chip">
+          <rect x={x} y={q(inY(i) - 11)} width={100} height={22} rx={7} />
+          <text x={x + 8} y={q(inY(i) + 4)} className="svg-mono tinytext">{inp.label}</text>
+          {inp.value && <text x={x + 96} y={q(inY(i) + 4)} textAnchor="end" className="svg-sub tiny">{inp.value}</text>}
+        </g>
+      ))}
+      {/* hidden nodes */}
+      {Array.from({ length: hidden }).map((_, j) => (
+        <circle key={`h${j}`} cx={q(hidX)} cy={q(hidY(j))} r={4.4} className="lv-hidnode" style={{ opacity: on ? 0.45 + 0.55 * noise(j * 9 + 1, t / 1.8) : 0.25 }} />
+      ))}
+      {/* core */}
+      <g style={{ opacity: 0.5 + 0.5 * glow }}>
+        <circle cx={q(coreX)} cy={q(coreY)} r={25} className="lv-corering" />
+        <text x={q(coreX)} y={q(coreY + 4)} textAnchor="middle" className="svg-label small">{core}</text>
+      </g>
+      {/* core → outputs */}
+      {outputs.map((o, k) => {
+        const fired = t > start + 1600 + k * 350;
+        const p = ph(t, start + 1600 + k * 350, start + 2100 + k * 350);
+        return (
+          <g key={o}>
+            <line x1={q(coreX + 25)} y1={q(coreY)} x2={outX} y2={q(outY(k))} className="lv-netedge out" style={{ opacity: fired ? 0.6 : 0.12 }} />
+            {p > 0 && p < 1 && <circle cx={q(coreX + 25 + (outX - coreX - 25) * p)} cy={q(coreY + (outY(k) - coreY) * p)} r={3.4} className="lv-pulse" />}
+            <g className={`lv-chip ${fired && p >= 1 ? "win" : ""}`} style={{ opacity: fired ? 1 : 0.3 }}>
+              <rect x={outX} y={q(outY(k) - 11)} width={104} height={22} rx={7} />
+              <text x={outX + 8} y={q(outY(k) + 4)} className="svg-mono tinytext">{o}</text>
+            </g>
+          </g>
+        );
+      })}
+    </g>
+  );
+}

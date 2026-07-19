@@ -969,3 +969,11 @@ body {
 .lv-pulse.bad { fill: #ff8b8b; filter: drop-shadow(0 0 8px rgba(255, 139, 139, 0.8)); }
 .lv-counter.mid { font-size: 18px; }
 .lv-ring.hotline { stroke: #ff8b8b; filter: drop-shadow(0 0 8px rgba(255, 139, 139, 0.6)); }
+
+/* best-of-both merge (D7): live nets, research minis, radar */
+.lv-netedge { stroke: color-mix(in srgb, var(--accent) 60%, var(--panel-line)); stroke-width: 1.1; }
+.lv-netedge.out { stroke-width: 1.6; }
+.lv-hidnode { fill: color-mix(in srgb, var(--accent) 70%, white 5%); }
+.lv-radar { fill: color-mix(in srgb, var(--accent) 22%, transparent); stroke: color-mix(in srgb, var(--accent) 85%, transparent); stroke-width: 1.6; }
+.bench-mini-stage { margin-top: 14px; border: 1px solid var(--panel-line); border-radius: 12px; background: rgba(12, 18, 28, 0.6); padding: 10px 12px 6px; }
+.bench-mini { display: block; }

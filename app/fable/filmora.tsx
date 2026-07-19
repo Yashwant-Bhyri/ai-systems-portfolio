@@ -1,7 +1,7 @@
 "use client";
 
 import { ChapterShell, type StepDef } from "./chapter-shell";
-import { useSim, ph, eph, pulse, noise, bez, typed, caret, rise, q } from "./live";
+import { useSim, ph, eph, pulse, noise, bez, typed, caret, rise, q, LiveNet } from "./live";
 
 /* Live scenes — every graphic is the runtime actually working. */
 
@@ -10,12 +10,55 @@ const SPIN = ["◐", "◓", "◑", "◒"];
 /* ---------- 1 · THE RUNTIME — one full production run ---------- */
 
 const RUN_LOG = [
-  { at: 2400, name: "research.trends", ms: "1.2 s" },
-  { at: 3400, name: "memory.retrieve", ms: "0.3 s" },
-  { at: 4100, name: "compile.prompt", ms: "0.2 s" },
-  { at: 4800, name: "agents.dispatch ×6", ms: "3.8 s" },
+  { at: 2400, name: "research.trends", ms: "1.2 s", kind: "feed" },
+  { at: 3400, name: "memory.retrieve", ms: "0.3 s", kind: "vector" },
+  { at: 4100, name: "compile.prompt", ms: "0.2 s", kind: "converge" },
+  { at: 4800, name: "agents.dispatch ×6", ms: "3.8 s", kind: "fanout" },
 ];
 const CLIPS = [86, 118, 74, 132, 96];
+
+/** tiny live operation glyph for a runtime-log row — each stage has its own */
+function MicroGlyph({ kind, t, live }: { kind: string; t: number; live: boolean }) {
+  const o = live ? 1 : 0.45;
+  if (kind === "feed")
+    return (
+      <g style={{ opacity: o }}>
+        {[0, 1, 2].map((j) => (
+          <rect key={j} x={0} y={q((((j * 7 - t / 40) % 18) + 18) % 18 - 3)} width={q(11 - j * 2)} height={3} rx={1.5} className="lv-feedbar" />
+        ))}
+      </g>
+    );
+  if (kind === "vector")
+    return (
+      <g style={{ opacity: o }}>
+        {[0, 1, 2, 3].map((j) => {
+          const hgt = q(4 + 9 * noise(j * 3 + 1, live ? t : 0));
+          return <rect key={j} x={j * 5} y={q(13 - hgt)} width={3.4} height={hgt} rx={1.5} className="lv-bar" />;
+        })}
+      </g>
+    );
+  if (kind === "converge") {
+    const p = live ? (t % 900) / 900 : 0.5;
+    return (
+      <g style={{ opacity: o }}>
+        {[0, 1, 2].map((j) => (
+          <circle key={j} cx={q(1 + (14 - 1) * p)} cy={q(1 + j * 6 + (7 - (1 + j * 6)) * p)} r={2} className="lv-pulse" />
+        ))}
+        <circle cx={16} cy={7} r={2.6} className="lv-hidnode" />
+      </g>
+    );
+  }
+  // fanout
+  const p2 = live ? (t % 900) / 900 : 0.5;
+  return (
+    <g style={{ opacity: o }}>
+      <circle cx={1} cy={7} r={2.6} className="lv-hidnode" />
+      {[0, 1, 2].map((j) => (
+        <circle key={j} cx={q(1 + 14 * p2)} cy={q(7 + (j - 1) * 6 * p2)} r={2} className="lv-pulse" />
+      ))}
+    </g>
+  );
+}
 
 function RuntimeGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
@@ -54,6 +97,9 @@ function RuntimeGraphic({ a }: { a: boolean }) {
           return (
             <g key={r.name} style={rise(eph(t, r.at, r.at + 250), 6)}>
               <text x={48} y={154 + i * 24} className="svg-mono tinytext">{done ? "✓" : SPIN[Math.floor(t / 140) % 4]} {r.name}</text>
+              <g transform={`translate(268,${143 + i * 24})`}>
+                <MicroGlyph kind={r.kind} t={t + i * 260} live={!done} />
+              </g>
               <text x={352} y={154 + i * 24} textAnchor="end" className="svg-mono tinytext">{done ? r.ms : "…"}</text>
             </g>
           );
@@ -86,69 +132,98 @@ function RuntimeGraphic({ a }: { a: boolean }) {
 
 const PLATFORMS = ["TikTok", "Douyin", "Xiaohongshu", "Instagram", "WeChat", "Facebook"];
 
+const TREND_MOTIFS = ["device", "macro", "type", "audio", "transition", "palette"];
+const TREND_TAGS = ["#launch", "#新品", "#aesthetic", "#creator", "#tech", "#reveal"];
+
 function TrendGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 10000;
+  const L = 11200;
   const t = el % L;
-  const raw = Math.round(723 * eph(t, 600, 8200));
-  const activeIdx = Math.floor(t / 1400) % 6;
-  const hp = (t % 1400) / 1400;
+  const raw = Math.round(723 * eph(t, 600, 7600));
+  const activeIdx = Math.floor(t / 1200) % 6;
+  const hp = (t % 1200) / 1200;
+  const blur = eph(t, 7400, 8100); // the spec's beat: scroll → blur → stamp
+  const scrolling = t < 7400;
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
       <defs>
         <clipPath id="feedclip">
-          <rect x={0} y={0} width={170} height={86} rx={8} />
+          <rect x={0} y={0} width={150} height={84} rx={8} />
         </clipPath>
       </defs>
-      {PLATFORMS.map((p, i) => {
-        const col = i % 3;
-        const row = Math.floor(i / 3);
-        const x = 34 + col * 196;
-        const y = 34 + row * 148;
-        const isActive = i === activeIdx;
-        return (
-          <g key={p}>
-            <g className={`lv-node ${isActive ? "is-live" : ""}`}>
-              <rect x={x} y={y} width={178} height={126} rx={12} />
+      <g style={{ filter: blur > 0 ? `blur(${q(blur * 4)}px)` : undefined, opacity: 1 - blur * 0.35 }}>
+        {PLATFORMS.map((p, i) => {
+          const col = i % 3;
+          const row = Math.floor(i / 3);
+          const x = 34 + col * 196;
+          const y = 34 + row * 148;
+          const isActive = scrolling && i === activeIdx;
+          return (
+            <g key={p}>
+              <g className={`lv-node ${isActive ? "is-live" : ""}`}>
+                <rect x={x} y={y} width={178} height={126} rx={12} />
+              </g>
+              <text x={x + 14} y={y + 24} className="svg-label small">{p}</text>
+              {isActive && <text x={x + 164} y={y + 24} textAnchor="end" className="svg-mono tinytext">reading…</text>}
+              {/* real trend posters, genuinely scrolling */}
+              <g transform={`translate(${x + 14},${y + 32})`} clipPath="url(#feedclip)">
+                {[0, 1, 2, 3].map((j) => {
+                  const cycleH = 176;
+                  const yy = q((((j * 44 - t / 16 - i * 37) % cycleH) + cycleH) % cycleH - 44);
+                  const motif = (i + j) % 6;
+                  return (
+                    <g key={j}>
+                      <svg x={0} y={yy} width={26} height={38} viewBox="0 0 120 180">
+                        <use href={`/trend-media.svg#${TREND_MOTIFS[motif]}`} />
+                      </svg>
+                      <rect x={32} y={yy + 8} width={q(70 + noise(i * 7 + j, 0) * 40)} height={8} rx={4} className="lv-feedbar" />
+                      <text x={32} y={yy + 30} className="svg-sub tiny">{TREND_TAGS[motif]}</text>
+                    </g>
+                  );
+                })}
+              </g>
+              {/* harvest pulse from the active platform */}
+              {isActive && hp > 0.15 && hp < 0.95 && (
+                <circle
+                  cx={q(bez((hp - 0.15) / 0.8, [x + 89, y + 63], [320, 160], [320, 196])[0])}
+                  cy={q(bez((hp - 0.15) / 0.8, [x + 89, y + 63], [320, 160], [320, 196])[1])}
+                  r={4.5}
+                  className="lv-pulse"
+                />
+              )}
             </g>
-            <text x={x + 14} y={y + 24} className="svg-label small">{p}</text>
-            {isActive && <text x={x + 164} y={y + 24} textAnchor="end" className="svg-mono tinytext">reading…</text>}
-            {/* genuinely scrolling feed */}
-            <g transform={`translate(${x + 14},${y + 34})`} clipPath="url(#feedclip)">
-              {[0, 1, 2, 3, 4, 5].map((j) => {
-                const cycleH = 132;
-                const yy = q((((j * 22 - t / 14 - i * 31) % cycleH) + cycleH) % cycleH - 22);
-                return (
-                  <g key={j}>
-                    <rect x={0} y={yy} width={q(92 + noise(i * 7 + j, 0) * 56)} height={10} rx={5} className="lv-feedbar" />
-                    <rect x={0} y={yy + 13} width={40} height={5} rx={2.5} className="lv-feedbar dim" />
-                  </g>
-                );
-              })}
-            </g>
-            {/* harvest pulse from the active platform */}
-            {isActive && hp > 0.15 && hp < 0.95 && (
-              <circle
-                cx={q(bez((hp - 0.15) / 0.8, [x + 89, y + 63], [320, 160], [320, 196])[0])}
-                cy={q(bez((hp - 0.15) / 0.8, [x + 89, y + 63], [320, 160], [320, 196])[1])}
-                r={4.5}
-                className="lv-pulse"
-              />
-            )}
-          </g>
-        );
-      })}
-
-      {/* live signal counter */}
-      <g className="lv-stamp big">
-        <rect x={216} y={172} width={208} height={58} rx={12} />
-        <text x={320} y={198} textAnchor="middle" className="lv-counter mid">{raw >= 700 ? "700+" : raw}</text>
-        <text x={320} y={218} textAnchor="middle" className="svg-sub tiny">creative signals · deduplicated live</text>
+          );
+        })}
       </g>
 
-      <text x={34} y={344} className="svg-note">
-        Six feeds, actually moving — every pulse you see is a signal harvested, deduplicated, and distilled for the brief.
+      {/* live counter while scanning; the stamp lands on the blurred feeds */}
+      {scrolling ? (
+        <g className="lv-chip">
+          <rect x={252} y={178} width={136} height={46} rx={10} />
+          <text x={320} y={198} textAnchor="middle" className="lv-counter mid">{raw}</text>
+          <text x={320} y={215} textAnchor="middle" className="svg-sub tiny">signals harvested</text>
+        </g>
+      ) : (
+        <g className="lv-stamp big" style={rise(eph(t, 7800, 8300), 8)}>
+          <rect x={186} y={166} width={268} height={70} rx={12} />
+          <text x={320} y={196} textAnchor="middle" className="lv-counter mid">700+ creative signals</text>
+          <text x={320} y={218} textAnchor="middle" className="svg-sub tiny">collected · deduplicated · distilled per brief</text>
+        </g>
+      )}
+      {t > 8600 && (
+        <g style={rise(eph(t, 8600, 9000), 6)}>
+          {["trend-skill.md ✓", "design.md ✓", "filmora params ✓"].map((f, i) => (
+            <g key={f} className="lv-chip win">
+              <rect x={130 + i * 135} y={330} width={125} height={26} rx={8} />
+              <text x={192 + i * 135} y={347} textAnchor="middle" className="svg-mono tinytext">{f}</text>
+            </g>
+          ))}
+        </g>
+      )}
+
+      <text x={34} y={396} className="svg-note">
+        Six feeds, actually moving — then the noise blurs away and what remains is the evidence.
       </text>
     </svg>
   );
@@ -247,8 +322,6 @@ const MEM_HITS = [
   { label: "params: beat-sync preset", score: 0.79 },
   { label: "b-roll: rainy street pack", score: 0.22 },
 ];
-const RANKED = ["1 · surf transition pack", "2 · golden-hour LUT", "3 · beat-sync cut preset"];
-
 function MemoryGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10200;
@@ -296,28 +369,27 @@ function MemoryGraphic({ a }: { a: boolean }) {
         );
       })}
 
-      {/* reco network fires, ranked list emerges */}
-      {[0, 1, 2].map((i) => {
-        const p = ph(t, 5400 + i * 260, 6100 + i * 260);
-        const y0 = 64 + i * 26;
-        return (
-          <g key={i}>
-            <path d={`M 430 ${y0 + 90} C 380 ${y0 + 120} 300 290 260 300`} className="lv-edge" style={{ opacity: p > 0 ? 0.5 : 0.12 }} />
-            {p > 0 && p < 1 && <circle cx={q(bez(p, [430, y0 + 90], [340, (y0 + 380) / 2], [260, 300])[0])} cy={q(bez(p, [430, y0 + 90], [340, (y0 + 380) / 2], [260, 300])[1])} r={3.6} className="lv-pulse" />}
-          </g>
-        );
-      })}
-      <g className="lv-node is-live">
-        <circle cx={220} cy={310} r={38} />
-        <text x={220} y={306} textAnchor="middle" className="svg-label small">RECO</text>
-        <text x={220} y={322} textAnchor="middle" className="svg-sub tiny">{t > 6400 ? "ranking ✓" : "network"}</text>
-      </g>
-      {RANKED.map((r, i) => (
-        <g key={r} className="lv-chip" style={rise(eph(t, 6600 + i * 450, 7100 + i * 450))}>
-          <rect x={300} y={286 + i * 34} width={220} height={28} rx={8} />
-          <text x={314} y={305 + i * 34} className="svg-mono tinytext">{r}</text>
-        </g>
-      ))}
+      {/* recommendation: a live layered net — hits feed it, ranks come out */}
+      <text x={30} y={252} className="svg-sub">RECOMMENDATION NETWORK · edges firing</text>
+      <LiveNet
+        x={30}
+        y={262}
+        w={580}
+        h={116}
+        inputs={[
+          { label: "trend ctx", value: "700+" },
+          { label: "brief", value: "0.91" },
+          { label: "memory hits", value: "×3" },
+        ]}
+        hidden={5}
+        core="RECO"
+        outputs={["surf transitions", "golden-hour LUT", "beat-sync cuts"]}
+        t={t}
+        start={5200}
+      />
+      {t > 7600 && (
+        <text x={610} y={252} textAnchor="end" className="tick ok" style={rise(eph(t, 7600, 7950), 4)}>ranked ✓</text>
+      )}
 
       <text x={30} y={404} className="svg-note">
         Retrieval, not storage: only what matches the query lights up — and only that feeds the ranking.
@@ -485,78 +557,92 @@ function OrchestrationGraphic({ a }: { a: boolean }) {
 /* ---------- 7 · OUTPUT + OBSERVABILITY — playhead scrubs, trace follows ---------- */
 
 const OUT_CLIPS = [92, 128, 84, 140, 96];
-const TRACES = [
-  ["research.trends", "1.2 s"],
-  ["memory.retrieve", "0.3 s"],
-  ["compile.prompt", "0.2 s"],
-  ["orchestrate.e2e", "≈2% of total"],
-];
+/** span waterfall: [label, start%, width%, tag] — real trace topology incl. parallel spans */
+const SPANS = [
+  ["request", 0, 98, "root"],
+  ["trend agent", 5, 33, "span"],
+  ["prompt compiler", 40, 12, "span"],
+  ["video generation", 53, 43, "span"],
+  ["music generation", 53, 29, "parallel"],
+  ["editor assembly", 84, 13, "span"],
+] as const;
+const EVAL_LOOP = ["trace", "agent eval", "regression", "prompt/config"];
 
 function OutputGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 9800;
+  const L = 10600;
   const t = el % L;
   const totalW = OUT_CLIPS.reduce((s, w) => s + w + 6, -6);
-  const head = totalW * eph(t, 600, 5400);
-  const cost = Math.round(28 * eph(t, 5800, 8200));
+  const runP = eph(t, 600, 5400); // one traced run, 0→100%
+  const head = totalW * runP;
+  const cost = Math.round(28 * eph(t, 6200, 8600));
+  const evalIdx = Math.floor(t / 1100) % 4;
 
   let acc = 0;
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={40} y={44} className="svg-sub">FINAL TIMELINE · fully editable — the playhead is moving through it</text>
-      <g transform="translate(40,56)">
+      <text x={40} y={40} className="svg-sub">FINAL TIMELINE · fully editable — the playhead is the traced run</text>
+      <g transform="translate(40,50)">
         {OUT_CLIPS.map((w, i) => {
           const x = acc;
           acc += w + 6;
           const litClip = head > x && head < x + w;
-          return <rect key={i} x={x} y={0} width={w} height={40} rx={6} className={`lv-bar ${litClip ? "" : "bg"}`} style={{ opacity: litClip ? 1 : 0.5 }} />;
+          return <rect key={i} x={x} y={0} width={w} height={32} rx={6} className={`lv-bar ${litClip ? "" : "bg"}`} style={{ opacity: litClip ? 1 : 0.5 }} />;
         })}
-        <rect x={0} y={48} width={q(totalW)} height={12} rx={5} className="lv-track" />
-        <rect x={0} y={48} width={q(head)} height={12} rx={5} className="lv-bar warm" />
-        <line x1={q(head)} y1={-6} x2={q(head)} y2={66} className="lv-playhead" />
+        <line x1={q(head)} y1={-6} x2={q(head)} y2={40} className="lv-playhead" />
       </g>
 
-      {/* trace waterfall follows the playhead */}
+      {/* live span waterfall — spans appear at their true offsets as the run passes them */}
       <g className="lv-box">
-        <rect x={40} y={150} width={330} height={160} rx={12} />
-        <text x={58} y={176} className="svg-sub">TRACE · every agent call</text>
-        {TRACES.map((r, i) => {
-          const at = 1300 + i * 1050;
-          if (t < at) return null;
+        <rect x={40} y={104} width={370} height={186} rx={12} />
+        <text x={58} y={128} className="svg-sub">TRACE WATERFALL · one run, every span</text>
+        {SPANS.map(([label, start, width, tag], i) => {
+          const sp = ph(runP * 100, start as number, (start as number) + (width as number));
+          if (runP * 100 < (start as number)) return null;
+          const x0 = 150 + (start as number) * 2.1;
           return (
-            <g key={r[0]} style={rise(eph(t, at, at + 300), 6)}>
-              <text x={58} y={202 + i * 26} className="svg-mono tinytext">{r[0]}</text>
-              <text x={300} y={202 + i * 26} textAnchor="end" className="svg-mono tinytext">{r[1]}</text>
-              <text x={352} y={202 + i * 26} textAnchor="end" className="tick ok">✓</text>
+            <g key={label} style={rise(Math.min(1, sp * 3), 4)}>
+              <text x={144} y={152 + i * 22} textAnchor="end" className="svg-mono tinytext">{label}</text>
+              <rect x={q(x0)} y={143 + i * 22} width={q((width as number) * 2.1)} height={11} rx={4} className="lv-track" />
+              <rect x={q(x0)} y={143 + i * 22} width={q((width as number) * 2.1 * sp)} height={11} rx={4} className={`lv-bar ${tag === "parallel" ? "warm" : i === 0 ? "bg" : ""}`} />
+              <text x={q(x0 + (width as number) * 2.1 + 6)} y={152 + i * 22} className="svg-sub tiny">{sp >= 1 ? tag : "…"}</text>
             </g>
           );
         })}
       </g>
 
-      {/* API cost drawing itself down 28% */}
+      {/* live metric cards */}
+      {[
+        { k: "API COST", v: `−${cost}%`, s: "baseline → optimized" },
+        { k: "ORCHESTRATION", v: `${Math.round(2 * eph(t, 5600, 6600) * 10) / 10}%`, s: "of end-to-end latency" },
+        { k: "SIGNALS", v: t > 7000 ? "700+" : `${Math.round(700 * eph(t, 5600, 7000))}`, s: "operationalized" },
+      ].map((m, i) => (
+        <g key={m.k} className="lv-chip" style={rise(eph(t, 5600 + i * 300, 6000 + i * 300), 8)}>
+          <rect x={432} y={104 + i * 64} width={186} height={56} rx={10} />
+          <text x={448} y={124 + i * 64} className="svg-sub tiny">{m.k}</text>
+          <text x={448} y={144 + i * 64} className="lv-counter mid">{m.v}</text>
+          <text x={614} y={152 + i * 64} textAnchor="end" className="svg-sub tiny">{m.s}</text>
+        </g>
+      ))}
+
+      {/* the optimization loop, cycling live */}
       <g className="lv-box">
-        <rect x={400} y={150} width={220} height={160} rx={12} />
-        <text x={418} y={176} className="svg-sub">API COST · after tracing</text>
-        <polyline
-          points={[0, 1, 2, 3, 4, 5, 6, 7, 8]
-            .filter((i) => i / 8 <= eph(t, 5800, 8200))
-            .map((i) => `${q(424 + i * 22)},${q(232 - 0 * i)}`)
-            .map((pt, i) => {
-              const drop = [0, 1, 2, 5, 9, 14, 20, 25, 28][i] || 0;
-              const [x] = pt.split(",");
-              return `${x},${q(206 + drop * 2.2)}`;
-            })
-            .join(" ")}
-          className="lv-line"
-        />
-        <text x={510} y={296} textAnchor="middle" className="lv-counter mid">−{cost}%</text>
+        <rect x={40} y={308} width={370} height={52} rx={10} />
+        {EVAL_LOOP.map((e2, i) => (
+          <g key={e2}>
+            <g className={`lv-chip ${t > 8800 && evalIdx === i ? "win" : ""}`}>
+              <rect x={54 + i * 90} y={320} width={80} height={26} rx={8} style={{ opacity: evalIdx === i ? 1 : 0.5 }} />
+              <text x={94 + i * 90} y={337} textAnchor="middle" className="svg-mono tinytext">{e2}</text>
+            </g>
+            {i < 3 && <text x={137 + i * 90} y={337} className="svg-sub tiny">→</text>}
+          </g>
+        ))}
+        <text x={400} y={337} textAnchor="end" className="svg-sub tiny">↺</text>
       </g>
 
-      <text x={40} y={352} className="svg-note">
-        Never a black-box render: the edit lands editable, and the trace that produced it is on screen —
-      </text>
-      <text x={40} y={370} className="svg-note">
-        which is exactly how the runtime's API usage was cut by 28%. You can only optimize what you can see.
+      <text x={40} y={392} className="svg-note">
+        Never a black-box render: every span of the run is on screen, and the loop that turns traces into
+        the −28% is cycling in front of you.
       </text>
     </svg>
   );
@@ -583,7 +669,7 @@ const STEPS: StepDef[] = [
     sub: "what works, right now",
     pilotTitle: "Six platforms, streamed into evidence",
     pilotBody:
-      "The feeds you see scrolling are the agent's actual working surface — TikTok, Douyin, Xiaohongshu, Instagram, WeChat, Facebook. Each pulse is a signal harvested; the counter climbs as the noise collapses into 700+ deduplicated creative signals per brief.",
+      "The feeds you see scrolling are the agent's actual working surface — six platforms, real trend motifs. Each pulse is a signal harvested. Then the beat that matters: the noise blurs away, and what remains is 700+ deduplicated creative signals — already compiling into skill files.",
     metrics: [
       { k: "platforms", v: "6" },
       { k: "signals per brief", v: "700+" },
@@ -648,7 +734,7 @@ const STEPS: StepDef[] = [
     sub: "the receipt",
     pilotTitle: "A finished edit — and the trace that produced it",
     pilotBody:
-      "The playhead scrubs the finished timeline while the trace waterfall fills in beneath it — every agent call, timed and checked. That visibility is how API usage was cut by 28%: the cost line draws itself down in front of you.",
+      "The playhead is a traced run: every span appears at its true offset in the waterfall — including the two generations running in parallel — while the metric cards count what tracing bought: −28% API cost at ≈2% orchestration overhead. Below, the loop that did it (trace → eval → regression → config) cycles live.",
     metrics: [
       { k: "API cost", v: "−28%" },
       { k: "orchestration overhead", v: "≈2% of e2e" },

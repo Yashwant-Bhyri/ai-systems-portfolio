@@ -226,3 +226,97 @@ non-whitelisted one.
 4. verify antigravity on screen  5. filmora  6. mindscape  7. systems
 8. full on-screen verification (watch text change between polls = liveness proof)
 9. commit + verification evidence below. Copy/steps/shell/director untouched.
+
+### VERIFICATION — Session 2 (on-screen, per mega prompt §6) — commit 38fdded
+
+Environment quirks discovered (log for future sessions):
+- The preview browser reports document.hidden=true → requestAnimationFrame NEVER
+  fires there. Fixed in engine: useSim runs rAF + a 66 ms interval watchdog that
+  steps the clock when rAF stalls >120 ms. In the hidden preview the browser
+  throttles intervals to ~1 Hz and the 200 ms delta clamp means sims run ~5× slow
+  during verification — full speed in any real visible tab.
+- window.innerHeight=0 until preview_resize is called; scroll auto-drives because
+  the tour is running (expected). Verification workaround remains: display:none
+  preceding sections so target chapter sits at scroll 0.
+- Hydration mismatch root cause: SSR vs client float serialization in last decimal
+  for noise/sin-derived geometry. Fixed with q() quantizer (0.1 px) on all computed
+  attrs. Confirmed: DOM shows quantized values; console error count did not grow
+  across 3+ reloads post-fix (stale entries show pre-fix values).
+
+Confirmed ON SCREEN:
+- ANTIGRAVITY all 8 steps render; liveness proven by DOM text diff between polls
+  (partial transcript streaming "“i s…" grew mid-poll); step rail click-through
+  verified each scene (loop/STT/trajectory/dual-lane/agents/orchestrator/voice-out
+  /report); orchestrator scene shows 5 signal values + ASK/ESCALATE routes; report
+  shows moments→rows. Screenshot of loop scene: candidate node lit, ring, pilot box.
+- FILMORA all 7 steps render with live carets (▌) in prompt/query scenes; Gantt
+  clock, trend counter, playhead+trace, −28% line present.
+- MINDSCAPE all 6 steps render: pipeline w/ blocked shadow packet copy, moving
+  timeline fusion, retrieval race columns, typed draft w/ evidence chips, NLI gate
+  with entail scores, Nancy chat + growing sparkline.
+- SYSTEMS logistics: liveness proven (text diff between polls — gauge/copilot);
+  copilot terminal types whitelisted query → ✓, then refused query → ✗.
+- tsc --noEmit: zero errors in app/fable (3 pre-existing cloudflare worker typing
+  errors in db/worker, untouched).
+
+Tuning notes / future candidates:
+- stepMs now 9800 for antigravity/filmora/mindscape (scene loops are 9.4–11 s).
+- MindScape RetrievalGraphic rerank row-swap is simplified (one promotion); could
+  be made a fuller re-sort.
+- Hidden-tab sims run slow by design (throttled watchdog); acceptable.
+
+STATUS: all operational graphics are live operation scenes. Committed 38fdded.
+
+---
+
+## 2026-07-19 — Session 3 (Fable): BEST-OF-BOTH MERGE, operational graphics only
+
+### User direction (two voice messages, distilled)
+1. Best of both worlds: V2 (in-fork files portfolio-v2.tsx / portfolio-visuals.tsx /
+   portfolio-v2.css, Geist-based "vx-" design system) has genuinely good components;
+   Fable's live-scene philosophy is right — reciprocate it into those components at
+   equal robustness, letting the two style philosophies meet. Work in THIS fork.
+2. Filmora runtime high-level: the log rows (research.trends / memory.retrieve /
+   compile.prompt / agents.dispatch) each get their own small live micro-graphic.
+3. Chapter verdicts: semantic prompt compiler + multi-agent = mine good; observability
+   = improve; MindScape = V2 wins (richer domain depth) except grounded reasoning =
+   mine wins; heavy machinery (logistics/systems UI) = mine wins; research strip
+   (Optek etc.) = V2's ResearchMiniVisual is "really really good" — bring it in.
+4. Re-read mega prompt §4/§5 graphic asks; treat them as unrefined ideas — implement
+   the most robust interpretation. Skip mascot work this pass. Operational graphics
+   must be COMPLETELY finished.
+
+### Decision D7 — merge map (per component)
+- FILMORA runtime: add live micro-glyphs per log row (mini scroll spark / vector
+  bars / converge / fan-out). TREND: keep continuous scroll + V2's trend-media.svg
+  posters INSIDE tiles + spec's missing beat: scroll → tiles BLUR → 700+ stamp lands.
+- NEURAL NETS: upgrade to layered nets (inputs → hidden layer → core → outputs,
+  edges firing in sequence, V2 SignalMesh topology, live) for Antigravity
+  orchestrator, Filmora recommendation, MindScape fusion.
+- OBSERVABILITY: proper live span waterfall (offset spans w/ root/parallel tags,
+  appearing as the clock passes), metric cards (−28% / 2% / 700+), and V2's eval
+  loop (trace → eval → regression → config ↺) cycling live.
+- MINDSCAPE (V2 depth, live treatment): capture = WebRTC rolling buffer + ms scale +
+  packet chips; perceive = 3-way split w/ typed transcript, SenseVoice event tokens
+  popping, live valence/arousal affect point; fuse = layered GMU net → BSV bars
+  (768d/sparse/1024d); retrieve = keep race, add HNSW scatter + BM25 score bars;
+  reason = keep mine + uncertainty/follow-up outputs; validate = keep mine + "release
+  with uncertainty" outcome; review = add radar + BSV strip, keep Nancy loop.
+- RESEARCH STRIP: port V2 ResearchMiniVisual as LIVE minis in systems bench —
+  TinyML (wave→spectrogram cells light→net fires→INT8 chip, 93%/<10ms/14×),
+  BIRD-SQL (Q+IMG→schema→SQL types itself→EX ✓), distill (judge stamps ✓/✗→SLM→
+  paired eval bars). CREATE two more in same language: webGLR (frame→seg+depth→
+  shader, dual live/HQ lanes), COL-VEO (storyboard state machine stepping,
+  seed-locked regen). Lit bench row shows its mini.
+- LOGISTICS: merge V2 contract flow (01 intent router → 02 approved handler
+  (parameterized) → 03 bounded response) into my live console+refusal+gauge.
+- ANTIGRAVITY folds: voice-out gains V2 prepared-audio cache rack (CACHE HIT beat);
+  report gains live confidence/coverage meters.
+- STYLE MEET: adopt V2's bordered-mono-chip / kicker vocabulary in scenes (already
+  close); reuse trend-media.svg asset. Fonts stay Sora/Plex (loaded), vx styling
+  accents blended in scene CSS.
+
+### Execution order
+filmora (runtime micro-glyphs, trend blur, reco net, observability) → mindscape →
+systems (research minis ×5 + logistics merge) → antigravity folds → on-screen
+verification → commit. Ledger append after each verified milestone.

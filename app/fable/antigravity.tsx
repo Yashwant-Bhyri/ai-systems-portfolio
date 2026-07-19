@@ -645,25 +645,39 @@ function VoiceOutGraphic({ a }: { a: boolean }) {
         </g>
       )}
 
-      {/* verdict stamp */}
+      {/* verdict stamp — clear of the waterfall rows */}
       {t > doneAt + 150 && (
         <g className="lv-stamp" style={rise(eph(t, doneAt + 150, doneAt + 550), 6)}>
-          <rect x={440} y={196 + (cycle === 1 ? 52 : 0)} width={180} height={40} rx={9} />
-          <text x={530} y={214 + (cycle === 1 ? 52 : 0)} textAnchor="middle" className="svg-label small">
+          <rect x={40} y={244} width={180} height={40} rx={9} />
+          <text x={130} y={262} textAnchor="middle" className="svg-label small">
             {cycle === 0 ? "740 ms · ✓ in budget" : "852 ms · ✓ in budget"}
           </text>
-          <text x={530} y={229 + (cycle === 1 ? 52 : 0)} textAnchor="middle" className="svg-sub tiny">
+          <text x={130} y={277} textAnchor="middle" className="svg-sub tiny">
             {cycle === 0 ? "260 ms headroom" : "fallback fired, budget held"}
           </text>
         </g>
       )}
 
+      {/* prepared-audio cache — the question was already synthesized */}
+      <text x={40} y={306} className="svg-sub tiny">PREPARED AUDIO CACHE · background lane keeps it warm</text>
+      {["arch probe", "ownership", "failure probe", "stale-state"].map((c2, i) => {
+        const hit = i === 2 && t > rows[1].start + 240 * SLOW;
+        return (
+          <g key={c2} className={`lv-chip ${hit ? "win" : ""}`}>
+            <rect x={40 + i * 145} y={314} width={135} height={24} rx={7} style={{ opacity: hit ? 1 : 0.55 }} />
+            <text x={107 + i * 145} y={330} textAnchor="middle" className="svg-mono tinytext">
+              {c2}{hit ? " · CACHE HIT" : ""}
+            </text>
+          </g>
+        );
+      })}
+
       {/* the voice actually speaks */}
-      <text x={40} y={320} className="svg-sub">SPOKEN TO CANDIDATE</text>
-      <Wave x={40} y={330} w={200} h={34} bars={24} t={t} on={speaking ? 1 : 0.05} />
-      <text x={260} y={352} className="svg-mono small">{qText}{speaking ? caret(t) : ""}</text>
+      <text x={40} y={362} className="svg-sub">SPOKEN TO CANDIDATE</text>
+      <Wave x={200} y={346} w={150} h={26} bars={20} t={t} on={speaking ? 1 : 0.05} />
+      <text x={360} y={366} className="svg-mono small">{qText}{speaking ? caret(t) : ""}</text>
       <text x={40} y={400} className="svg-note">
-        Every cycle you watch is one turn's real budget — and on alternating replays, the fallback path itself.
+        Every cycle is one turn's real budget — the question was cached before it was needed, and on alternating replays the fallback fires.
       </text>
     </svg>
   );
@@ -706,6 +720,22 @@ function ReportGraphic({ a }: { a: boolean }) {
         <rect x={252} y={32} width={368} height={356} rx={14} />
         <text x={276} y={64} className="svg-label big">CANDIDATE EVIDENCE REPORT</text>
         <text x={276} y={84} className="svg-sub">interview #{count} · not a vibe score — a ledger</text>
+        {/* live meters — filling as the evidence assembles */}
+        {[
+          ["EVIDENCE", 82],
+          ["COVERAGE", 72],
+          ["QUALITY", 86],
+        ].map(([k2, v], i) => {
+          const p = eph(t, 1600 + i * 300, 3400 + i * 300);
+          return (
+            <g key={String(k2)}>
+              <text x={276 + i * 118} y={104} className="svg-sub tiny">{k2}</text>
+              <text x={352 + i * 118} y={104} textAnchor="end" className="svg-mono tinytext">{Math.round(Number(v) * p)}%</text>
+              <rect x={276 + i * 118} y={109} width={76} height={5} rx={2.5} className="lv-track thin" />
+              <rect x={276 + i * 118} y={109} width={q(76 * (Number(v) / 100) * p)} height={5} rx={2.5} className="lv-bar" />
+            </g>
+          );
+        })}
         {REPORT_ROWS.map((r, i) => {
           const s = 2300 + i * 1300;
           const p = eph(t, s, s + 500);
@@ -714,7 +744,7 @@ function ReportGraphic({ a }: { a: boolean }) {
             <g key={r[0]}>
               {link > 0 && (
                 <path
-                  d={`M 208 ${84 + i * 74} C 232 ${84 + i * 74} 236 ${112 + i * 60} 252 ${114 + i * 60}`}
+                  d={`M 208 ${84 + i * 74} C 232 ${84 + i * 74} 236 ${128 + i * 54} 252 ${130 + i * 54}`}
                   className="lv-edge win"
                   pathLength={100}
                   strokeDasharray="100 100"
@@ -723,9 +753,9 @@ function ReportGraphic({ a }: { a: boolean }) {
                 />
               )}
               <g style={rise(p, 8)}>
-                <text x={276} y={118 + i * 60} className="svg-mono small">{r[0]}</text>
-                <text x={276} y={136 + i * 60} className="svg-sub tiny">{r[1]}</text>
-                <text x={596} y={124 + i * 60} textAnchor="end" className="tick ok">✓</text>
+                <text x={276} y={134 + i * 54} className="svg-mono small">{r[0]}</text>
+                <text x={276} y={151 + i * 54} className="svg-sub tiny">{r[1]}</text>
+                <text x={596} y={140 + i * 54} textAnchor="end" className="tick ok">✓</text>
               </g>
             </g>
           );
