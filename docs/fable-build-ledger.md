@@ -159,3 +159,70 @@ Known notes / candidates for future tuning:
   Tune stepMs in each chapter file if a faster tour is wanted.
 
 STATUS: complete and verified. Committed to git.
+
+---
+
+## 2026-07-19 — Session 2 (Fable): OPERATIONAL GRAPHICS REDO
+
+### User feedback triggering this session
+The operational graphics were flagged as still being "simple flow charts / text-based
+architecture maps." Requirement restated: REAL, LIVE, DYNAMIC, operation-depicting
+graphics — the graphic must look like the system actually running, not a labeled
+diagram of it. Work on the fork (do not restart from scratch). Fix ALL operational
+graphics in this pass.
+
+### Diagnosis of current state (commit 4cafae8)
+All graphics in antigravity/filmora/mindscape/systems are built from `svg-bits.tsx`
+(Node = labeled rect, Packet = dot on animateMotion path) + CSS animationDelay.
+They are diagrams-with-decoration: nothing streams, counts, races, decides, or
+changes state over time. This is exactly the failure the user is flagging.
+
+### Decision D6 — Sim-clock live graphics (supersedes the visual half of D2; keeps SVG)
+Every operational graphic becomes a pure function of a requestAnimationFrame sim
+clock (`useSim(active)` → elapsed ms). A scripted scenario loop (6–11 s) derives ALL
+visual state from t: streaming text w/ backspace revisions, live ms counters,
+progress races, score count-ups, chips that fly and re-sort, gates that scan and
+block, stamps that land. Benefits: pausing the tour freezes the whole scene
+coherently; loops are deterministic; alternate cycles can show branch behavior
+(e.g. orchestrator ASK vs ESCALATE, Cartesia→ElevenLabs fallback firing).
+New shared engine: `app/fable/live.tsx` (useSim, phase/ease helpers, retype/script
+typing engine, Wave, noise). `svg-bits.tsx` kept only where a plain node is still
+the right call inside a live scene.
+
+### Scene scripts (what each graphic now DEPICTS — the operation, live)
+ANTIGRAVITY: 1 loop=one real turn replayed (speak→transcribe→decide→speak, live ms
+counter, phase arc); 2 STT=partials mutating w/ revisions→finals committing to a
+log w/ per-word confidence, live latency ticker; 3 trajectory=map builds from
+résumé claims, then live answer routes along similarity-scored edges (scores count
+up, winner glows, frontier expands); 4 dual-lane=real race per turn, fast lane
+completes @~900 ms while background keeps filling→package into READY queue,
+consumed next turn; 5 agents=4 cards processing concurrently (typing findings,
+score bars), discrepancy ledger checks claims one-by-one live; 6 orchestrator=
+signal pulses land w/ values, reasoning types, decision fires (ASK/ESCALATE
+alternating by cycle); 7 voice-out=0.25× slow-mo waterfall of the 940 ms budget w/
+cumulative counter; odd cycles show Cartesia timeout→ElevenLabs fallback actually
+taking over; 8 report=report assembles from transcript moments w/ evidence link
+lines, 250+ stamp.
+FILMORA: 1 runtime=prompt types→agent log w/ spinners→timeline clips assemble;
+2 trend=feeds genuinely scrolling per platform, harvest pulses, counter →700+;
+3 skills=signal stream compiling INTO files (lines typed live, version bump, ✓);
+4 memory=query embeds (bars sweep)→DB probe→hits score-count & re-sort→reco ranks;
+5 compiler=token chips fly from 3 live panes into the brief, determinism check;
+6 orchestration=live Gantt w/ hand-off chips, overhead slices ≈2%, running clock;
+7 output=playhead scrubs timeline, trace waterfall follows, cost line draws −28%.
+MINDSCAPE: 1 pipeline=session packet traverses stages (active stage works), shadow
+ungrounded packet gets BLOCKED at validate; 2 perceive=3 streams on a moving shared
+time axis fusing into a live state vector; 3 retrieval=dense vs BM25 race→RRF
+interleave (chips physically merge)→rerank sweep re-orders→top-k; 4 reasoning=draft
+sentence types, evidence chips light + lineage lines draw IN SYNC with the words;
+5 validate=claims conveyor into NLI gate, scan beam, entail scores, pass/block live;
+6 review=handoff rows + Nancy chat pinging, each exchange extends the timeline
+sparkline. SYSTEMS/logistics=role requests pulse the API live, risk gauge reacts to
+weather cycle, copilot terminal runs a whitelisted query then visibly REFUSES a
+non-whitelisted one.
+
+### Plan
+1. live.tsx engine  2. antigravity graphics  3. CSS live-scene section
+4. verify antigravity on screen  5. filmora  6. mindscape  7. systems
+8. full on-screen verification (watch text change between polls = liveness proof)
+9. commit + verification evidence below. Copy/steps/shell/director untouched.
