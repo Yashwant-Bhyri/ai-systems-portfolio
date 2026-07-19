@@ -320,3 +320,31 @@ STATUS: all operational graphics are live operation scenes. Committed 38fdded.
 filmora (runtime micro-glyphs, trend blur, reco net, observability) → mindscape →
 systems (research minis ×5 + logistics merge) → antigravity folds → on-screen
 verification → commit. Ledger append after each verified milestone.
+
+### VERIFICATION — Session 3 (on-screen) — commit c2a5d02
+
+Confirmed ON SCREEN (fresh page, 1400×880):
+- FILMORA: runtime log rows show live micro-glyphs; trend tiles render all 24
+  trend-media.svg posters (getBBox width > 0 for every <use>) with tags scrolling;
+  memory step hosts the LiveNet; observability shows the span waterfall + metric
+  cards + eval loop. Typing carets live in prompt/query scenes.
+- MINDSCAPE: now 8 steps — capture (rolling buffer + packets), perception
+  (3 channels incl. live affect plane), gated fusion (LiveNet → BSV bars),
+  hybrid retrieval (HNSW scatter + BM25 bars → RRF → rerank), reason (+output
+  chips), validate (+release-with-uncertainty), review (radar + Nancy + sparkline).
+  All render; liveness inherited from verified engine.
+- SYSTEMS: all 4 bench minis render and the chapter sim runs (text diff over 4 s,
+  copilot query present incl. "parameterized query" contract line).
+- ANTIGRAVITY: voice-out shows PREPARED AUDIO CACHE rack (CACHE HIT beat);
+  report shows live EVIDENCE/COVERAGE/QUALITY meters. Fixed a stamp-overlaps-bar
+  layout bug in voice-out while merging.
+- tsc clean (app/fable); zero console errors on fresh load (hydration parity holds
+  for all new scenes — q() discipline applied throughout).
+
+Incident note: mid-verification the long-lived hidden preview page degraded (sims
+froze, then the renderer hung and the server was reaped). A fresh preview_start +
+reload reproduced NONE of it — environment artifact, not site code. If sims ever
+look frozen during verification: reload the page first before debugging code.
+
+Deferred (user explicitly said skip this pass): mascot/guide changes.
+STATUS: best-of-both merge complete and verified. Committed c2a5d02.

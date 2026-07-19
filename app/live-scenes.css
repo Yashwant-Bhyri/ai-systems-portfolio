@@ -1,0 +1,120 @@
+/* ============================================================
+   LIVE OPERATIONAL SCENES — standalone vocabulary for hosting
+   the sim-clock graphics inside the V2 (vx) experience.
+   .vx-live-stage bridges the scene vars onto V2's design tokens
+   so every scene paints in the owning chapter's accent.
+   ============================================================ */
+
+.vx-live-stage {
+  --accent: var(--active-accent, var(--vx-lime));
+  --panel-line: var(--vx-line);
+  --text-hi: var(--vx-ink);
+  --text: #c3cee0;
+  --text-dim: var(--vx-muted);
+  --warm: var(--vx-amber);
+  --cold: var(--vx-cyan);
+  --fable-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --fable-sans: var(--font-geist-sans), system-ui, sans-serif;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.op-svg { width: 100%; height: auto; max-height: 100%; }
+
+.svg-label { fill: var(--text-hi); font-family: var(--fable-sans); font-size: 13px; font-weight: 600; }
+.svg-label.small { font-size: 11px; }
+.svg-label.big { font-size: 16px; }
+.svg-sub { fill: var(--text-dim); font-family: var(--fable-mono); font-size: 10px; }
+.svg-sub.tiny { font-size: 9px; }
+.svg-mono { fill: var(--text); font-family: var(--fable-mono); font-size: 12px; }
+.svg-mono.small { font-size: 10.5px; }
+.svg-mono.tinytext { font-size: 10px; fill: var(--text); }
+.svg-mono.dark { fill: #0a0e17; }
+.svg-mono.small.dim, .svg-mono.dim { opacity: 0.45; }
+.svg-note { fill: var(--text-dim); font-family: var(--fable-sans); font-size: 12px; }
+.tick.ok { fill: #6ee7a8; font-family: var(--fable-mono); font-size: 11px; }
+.tick.bad { fill: #ff8b8b; font-family: var(--fable-mono); font-size: 11px; }
+
+/* ============================================================
+   LIVE OPERATIONAL SCENES (D6) — sim-clock driven graphics.
+   All motion is computed from the clock in React; these classes
+   only paint. No CSS keyframes here, so pausing freezes scenes.
+   ============================================================ */
+
+.lw { fill: color-mix(in srgb, var(--accent) 85%, white 5%); opacity: 0.9; }
+
+.lv-ring { fill: none; stroke: color-mix(in srgb, var(--accent) 80%, transparent); stroke-width: 2.6; stroke-linecap: round; }
+.lv-ring.track { stroke: var(--panel-line); stroke-width: 2; }
+.lv-ring.tip { stroke: #fff; stroke-width: 4; filter: drop-shadow(0 0 8px var(--accent)); }
+
+.lv-node rect {
+  fill: rgba(16, 24, 38, 0.92);
+  stroke: var(--panel-line);
+  stroke-width: 1.3;
+  transition: stroke 0.25s ease, filter 0.25s ease;
+}
+.lv-node.is-live rect {
+  stroke: color-mix(in srgb, var(--accent) 80%, transparent);
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--accent) 45%, transparent));
+}
+
+.lv-box rect:first-of-type { fill: rgba(12, 18, 28, 0.9); stroke: var(--panel-line); stroke-width: 1.2; }
+.lv-box.hot rect:first-of-type { stroke: color-mix(in srgb, var(--accent) 55%, transparent); }
+
+.lv-chip rect { fill: rgba(18, 26, 42, 0.95); stroke: color-mix(in srgb, var(--accent) 40%, var(--panel-line)); stroke-width: 1.2; }
+.lv-chip.win rect { stroke: color-mix(in srgb, var(--accent) 85%, transparent); filter: drop-shadow(0 0 9px color-mix(in srgb, var(--accent) 50%, transparent)); }
+
+.lv-edge { fill: none; stroke: color-mix(in srgb, var(--accent) 45%, var(--panel-line)); stroke-width: 1.8; }
+.lv-edge.win { stroke: color-mix(in srgb, var(--accent) 90%, white 5%); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 55%, transparent)); }
+
+.lv-pulse { fill: var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
+
+.lv-track { fill: rgba(255, 255, 255, 0.05); stroke: var(--panel-line); stroke-width: 1; }
+.lv-track.thin { stroke: none; }
+.lv-bar { fill: color-mix(in srgb, var(--accent) 78%, transparent); }
+.lv-bar.bg { fill: color-mix(in srgb, var(--cold) 45%, transparent); }
+.lv-bar.warm { fill: color-mix(in srgb, var(--warm) 75%, transparent); }
+.lv-bar.bad { fill: rgba(255, 120, 120, 0.55); }
+
+.lv-tick { stroke: var(--panel-line); stroke-width: 1.4; }
+.lv-conf { fill: color-mix(in srgb, var(--accent) 70%, transparent); }
+.lv-docline { fill: color-mix(in srgb, var(--accent) 50%, var(--panel-line)); }
+
+.lv-counter { fill: var(--accent); font-family: var(--fable-mono); font-size: 26px; font-weight: 700; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 45%, transparent)); }
+.lv-phase { fill: var(--text-hi); font-family: var(--fable-mono); font-size: 12px; letter-spacing: 0.22em; }
+.lv-phase.small { font-size: 10px; letter-spacing: 0.18em; fill: var(--text-dim); }
+
+.lv-dot { fill: var(--accent); }
+.lv-dot.ok { fill: #6ee7a8; filter: drop-shadow(0 0 5px rgba(110, 231, 168, 0.7)); }
+
+.lv-core .lv-corering { fill: rgba(16, 24, 38, 0.92); stroke: color-mix(in srgb, var(--accent) 75%, transparent); stroke-width: 2; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 40%, transparent)); }
+
+.lv-stamp rect { fill: color-mix(in srgb, var(--accent) 18%, rgba(16, 24, 38, 0.95)); stroke: color-mix(in srgb, var(--accent) 85%, transparent); stroke-width: 1.6; }
+.lv-stamp.big rect { stroke-width: 2.2; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 55%, transparent)); }
+
+.scanline { fill: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+
+/* live-scene additions (filmora / mindscape / systems) */
+.lv-feedbar { fill: color-mix(in srgb, var(--accent) 40%, var(--panel-line)); }
+.lv-feedbar.dim { opacity: 0.5; }
+.lv-line { fill: none; stroke: color-mix(in srgb, var(--accent) 85%, transparent); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.lv-playhead { stroke: var(--warm); stroke-width: 2; filter: drop-shadow(0 0 6px var(--warm)); }
+.lv-gate { fill: color-mix(in srgb, var(--accent) 30%, rgba(16, 24, 38, 0.9)); stroke: color-mix(in srgb, var(--accent) 75%, transparent); stroke-width: 1.6; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 35%, transparent)); }
+.lv-bubble { fill: rgba(20, 28, 44, 0.95); stroke: var(--panel-line); stroke-width: 1.1; }
+.lv-bubble.nancy { stroke: color-mix(in srgb, var(--accent) 55%, transparent); }
+.lv-db ellipse, .lv-db path { fill: rgba(16, 24, 38, 0.9); stroke: color-mix(in srgb, var(--accent) 50%, var(--panel-line)); stroke-width: 1.4; }
+.lv-ripple { fill: none; stroke: color-mix(in srgb, var(--accent) 70%, transparent); stroke-width: 1.4; }
+.lv-pulse.bad { fill: #ff8b8b; filter: drop-shadow(0 0 8px rgba(255, 139, 139, 0.8)); }
+.lv-counter.mid { font-size: 18px; }
+.lv-ring.hotline { stroke: #ff8b8b; filter: drop-shadow(0 0 8px rgba(255, 139, 139, 0.6)); }
+
+/* best-of-both merge (D7): live nets, research minis, radar */
+.lv-netedge { stroke: color-mix(in srgb, var(--accent) 60%, var(--panel-line)); stroke-width: 1.1; }
+.lv-netedge.out { stroke-width: 1.6; }
+.lv-hidnode { fill: color-mix(in srgb, var(--accent) 70%, white 5%); }
+.lv-radar { fill: color-mix(in srgb, var(--accent) 22%, transparent); stroke: color-mix(in srgb, var(--accent) 85%, transparent); stroke-width: 1.6; }
+.bench-mini-stage { margin-top: 14px; border: 1px solid var(--panel-line); border-radius: 12px; background: rgba(12, 18, 28, 0.6); padding: 10px 12px 6px; }
+.bench-mini { display: block; }

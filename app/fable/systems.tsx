@@ -6,7 +6,7 @@ import { useSim, ph, eph, pulse, noise, bez, typed, caret, rise, Wave, q } from 
 
 /* ---------- live research minis (V2's mini-pipeline language, made live) ---------- */
 
-function BenchMini({ idx, t }: { idx: number; t: number }) {
+export function BenchMini({ idx, t }: { idx: number; t: number }) {
   if (idx === 0) {
     // Optek TinyML: audio → log-Mel cells → tiny net firing → INT8 on the SoC
     const sweep = Math.floor(t / 140) % 18;
@@ -140,7 +140,7 @@ const ROLE_REQS = [
 ];
 const WEATHER = ["☀ clear", "🌧 storm cell", "🌫 fog", "☀ clear"];
 
-function LogisticsGraphic({ a }: { a: boolean }) {
+export function LogisticsGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 11000;
   const t = el % L;

@@ -10,7 +10,7 @@ import { useSim, ph, eph, pulse, noise, bez, typed, caret, rise, Wave, LiveNet, 
 
 const STAGES = ["CAPTURE", "PERCEIVE", "FUSE", "RETRIEVE", "REASON", "VALIDATE", "REVIEW"];
 
-function PipelineGraphic({ a }: { a: boolean }) {
+export function PipelineGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10400;
   const t = el % L;
@@ -80,7 +80,7 @@ function PipelineGraphic({ a }: { a: boolean }) {
 
 /* ---------- 2 · CAPTURE — WebRTC audio in a rolling buffer, packets shipping ---------- */
 
-function CaptureGraphic({ a }: { a: boolean }) {
+export function CaptureGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 8800;
   const t = el % L;
@@ -142,7 +142,7 @@ const EVENT_TOKENS = [
   { tok: "<sigh>", at: 5800 },
 ];
 
-function PerceiveGraphic({ a }: { a: boolean }) {
+export function PerceiveGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 9600;
   const t = el % L;
@@ -220,7 +220,7 @@ function PerceiveGraphic({ a }: { a: boolean }) {
 
 /* ---------- 4 · FUSE — gated multimodal net → Behavioral State Vector ---------- */
 
-function FuseGraphic({ a }: { a: boolean }) {
+export function FuseGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 9200;
   const t = el % L;
@@ -285,7 +285,7 @@ const HNSW_HITS = [2, 7, 10];
 const BM25_ROWS: [string, number][] = [["“sleep disruption”", 88], ["“anxiety episode”", 73], ["check-in log terms", 61], ["note 2026-05-12", 48], ["clinic intake", 39]];
 const MERGED = ["DSM-5 §300.02 GAD", "“sleep disruption”", "session 11, turn 8", "check-in log terms", "affect baseline"];
 
-function RetrievalGraphic({ a }: { a: boolean }) {
+export function RetrievalGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 11000;
   const t = el % L;
@@ -374,7 +374,7 @@ const EVIDENCE = [
   { label: "session transcript · turn 14", trigger: 5300, y: 302 },
 ];
 
-function ReasonGraphic({ a }: { a: boolean }) {
+export function ReasonGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 9800;
   const t = el % L;
@@ -437,7 +437,7 @@ const V_CLAIMS = [
   { text: "adherence improving", entail: 0.88, at: 6400, ok: true },
 ];
 
-function ValidateGraphic({ a }: { a: boolean }) {
+export function ValidateGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10400;
   const t = el % L;
@@ -510,7 +510,7 @@ const HANDOFF_ROWS = [
   "Suggested — never automatic — actions",
 ];
 
-function ReviewGraphic({ a }: { a: boolean }) {
+export function ReviewGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 9800;
   const t = el % L;

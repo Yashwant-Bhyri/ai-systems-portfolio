@@ -11,7 +11,7 @@ import { useSim, ph, eph, ez, pulse, noise, bez, script, typed, caret, rise, Wav
 
 /* ---------- 1 · THE LOOP — one real turn, replayed live ---------- */
 
-function LoopGraphic({ a }: { a: boolean }) {
+export function LoopGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 9600;
   const t = el % L;
@@ -103,7 +103,7 @@ function LoopGraphic({ a }: { a: boolean }) {
 const STT_FINAL_1 = ["I", "sharded", "the", "Redis", "state", "by", "session."];
 const STT_CONF_1 = [0.98, 0.94, 0.97, 0.92, 0.96, 0.99, 0.95];
 
-function SttGraphic({ a }: { a: boolean }) {
+export function SttGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 8600;
   const t = el % L;
@@ -190,7 +190,7 @@ const TRAJ_ROUTES = [
   { label: "pivot topic", y: 204, score: 0.22 },
 ];
 
-function TrajectoryGraphic({ a }: { a: boolean }) {
+export function TrajectoryGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 11000;
   const t = el % L;
@@ -292,7 +292,7 @@ function TrajectoryGraphic({ a }: { a: boolean }) {
 
 /* ---------- 4 · DUAL-LANE — a real race, per turn ---------- */
 
-function FastLaneGraphic({ a }: { a: boolean }) {
+export function FastLaneGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10200;
   const t = el % L;
@@ -410,7 +410,7 @@ const CLAIMS = [
   { label: "Playwright e2e suite", ok: true },
 ];
 
-function AgentsGraphic({ a }: { a: boolean }) {
+export function AgentsGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 9800;
   const t = el % L;
@@ -492,7 +492,7 @@ const ORCH_IN = [
   { label: "REASONING", v: "0.78" },
 ];
 
-function OrchestratorGraphic({ a }: { a: boolean }) {
+export function OrchestratorGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 9000;
   const t = el % L;
@@ -575,7 +575,7 @@ function OrchestratorGraphic({ a }: { a: boolean }) {
 
 /* ---------- 7 · VOICE OUT — the 940 ms budget, replayed in slow-mo ---------- */
 
-function VoiceOutGraphic({ a }: { a: boolean }) {
+export function VoiceOutGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10600;
   const t = el % L;
@@ -698,7 +698,7 @@ const REPORT_ROWS = [
   ["Communication under pressure", "clear at 2 escalations"],
 ];
 
-function ReportGraphic({ a }: { a: boolean }) {
+export function ReportGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10800;
   const t = el % L;

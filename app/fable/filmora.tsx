@@ -60,7 +60,7 @@ function MicroGlyph({ kind, t, live }: { kind: string; t: number; live: boolean 
   );
 }
 
-function RuntimeGraphic({ a }: { a: boolean }) {
+export function RuntimeGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 11000;
   const t = el % L;
@@ -135,7 +135,7 @@ const PLATFORMS = ["TikTok", "Douyin", "Xiaohongshu", "Instagram", "WeChat", "Fa
 const TREND_MOTIFS = ["device", "macro", "type", "audio", "transition", "palette"];
 const TREND_TAGS = ["#launch", "#新品", "#aesthetic", "#creator", "#tech", "#reveal"];
 
-function TrendGraphic({ a }: { a: boolean }) {
+export function TrendGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 11200;
   const t = el % L;
@@ -249,7 +249,7 @@ const SKILL_FILES = [
   },
 ];
 
-function SkillGraphic({ a }: { a: boolean }) {
+export function SkillGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10600;
   const t = el % L;
@@ -322,7 +322,7 @@ const MEM_HITS = [
   { label: "params: beat-sync preset", score: 0.79 },
   { label: "b-roll: rainy street pack", score: 0.22 },
 ];
-function MemoryGraphic({ a }: { a: boolean }) {
+export function MemoryGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10200;
   const t = el % L;
@@ -421,7 +421,7 @@ const PANES = [
   { label: "PRODUCTION STATE", sub: "timeline: 2 clips placed", y: 280 },
 ];
 
-function CompilerGraphic({ a }: { a: boolean }) {
+export function CompilerGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10000;
   const t = el % L;
@@ -500,7 +500,7 @@ const HANDOFFS = [
 ];
 const GX = (ms: number) => 150 + (ms - 600) * 0.05;
 
-function OrchestrationGraphic({ a }: { a: boolean }) {
+export function OrchestrationGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 11000;
   const t = el % L;
@@ -554,6 +554,62 @@ function OrchestrationGraphic({ a }: { a: boolean }) {
   );
 }
 
+/* ---------- 6.5 · EDITOR TIMELINE — tracks assemble, still editable ---------- */
+
+const EDITOR_TRACKS: [string, number][] = [
+  ["VIDEO", 92],
+  ["DIALOGUE", 58],
+  ["MUSIC", 82],
+  ["CAPTIONS", 70],
+  ["TRANSITIONS", 44],
+  ["FX + META", 64],
+];
+
+export function EditorGraphic({ a }: { a: boolean }) {
+  const el = useSim(a);
+  const L = 9600;
+  const t = el % L;
+  const allDone = t > 1200 + 5 * 700 + 1400;
+  const headP = eph(t, 6400, 9000);
+
+  return (
+    <svg viewBox="0 0 640 420" className="op-svg">
+      <text x={40} y={40} className="svg-sub">FILMORA ASSEMBLY · tracks landing, individually editable</text>
+      <g className="lv-chip">
+        <rect x={470} y={22} width={150} height={30} rx={8} />
+        <text x={545} y={42} textAnchor="middle" className="svg-mono tinytext">{allDone ? "PLAYBACK READY ✓" : "assembling…"}</text>
+      </g>
+
+      {/* preview window */}
+      <g className="lv-box hot">
+        <rect x={40} y={56} width={580} height={110} rx={12} />
+        <text x={320} y={104} textAnchor="middle" className="svg-label big" style={{ opacity: 0.4 + 0.6 * eph(t, 5200, 6200) }}>FOLD THE FUTURE</text>
+        <text x={320} y={126} textAnchor="middle" className="svg-sub tiny">product reveal · kinetic type · 18 s vertical</text>
+        {allDone && <line x1={q(52 + 556 * headP)} y1={64} x2={q(52 + 556 * headP)} y2={158} className="lv-playhead" />}
+      </g>
+
+      {/* tracks land one by one, still editable */}
+      {EDITOR_TRACKS.map(([label, w], i) => {
+        const start = 1200 + i * 700;
+        const p = eph(t, start, start + 1400);
+        return (
+          <g key={label}>
+            <text x={128} y={200 + i * 30} textAnchor="end" className="svg-mono tinytext">{label}</text>
+            <rect x={140} y={190 + i * 30} width={460} height={16} rx={5} className="lv-track" />
+            <rect x={140} y={190 + i * 30} width={q(460 * (w / 100) * p)} height={16} rx={5} className={`lv-bar ${i % 2 ? "bg" : ""}`} />
+            {p >= 1 && <text x={q(148 + 460 * (w / 100))} y={202 + i * 30} className="tick ok">✓</text>}
+            {p > 0 && p < 1 && <circle cx={q(140 + 460 * (w / 100) * p)} cy={198 + i * 30} r={3.4} className="lv-pulse" />}
+          </g>
+        );
+      })}
+
+      <text x={40} y={400} className="svg-note">
+        Never one opaque blob — every element you watched land stays a separate, editable track inside the editor.
+      </text>
+    </svg>
+  );
+}
+
 /* ---------- 7 · OUTPUT + OBSERVABILITY — playhead scrubs, trace follows ---------- */
 
 const OUT_CLIPS = [92, 128, 84, 140, 96];
@@ -568,7 +624,7 @@ const SPANS = [
 ] as const;
 const EVAL_LOOP = ["trace", "agent eval", "regression", "prompt/config"];
 
-function OutputGraphic({ a }: { a: boolean }) {
+export function OutputGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10600;
   const t = el % L;

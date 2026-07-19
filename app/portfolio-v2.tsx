@@ -11,14 +11,16 @@ import {
 } from "react";
 import {
   AntigravityOverview,
-  AntigravityVisual,
   FilmoraOverview,
-  FilmoraVisual,
-  LogisticsVisual,
   MindScapeOverview,
-  MindScapeVisual,
-  ResearchMiniVisual,
 } from "./portfolio-visuals";
+import {
+  LiveAntigravityVisual,
+  LiveFilmoraVisual,
+  LiveMindScapeVisual,
+  LiveLogisticsVisual,
+  LiveResearchMini,
+} from "./live-visuals";
 
 type SequenceController = {
   index: number;
@@ -147,6 +149,16 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     proof: "553–668 ms recorded local process-turn smoke",
   },
   {
+    label: "Dual-lane runtime",
+    title: "The fast lane replies in 900 ms while the heavy analysis keeps running.",
+    explanation: "Turn handling races on two lanes: the foreground lane speaks now, the background lane finishes seconds later and drops a ready-made next-question package into the queue—consumed the instant the next turn starts.",
+    input: "Committed turn + prepared packet",
+    operation: "Fast reply now · deep analysis in parallel",
+    output: "Reply < 900 ms + next-question package",
+    stack: ["fast lane", "background lane", "Redis + fallback", "OpenRouter tiers"],
+    proof: "Depth never costs latency",
+  },
+  {
     label: "Evidence agents",
     title: "Four specialist agents inspect the same answer from different angles.",
     explanation: "Concept coverage, weakness detection, résumé-claim discrepancy, and observable reasoning behavior run concurrently and emit typed findings.",
@@ -207,6 +219,16 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     output: "Trend context + reusable artifacts",
     stack: ["research agent", "memory retrieval", "creative feature extraction"],
     proof: "700+ creative signals operationalized",
+  },
+  {
+    label: "Skill compilation",
+    title: "Raw signals compile into durable, versioned skill files.",
+    explanation: "Trend evidence becomes trend playbooks, design rules, and Filmora-native parameter presets—knowledge the agents execute against instead of re-learning the platform on every run.",
+    input: "700+ deduplicated signals",
+    operation: "Compile evidence into skill artifacts",
+    output: "trend-skill.md · design.md · params",
+    stack: ["skill files", "design rules", "Filmora params", "versioning"],
+    proof: "Reused across briefs",
   },
   {
     label: "Memory + recommendation",
@@ -371,6 +393,18 @@ const RESEARCH = [
     meta: "CUHK-SZ NLP GROUP · 2024",
     copy: "Automated TRL distillation pipelines, filtered synthetic data with an LLM-as-judge framework, and exposed factuality, BERTScore, and ROUGE behavior through interactive evaluation views.",
     proof: "31% fewer factual errors · 200+ response pairs",
+  },
+  {
+    title: "webGLR Perception Pipeline",
+    meta: "BROWSER PERCEPTION → SHADER",
+    copy: "A zero-build browser pipeline that fuses live segmentation and depth into on-canvas shaders, with a fast live lane and a slower high-quality lane running side by side.",
+    proof: "Segmentation + depth fused live · dual live/HQ lanes",
+  },
+  {
+    title: "COL-VEO Video Orchestration",
+    meta: "DETERMINISTIC AI VIDEO",
+    copy: "A storyboard state machine drives AI video generation with 15-axis prompt control and seed-locked regeneration—the same seed reproduces identical frames by construction.",
+    proof: "Storyboard state machine · seed-safe regeneration",
   },
 ] as const;
 
@@ -852,7 +886,7 @@ function FlagshipChapter({
 }) {
   const reducedMotion = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
-  const controller = useAutoplaySequence(steps.length, 6800, ref, reducedMotion, {
+  const controller = useAutoplaySequence(steps.length, 9400, ref, reducedMotion, {
     observeSelector: ".vx-walkthrough",
     pointerSelector: ".vx-story-panel",
   });
@@ -910,7 +944,7 @@ function AntigravityChapter() {
       accent="lime"
       steps={ANTIGRAVITY_STEPS}
       Overview={AntigravityOverview}
-      Visual={AntigravityVisual}
+      Visual={LiveAntigravityVisual}
       proof={[
         { label: "PRODUCT IMPACT", value: "250+ completed interviews", detail: "Automated technical screening after the ATS layer" },
         { label: "RUNTIME", value: "Two-track agent architecture", detail: "Fast foreground response · deep next-turn analysis" },
@@ -937,7 +971,7 @@ function FilmoraChapter() {
       accent="violet"
       steps={FILMORA_STEPS}
       Overview={FilmoraOverview}
-      Visual={FilmoraVisual}
+      Visual={LiveFilmoraVisual}
       proof={[
         { label: "TREND INTELLIGENCE", value: "700+ creative signals", detail: "Hooks, audio, themes, palettes, tempo, captions, and effects" },
         { label: "COST", value: "28% API-cost reduction", detail: "Trace-led workflow optimization and attribution" },
@@ -961,7 +995,7 @@ function MindScapeChapter() {
       accent="cyan"
       steps={MINDSCAPE_STEPS}
       Overview={MindScapeOverview}
-      Visual={MindScapeVisual}
+      Visual={LiveMindScapeVisual}
       proof={[
         { label: "STATE MODEL", value: "7-layer behavioral pipeline", detail: "Speech, events, affect, fusion, retrieval, reasoning, review" },
         { label: "GROUNDING", value: "Dense + lexical + rerank", detail: "MedCPT · HNSW · BM25 · RRF · BioLinkBERT" },
@@ -992,7 +1026,7 @@ function LogisticsChapter() {
             <StageControls controller={controller} total={LOGISTICS_STEPS.length} />
             <a href="https://github.com/Yashwant-Bhyri/logistics-company" target="_blank" rel="noreferrer">Inspect the repository ↗</a>
           </div>
-          <div className="vx-logistics-stage"><LogisticsVisual active={controller.index} /><div className="vx-io-rail"><div><span>INPUT</span><strong>{step.input}</strong></div><i /><div><span>OPERATION</span><strong>{step.operation}</strong></div><i /><div><span>OUTPUT</span><strong>{step.output}</strong></div></div></div>
+          <div className="vx-logistics-stage"><LiveLogisticsVisual active={controller.index} /><div className="vx-io-rail"><div><span>INPUT</span><strong>{step.input}</strong></div><i /><div><span>OPERATION</span><strong>{step.operation}</strong></div><i /><div><span>OUTPUT</span><strong>{step.output}</strong></div></div></div>
         </div>
         {controller.complete ? (
           <div className="vx-project-handoff" role="status">
@@ -1014,7 +1048,7 @@ function ResearchSection() {
     <section id="research" className="vx-research vx-section-shell">
       <div className="vx-section-heading"><span>05 / RESEARCH & ENGINEERING RECORD</span><h2>Research that ends in an operational measurement.</h2><p>Three compact specimens show the transformation, deployment constraint, and evaluation result—not just the model name.</p></div>
       <div className="vx-research-grid">
-        {RESEARCH.map((item, index) => <article key={item.title}><span>{String(index + 1).padStart(2, "0")} · {item.meta}</span><ResearchMiniVisual index={index} /><h3>{item.title}</h3><p>{item.copy}</p><strong>{item.proof}</strong></article>)}
+        {RESEARCH.map((item, index) => <article key={item.title}><span>{String(index + 1).padStart(2, "0")} · {item.meta}</span><LiveResearchMini index={index} /><h3>{item.title}</h3><p>{item.copy}</p><strong>{item.proof}</strong></article>)}
       </div>
       <div className="vx-profile-strip">
         <div><span>EDUCATION</span><strong>B.Eng. Computer Science &amp; Engineering</strong><p>The Chinese University of Hong Kong, Shenzhen · 2023–2027 · Full Admission Excellence Scholarship</p></div>

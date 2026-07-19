@@ -114,12 +114,12 @@ export function AntigravityOverview({ active, onSelect }: OverviewProps) {
         <MapLink label="audio" />
         <MapNode step={1} kicker="INGRESS" title="Streaming speech-to-text" detail="Partial → final transcript" glyph="transcript" active={active === 1} onSelect={onSelect} />
         <MapLink label="turn packet" />
-        <MapNode step={4} kicker="INTELLIGENCE" title="Interview orchestrator" detail="Parallel evidence → next route" glyph="agents" active={active === 4 || active === 3 || active === 2} onSelect={onSelect} />
+        <MapNode step={5} kicker="INTELLIGENCE" title="Interview orchestrator" detail="Parallel evidence → next route" glyph="agents" active={active >= 2 && active <= 5} onSelect={onSelect} />
         <MapLink label="question" />
-        <MapNode step={5} kicker="OUTPUT" title="Prepared response audio" detail="Cached TTS + playback" glyph="audio" active={active === 5} onSelect={onSelect} />
+        <MapNode step={6} kicker="OUTPUT" title="Prepared response audio" detail="Cached TTS + playback" glyph="audio" active={active === 6} onSelect={onSelect} />
       </div>
       <div className="vx-overview-return" aria-hidden="true"><i /><span>adaptive follow-up returns to the candidate</span></div>
-      <button className="vx-evidence-rail" type="button" onClick={() => onSelect(6)} aria-pressed={active === 6} data-active={active === 6}>
+      <button className="vx-evidence-rail" type="button" onClick={() => onSelect(7)} aria-pressed={active === 7} data-active={active === 7}>
         <span>EVIDENCE RAIL</span><strong>Every turn compounds into the recruiter report</strong>
         <div><i>concepts</i><i>weaknesses</i><i>claim checks</i><i>reasoning</i><i>coverage</i></div>
       </button>
@@ -233,15 +233,15 @@ export function FilmoraOverview({ active, onSelect }: OverviewProps) {
       <div className="vx-overview-track vx-overview-track-six">
         <MapNode step={0} kicker="INPUT" title="Creative brief" detail="Intent + format + constraints" glyph="brief" active={active === 0} onSelect={onSelect} />
         <MapLink label="research" />
-        <MapNode step={1} kicker="CONTEXT" title="Trend intelligence" detail="700+ creative signals" glyph="sources" active={active === 1 || active === 2} onSelect={onSelect} />
+        <MapNode step={1} kicker="CONTEXT" title="Trend intelligence" detail="700+ creative signals" glyph="sources" active={active >= 1 && active <= 3} onSelect={onSelect} />
         <MapLink label="compile" />
-        <MapNode step={3} kicker="CONTRACT" title="Prompt compiler" detail="Schema-bound instructions" glyph="compiler" active={active === 3} onSelect={onSelect} />
+        <MapNode step={4} kicker="CONTRACT" title="Prompt compiler" detail="Schema-bound instructions" glyph="compiler" active={active === 4} onSelect={onSelect} />
         <MapLink label="dispatch" />
-        <MapNode step={4} kicker="PRODUCTION" title="Agent graph" detail="Parallel editable assets" glyph="dag" active={active === 4} onSelect={onSelect} />
+        <MapNode step={5} kicker="PRODUCTION" title="Agent graph" detail="Parallel editable assets" glyph="dag" active={active === 5} onSelect={onSelect} />
         <MapLink label="assemble" />
-        <MapNode step={5} kicker="OUTPUT" title="Filmora timeline" detail="Editor-ready media tracks" glyph="timeline" active={active === 5} onSelect={onSelect} />
+        <MapNode step={6} kicker="OUTPUT" title="Filmora timeline" detail="Editor-ready media tracks" glyph="timeline" active={active === 6} onSelect={onSelect} />
       </div>
-      <button className="vx-telemetry-rail" type="button" onClick={() => onSelect(6)} aria-pressed={active === 6} data-active={active === 6}>
+      <button className="vx-telemetry-rail" type="button" onClick={() => onSelect(7)} aria-pressed={active === 7} data-active={active === 7}>
         <span>OBSERVABILITY RAIL</span><i /><i /><i /><i /><i /><strong>traces · evals · guardrails · latency · cost</strong>
       </button>
       <div className="vx-map-packet vx-map-packet-filmora" aria-hidden="true" />
