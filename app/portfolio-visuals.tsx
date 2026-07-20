@@ -27,6 +27,40 @@ type MapGlyph = "voice" | "transcript" | "agents" | "audio" | "brief" | "sources
 /** Dedicated animated SVG mini-glyphs for the MindScape architecture map —
  *  each one sketches the stage's actual mechanism, not a generic dot pattern. */
 const MIND_GLYPHS: Record<string, ReactElement> = {
+  agents: (
+    <svg viewBox="0 0 84 42" className="vx-mind-glyph">
+      {[[8, 8], [8, 21], [8, 34], [30, 12], [30, 30]].map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r={2.6} className="mg-dot" />
+      ))}
+      <path d="M 11 9 C 22 10 24 12 27 12 M 11 21 C 20 19 24 14 27 13 M 11 21 C 20 23 24 28 27 29 M 11 33 C 22 32 24 30 27 30 M 33 13 L 44 19 M 33 29 L 44 23" className="mg-edge" />
+      <circle cx={50} cy={21} r={7} className="mg-core-ring" />
+      <circle cx={50} cy={21} r={2.4} className="mg-core" />
+      <path d="M 57 21 h 12" className="mg-edge" />
+      <rect x={70} y={14} width={12} height={14} rx={3} className="mg-chip lit" />
+    </svg>
+  ),
+  audio: (
+    <svg viewBox="0 0 84 42" className="vx-mind-glyph">
+      <path d="M 8 16 h 8 l 9 -8 v 26 l -9 -8 h -8 Z" className="mg-shield" />
+      <path d="M 32 13 a 11 11 0 0 1 0 16 M 38 8 a 18 18 0 0 1 0 26" className="mg-arc" />
+      {[12, 20, 30, 24, 16, 26, 14].map((h, i) => (
+        <rect key={i} x={52 + i * 4.4} y={21 - h / 2} width={2.8} height={h} rx={1.4} className="mg-bar" style={{ animationDelay: `${i * 0.11}s` }} />
+      ))}
+    </svg>
+  ),
+  dag: (
+    <svg viewBox="0 0 84 42" className="vx-mind-glyph">
+      <circle cx={9} cy={21} r={3.2} className="mg-core" />
+      {[7, 21, 35].map((y, i) => (
+        <g key={y}>
+          <path d={`M 12 21 C 26 21 28 ${y} 40 ${y}`} className="mg-edge" style={{ animationDelay: `${i * 0.3}s` }} />
+          <rect x={42} y={y - 5} width={16} height={10} rx={3} className="mg-chip" />
+          <path d={`M 58 ${y} C 66 ${y} 68 21 74 21`} className="mg-edge" style={{ animationDelay: `${0.4 + i * 0.3}s` }} />
+        </g>
+      ))}
+      <rect x={74} y={15} width={8} height={12} rx={2.5} className="mg-chip lit" />
+    </svg>
+  ),
   capture: (
     <svg viewBox="0 0 84 42" className="vx-mind-glyph">
       {[6, 14, 26, 34, 20, 30, 12, 24, 16, 28, 10, 22].map((h, i) => (

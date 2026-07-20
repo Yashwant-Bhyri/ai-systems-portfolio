@@ -292,3 +292,16 @@
 .mg-lines.lit { stroke: currentColor; }
 .mg-shield { fill: color-mix(in srgb, currentColor 10%, transparent); stroke: currentColor; stroke-width: 1.4; }
 .mg-check { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+
+/* intelligence / output / production glyph pieces */
+.mg-core-ring { fill: none; stroke: currentColor; stroke-width: 1.6; }
+.mg-arc { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; opacity: 0.85; }
+.vx-cuhk-img { width: 1em; height: 0.82em; object-fit: contain; vertical-align: -0.08em; margin-right: 0.2em; }
+
+/* typography micro-pass: sharper hierarchy, no font changes */
+.vx-case-heading > span { letter-spacing: 0.14em; }
+.vx-case-heading h2 { letter-spacing: -0.045em; }
+.vx-story-kicker span, .vx-overview-head span { letter-spacing: 0.15em; }
+.vx-emph { letter-spacing: 0.005em; }
+.vx-hero-thesis { font-size: 16.5px; line-height: 1.62; }
+.vx-spark-bubble { letter-spacing: 0.005em; }

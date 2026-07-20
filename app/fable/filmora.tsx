@@ -616,18 +616,23 @@ type DagNode = {
   api: string; file: string; ms: string; start: number; dur: number; deps: string[]; async?: boolean;
 };
 const DAG: DagNode[] = [
-  { id: "planner", label: "PLANNER", x: 80, y: 150, api: "orchestrator", file: "prod.graph", ms: "0.3 s", start: 500, dur: 700, deps: [] },
-  { id: "video", label: "VIDEO", x: 250, y: 60, api: "Video API", file: "video.mp4", ms: "6.2 s", start: 1300, dur: 2600, deps: ["planner"], async: true },
-  { id: "music", label: "MUSIC", x: 250, y: 150, api: "AI Music", file: "music.wav", ms: "4.1 s", start: 1300, dur: 2100, deps: ["planner"], async: true },
-  { id: "dialogue", label: "DIALOGUE", x: 250, y: 240, api: "TTS API", file: "dialogue.wav", ms: "1.8 s", start: 1300, dur: 1500, deps: ["planner"], async: true },
-  { id: "captions", label: "CAPTIONS", x: 400, y: 240, api: "caption agent", file: "captions.srt", ms: "0.9 s", start: 2900, dur: 1000, deps: ["dialogue"] },
-  { id: "fx", label: "FX / TRANS", x: 400, y: 105, api: "FX agent", file: "effects.json", ms: "0.6 s", start: 4000, dur: 900, deps: ["video", "music"] },
-  { id: "assembly", label: "ASSEMBLY", x: 545, y: 150, api: "editor agent", file: "timeline.proj", ms: "1.2 s", start: 5000, dur: 1300, deps: ["fx", "captions"] },
+  { id: "brief", label: "BRIEF", x: 48, y: 150, api: "intent parser", file: "brief.json", ms: "0.2 s", start: 300, dur: 500, deps: [] },
+  { id: "planner", label: "PLANNER", x: 134, y: 150, api: "orchestrator", file: "prod.graph", ms: "0.4 s", start: 900, dur: 600, deps: ["brief"] },
+  { id: "script", label: "SCRIPT", x: 222, y: 60, api: "script agent", file: "script.md", ms: "1.1 s", start: 1600, dur: 900, deps: ["planner"] },
+  { id: "music", label: "MUSIC", x: 222, y: 150, api: "AI Music", file: "music.wav", ms: "4.1 s", start: 1600, dur: 2600, deps: ["planner"], async: true },
+  { id: "dialogue", label: "DIALOGUE", x: 222, y: 240, api: "TTS API", file: "dialogue.wav", ms: "1.8 s", start: 1600, dur: 1300, deps: ["planner"], async: true },
+  { id: "storyboard", label: "STORYBOARD", x: 310, y: 60, api: "storyboard agent", file: "frames.json", ms: "0.9 s", start: 2600, dur: 900, deps: ["script"] },
+  { id: "captions", label: "CAPTIONS", x: 310, y: 240, api: "caption agent", file: "captions.srt", ms: "0.9 s", start: 3000, dur: 900, deps: ["dialogue"] },
+  { id: "video", label: "VIDEO", x: 398, y: 60, api: "Video API", file: "video.mp4", ms: "6.2 s", start: 3600, dur: 2300, deps: ["storyboard"], async: true },
+  { id: "fx", label: "FX / TRANS", x: 398, y: 150, api: "FX agent", file: "effects.json", ms: "0.6 s", start: 4300, dur: 900, deps: ["music", "video"] },
+  { id: "qa", label: "QA · EVAL", x: 486, y: 105, api: "eval agent", file: "qa.report", ms: "0.8 s", start: 6000, dur: 900, deps: ["video", "fx"] },
+  { id: "human", label: "HUMAN GATE", x: 486, y: 195, api: "approval gate", file: "approved ✓", ms: "—", start: 7000, dur: 800, deps: ["qa", "captions"] },
+  { id: "assembly", label: "ASSEMBLY", x: 574, y: 150, api: "editor agent", file: "timeline.proj", ms: "1.2 s", start: 7900, dur: 1200, deps: ["human"] },
 ];
 
 export function EditorGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 10200;
+  const L = 10600;
   const t = el % L;
   const [focus, setFocus] = useState<string | null>(null);
   const node = (id: string) => DAG.find((n) => n.id === id)!;
@@ -646,8 +651,8 @@ export function EditorGraphic({ a }: { a: boolean }) {
           const p = stateOf(n) === "run" ? ((t - n.start) % 600) / 600 : 0;
           return (
             <g key={`${d}-${n.id}`}>
-              <path d={`M ${a2.x + 44} ${a2.y} C ${(a2.x + n.x) / 2 + 20} ${a2.y} ${(a2.x + n.x) / 2 - 20} ${n.y} ${n.x - 44} ${n.y}`} className={`lv-edge ${running ? "win" : ""}`} style={{ opacity: running ? 0.8 : 0.25 }} />
-              {p > 0 && <circle cx={q(bez(p, [a2.x + 44, a2.y], [(a2.x + n.x) / 2, (a2.y + n.y) / 2], [n.x - 44, n.y])[0])} cy={q(bez(p, [a2.x + 44, a2.y], [(a2.x + n.x) / 2, (a2.y + n.y) / 2], [n.x - 44, n.y])[1])} r={3.4} className="lv-pulse" />}
+              <path d={`M ${a2.x + 42} ${a2.y} C ${(a2.x + n.x) / 2 + 16} ${a2.y} ${(a2.x + n.x) / 2 - 16} ${n.y} ${n.x - 42} ${n.y}`} className={`lv-edge ${running ? "win" : ""}`} style={{ opacity: running ? 0.8 : 0.25 }} />
+              {p > 0 && <circle cx={q(bez(p, [a2.x + 42, a2.y], [(a2.x + n.x) / 2, (a2.y + n.y) / 2], [n.x - 42, n.y])[0])} cy={q(bez(p, [a2.x + 42, a2.y], [(a2.x + n.x) / 2, (a2.y + n.y) / 2], [n.x - 42, n.y])[1])} r={3.4} className="lv-pulse" />}
             </g>
           );
         }),
@@ -660,9 +665,9 @@ export function EditorGraphic({ a }: { a: boolean }) {
         return (
           <g key={n.id} onClick={() => setFocus(n.id)} style={{ cursor: "pointer" }}>
             <g className={`lv-node ${st === "run" || isFocus ? "is-live" : ""}`}>
-              <rect x={n.x - 44} y={n.y - 22} width={88} height={44} rx={10} style={{ opacity: st === "wait" ? 0.5 : 1 }} />
+              <rect x={n.x - 42} y={n.y - 20} width={84} height={40} rx={9} style={{ opacity: st === "wait" ? 0.5 : 1 }} />
             </g>
-            <text x={n.x} y={n.y - 3} textAnchor="middle" className="svg-label small">{n.label}</text>
+            <text x={n.x} y={n.y - 2} textAnchor="middle" className="svg-sub" style={{ fill: "var(--text-hi)" }}>{n.label}</text>
             <text x={n.x} y={n.y + 13} textAnchor="middle" className={st === "done" ? "tick ok" : "svg-sub tiny"}>
               {st === "done" ? "✓ " + n.ms : st === "run" ? (n.async ? "async…" : "running…") : "queued"}
             </text>

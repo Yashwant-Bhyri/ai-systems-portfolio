@@ -398,7 +398,7 @@ const RESEARCH = [
   },
   {
     title: "Logistics AI Ops",
-    meta: "ROLE-AWARE OPERATIONS COPILOT",
+    meta: "FLASK + MYSQL · BOUNDED AI OPERATIONS",
     copy: "Role-gated logistics workflows over Flask + MySQL with weather- and geo-aware route risk—and a bounded AI copilot that answers only through approved intents and parameterized queries.",
     proof: "Bounded query contracts · visible refusals · human-owned actions",
   },
@@ -620,14 +620,14 @@ function useHeroChoreography(reducedMotion: boolean) {
 const PAINT_PHRASES = ["CUHK-Shenzhen", "1+ years of experience"];
 
 function CuhkCrest() {
-  // Prefers the official emblem if provided at /public/brands/cuhk.svg;
-  // otherwise renders a faithful phoenix-on-shield mark in CUHK purple & gold.
+  // The actual CUHK coat of arms (Wikimedia Commons, fetched 2026-07-20)
+  // at /public/brands/cuhk.png; drawn fallback only if the file is missing.
   const [official, setOfficial] = useState(true);
   if (official) {
     return (
       <img
         className="vx-cuhk-crest vx-cuhk-img"
-        src="/brands/cuhk.svg"
+        src="/brands/cuhk.png"
         alt="CUHK"
         onError={() => setOfficial(false)}
       />
@@ -715,9 +715,10 @@ function GalaxyField({ reducedMotion }: { reducedMotion: boolean }) {
     return () => window.clearTimeout(timer);
   }, [reducedMotion]);
 
-  // two clusters in focus at any moment: a primary (bright) and a secondary
+  // three clusters alive at once: primary bright, secondary lit, tertiary ambient
   const primary = cycle % GALAXY_CLUSTERS.length;
   const secondary = (cycle + 2) % GALAXY_CLUSTERS.length;
+  const tertiary = (cycle + 4) % GALAXY_CLUSTERS.length;
   // the space itself drifts toward the primary cluster
   const pc = GALAXY_CLUSTERS[primary];
   const driftX = (50 - pc.cx) * 0.22;
@@ -732,8 +733,9 @@ function GalaxyField({ reducedMotion }: { reducedMotion: boolean }) {
           cluster.terms.map(([term, dx, dy], ti) => {
             const inPrimary = ci === primary;
             const inSecondary = ci === secondary;
-            const bright = inPrimary && ti !== (cycle % 2 === 0 ? 3 : 1);
-            const visible = inPrimary || inSecondary;
+            const inTertiary = ci === tertiary;
+            const bright = (inPrimary && ti !== (cycle % 2 === 0 ? 3 : 1)) || (inSecondary && ti === cycle % 4);
+            const visible = inPrimary || inSecondary || inTertiary;
             return (
               <span
                 key={term}
@@ -805,13 +807,13 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
             <span className="vx-hero-measure" aria-hidden="true">{hero.text}</span>
             <span className="vx-hero-typed" aria-hidden="true"><TypedWords text={hero.text} cursor={hero.cursor} /><i /></span>
           </h1>
-          <p className="vx-hero-thesis"><Emph text="I engineer the part between ⟪a model demo⟫ and ⟪a dependable AI product⟫: ⟪orchestration⟫, ⟪retrieval⟫, ⟪multimodal perception⟫, ⟪evaluation⟫, ⟪observability⟫ — and the interface that makes the system understandable." /></p>
+          <p className="vx-hero-thesis"><Emph text="I am the layer that turns a simple prototype into ⟪a reliable, production-grade AI product⟫ — ⟪advanced orchestration⟫, ⟪deep retrieval⟫, ⟪multimodal perception⟫, ⟪evaluation⟫, ⟪observability⟫, and ⟪production-grade deployment⟫." /></p>
           <div className="vx-hero-actions">
             <a className="vx-primary-action" href="#projects">Explore my projects <i>↓</i></a>
             <a href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">View my résumé ↗</a>
             <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">Open GitHub ↗</a>
           </div>
-          <div className="vx-hero-meta"><span>CUHK-Shenzhen · B.Eng. CSE</span><span>Fourth-year student · 2027</span><span>Wondershare Filmora · AIGC R&amp;D</span></div>
+          <div className="vx-hero-meta"><span>CUHK-Shenzhen · B.Eng. CSE</span><span>Year-4 · Class of 2027</span><span>Wondershare Filmora · AIGC R&amp;D</span></div>
         </div>
         <HeroProjectDeck reducedMotion={reducedMotion} ready={hero.ready} />
       </div>

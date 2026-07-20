@@ -565,3 +565,22 @@ G14. Guide agent "Spark": lumen-compared original — fixed dock bottom-left,
     chapter + current step (reads V2 DOM, zero rewiring), dismissible, hops on
     chapter change. No UI/font disturbance.
 G15. Observability: user asked kimi-site to copy OUR loop — ours already current.
+
+### VERIFICATION — Session 5 (on-screen, trial fork) — commit above
+
+Confirmed in browser (fresh load + rail click-throughs, zero console errors):
+G1 ✓ 20 terms in 5 clusters, 3 bright in primary, drift transform applied
+G3 ✓ 4 greeting words styled + line break   G4 ✓ pause button absent
+G5 ✓ 18 emphasis spans across hero/chapters/step titles
+G6 ✓ 6 real brand <image> marks render in trend tiles
+G7 ✓ RETRIEVED MEMORY pane in compiler   G8 ✓ DAG + NODE INSPECTOR live
+G9 ✓ HOT PATH / REASONING PATH intro chips   G10 ✓ RULEBOOK + VERDICTS lanes
+G11 ✓ 7 dedicated SVG map glyphs   G12 ✓ #logistics section gone, 6 research
+articles (Logistics AI Ops mini incl.)   G13 ✓ token-grid partial label + 1
+sweeping capture window (pill count 0 in frozen off-screen sim = env quirk)
+G14 ✓ Spark docked, typing its intro   G2 ✓ crest official-file pickup wired
+(wikimedia blocked in sandbox — drop the official SVG at public/brands/cuhk.svg
+and it is used automatically; drawn phoenix-shield fallback otherwise)
+
+Trial server: launch config "trial" (stop "fable" first — same port).
+Source of truth: portfolio-fable @ d7bbf13, tag v4-polish-d7bbf13, untouched.

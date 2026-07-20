@@ -234,7 +234,7 @@ export function LiveResearchMini({ index }: { index: number }) {
           <BenchMini idx={2} t={el} />
         </svg>
       )}
-      {index === 5 && <LogisticsMini a={on} />}
+      {index === 5 && <LogisticsGraphic a={on} />}
     </div>
   );
 }
