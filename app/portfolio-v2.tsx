@@ -14,6 +14,7 @@ import {
   FilmoraOverview,
   MindScapeOverview,
 } from "./portfolio-visuals";
+import { GuideSpark } from "./guide-spark";
 import {
   LiveAntigravityVisual,
   LiveFilmoraVisual,
@@ -96,26 +97,15 @@ const PROJECTS = [
   },
 ] as const;
 
-const GALAXY_TERMS = [
-  ["AI Agent Engineer", 6, 14, -8, 9],
-  ["AI Application Engineer", 74, 11, 12, -6],
-  ["AI Systems Engineer", 5, 35, 9, 8],
-  ["Agent Orchestration", 84, 29, -11, 7],
-  ["Multimodal AI", 3, 62, 12, -9],
-  ["Retrieval-Augmented Generation", 72, 64, -7, 10],
-  ["Tool Calling", 10, 84, 9, -8],
-  ["Evaluation", 77, 86, -10, -7],
-  ["Observability", 32, 8, 11, 8],
-  ["Vector Search", 48, 91, -9, -10],
-  ["Speech AI", 91, 48, -12, 7],
-  ["Structured Outputs", 18, 48, 10, -6],
-  ["Human-in-the-loop", 59, 14, -8, 9],
-  ["Guardrails", 92, 75, 9, -9],
-  ["Async Runtimes", 27, 91, -9, -8],
-  ["Embeddings", 61, 82, 12, 7],
-  ["Agent Evaluation", 38, 24, -10, 9],
-  ["Model Serving", 88, 16, 8, 10],
-] as const;
+/** Five thematic keyword clusters. Each term sits near its cluster centre
+ *  (tight spread) and the space slowly drifts from cluster to cluster. */
+const GALAXY_CLUSTERS: { cx: number; cy: number; terms: [string, number, number][] }[] = [
+  { cx: 16, cy: 20, terms: [["AI Application Engineer", -6, -8], ["Structured Outputs", 7, 2], ["Tool Calling", -4, 10], ["Human-in-the-loop", 6, -2]] },
+  { cx: 80, cy: 16, terms: [["AI Agent Engineer", -7, -6], ["Agent Orchestration", 6, 3], ["Async Runtimes", -3, 11], ["Model Serving", 8, -1]] },
+  { cx: 14, cy: 74, terms: [["Retrieval-Augmented Generation", -5, -7], ["Vector Search", 8, 0], ["Embeddings", -3, 9], ["Semantic Memory", 7, -3]] },
+  { cx: 82, cy: 72, terms: [["Multimodal AI", -6, -7], ["Speech AI", 7, 1], ["Streaming STT", -4, 9], ["Realtime Voice", 8, -2]] },
+  { cx: 48, cy: 44, terms: [["Evaluation", -7, -6], ["Observability", 7, 2], ["Agent Evaluation", -4, 10], ["Guardrails", 8, -3]] },
+];
 
 const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
   {
@@ -150,7 +140,7 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
   },
   {
     label: "Dual-lane runtime",
-    title: "The fast lane replies in 900 ms while the heavy analysis keeps running.",
+    title: "The ⟪fast lane replies in 900 ms⟫ while the ⟪heavy analysis keeps running⟫.",
     explanation: "Turn handling races on two lanes: the foreground lane speaks now, the background lane finishes seconds later and drops a ready-made next-question package into the queue—consumed the instant the next turn starts.",
     input: "Committed turn + prepared packet",
     operation: "Fast reply now · deep analysis in parallel",
@@ -406,6 +396,12 @@ const RESEARCH = [
     copy: "A storyboard state machine drives AI video generation with 15-axis prompt control and seed-locked regeneration—the same seed reproduces identical frames by construction.",
     proof: "Storyboard state machine · seed-safe regeneration",
   },
+  {
+    title: "Logistics AI Ops",
+    meta: "ROLE-AWARE OPERATIONS COPILOT",
+    copy: "Role-gated logistics workflows over Flask + MySQL with weather- and geo-aware route risk—and a bounded AI copilot that answers only through approved intents and parameterized queries.",
+    proof: "Bounded query contracts · visible refusals · human-owned actions",
+  },
 ] as const;
 
 function useReducedMotion() {
@@ -624,11 +620,36 @@ function useHeroChoreography(reducedMotion: boolean) {
 const PAINT_PHRASES = ["CUHK-Shenzhen", "1+ years of experience"];
 
 function CuhkCrest() {
+  // Prefers the official emblem if provided at /public/brands/cuhk.svg;
+  // otherwise renders a faithful phoenix-on-shield mark in CUHK purple & gold.
+  const [official, setOfficial] = useState(true);
+  if (official) {
+    return (
+      <img
+        className="vx-cuhk-crest vx-cuhk-img"
+        src="/brands/cuhk.svg"
+        alt="CUHK"
+        onError={() => setOfficial(false)}
+      />
+    );
+  }
   return (
     <svg className="vx-cuhk-crest" viewBox="0 0 20 24" aria-label="CUHK" role="img">
-      <path d="M2 2 h16 v13 c0 4 -4 6 -8 7 c-4 -1 -8 -3 -8 -7 Z" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M6 8 h8 M6 12 h8 M10 8 v8" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M2 1.5 h16 v13.5 c0 4.4 -4.2 6.6 -8 7.8 c-3.8 -1.2 -8 -3.4 -8 -7.8 Z" fill="#4B2E83" stroke="#D3A94C" strokeWidth="1.3" />
+      <path d="M10 5 c-2.4 1.5 -3.4 3.4 -3.2 5.4 c1 -1 2 -1.5 3.2 -1.6 c1.2 0.1 2.2 0.6 3.2 1.6 c0.2 -2 -0.8 -3.9 -3.2 -5.4 Z" fill="#D3A94C" />
+      <path d="M6.6 12.6 c1 1.4 2.2 2.1 3.4 2.1 c1.2 0 2.4 -0.7 3.4 -2.1" fill="none" stroke="#D3A94C" strokeWidth="1.1" strokeLinecap="round" />
+      <circle cx="10" cy="17.2" r="1" fill="#D3A94C" />
     </svg>
+  );
+}
+
+/** Renders copy with ⟪accent⟫ markers as striking emphasised spans. */
+function Emph({ text }: { text: string }) {
+  const parts = text.split(/⟪|⟫/);
+  return (
+    <>
+      {parts.map((part, i) => (i % 2 === 1 ? <em key={i} className="vx-emph">{part}</em> : <span key={i}>{part}</span>))}
+    </>
   );
 }
 
@@ -653,9 +674,13 @@ function TypedWords({ text, cursor }: { text: string; cursor: number }) {
       {segments.map(({ segment, start, end, painted, paintIdx }, index) => {
         const visible = cursor <= start ? "" : segment.slice(0, Math.min(segment.length, cursor - start));
         const active = !/^\s+$/.test(segment) && cursor > start && cursor < end;
+        const greetLen = text.indexOf(".") + 1;
+        const isGreet = end <= greetLen && !/^\s+$/.test(segment);
         const cls = [
           active ? "is-typing" : cursor >= end && !/^\s+$/.test(segment) ? "is-complete" : "",
           painted ? "is-paint" : "",
+          isGreet ? "vx-greet" : "",
+          isGreet && end === greetLen ? "vx-greet-end" : "",
         ].join(" ").trim();
         return (
           <span key={`${segment}-${index}`} className={cls} style={painted ? ({ "--paint-delay": `${0.25 + paintIdx * 0.16}s` } as CSSProperties) : undefined}>
@@ -682,33 +707,44 @@ function GalaxyField({ reducedMotion }: { reducedMotion: boolean }) {
     let timer = 0;
     const schedule = () => {
       timer = window.setTimeout(() => {
-        if (!document.hidden) setCycle((value) => (value + 1) % GALAXY_TERMS.length);
+        if (!document.hidden) setCycle((value) => value + 1);
         schedule();
-      }, 2600);
+      }, 3400);
     };
     schedule();
     return () => window.clearTimeout(timer);
   }, [reducedMotion]);
 
+  // two clusters in focus at any moment: a primary (bright) and a secondary
+  const primary = cycle % GALAXY_CLUSTERS.length;
+  const secondary = (cycle + 2) % GALAXY_CLUSTERS.length;
+  // the space itself drifts toward the primary cluster
+  const pc = GALAXY_CLUSTERS[primary];
+  const driftX = (50 - pc.cx) * 0.22;
+  const driftY = (50 - pc.cy) * 0.22;
+
   return (
     <div className="vx-galaxy" aria-hidden="true">
       <div className="vx-nebula vx-nebula-a" /><div className="vx-nebula vx-nebula-b" />
-      <div className="vx-starfield">{stars.map((star, index) => <i key={index} style={{ "--x": `${star.x}%`, "--y": `${star.y}%`, "--size": `${star.size}px`, "--delay": `${star.delay}s` } as CSSProperties} />)}</div>
-      <div className="vx-termfield">
-        {GALAXY_TERMS.map(([term, x, y, dx, dy], index) => {
-          const slot = (index - cycle + GALAXY_TERMS.length) % GALAXY_TERMS.length;
-          const visible = slot < 10;
-          const bright = visible && (slot === 1 || slot === 6);
-          return (
-            <span
-              key={term}
-              data-visible={visible}
-              data-bright={bright}
-              data-mobile={slot < 5}
-              style={{ "--x": `${x}%`, "--y": `${y}%`, "--dx": `${dx}px`, "--dy": `${dy}px`, "--term-delay": `${index * -1.7}s` } as CSSProperties}
-            ><i />{term}</span>
-          );
-        })}
+      <div className="vx-starfield" style={{ transform: `translate(${driftX * 0.5}%, ${driftY * 0.5}%)`, transition: "transform 3.2s cubic-bezier(.4,0,.2,1)" }}>{stars.map((star, index) => <i key={index} style={{ "--x": `${star.x}%`, "--y": `${star.y}%`, "--size": `${star.size}px`, "--delay": `${star.delay}s` } as CSSProperties} />)}</div>
+      <div className="vx-termfield" style={{ transform: `translate(${driftX}%, ${driftY}%)`, transition: "transform 3.2s cubic-bezier(.4,0,.2,1)" }}>
+        {GALAXY_CLUSTERS.map((cluster, ci) =>
+          cluster.terms.map(([term, dx, dy], ti) => {
+            const inPrimary = ci === primary;
+            const inSecondary = ci === secondary;
+            const bright = inPrimary && ti !== (cycle % 2 === 0 ? 3 : 1);
+            const visible = inPrimary || inSecondary;
+            return (
+              <span
+                key={term}
+                data-visible={visible}
+                data-bright={bright}
+                data-mobile={inPrimary}
+                style={{ "--x": `${cluster.cx + dx}%`, "--y": `${cluster.cy + dy}%`, "--dx": `${(dx % 3) * 4}px`, "--dy": `${(dy % 3) * 4}px`, "--term-delay": `${(ci * 4 + ti) * -1.7}s` } as CSSProperties}
+              ><i />{term}</span>
+            );
+          }),
+        )}
       </div>
       <div className="vx-galaxy-mask" />
     </div>
@@ -733,7 +769,7 @@ function HeroProjectDeck({ reducedMotion, ready }: { reducedMotion: boolean; rea
           return (
             <a
               key={project.id}
-              href={`#${project.id}`}
+              href={project.id === "logistics" ? "#research" : `#${project.id}`}
               className={`vx-deck-card vx-accent-${project.accent}`}
               data-position={offset}
               tabIndex={ready && active ? 0 : -1}
@@ -750,7 +786,6 @@ function HeroProjectDeck({ reducedMotion, ready }: { reducedMotion: boolean; rea
       </div>
       <div className="vx-deck-controls">
         <button type="button" onClick={deck.previous} aria-label="Previous project" disabled={!ready}>←</button>
-        <button className="vx-deck-pause" type="button" onClick={deck.toggle} aria-label={deck.autoplayEnabled ? "Pause project carousel" : "Play project carousel"} disabled={!ready || deck.motionDisabled}>{deck.autoplayEnabled ? "Ⅱ" : "▶"}</button>
         <div>{PROJECTS.map((project, index) => <button key={project.id} type="button" className={deck.index === index ? "is-active" : ""} onClick={() => deck.choose(index)} aria-label={`Show ${project.category}`} disabled={!ready} />)}</div>
         <button type="button" onClick={deck.next} aria-label="Next project" disabled={!ready}>→</button>
       </div>
@@ -770,7 +805,7 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
             <span className="vx-hero-measure" aria-hidden="true">{hero.text}</span>
             <span className="vx-hero-typed" aria-hidden="true"><TypedWords text={hero.text} cursor={hero.cursor} /><i /></span>
           </h1>
-          <p>I engineer the part between a model demo and a dependable AI product: orchestration, retrieval, multimodal perception, evaluation, observability, and the interface that makes the system understandable.</p>
+          <p className="vx-hero-thesis"><Emph text="I engineer the part between ⟪a model demo⟫ and ⟪a dependable AI product⟫: ⟪orchestration⟫, ⟪retrieval⟫, ⟪multimodal perception⟫, ⟪evaluation⟫, ⟪observability⟫ — and the interface that makes the system understandable." /></p>
           <div className="vx-hero-actions">
             <a className="vx-primary-action" href="#projects">Explore my projects <i>↓</i></a>
             <a href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">View my résumé ↗</a>
@@ -859,7 +894,7 @@ function ProjectIndex() {
       <div className="vx-project-grid">
         {PROJECTS.map((project, cardIdx) => (
           <a
-            href={`#${project.id}`}
+            href={project.id === "logistics" ? "#research" : `#${project.id}`}
             key={project.id}
             className={`vx-project-card vx-accent-${project.accent} ${spot === cardIdx ? "is-spotlit" : ""}`}
           >
@@ -912,7 +947,7 @@ function SystemWalkthrough({
         </div>
         <div className="vx-story-copy">
           <span>{step.label}</span>
-          <h3>{step.title}</h3>
+          <h3><Emph text={step.title} /></h3>
           <p>{step.explanation}</p>
           <div className="vx-tech-stack">{step.stack.map((item) => <i key={item}>{item}</i>)}</div>
           {step.proof ? <strong className="vx-proof-chip"><i />{step.proof}</strong> : null}
@@ -962,7 +997,7 @@ function CaseHeading({
         {/* reserves final height so the layout never jumps while typing */}
         <b className="vx-typed-ghost" aria-hidden="true">{title}</b>
       </h2>
-      <p>{copy}</p>
+      <p><Emph text={copy} /></p>
     </div>
   );
 }
@@ -1050,7 +1085,7 @@ function AntigravityChapter() {
       brand="ANTIGRAVITY"
       category="AI-NATIVE TECHNICAL INTERVIEWING PLATFORM"
       title="Real-time AI interview software that conducts automated technical interviews at scale."
-      copy="I built the real-time voice layer and the robust multi-agent orchestration decision engine behind it: streaming speech, evidence-seeking route logic, and the recruiter intelligence layer that turns a live technical conversation into a defensible hiring artifact."
+      copy="I built the ⟪real-time voice layer⟫ and the robust ⟪multi-agent orchestration decision engine⟫ behind it: streaming speech, evidence-seeking route logic, and the recruiter intelligence layer that turns a live technical conversation into a ⟪defensible hiring artifact⟫."
       accent="lime"
       steps={ANTIGRAVITY_STEPS}
       Overview={AntigravityOverview}
@@ -1077,7 +1112,7 @@ function FilmoraChapter() {
       brand="WONDERSHARE FILMORA · AIGC R&D"
       category="MULTIMODAL AI VIDEO-PRODUCTION RUNTIME"
       title="An end-to-end multimodal production workflow, built into the Filmora enterprise editor."
-      copy="As an AI application engineering intern at Wondershare, I built agents into the Filmora enterprise software: multi-agent planning over a multimodal production graph — video, audio, dialogue, captions, effects — with live trend intelligence, memory, schema-bound prompting, and workflow observability."
+      copy="As an AI application engineering intern at Wondershare, I built ⟪agents into the Filmora enterprise software⟫: ⟪multi-agent planning⟫ over a ⟪multimodal production graph⟫ — video, audio, dialogue, captions, effects — with live trend intelligence, ⟪memory⟫, schema-bound prompting, and ⟪workflow observability⟫."
       accent="violet"
       steps={FILMORA_STEPS}
       Overview={FilmoraOverview}
@@ -1101,7 +1136,7 @@ function MindScapeChapter() {
       brand="MINDSCAPE"
       category="MULTIMODAL CLINICAL DECISION-SUPPORT ARCHITECTURE · PROTOTYPE"
       title="A clinical diagnosis-prediction tool that keeps every step of its reasoning inspectable."
-      copy="MindScape predicts and supports clinical assessment from a patient session: seven layers — perception, state fusion, retrieval, reasoning, validation, clinician review — each separately inspectable, connected as one decision-support workflow. The clinician always owns the decision."
+      copy="MindScape ⟪predicts and supports clinical assessment⟫ from a patient session: ⟪seven inspectable layers⟫ — perception, state fusion, retrieval, reasoning, validation, clinician review — connected as one decision-support workflow. ⟪The clinician always owns the decision.⟫"
       accent="cyan"
       steps={MINDSCAPE_STEPS}
       Overview={MindScapeOverview}
@@ -1273,8 +1308,8 @@ export function PortfolioV2() {
       <AntigravityChapter />
       <FilmoraChapter />
       <MindScapeChapter />
-      <LogisticsChapter />
       <ResearchSection />
+      <GuideSpark />
       <footer className="vx-footer"><div><strong>Yashwant Bhyri</strong><span>AI Agent · AI Application · Applied AI Engineering</span></div><p>Built to make the engineering visible.</p><a href="#top">Return to orbit ↑</a></footer>
       <OrbitGuide />
     </main>

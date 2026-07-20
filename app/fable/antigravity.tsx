@@ -151,11 +151,29 @@ export function SttGraphic({ a }: { a: boolean }) {
         <text x={466} y={78} className="svg-mono">{lat} ms</text>
       </g>
 
-      {/* partial hypothesis lane — text mutates live */}
+      {/* partial hypothesis lane — V2's token grid: provisional words as pills */}
       <g className="lv-box hot">
-        <rect x={300} y={104} width={310} height={58} rx={10} />
-        <text x={314} y={126} className="svg-sub">PARTIAL HYPOTHESIS · revised as you speak</text>
-        <text x={314} y={148} className="svg-mono">{partial}{partial ? caret(t) : ""}</text>
+        <rect x={300} y={96} width={310} height={76} rx={10} />
+        <text x={314} y={116} className="svg-sub">PARTIAL HYPOTHESIS · provisional words revise live</text>
+        {(() => {
+          const words = partial.replace(/[“”]/g, "").split(" ").filter(Boolean);
+          let px = 314;
+          let py = 134;
+          return words.map((w, i) => {
+            const pw = w.length * 6.4 + 12;
+            if (px + pw > 596) { px = 314; py += 24; }
+            const gx = px;
+            px += pw + 6;
+            const provisional = i >= words.length - 2;
+            return (
+              <g key={`${w}-${i}`}>
+                <rect x={q(gx)} y={py - 13} width={q(pw)} height={19} rx={5} className="lv-tokenpill" style={{ opacity: provisional ? 0.55 : 0.95 }} />
+                <text x={q(gx + pw / 2)} y={py} textAnchor="middle" className="svg-mono tinytext">{w}</text>
+              </g>
+            );
+          });
+        })()}
+        {partial && <text x={598} y={166} textAnchor="end" className="svg-sub tiny">revising{caret(t)}</text>}
       </g>
 
       {/* committed transcript log */}
@@ -210,8 +228,20 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
   const ans = typed("“we hash sessions across shards; only that node's turns die…”", t, 3400, 5200);
   const win = eph(t, 6600, 7200);
 
+  const introP = eph(t, 200, 900);
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
+      {/* first: the two paths every turn runs on */}
+      <g style={{ opacity: introP }}>
+        <g className="lv-chip win">
+          <rect x={186} y={14} width={200} height={30} rx={9} />
+          <text x={286} y={33} textAnchor="middle" className="svg-mono tinytext">HOT PATH · answer now</text>
+        </g>
+        <g className="lv-chip">
+          <rect x={398} y={14} width={216} height={30} rx={9} />
+          <text x={506} y={33} textAnchor="middle" className="svg-mono tinytext">REASONING PATH · think deep</text>
+        </g>
+      </g>
       {/* résumé source */}
       <g className="lv-node is-live">
         <rect x={30} y={48} width={120} height={128} rx={12} />

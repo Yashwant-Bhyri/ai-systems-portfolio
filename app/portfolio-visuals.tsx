@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties, type ReactElement } from "react";
 
 /** Cycles a glow index across the overview nodes, synced to the packet cadence —
  *  each tile lights up (hover treatment) as the signal reaches it. */
@@ -23,6 +23,86 @@ type VisualProps = {
 };
 
 type MapGlyph = "voice" | "transcript" | "agents" | "audio" | "brief" | "sources" | "compiler" | "dag" | "timeline" | "capture" | "perceive" | "fuse" | "retrieve" | "reason" | "validate" | "review";
+
+/** Dedicated animated SVG mini-glyphs for the MindScape architecture map —
+ *  each one sketches the stage's actual mechanism, not a generic dot pattern. */
+const MIND_GLYPHS: Record<string, ReactElement> = {
+  capture: (
+    <svg viewBox="0 0 84 42" className="vx-mind-glyph">
+      {[6, 14, 26, 34, 20, 30, 12, 24, 16, 28, 10, 22].map((h, i) => (
+        <rect key={i} x={4 + i * 6.6} y={21 - h / 2} width={4} height={h} rx={2} className="mg-bar" style={{ animationDelay: `${i * 0.09}s` }} />
+      ))}
+      <rect x={52} y={4} width={26} height={34} rx={3} className="mg-window" />
+    </svg>
+  ),
+  perceive: (
+    <svg viewBox="0 0 84 42" className="vx-mind-glyph">
+      <circle cx={10} cy={21} r={4} className="mg-core" />
+      {[6, 21, 36].map((y, i) => (
+        <g key={y}>
+          <path d={`M 14 21 C 34 21 40 ${y} 56 ${y}`} className="mg-edge" style={{ animationDelay: `${i * 0.35}s` }} />
+          <rect x={58} y={y - 4} width={22} height={8} rx={3} className="mg-chip" />
+        </g>
+      ))}
+    </svg>
+  ),
+  fuse: (
+    <svg viewBox="0 0 84 42" className="vx-mind-glyph">
+      {[6, 16, 26, 36].map((y, i) => (
+        <path key={y} d={`M 4 ${y} C 26 ${y} 32 21 50 21`} className="mg-edge" style={{ animationDelay: `${i * 0.28}s` }} />
+      ))}
+      <circle cx={54} cy={21} r={6} className="mg-core" />
+      <rect x={66} y={15} width={14} height={12} rx={3} className="mg-chip lit" />
+    </svg>
+  ),
+  retrieve: (
+    <svg viewBox="0 0 84 42" className="vx-mind-glyph">
+      {[8, 21, 34].map((y, li) => (
+        <g key={y}>
+          <line x1={6} y1={y} x2={62} y2={y} className="mg-layer" />
+          {Array.from({ length: 3 + li * 2 }).map((_, ni) => (
+            <circle key={ni} cx={10 + ni * (48 / (2 + li * 2))} cy={y} r={2.2} className="mg-dot" />
+          ))}
+        </g>
+      ))}
+      <path d="M 34 8 L 22 21 L 46 34" className="mg-path" />
+      <circle cx={46} cy={34} r={4} className="mg-core" />
+      <circle cx={72} cy={21} r={7} fill="none" className="mg-lens" />
+      <line x1={77} y1={26} x2={82} y2={31} className="mg-lens" />
+    </svg>
+  ),
+  reason: (
+    <svg viewBox="0 0 84 42" className="vx-mind-glyph">
+      {[
+        [8, 8], [8, 34], [30, 21],
+      ].map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r={3.4} className="mg-dot" style={{ animationDelay: `${i * 0.3}s` }} />
+      ))}
+      <path d="M 11 9 L 27 19 M 11 33 L 27 23 M 34 21 L 48 21" className="mg-edge" />
+      <rect x={50} y={11} width={30} height={20} rx={4} className="mg-chip" />
+      <path d="M 56 21 h 18 M 56 26 h 12" className="mg-lines" />
+      <path d="M 56 16 h 14" className="mg-lines lit" />
+    </svg>
+  ),
+  validate: (
+    <svg viewBox="0 0 84 42" className="vx-mind-glyph">
+      <rect x={6} y={6} width={26} height={30} rx={3} className="mg-window" />
+      <path d="M 11 13 h 16 M 11 20 h 16 M 11 27 h 10" className="mg-lines" />
+      <path d="M 56 4 l 16 5 v 12 c 0 9 -7 14 -16 17 c -9 -3 -16 -8 -16 -17 v -12 Z" className="mg-shield" />
+      <path d="M 50 21 l 5 5 l 9 -10" className="mg-check" />
+      <path d="M 34 21 h 4" className="mg-edge" />
+    </svg>
+  ),
+  review: (
+    <svg viewBox="0 0 84 42" className="vx-mind-glyph">
+      <circle cx={16} cy={13} r={5} className="mg-core" />
+      <path d="M 7 34 a 9 8 0 0 1 18 0" className="mg-path" />
+      <rect x={36} y={6} width={44} height={30} rx={4} className="mg-window" />
+      <path d="M 42 14 h 24 M 42 21 h 32 M 42 28 h 18" className="mg-lines" />
+      <path d="M 70 26 l 3 3 l 5 -6" className="mg-check" />
+    </svg>
+  ),
+};
 
 function MapNode({
   step,
@@ -53,7 +133,11 @@ function MapNode({
       aria-pressed={active}
     >
       <span>{kicker}</span>
-      <div className={`vx-map-glyph vx-map-glyph-${glyph}`} aria-hidden="true">{Array.from({ length: 7 }, (_, index) => <i key={index} />)}</div>
+      {MIND_GLYPHS[glyph] ? (
+        <div className="vx-map-glyph vx-map-glyph-svg" aria-hidden="true">{MIND_GLYPHS[glyph]}</div>
+      ) : (
+        <div className={`vx-map-glyph vx-map-glyph-${glyph}`} aria-hidden="true">{Array.from({ length: 7 }, (_, index) => <i key={index} />)}</div>
+      )}
       <strong>{title}</strong>
       <small>{detail}</small>
       <i aria-hidden="true" />

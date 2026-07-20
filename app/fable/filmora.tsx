@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ChapterShell, type StepDef } from "./chapter-shell";
 import { useSim, ph, eph, pulse, noise, bez, typed, caret, rise, q, LiveNet } from "./live";
 
@@ -141,12 +142,15 @@ const PLAT_BADGES: { glyph: string; bg: string; fg: string }[] = [
   { glyph: "f", bg: "#122a52", fg: "#7aa9ff" },
 ];
 
+const PLAT_FILES = ["tiktok", "douyin", "xiaohongshu", "instagram", "wechat", "facebook"];
+
 function PlatBadge({ i, x, y, s = 16 }: { i: number; x: number; y: number; s?: number }) {
   const b = PLAT_BADGES[i];
   return (
     <g className="lv-platbadge" transform={`translate(${x},${y})`}>
       <rect width={s} height={s} rx={4.5} fill={b.bg} stroke="rgba(255,255,255,0.22)" strokeWidth={0.8} />
-      <text x={s / 2} y={s / 2 + 3.4} textAnchor="middle" fill={b.fg}>{b.glyph}</text>
+      {/* the real platform mark, downloaded into /public/brands */}
+      <image href={`/brands/${PLAT_FILES[i]}.svg`} x={2.5} y={2.5} width={s - 5} height={s - 5} />
     </g>
   );
 }
@@ -459,15 +463,16 @@ const BRIEF_LINES = [
 const TOKENS = [
   { word: "beach reel", from: 0, at: 2000 },
   { word: "golden hour", from: 1, at: 2700 },
-  { word: "12 cuts/30 s", from: 1, at: 3400 },
+  { word: "beat-sync skill", from: 2, at: 3400 },
   { word: "drop @ 8 s", from: 1, at: 4100 },
-  { word: "zh+en", from: 0, at: 4800 },
-  { word: "transition[7]", from: 2, at: 5500 },
+  { word: "LUT preset", from: 2, at: 4800 },
+  { word: "transition[7]", from: 3, at: 5500 },
 ];
 const PANES = [
-  { label: "USER INTENT", sub: "“beach reel, fast cuts”", y: 40 },
-  { label: "TREND CONTEXT", sub: "700+ live signals", y: 160 },
-  { label: "PRODUCTION STATE", sub: "timeline: 2 clips placed", y: 280 },
+  { label: "USER INTENT", sub: "“beach reel, fast cuts”", y: 34 },
+  { label: "TREND CONTEXT", sub: "700+ live signals", y: 124 },
+  { label: "RETRIEVED MEMORY", sub: "3 skills · 2 presets recalled", y: 214 },
+  { label: "PRODUCTION STATE", sub: "timeline: 2 clips placed", y: 304 },
 ];
 
 export function CompilerGraphic({ a }: { a: boolean }) {
@@ -480,11 +485,11 @@ export function CompilerGraphic({ a }: { a: boolean }) {
       {PANES.map((p2, i) => (
         <g key={p2.label}>
           <g className={`lv-node ${TOKENS.some((tk) => tk.from === i && t > tk.at && t < tk.at + 700) ? "is-live" : ""}`}>
-            <rect x={30} y={p2.y} width={190} height={78} rx={11} />
+            <rect x={30} y={p2.y} width={190} height={72} rx={11} />
           </g>
           <text x={46} y={p2.y + 26} className="svg-label small">{p2.label}</text>
           <text x={46} y={p2.y + 48} className="svg-mono tinytext">{p2.sub}</text>
-          <circle cx={46} cy={p2.y + 64} r={3} className="lv-pulse" style={{ opacity: 0.3 + 0.7 * pulse(t + i * 300, 900) }} />
+          <circle cx={46} cy={p2.y + 58} r={3} className="lv-pulse" style={{ opacity: 0.3 + 0.7 * pulse(t + i * 300, 900) }} />
         </g>
       ))}
 
@@ -605,62 +610,81 @@ export function OrchestrationGraphic({ a }: { a: boolean }) {
 
 /* ---------- 6.5 · EDITOR TIMELINE — tracks assemble, still editable ---------- */
 
-/** track · API used · produced file · agent latency · async? */
-const EDITOR_TRACKS: { label: string; api: string; file: string; ms: string; w: number; async?: boolean }[] = [
-  { label: "VIDEO", api: "Video API", file: "video.mp4", ms: "6.2 s", w: 92, async: true },
-  { label: "DIALOGUE", api: "TTS API", file: "dialogue.wav", ms: "1.8 s", w: 58, async: true },
-  { label: "MUSIC", api: "AI Music", file: "music.wav", ms: "4.1 s", w: 82, async: true },
-  { label: "CAPTIONS", api: "caption agent", file: "captions.srt", ms: "0.9 s", w: 70 },
-  { label: "TRANSITIONS", api: "FX agent", file: "effects.json", ms: "0.6 s", w: 44 },
-  { label: "ASSEMBLY", api: "editor agent", file: "timeline.proj", ms: "1.2 s", w: 64 },
+/** The real production DAG: nodes, dependencies, live execution, inspectable. */
+type DagNode = {
+  id: string; label: string; x: number; y: number;
+  api: string; file: string; ms: string; start: number; dur: number; deps: string[]; async?: boolean;
+};
+const DAG: DagNode[] = [
+  { id: "planner", label: "PLANNER", x: 80, y: 150, api: "orchestrator", file: "prod.graph", ms: "0.3 s", start: 500, dur: 700, deps: [] },
+  { id: "video", label: "VIDEO", x: 250, y: 60, api: "Video API", file: "video.mp4", ms: "6.2 s", start: 1300, dur: 2600, deps: ["planner"], async: true },
+  { id: "music", label: "MUSIC", x: 250, y: 150, api: "AI Music", file: "music.wav", ms: "4.1 s", start: 1300, dur: 2100, deps: ["planner"], async: true },
+  { id: "dialogue", label: "DIALOGUE", x: 250, y: 240, api: "TTS API", file: "dialogue.wav", ms: "1.8 s", start: 1300, dur: 1500, deps: ["planner"], async: true },
+  { id: "captions", label: "CAPTIONS", x: 400, y: 240, api: "caption agent", file: "captions.srt", ms: "0.9 s", start: 2900, dur: 1000, deps: ["dialogue"] },
+  { id: "fx", label: "FX / TRANS", x: 400, y: 105, api: "FX agent", file: "effects.json", ms: "0.6 s", start: 4000, dur: 900, deps: ["video", "music"] },
+  { id: "assembly", label: "ASSEMBLY", x: 545, y: 150, api: "editor agent", file: "timeline.proj", ms: "1.2 s", start: 5000, dur: 1300, deps: ["fx", "captions"] },
 ];
 
 export function EditorGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 9600;
+  const L = 10200;
   const t = el % L;
-  const allDone = t > 1200 + 5 * 700 + 1400;
-  const headP = eph(t, 6400, 9000);
+  const [focus, setFocus] = useState<string | null>(null);
+  const node = (id: string) => DAG.find((n) => n.id === id)!;
+  const stateOf = (n: DagNode) => (t < n.start ? "wait" : t < n.start + n.dur ? "run" : "done");
+  const focused = focus ? node(focus) : DAG.find((n) => stateOf(n) === "run") ?? DAG[DAG.length - 1];
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={40} y={36} className="svg-sub">FILMORA ASSEMBLY · a production DAG landing as editable tracks</text>
-      <g className="lv-chip">
-        <rect x={470} y={18} width={150} height={28} rx={8} />
-        <text x={545} y={37} textAnchor="middle" className="svg-mono tinytext">{allDone ? "PLAYBACK READY ✓" : "assembling…"}</text>
-      </g>
+      <text x={30} y={32} className="svg-sub">PRODUCTION DAG · live run — click any node to inspect it</text>
 
-      {/* preview window — the reel itself */}
-      <g className="lv-box hot">
-        <rect x={40} y={50} width={580} height={92} rx={12} />
-        <rect x={52} y={60} width={130} height={72} rx={8} className="lv-preview" />
-        <path d="M 108 84 l 20 12 l -20 12 Z" className="lv-previewplay" style={{ opacity: allDone ? 1 : 0.4 }} />
-        <text x={200} y={86} className="svg-label big" style={{ opacity: 0.45 + 0.55 * eph(t, 5200, 6200) }}>FOLD THE FUTURE</text>
-        <text x={200} y={108} className="svg-sub tiny">product reveal · kinetic type · 18 s vertical · 9:16</text>
-        {allDone && <line x1={q(52 + 130 * headP)} y1={60} x2={q(52 + 130 * headP)} y2={132} className="lv-playhead" />}
-      </g>
+      {/* dependency edges, tokens travelling on the active ones */}
+      {DAG.flatMap((n) =>
+        n.deps.map((d) => {
+          const a2 = node(d);
+          const running = stateOf(n) === "run" || (stateOf(a2) === "done" && stateOf(n) === "wait" && t > a2.start + a2.dur - 300);
+          const p = stateOf(n) === "run" ? ((t - n.start) % 600) / 600 : 0;
+          return (
+            <g key={`${d}-${n.id}`}>
+              <path d={`M ${a2.x + 44} ${a2.y} C ${(a2.x + n.x) / 2 + 20} ${a2.y} ${(a2.x + n.x) / 2 - 20} ${n.y} ${n.x - 44} ${n.y}`} className={`lv-edge ${running ? "win" : ""}`} style={{ opacity: running ? 0.8 : 0.25 }} />
+              {p > 0 && <circle cx={q(bez(p, [a2.x + 44, a2.y], [(a2.x + n.x) / 2, (a2.y + n.y) / 2], [n.x - 44, n.y])[0])} cy={q(bez(p, [a2.x + 44, a2.y], [(a2.x + n.x) / 2, (a2.y + n.y) / 2], [n.x - 44, n.y])[1])} r={3.4} className="lv-pulse" />}
+            </g>
+          );
+        }),
+      )}
 
-      {/* each track: who made it, what it is, how long it took */}
-      {EDITOR_TRACKS.map((tr, i) => {
-        const start = 1200 + i * 700;
-        const p = eph(t, start, start + 1400);
-        const y = 172 + i * 34;
+      {/* nodes */}
+      {DAG.map((n) => {
+        const st = stateOf(n);
+        const isFocus = focused.id === n.id;
         return (
-          <g key={tr.label}>
-            <text x={128} y={y + 12} textAnchor="end" className="svg-mono tinytext">{tr.label}</text>
-            <rect x={140} y={y} width={280} height={17} rx={5} className="lv-track" />
-            <rect x={140} y={y} width={q(280 * (tr.w / 100) * p)} height={17} rx={5} className={`lv-bar ${i % 2 ? "bg" : ""}`} />
-            {p > 0 && p < 1 && <circle cx={q(140 + 280 * (tr.w / 100) * p)} cy={y + 8} r={3.2} className="lv-pulse" />}
-            <text x={434} y={y + 12} className="svg-sub tiny" style={{ opacity: Math.max(0.3, p) }}>{tr.api}</text>
-            <text x={516} y={y + 12} className="svg-mono tinytext" style={{ opacity: Math.max(0.3, p) }}>{tr.file}</text>
-            {p >= 1 && <text x={632} y={y + 12} textAnchor="end" className="tick ok">{tr.ms}</text>}
-            {tr.async && p > 0 && p < 1 && <text x={632} y={y + 12} textAnchor="end" className="svg-sub tiny">async…</text>}
+          <g key={n.id} onClick={() => setFocus(n.id)} style={{ cursor: "pointer" }}>
+            <g className={`lv-node ${st === "run" || isFocus ? "is-live" : ""}`}>
+              <rect x={n.x - 44} y={n.y - 22} width={88} height={44} rx={10} style={{ opacity: st === "wait" ? 0.5 : 1 }} />
+            </g>
+            <text x={n.x} y={n.y - 3} textAnchor="middle" className="svg-label small">{n.label}</text>
+            <text x={n.x} y={n.y + 13} textAnchor="middle" className={st === "done" ? "tick ok" : "svg-sub tiny"}>
+              {st === "done" ? "✓ " + n.ms : st === "run" ? (n.async ? "async…" : "running…") : "queued"}
+            </text>
+            {st === "run" && <rect x={n.x - 36} y={n.y + 17} width={q(72 * ((t - n.start) / n.dur))} height={3} rx={1.5} className="lv-bar" />}
           </g>
         );
       })}
 
-      <text x={40} y={400} className="svg-note">
-        Never one opaque blob — every track shows the API that made it, the file it produced, and what it cost in time.
+      {/* inspector card for the focused / running node */}
+      <g className="lv-box hot">
+        <rect x={30} y={300} width={580} height={72} rx={12} />
+        <text x={48} y={324} className="svg-sub tiny">NODE INSPECTOR · {focused.label}</text>
+        <text x={48} y={346} className="svg-mono tinytext">api: {focused.api}</text>
+        <text x={220} y={346} className="svg-mono tinytext">out: {focused.file}</text>
+        <text x={420} y={346} className="svg-mono tinytext">latency: {focused.ms}</text>
+        <text x={48} y={362} className="svg-sub tiny">
+          deps: {focused.deps.length ? focused.deps.join(" + ") : "none"} · {focused.async ? "async lane" : "sync"} · retries: 0
+        </text>
+      </g>
+
+      <text x={30} y={400} className="svg-note">
+        This is the actual shape of the run — parallel generation, governed hand-offs, one editable timeline out.
       </text>
     </svg>
   );

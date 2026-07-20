@@ -226,3 +226,69 @@
 .lv-srcbadge.dense { fill: color-mix(in srgb, var(--warm) 26%, rgba(16, 24, 38, 0.95)); stroke: color-mix(in srgb, var(--warm) 55%, transparent); }
 .lv-preview { fill: rgba(255, 255, 255, 0.05); stroke: color-mix(in srgb, var(--accent) 45%, var(--panel-line)); stroke-width: 1.2; }
 .lv-previewplay { fill: var(--accent); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 55%, transparent)); }
+
+/* ============================================================
+   Session-5 trial: greeting, emphasis, spark guide, capture
+   window, mindscape map glyphs.
+   ============================================================ */
+
+/* greeting gets its own styled line */
+.vx-hero-typed .vx-greet { color: var(--vx-lime); font-weight: 600; letter-spacing: 0.01em; }
+.vx-hero-typed .vx-greet-end::after { content: "\A"; white-space: pre; }
+
+/* striking emphasis inside copy */
+.vx-emph {
+  font-style: normal;
+  font-weight: 680;
+  color: var(--active-accent, var(--vx-lime));
+  background: linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--active-accent, var(--vx-lime)) 20%, transparent) 62%);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+.vx-hero-thesis { color: #b9c3cf; }
+.vx-hero-thesis .vx-emph { color: var(--vx-lime); }
+.vx-story-copy h3 .vx-emph { text-shadow: 0 0 18px color-mix(in srgb, var(--active-accent) 35%, transparent); }
+
+/* capture analysis window (V2 effect) */
+.lv-window { fill: color-mix(in srgb, var(--accent) 10%, transparent); stroke: color-mix(in srgb, var(--accent) 55%, transparent); stroke-width: 1; }
+.lv-windowedge { stroke: color-mix(in srgb, var(--accent) 85%, transparent); stroke-width: 1.6; }
+
+/* Spark — the tour guide */
+.vx-spark-dock { position: fixed; left: 22px; bottom: 22px; z-index: 60; display: flex; flex-direction: column; gap: 8px; max-width: 300px; transition: transform 0.4s cubic-bezier(0.34, 1.4, 0.44, 1); }
+.vx-spark-dock.is-hopping { animation: sparkHop 0.72s cubic-bezier(0.4, 0, 0.2, 1); }
+@keyframes sparkHop { 0% { transform: translateY(0); } 35% { transform: translateY(-26px) rotate(-5deg); } 70% { transform: translateY(4px); } 100% { transform: translateY(0); } }
+.vx-spark-bubble { padding: 10px 13px; border: 1px solid color-mix(in srgb, var(--active-accent, var(--vx-lime)) 35%, var(--vx-line)); background: rgba(7, 9, 13, 0.94); color: #cfd8e2; font: 500 12px/1.5 var(--font-geist-mono), monospace; border-radius: 10px 10px 10px 3px; min-height: 38px; }
+.vx-spark-row { display: flex; align-items: flex-end; gap: 6px; }
+.vx-spark-fig { width: 58px; height: 58px; color: var(--active-accent, var(--vx-lime)); filter: drop-shadow(0 0 12px color-mix(in srgb, var(--active-accent, var(--vx-lime)) 35%, transparent)); animation: sparkBreathe 3.4s ease-in-out infinite; }
+@keyframes sparkBreathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.spark-body { fill: rgba(10, 13, 18, 0.95); stroke: currentColor; stroke-width: 2; }
+.spark-ring { fill: none; stroke: color-mix(in srgb, currentColor 40%, transparent); stroke-width: 1.2; stroke-dasharray: 4 5; }
+.spark-antenna { stroke: currentColor; stroke-width: 1.6; }
+.spark-ember { fill: currentColor; animation: sparkEmber 1.6s ease-in-out infinite; }
+@keyframes sparkEmber { 50% { opacity: 0.4; } }
+.spark-eye { fill: #eef3f7; }
+.spark-pupil { fill: #0b0e13; transition: cx 0.5s ease, cy 0.5s ease; }
+.spark-mouth { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+.vx-spark-dismiss { width: 26px; height: 26px; border: 1px solid var(--vx-line); background: rgba(10, 13, 18, 0.9); color: #8d97a5; border-radius: 50%; cursor: pointer; }
+.vx-spark-summon { position: fixed; left: 22px; bottom: 22px; z-index: 60; width: 40px; height: 40px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--vx-lime) 45%, var(--vx-line)); background: rgba(7, 9, 13, 0.94); color: var(--vx-lime); font-size: 16px; cursor: pointer; }
+@media (max-width: 940px) { .vx-spark-dock { max-width: 230px; } }
+
+/* mindscape dedicated map glyphs */
+.vx-map-glyph-svg { display: flex; align-items: center; justify-content: center; }
+.vx-mind-glyph { width: 100%; height: 42px; color: var(--active-accent, var(--vx-cyan)); opacity: 0.85; }
+.mg-bar { fill: currentColor; animation: mgWave 1.6s ease-in-out infinite alternate; transform-origin: center; }
+@keyframes mgWave { to { transform: scaleY(0.55); } }
+.mg-window { fill: color-mix(in srgb, currentColor 10%, transparent); stroke: currentColor; stroke-width: 1.2; }
+.mg-core { fill: currentColor; }
+.mg-edge { fill: none; stroke: currentColor; stroke-width: 1.3; opacity: 0.75; stroke-dasharray: 30; animation: mgFlow 2.2s linear infinite; }
+@keyframes mgFlow { to { stroke-dashoffset: -60; } }
+.mg-chip { fill: color-mix(in srgb, currentColor 14%, transparent); stroke: currentColor; stroke-width: 1; }
+.mg-chip.lit { fill: color-mix(in srgb, currentColor 35%, transparent); }
+.mg-layer { stroke: color-mix(in srgb, currentColor 30%, transparent); stroke-width: 1; }
+.mg-dot { fill: currentColor; opacity: 0.7; }
+.mg-path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-dasharray: 40; animation: mgFlow 2.6s linear infinite; }
+.mg-lens { stroke: currentColor; stroke-width: 1.4; fill: none; }
+.mg-lines { stroke: color-mix(in srgb, currentColor 55%, transparent); stroke-width: 1.2; fill: none; }
+.mg-lines.lit { stroke: currentColor; }
+.mg-shield { fill: color-mix(in srgb, currentColor 10%, transparent); stroke: currentColor; stroke-width: 1.4; }
+.mg-check { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }

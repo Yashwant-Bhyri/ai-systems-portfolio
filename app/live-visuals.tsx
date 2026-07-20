@@ -184,8 +184,33 @@ function DistillMini({ a }: { a: boolean }) {
   );
 }
 
+
+/** Logistics AI Ops as a research specimen: the bounded copilot, compressed. */
+function LogisticsMini({ a }: { a: boolean }) {
+  const el = useSim(a);
+  const t = el % 9000;
+  return (
+    <svg viewBox="0 0 320 150" className="op-svg">
+      <text x={6} y={16} className="svg-sub tiny">BOUNDED OPS COPILOT · live</text>
+      {["ADMIN", "DRIVER", "CUST."].map((r, i) => (
+        <g key={r} className="lv-chip">
+          <rect x={6 + i * 52} y={24} width={46} height={20} rx={6} style={{ opacity: Math.floor(t / 800) % 3 === i ? 1 : 0.45 }} />
+          <text x={29 + i * 52} y={38} textAnchor="middle" className="svg-sub tiny">{r}</text>
+        </g>
+      ))}
+      <text x={170} y={38} className="svg-sub tiny">JWT-gated routes</text>
+      <rect x={6} y={52} width={308} height={72} rx={8} className="lv-track" />
+      <text x={14} y={68} className="svg-mono tinytext">{typed("> late deliveries in Kowloon?", t, 400, 1800)}{t > 400 && t < 1900 ? caret(t) : ""}</text>
+      {t > 2200 && <text x={14} y={84} className="tick ok">intent ✓ → parameterized query → 4 rows</text>}
+      {t > 3000 && <text x={14} y={100} className="svg-mono tinytext">{typed("> export all customer records", t, 3000, 4400)}{t > 3000 && t < 4500 ? caret(t) : ""}</text>}
+      {t > 4900 && <text x={14} y={116} className="tick bad">✗ intent not whitelisted — refused</text>}
+      <text x={6} y={142} className="svg-mono tinytext">0 unrestricted queries · human-owned actions</text>
+    </svg>
+  );
+}
+
 /** index mapping for the research grid:
- *  0 TinyML · 1 Text-to-SQL · 2 distillation · 3 webGLR · 4 COL-VEO */
+ *  0 TinyML · 1 Text-to-SQL · 2 distillation · 3 webGLR · 4 COL-VEO · 5 logistics */
 export function LiveResearchMini({ index }: { index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const on = useOnScreen(ref, 0.2);
@@ -209,6 +234,7 @@ export function LiveResearchMini({ index }: { index: number }) {
           <BenchMini idx={2} t={el} />
         </svg>
       )}
+      {index === 5 && <LogisticsMini a={on} />}
     </div>
   );
 }

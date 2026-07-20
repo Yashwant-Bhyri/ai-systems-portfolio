@@ -493,3 +493,75 @@ R2. webGLR + COL-VEO: perfect, don't touch.
 2) Hero (H1–H4) + Index (P1) + typed case headings (C1) + chapter copy (A1/F1/M1)
 3) Scene reworks: A3,A4,A6,A7 → F2,F3,F6,F7 → M4,M6,M7,M8,M10
 4) verify on screen → commit → ledger.
+
+### VERIFICATION — Session 4 (on-screen) — commit d7bbf13
+
+Checklist coverage (IDs from the Session-4 list above):
+H1 ✓ slower typing (1 char / ~26-41 ms)   H2 ✓ new copy + numeral 4 + top-20
+H3 ✓ paint sweep (5 painted word-spans confirmed in DOM) + CUHK crest inline
+H4 ✓ deck: pointer-pause narrowed to controls, 4.2 s flip, loop
+P1 ✓ typed hook + painted target + typed sub-line (ghost layout, no jump)
+P2 ✓ spotlight cycle: 5×1 s then 5×2.5 s, existing hover treatment via .is-spotlit
+C1 ✓ typed case headings (aria-label keeps a11y)   C2 ✓ data-glow cycling verified
+   (3 nodes glowing page-wide, one per chapter)   C3 ✓ targeted overflow fixes
+A1 ✓ copy   A2 ✓ glyph rebuilt (net + ring core)   A3 ✓ avatars   A4 ✓ token pills
+A5 ✓ claim 01–04 framing + chip/answer overflow   A6 ✓ dual-lane legend
+A7 ✓ orchestrator input cards w/ wave/bulb/crack/scales/net glyphs (4 icon groups
+   in DOM; wave icon is bars, not lv-orchicon class — by design)   A8 ✓ cache-hit
+   text fits (· HIT ✓), spoken line shortened + moved
+F1 ✓ copy   F2 ✓ 6 platform badges   F3 ✓ scan→snippets→compiler scene
+F4 ✓ LiveNet outX fix   F6 ✓ editor DAG rows (API/file/latency/async) + preview
+   fixed   F7 ✓ observability = orbiting optimization loop, 5 stations doing work,
+   cycle counter, downstream result cards (−28% grows per completed lap)
+M1 ✓ diagnosis-prediction copy   M2 ✓ glyph overrides   M3 ✓ capture labels
+M4 ✓ 6 tokens (2-col) + 3 typed sentences   M6 ✓ BSV named-dimension cells (6)
+M7 ✓ HNSW 3-layer greedy descent + low-mood/anhedonia + RRF D/L source badges
+M8 ✓ evidence insets (scanning log, RAG doc w/ §296.22 hit, transcript skim)
+M9 ✓ claims updated to condition   M10 ✓ Nancy removed; radar w/ axis labels +
+   growing timeline + human-owned ✓
+R1 ✓ SQL mini shortened; minis fit 320×150   R2 untouched as ordered
+
+tsc clean · zero console errors on fresh load · all checks done in-browser
+(step-rail click-throughs + DOM assertions). Remaining known env quirks unchanged.
+STATUS: session-4 polish complete. Committed d7bbf13.
+
+---
+
+## 2026-07-20 — Session 5 (Fable): TRIAL FORK — isolated experiment space
+
+Source of truth: /Users/yash/Documents/Resume/portfolio-fable @ d7bbf13 (tagged
+v4-polish-d7bbf13) — UNTOUCHED. This directory (portfolio-fable-trial) is the
+duplicate for trial changes.
+
+### Deconstructed checklist (session-5)
+G1. Galaxy: 5 thematic keyword clusters; 2 clusters in focus at a time (3-4 words
+    lit in one, 3-4 semi-lit in other); background space FLOATS/pans cluster to
+    cluster; clusters not too wide.
+G2. CUHK: real emblem wanted. Wikimedia fetch blocked in sandbox; implemented
+    faithful phoenix-shield crest in CUHK purple/gold + auto-pickup of
+    /public/brands/cuhk.svg if user drops the official file there.
+G3. Greeting "Hi—welcome to my portfolio." formatted as its own styled line.
+G4. Hero deck: pause button REMOVED (always auto-flips; arrows/dots stay).
+G5. Striking typography for key copy (hero p, chapter copy, step titles, scene
+    notes): ⟪marker⟫-based accent emphasis renderer; "900 ms" side box weight.
+G6. Real platform logos (downloaded: tiktok/douyin/xiaohongshu/instagram/wechat/
+    facebook SVGs in public/brands) used in trend + skill scenes.
+G7. Context compiler: + RETRIEVED MEMORY input (4 sources).
+G8. Editor timeline → interactive production DAG (clickable nodes, live tokens,
+    per-node API/file/latency card).
+G9. Question path: FIRST explain hot path vs reasoning path, then the map.
+    (Note: the pasted "fast lane = …" spacing text is from the kimi site, not
+    this codebase — actionable essence applied here.)
+G10. Validation gate: full rebuild — RULEBOOK model (DSM-5 + policy clauses),
+    clause retrieval, claim checked AGAINST the clause, cited pass/fail.
+G11. MindScape overview glyphs: replaced with dedicated animated SVG mini-glyphs
+    (capture/perceive/fuse/retrieve/reason/validate/review) via MapNode.
+G12. Logistics: standalone chapter REMOVED; lives as research specimen #6 (after
+    COL-VEO) with a live mini; logistics card/deck links retarget #research.
+G13. V2 effects integrated ADDITIVELY: STT partial token-grid pills; capture
+    rolling-buffer sliding analysis window. Nothing else touched.
+G14. Guide agent "Spark": lumen-compared original — fixed dock bottom-left,
+    chapter accent tint, gaze toward active stage, typed bubble narrating
+    chapter + current step (reads V2 DOM, zero rewiring), dismissible, hops on
+    chapter change. No UI/font disturbance.
+G15. Observability: user asked kimi-site to copy OUR loop — ours already current.

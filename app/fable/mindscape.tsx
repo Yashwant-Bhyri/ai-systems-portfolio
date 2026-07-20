@@ -106,6 +106,17 @@ export function CaptureGraphic({ a }: { a: boolean }) {
           <text key={m2} x={48 + i * 130} y={242} className="svg-sub tiny">{m2}{i < 4 ? " ms" : ""}</text>
         ))}
         <line x1={568} y1={168} x2={568} y2={224} className="lv-playhead" style={{ opacity: 0.5 + 0.5 * pulse(t, 700) }} />
+        {/* V2's analysis window, sweeping the buffer */}
+        {(() => {
+          const wx = 48 + (((t / 9) % 440) + 440) % 440;
+          return (
+            <g>
+              <rect x={q(wx)} y={166} width={80} height={62} rx={4} className="lv-window" />
+              <line x1={q(wx)} y1={166} x2={q(wx)} y2={228} className="lv-windowedge" />
+              <line x1={q(wx + 80)} y1={166} x2={q(wx + 80)} y2={228} className="lv-windowedge" />
+            </g>
+          );
+        })()}
       </g>
 
       {/* packets shipping downstream every ~1.1 s */}
@@ -519,65 +530,91 @@ export function ReasonGraphic({ a }: { a: boolean }) {
 /* ---------- 7 · VALIDATE — claims scanned live; one is stopped ---------- */
 
 const V_CLAIMS = [
-  { text: "low mood ↔ anhedonia", entail: 0.94, at: 800, ok: true },
-  { text: "“responding well to CBT”", entail: 0.31, at: 3600, ok: false },
-  { text: "adherence improving", entail: 0.88, at: 6400, ok: true },
+  { text: "low mood ↔ anhedonia", clause: "§296.22 · A1+A2", verdict: "pass", entail: 0.94, at: 900 },
+  { text: "“responding well to CBT”", clause: "policy R-04 · outcome claims", verdict: "block", entail: 0.31, at: 4300 },
+  { text: "adherence improving", clause: "§B-criteria · course", verdict: "pass", entail: 0.88, at: 7700 },
 ];
+const RULEBOOK_LINES = ["A. five+ symptoms / 2 wks", "B. functional impairment", "C. not substance-induced", "R-04 no outcome claims", "R-11 risk language screen"];
 
 export function ValidateGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 10400;
+  const L = 11400;
   const t = el % L;
-  const gateX = 330;
+  const active = V_CLAIMS.findIndex((c) => t >= c.at && t < c.at + 3200);
+  const clauseFor = active >= 0 ? V_CLAIMS[active] : null;
+  // which rulebook line the retrieval lands on, per claim
+  const clauseLine = active === 0 ? 0 : active === 1 ? 3 : 1;
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <rect x={gateX} y={60} width={16} height={220} rx={6} className="lv-gate" />
-      <text x={gateX + 8} y={46} textAnchor="middle" className="svg-sub">NLI GATE · DeBERTa</text>
+      <text x={30} y={32} className="lv-phase small">VALIDATION = CHECK THE CLAIM AGAINST THE RULEBOOK — NEVER AGAINST A VIBE</text>
 
+      {/* claims queue, left */}
       {V_CLAIMS.map((c, i) => {
-        const approach = eph(t, c.at, c.at + 900);
-        const scanning = t > c.at + 900 && t < c.at + 1700;
-        const decided = t > c.at + 1700;
-        const passP = eph(t, c.at + 1700, c.at + 2400);
-        const cx = c.ok
-          ? 60 + (gateX - 130) * approach + (decided ? 200 * passP : 0)
-          : 60 + (gateX - 130) * approach;
-        const cy = 84 + i * 72 + (!c.ok && decided ? 90 * passP : 0);
-        const score = c.entail * (scanning ? ph(t, c.at + 900, c.at + 1650) : decided ? 1 : 0);
+        const phase = t < c.at ? "wait" : t < c.at + 1100 ? "retrieve" : t < c.at + 2300 ? "check" : "done";
         return (
-          <g key={c.text} style={{ opacity: !c.ok && decided ? Math.max(0, 1 - passP * 0.8) : 1 }}>
-            <g className={`lv-chip ${decided && c.ok ? "win" : ""}`} transform={`translate(${q(cx)},${q(cy)})`}>
-              <rect x={0} y={0} width={166} height={34} rx={9} />
-              <text x={10} y={22} className="svg-mono tinytext">{c.text}</text>
-            </g>
-            {scanning && (
-              <rect x={q(cx - 4)} y={q(cy - 4)} width={174} height={42} rx={10} className="scanline" style={{ opacity: 0.4 + 0.5 * pulse(t, 340) }} />
-            )}
-            {(scanning || decided) && (
-              <text x={q(cx + 176)} y={q(cy + 22)} className={decided ? (c.ok ? "tick ok" : "tick bad") : "svg-mono tinytext"}>
-                {decided ? (c.ok ? `${c.entail.toFixed(2)} entailed ✓` : `${c.entail.toFixed(2)} ✗ blocked`) : `entail ${score.toFixed(2)}…`}
+          <g key={c.text}>
+            <g className={`lv-chip ${phase === "retrieve" || phase === "check" ? "win" : ""}`} style={{ opacity: phase === "wait" ? 0.4 : 1 }}>
+              <rect x={30} y={54 + i * 58} width={190} height={44} rx={10} />
+              <text x={44} y={73 + i * 58} className="svg-mono tinytext">{c.text}</text>
+              <text x={44} y={90 + i * 58} className="svg-sub tiny">
+                {phase === "wait" ? "queued" : phase === "retrieve" ? "finding its clause…" : phase === "check" ? `entail ${(c.entail * ph(t, c.at + 1100, c.at + 2100)).toFixed(2)}…` : c.verdict === "pass" ? `✓ ${c.clause}` : `✗ ${c.clause}`}
               </text>
+            </g>
+            {phase !== "wait" && (
+              <path d={`M 220 ${76 + i * 58} C 260 ${76 + i * 58} 260 150 296 150`} className={`lv-edge ${phase !== "done" ? "win" : ""}`} style={{ opacity: phase === "done" ? 0.25 : 0.8 }} />
             )}
           </g>
         );
       })}
 
-      <g className="lv-box">
-        <rect x={400} y={286} width={220} height={92} rx={10} />
-        <text x={416} y={310} className="svg-sub">DETERMINISTIC GATES</text>
-        <text x={416} y={334} className="svg-mono tinytext">DSM-5 criteria check {t % 2600 < 1300 ? "…" : " ✓"}</text>
-        <text x={416} y={356} className="svg-mono tinytext">risk-language screen {t % 2600 < 1900 ? "…" : " ✓"}</text>
-      </g>
-      <g className="lv-chip">
-        <rect x={30} y={300} width={210} height={72} rx={10} />
-        <text x={44} y={322} className="svg-sub tiny">this replay</text>
-        <text x={44} y={340} className="svg-mono tinytext">passed 2 · blocked 1</text>
-        <text x={44} y={360} className="tick ok" style={{ opacity: eph(t, 8600, 9000) }}>released with uncertainty ✓</text>
+      {/* THE RULEBOOK — DSM-5 + policy, an actual open book being consulted */}
+      <g className="lv-box hot">
+        <rect x={296} y={54} width={210} height={200} rx={12} />
+        <text x={312} y={78} className="svg-sub">RULEBOOK · DSM-5 + policy</text>
+        {RULEBOOK_LINES.map((ln, i) => {
+          const hit = clauseFor && i === clauseLine && t > V_CLAIMS[active].at + 500;
+          return (
+            <g key={ln}>
+              {hit && <rect x={306} y={88 + i * 30} width={190} height={24} rx={6} className="scanline" style={{ opacity: 0.5 + 0.4 * pulse(t, 400) }} />}
+              <text x={314} y={104 + i * 30} className={hit ? "svg-mono tinytext" : "svg-mono tinytext dim"}>{ln}</text>
+            </g>
+          );
+        })}
+        <text x={312} y={246} className="svg-sub tiny">{clauseFor && t > V_CLAIMS[active].at + 500 ? `retrieved: ${clauseFor.clause}` : "awaiting claim…"}</text>
       </g>
 
-      <text x={30} y={402} className="svg-note">
-        Unsupported language is removed, not softened — the model never negotiates with the gate.
+      {/* verdict lane, right */}
+      <g className="lv-box">
+        <rect x={528} y={54} width={92} height={200} rx={12} />
+        <text x={574} y={78} textAnchor="middle" className="svg-sub tiny">VERDICTS</text>
+        {V_CLAIMS.map((c, i) => {
+          const done = t > c.at + 2300;
+          return (
+            <g key={c.text} style={rise(done ? 1 : 0, 6)}>
+              <text x={574} y={106 + i * 44} textAnchor="middle" className={c.verdict === "pass" ? "tick ok" : "tick bad"}>{c.verdict === "pass" ? "✓ pass" : "✗ block"}</text>
+              <text x={574} y={120 + i * 44} textAnchor="middle" className="svg-sub tiny">{c.verdict === "pass" ? "cited" : "removed"}</text>
+            </g>
+          );
+        })}
+      </g>
+
+      {/* the double gate beneath: model check + deterministic rules */}
+      <g className="lv-box">
+        <rect x={30} y={274} width={476} height={72} rx={10} />
+        <text x={46} y={296} className="svg-sub tiny">TWO GATES, IN ORDER</text>
+        <text x={46} y={316} className="svg-mono tinytext">1 · DeBERTa NLI — is the claim entailed by its evidence? {t % 3000 < 1600 ? "checking…" : "scored ✓"}</text>
+        <text x={46} y={334} className="svg-mono tinytext">2 · deterministic clauses — DSM-5 + risk language {t % 3000 < 2300 ? "…" : "enforced ✓"}</text>
+      </g>
+      <g className="lv-chip">
+        <rect x={528} y={274} width={92} height={72} rx={10} />
+        <text x={574} y={300} textAnchor="middle" className="svg-mono tinytext">2 ✓ · 1 ✗</text>
+        <text x={574} y={318} textAnchor="middle" className="svg-sub tiny">this replay</text>
+        <text x={574} y={336} textAnchor="middle" className="tick ok" style={{ opacity: eph(t, 10200, 10700) }}>cited ✓</text>
+      </g>
+
+      <text x={30} y={382} className="svg-note">
+        Every verdict carries its clause — a claim passes with a citation, or it is removed. The model never negotiates with the book.
       </text>
     </svg>
   );
