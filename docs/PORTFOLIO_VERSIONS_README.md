@@ -1,6 +1,6 @@
 # Portfolio — Complete Version Guide
 
-**Owner:** Yashwant Bhyri · **Last updated:** 2026-07-20 (v6-elite)
+**Owner:** Yashwant Bhyri · **Last updated:** 2026-07-20 (v7-profile)
 This is the single document to keep. It explains every version of the portfolio,
 where it lives, how to run it, how to roll back, and where the full history is logged.
 
@@ -13,7 +13,7 @@ where it lives, how to run it, how to roll back, and where the full history is l
 | `portfolio` | **V2 live** — Codex's accepted V2 baseline | Read-only reference. Never edited by Fable. |
 | `portfolio-v3` | Codex's parallel V3 experiment | Read-only reference. |
 | `portfolio-fable` | **Fable's main fork** (duplicated from the frozen V2 baseline) | Holds v1→v4 of Fable's work. Frozen at **v4**. |
-| `portfolio-fable-trial` | **Isolated trial fork** (duplicated from portfolio-fable @ v4) | Holds v5, v5-enhanced, **v6-elite (current best)**. |
+| `portfolio-fable-trial` | **Isolated trial fork** (duplicated from portfolio-fable @ v4) | Holds v5, v5-enhanced, v6-elite, **v7-profile (current best)**. |
 | `/Users/yash/Documents/kimi/workspace/portfolio-kimi` | The kimi/Lumen stream (separate agent's build, port 7100) | Reference only (Lumen guide studied for Spark). |
 
 ## 2. The versions — what each tag means
@@ -35,17 +35,18 @@ All version switching is done with git tags. Both forks keep full history.
 |---|---|---|
 | `49c8723` · tag **`v5-baseline-49c8723`** | **v5 (pure baseline)** | Clustered drifting keyword galaxy, Spark tour guide, interactive Filmora DAG, rulebook validation gate, logistics dissolved into research, real platform brand SVGs, ⟪emphasis⟫ copy system, greeting line, pause button removed. |
 | `c0db353` · tag **`v5-enhanced`** | v5-enhanced | Real CUHK coat of arms (downloaded), dedicated SVG glyphs for INTELLIGENCE/OUTPUT/PRODUCTION map nodes, 12-node production DAG with QA + human gates, denser galaxy (3 clusters alive), reworded hero thesis, full logistics console in research, typography pass. |
-| tag **`v6-elite`** | **v6 (final polish)** | Line-by-line elite pass: every stale/clunky string fixed ("six specimens", measured-latency proof, bounded-copilot card), dead code removed (old logistics chapter/visual/mini), single guide (Spark replaces V2's Orbit), caption corrections, greeting spacing detail. |
+| tag `v6-elite` | v6 (polish) | Line-by-line elite pass: every stale/clunky string fixed ("six specimens", measured-latency proof, bounded-copilot card), dead code removed (old logistics chapter/visual/mini), single guide (Spark replaces V2's Orbit), caption corrections, greeting spacing detail. |
+| tag **`v7-profile`** | **v7 (current best)** | Operator Profile page: four target roles with domain-weight meters + evidence anchors, the five capability domains (galaxy clusters, mapped) with animated glyphs, curated core-expertise keyword tray. |
 
 ## 3. How to run any version
 
 ```bash
 # 1) go to the fork that has the version you want
 cd /Users/yash/Documents/Resume/portfolio-fable        # for v4 and earlier
-cd /Users/yash/Documents/Resume/portfolio-fable-trial  # for v5 / v5-enhanced / v6-elite
+cd /Users/yash/Documents/Resume/portfolio-fable-trial  # for v5 / v6 / v7
 
 # 2) check out the tag you want (or stay on the latest)
-git checkout v6-elite          # or v5-enhanced, v5-baseline-49c8723, v4-polish-d7bbf13, …
+git checkout v7-profile        # or v6-elite, v5-enhanced, v5-baseline-49c8723, v4-polish-d7bbf13, …
 git checkout main 2>/dev/null || git checkout -        # to come back to latest
 
 # 3) run it (both forks already have node_modules installed)

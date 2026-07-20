@@ -679,3 +679,10 @@ domain lit 3.2 s offset cycle; keyword flare cycle; all interactable (click
 role → pin; click evidence → chapter anchor). Spark gets a #profile line.
 PLACEMENT: section #profile between hero and #projects; nav gains PROFILE.
 FILES: app/profile-section.tsx (new) + CSS in live-scenes.css. Tag: v7-profile.
+
+### Session 7 — v7-profile (tag v7-profile) — VERIFIED ON SCREEN
+Operator Profile built per the session-7 plan above. Confirmed in browser:
+#profile section + nav link, 4 role cards (titles in the user's order), 5
+domain rows w/ animated glyphs, 11 core-weight dots, 7 evidence anchors, 8
+keyword-tray chips w/ 2 flaring, role spotlight cycling, Spark narrating the
+new section. Screenshot proof captured. tsc clean, zero fresh console errors.
