@@ -15,6 +15,7 @@ import {
   MindScapeOverview,
 } from "./portfolio-visuals";
 import { GuideSpark } from "./guide-spark";
+import { ProfileSection } from "./profile-section";
 import {
   LiveAntigravityVisual,
   LiveFilmoraVisual,
@@ -1235,10 +1236,11 @@ export function PortfolioV2() {
       <div className="vx-cursor-light" aria-hidden="true" />
       <header className="vx-header">
         <a href="#top" className="vx-brand" aria-label="Yashwant Bhyri, portfolio home"><span>YB</span><div><strong>Yashwant Bhyri</strong><small>AI agent &amp; application engineer</small></div></a>
-        <nav aria-label="Portfolio navigation"><a href="#projects">Projects</a><a href="#antigravity">Antigravity</a><a href="#filmora">Filmora</a><a href="#mindscape">MindScape</a><a href="#research">Research</a></nav>
+        <nav aria-label="Portfolio navigation"><a href="#profile">Profile</a><a href="#projects">Projects</a><a href="#antigravity">Antigravity</a><a href="#filmora">Filmora</a><a href="#mindscape">MindScape</a><a href="#research">Research</a></nav>
         <a className="vx-header-resume" href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">Résumé ↗</a>
       </header>
       <Hero reducedMotion={reducedMotion} />
+      <ProfileSection />
       <ProjectIndex />
       <AntigravityChapter />
       <FilmoraChapter />

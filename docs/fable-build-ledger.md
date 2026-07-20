@@ -613,3 +613,69 @@ Round items, all confirmed in browser (fresh load + clicks, 0 console errors):
 7 ✓ Copy/typography last-pass: Year-4 · Class of 2027; tracking on kickers +
   case headings; thesis sizing. Screenshot proof: hero shows greeting line,
   real emblem, both paint sweeps, Spark narrating.
+
+### Session 6 — v6-elite (commit 3bc2207, tag v6-elite) — FINAL POLISH PASS
+
+Line-by-line audit of every on-screen string + component. Fixed: "Three→Six
+compact specimens" (research heading), guide research line (six systems),
+logistics card category/summary (Bounded AI operations copilot), turn-latency
+proof de-jargoned, compiler caption updated for its 4th input, greeting-line
+stray space swallowed. Structural: Spark is now the ONLY guide (V2 Orbit
+dialogue unmounted, stale logistics guide line removed); dead code deleted
+(LogisticsChapter + LOGISTICS_STEPS + LiveLogisticsVisual + LogisticsMini).
+Incident: LOGISTICS_STEPS deletion overshot into RESEARCH (terminator
+mismatch) — caught by tsc, restored from HEAD with all 6 entries, verified.
+README: PORTFOLIO_VERSIONS_README.md at Resume root + docs/ — complete version
+map, tags, run/rollback procedure, assets, quirks.
+VERIFIED on fresh load: 6/6 sections render, 6 research articles, Spark alive,
+hero typing, real crest, no Orbit, all new copy present. tsc clean.
+
+Version ladder final: v4-polish-d7bbf13 (portfolio-fable) · v5-baseline-49c8723
+· v5-enhanced (c0db353) · v6-elite (3bc2207) — all in portfolio-fable-trial.
+
+---
+
+## 2026-07-20 — Session 7 (Fable): OPERATOR PROFILE page — the positioning layer
+
+### Why (user intent, distilled)
+The site proves HOW he builds; nothing states WHAT he is for. New "second page"
+(full-height section directly after the hero, id=#profile, in-tour) answering:
+(1) which roles he's aiming at, (2) the five capability domains behind them,
+(3) a LIMITED, curated set of elite expertise keywords. Marketing-grade,
+mechanism-first, self-driving like everything else.
+
+### Design (planned before code)
+STRUCTURE — three tiers, one narrative:
+T1 ROLES (the ask): four role cards, auto-spotlight cycling —
+  01 AI Systems Engineer · realtime runtimes, latency budgets, reliability
+  02 AI Agent & Application Developer · agent orchestration shipped as product
+  03 Full-Stack AI Engineer · model to interface, one owner
+  04 AI/ML Engineer · distillation, quantization, eval discipline
+  Each card carries: one-line definition + a 5-dot DOMAIN WEIGHT meter (which
+  of the five domains power this role) + evidence anchors into the proof
+  chapters (#antigravity, #filmora, #mindscape, #research). Roles are never
+  floating claims — every card links DOWN into a chapter that demonstrates it.
+T2 DOMAINS (the spine): THE SAME FIVE CLUSTERS as the hero galaxy — explicit
+  narrative echo ("the keywords floating behind the hero are this map"):
+  D1 Agentic Systems & Orchestration — enterprise agent networks · decision
+     engines · async state & hand-offs
+  D2 Memory, Retrieval & Data Engineering — robust memory pipelines · hybrid
+     retrieval + rerank · vector infrastructure
+  D3 Multimodal & Realtime AI — voice AI (< 1 s loops) · vision AI · streaming
+     perception
+  D4 Application, Product & Enterprise Integration — full-stack AI products ·
+     AI into legacy/proprietary enterprise software · production deployment
+  D5 Evaluation, Observability & Optimization — eval harnesses · RL-style
+     feedback loops · tracing + cost/latency optimization · advanced prompt &
+     context engineering
+  One domain lit at a time (tour cadence), mini animated glyph per domain
+  (reuse mg-* language), proof chips per domain.
+T3 KEYWORD TRAY (the polish): ONE curated line — LLMs · enterprise agent
+  networks · memory & retrieval pipelines · voice AI · vision AI ·
+  legacy-enterprise AI integration · RL feedback loops · prompt & context
+  engineering. 1–2 chips flare at a time (galaxy behavior, grounded).
+BEHAVIOR: typed heading + painted key phrase; role spotlight 2.8 s cycle;
+domain lit 3.2 s offset cycle; keyword flare cycle; all interactable (click
+role → pin; click evidence → chapter anchor). Spark gets a #profile line.
+PLACEMENT: section #profile between hero and #projects; nav gains PROFILE.
+FILES: app/profile-section.tsx (new) + CSS in live-scenes.css. Tag: v7-profile.

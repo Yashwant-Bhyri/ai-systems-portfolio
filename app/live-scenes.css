@@ -308,3 +308,47 @@
 
 /* v6 detail: swallow the stray space after the greeting line break */
 .vx-hero-typed .vx-greet-end + span { font-size: 0; }
+
+/* ============================================================
+   OPERATOR PROFILE — roles · domains · keyword tray
+   ============================================================ */
+.vx-profile { position: relative; padding-top: 96px; padding-bottom: 84px; scroll-margin-top: 70px; }
+.vx-profile-tier { display: block; margin-bottom: 12px; color: var(--vx-lime); font: 600 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.15em; }
+.vx-profile-grid { margin-top: 52px; display: grid; grid-template-columns: minmax(300px, 0.38fr) minmax(0, 0.62fr); gap: 18px; align-items: start; }
+
+.vx-role-rail { display: flex; flex-direction: column; gap: 10px; }
+.vx-role-card { position: relative; text-align: left; padding: 16px 18px; border: 1px solid var(--vx-line); background: rgba(255, 255, 255, 0.018); cursor: pointer; transition: 260ms var(--vx-ease); }
+.vx-role-card > span { color: var(--vx-lime); font: 600 11px/1 var(--font-geist-mono), monospace; }
+.vx-role-card > strong { display: block; margin-top: 8px; font-size: 19px; font-weight: 560; letter-spacing: -0.03em; color: #e8edf3; }
+.vx-role-card > p { margin: 7px 0 0; color: #9aa5b1; font-size: 13px; line-height: 1.5; }
+.vx-role-card.is-lit { transform: translateY(-3px); border-color: color-mix(in srgb, var(--vx-lime) 45%, var(--vx-line)); background: rgba(255, 255, 255, 0.035); box-shadow: 0 0 26px color-mix(in srgb, var(--vx-lime) 12%, transparent); }
+.vx-role-weights { margin-top: 11px; display: flex; gap: 5px; }
+.vx-role-weights i { width: 22px; height: 5px; border-radius: 2.5px; background: rgba(255, 255, 255, 0.1); }
+.vx-role-weights i[data-w="1"] { background: color-mix(in srgb, var(--vx-lime) 35%, transparent); }
+.vx-role-weights i[data-w="2"] { background: var(--vx-lime); box-shadow: 0 0 8px color-mix(in srgb, var(--vx-lime) 55%, transparent); }
+.vx-role-evidence { margin-top: 10px; display: flex; gap: 7px; flex-wrap: wrap; }
+.vx-role-evidence a { padding: 5px 8px; border: 1px solid var(--vx-line); color: #b9c3cf; font: 550 10.5px/1 var(--font-geist-mono), monospace; text-decoration: none; transition: 200ms ease; }
+.vx-role-evidence a:hover { border-color: color-mix(in srgb, var(--vx-lime) 45%, var(--vx-line)); color: var(--vx-lime); }
+
+.vx-domain-stack { display: flex; flex-direction: column; gap: 8px; }
+.vx-domain-row { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; padding: 13px 16px; border: 1px solid var(--vx-line); background: rgba(255, 255, 255, 0.014); transition: 280ms var(--vx-ease); }
+.vx-domain-row.is-lit { border-color: color-mix(in srgb, var(--vx-lime) 42%, var(--vx-line)); background: rgba(255, 255, 255, 0.032); }
+.vx-domain-row.is-weighted { border-left: 2px solid color-mix(in srgb, var(--vx-lime) 65%, transparent); }
+.vx-domain-row strong { display: block; font-size: 14.5px; font-weight: 570; letter-spacing: -0.015em; color: #e4eaf1; }
+.vx-domain-kws { margin-top: 7px; display: flex; gap: 6px; flex-wrap: wrap; }
+.vx-domain-kws i { padding: 4px 8px; border: 1px solid var(--vx-line); background: rgba(255, 255, 255, 0.022); color: #aeb8c3; font: 520 10.5px/1.3 var(--font-geist-mono), monospace; font-style: normal; }
+.vx-domain-row.is-lit .vx-domain-kws i { color: #d8e2ea; border-color: color-mix(in srgb, var(--vx-lime) 26%, var(--vx-line)); }
+.vx-domain-row small { display: block; margin-top: 6px; min-height: 13px; color: var(--vx-lime); font: 520 10.5px/1.2 var(--font-geist-mono), monospace; opacity: 0.85; }
+.vx-domain-glyph { width: 46px; height: 46px; color: #66727f; transition: color 300ms ease; }
+.vx-domain-glyph.is-lit { color: var(--vx-lime); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--vx-lime) 35%, transparent)); }
+
+.vx-kw-tray { margin-top: 42px; border: 1px solid var(--vx-line); background: rgba(6, 8, 11, 0.9); padding: 18px 22px; }
+.vx-kw-tray > span { color: var(--vx-lime); font: 600 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.15em; }
+.vx-kw-tray > div { margin-top: 13px; display: flex; gap: 9px; flex-wrap: wrap; }
+.vx-kw-tray em { padding: 8px 12px; border: 1px solid var(--vx-line); color: #b3bdc9; font: 550 12.5px/1 var(--font-geist-mono), monospace; font-style: normal; transition: 420ms ease; }
+.vx-kw-tray em[data-flare="true"] { color: #0c1207; background: var(--vx-lime); border-color: var(--vx-lime); box-shadow: 0 0 22px color-mix(in srgb, var(--vx-lime) 45%, transparent); }
+
+@media (max-width: 940px) {
+  .vx-profile-grid { grid-template-columns: 1fr; }
+  .vx-domain-row { grid-template-columns: 40px 1fr; }
+}

@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const CHAPTER_LINES: Record<string, string> = {
   top: "Hi — I'm Spark. Scroll, and I'll explain every system as it runs.",
+  profile: "This is what I'm built for — four target roles, five domains, and the proof lives one scroll down.",
   projects: "Five systems, ordered for AI application & agent roles. The cards are touring themselves — or pick one.",
   antigravity: "A real interview turn is replaying. Watch the loop close in under a second.",
   filmora: "One creative brief becomes a finished edit. Every stage here is the runtime actually working.",
@@ -24,7 +25,7 @@ const CHAPTER_LINES: Record<string, string> = {
   research: "Five research specimens plus the bounded ops copilot — each one is a live mini-pipeline.",
 };
 
-const SECTION_IDS = ["top", "projects", "antigravity", "filmora", "mindscape", "research"];
+const SECTION_IDS = ["top", "profile", "projects", "antigravity", "filmora", "mindscape", "research"];
 
 type Watch = { section: string; step: string; title: string };
 
