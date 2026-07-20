@@ -348,3 +348,148 @@ look frozen during verification: reload the page first before debugging code.
 
 Deferred (user explicitly said skip this pass): mascot/guide changes.
 STATUS: best-of-both merge complete and verified. Committed c2a5d02.
+
+---
+
+## 2026-07-20 — Session 3b (Fable): DIRECTION CORRECTION — V2 IS THE CANVAS
+
+### What went wrong
+User (angrily, correctly): "I asked you to fork it directly on top of a duplicate
+V2." Sessions 1–3 built/kept a from-scratch shell (app/fable/experience) and pulled
+V2 pieces INTO it. The instruction was the inverse: the V2 site (portfolio-v2.tsx,
+vx design system, Geist) is the base; Fable's live scenes get reciprocated INSIDE
+it. LESSON (binding): when he says "inside V2", the V2 experience is the host —
+do not substitute a rebuilt shell, however verified.
+
+### Decision D8 — rehost (commit 45ffd72)
+- app/page.tsx + app/layout.tsx restored to boot PortfolioV2 (+ live-scenes.css).
+- New app/live-visuals.tsx adapter: LiveAntigravityVisual / LiveFilmoraVisual /
+  LiveMindScapeVisual / LiveLogisticsVisual / LiveResearchMini mount the fable live
+  scenes as V2 VisualComponents; per-stage useOnScreen gates the sim clock.
+- New app/live-scenes.css: standalone scene vocabulary + .vx-live-stage bridge
+  (--accent ← --active-accent etc.) so scenes paint in each vx chapter accent.
+- V2 step arrays extended: ANTIGRAVITY_STEPS + "Dual-lane runtime" (idx 3, 8 total);
+  FILMORA_STEPS + "Skill compilation" (idx 2, 8 total). Overview maps re-indexed
+  (AntigravityOverview INTELLIGENCE now 2–5, voice 6, rail 7; FilmoraOverview
+  CONTEXT 1–3, compiler 4, graph 5, timeline 6, rail 7). MindScape 7 steps map 1:1
+  (fable Pipeline scene unused — V2's Overview serves the high-level view).
+- New EditorGraphic (filmora.tsx) for V2's "Editor timeline" step — tracks land
+  live, playhead after PLAYBACK READY ✓.
+- RESEARCH grid: 5 articles (adds webGLR + COL-VEO), all with live minis; SqlMini
+  + DistillMini written in live-visuals.tsx; TinyML/webGLR/COL-VEO reuse BenchMini.
+- LogisticsChapter: V2 3-step copy rail + fable live console (full story runs
+  regardless of rail index). FlagshipChapter interval 6800 → 9400 ms.
+- Scene fns exported from app/fable/{antigravity,filmora,mindscape,systems}.tsx.
+  Fable shell (app/fable/experience + director tour + mascot) left intact but
+  unreferenced; git history holds everything.
+
+### VERIFICATION (on-screen, fresh page)
+- V2 shell boots; rails: antigravity 8, filmora 8, mindscape 7; 9 live stages;
+  research grid 5 articles (headings incl. webGLR + COL-VEO); logistics live.
+- LIVENESS inside V2 stage proven: dual-lane scene ran on screen (reply out ·
+  900 ms → ✓ 0.9 s → package ready → NEXT-Q pkg in READY QUEUE).
+- New scenes mount: filmora skills (idx 2), editor (idx 6), mindscape capture
+  (idx 0). React interactivity confirmed (rail clicks switch scenes).
+- Zero console errors after reload (hydration parity holds under V2 hosting).
+- tsc clean (app code).
+
+### Verification-env lessons (append to the quirks list)
+- V2 sets html{scroll-behavior:smooth} — ALL scrolls animate, and animations never
+  progress in the hidden preview page. Set documentElement.style.scrollBehavior=
+  "auto" and use behavior:"instant" before probing.
+- IntersectionObserver callbacks only run on rendering steps; in the hidden page
+  force one with preview_resize after moving scroll. A frozen sim at scrollY>0 is
+  usually a NOT-actually-on-screen stage (vx stages sit ~1100px into a chapter).
+STATUS: live scenes now run inside the V2 site. Committed 45ffd72.
+
+---
+
+## 2026-07-20 — Session 4 (Fable): FULL POLISH PASS — deconstructed checklist
+
+User tagged components with screenshots + V2 reference images. Binding: miss NOTHING.
+
+### HERO
+H1. Slow the hero typing speed.
+H2. New copy: "Hi—welcome to my portfolio. I am Yashwant Bhyri, a Year-4 Computer
+    Science & AI student at CUHK-Shenzhen (top 20 university in the world), with
+    1+ years of experience building advanced AI applications, agentic &
+    orchestration systems, and production-grade multimodal systems with advanced
+    memory and retrieval — through internships and research." Use numeral 4; CUHK
+    badge/symbol next to name.
+H3. Dynamic paint-brush/wave highlight sweeping over "CUHK-Shenzhen" and
+    "1+ years of experience" AFTER typing (MS-Paint painted-over effect).
+H4. Hero project deck: cards auto-rotate/flip continuously (no play button).
+
+### PROJECT INDEX
+P1. Heading: typed hook "So, what did I build?" + paint highlight; then typed
+    sub-line "Five AI systems that I built, explained from user input to
+    engineering outcome."
+P2. Cards auto-spotlight cycle using the EXISTING hover treatment (no new overlay):
+    quick pass ~1 s each 1→5, then slow pass ~2.5 s each, looping.
+
+### ALL FLAGSHIP CHAPTERS
+C1. Chapter title/copy typed out (typing effect per project heading).
+C2. High-level architecture: as the packet bubble travels, each tile lights with
+    the hover/click highlight in sequence (INPUT→INGRESS→INTELLIGENCE→OUTPUT etc.)
+C3. Boundary/overflow audit on EVERY scene.
+
+### ANTIGRAVITY
+A1. New chapter copy (his words): real-time AI interview software conducting
+    automated technical interviews at scale via a robust multi-agent orchestration
+    decision engine + integrated voice-layer agent.
+A2. INTELLIGENCE map-node glyph is broken — fix.
+A3. Loop scene: add avatar stickers (fictional candidate / Antigravity) V2-style.
+A4. STT scene: merge V2's token-pill partial transcript (word pills) — esp. the
+    transcript end/commit.
+A5. Trajectory: rename résumé chips to claim 1..4; Q1=claim-1 probe, Q2=depth
+    probe, Q3=pressure question. Fix text overflow: "next: Q4" chip + LIVE ANSWER.
+A6. Dual-lane: explain WHAT dual-lane is first (legend/definition in scene).
+A7. Orchestrator: redo input pills — visually storytelling mini-cards w/ glyphs.
+A8. Voice out: fix CACHE HIT pill overflow; fix "spoken to candidate" line
+    overflowing right edge.
+
+### FILMORA
+F1. New chapter copy: AI application engineering intern; end-to-end multimodal
+    production workflow (video+audio), multi-agent planning, AI integrated into
+    the Filmora enterprise editor via agents over a multimodal production graph.
+F2. Trend scene: platform logo badges next to names (6 platforms).
+F3. Skill scene rework: platform list w/ badges → scan → extract famous
+    audio/media snippets → skill compiler → trend-skill.md / design.md /
+    filmora-params.json.
+F4. Memory/reco: fix recommendation network bottom/right boundary overflow
+    (LiveNet output chips exceed viewBox).
+F5. Production graph: boundary check.
+F6. Editor timeline: fix empty "FOLD THE FUTURE" preview; upgrade to production-
+    DAG flavor: per-track API used, file type, agents involved, latency, async.
+F7. Observability: REMOVE trace waterfall. Build a signature loop graphic:
+    telemetry trace → agent eval → RL-style tuning → regression testing →
+    prompt/config tuning (cycling live), with API cost / orchestration 2% /
+    signal corpus as downstream improvement results.
+
+### MINDSCAPE
+M1. One-line description: clinical diagnosis prediction tool (direct).
+M2. Overview map glyphs (fuse/retrieve/reason/validate/review) are bad — rework
+    static glyphs (dynamic cool if possible).
+M3. Capture: keep; add patient/linguistic symbol labels toward perception.
+M4. Perception: MORE event tokens (5+), 2–3 linguistic sentences, keep v/a plane;
+    optional vector-DB hint.
+M5. Fusion: keep (very nice); fix BSV output chip boundary.
+M6. BSV strip: NOT audio-like bars — smarter vector representation (labeled dims).
+M7. Retrieval: real HNSW/FAISS operational graphic (layered small-world descent
+    on a vector DB). Switch example off sleep-disruption → another clinical
+    condition (low mood/anhedonia · DSM-5 §296.2x). Elevate RRF merge visual.
+M8. Reasoning: evidence sub-graphics — agent skims check-in logs top-to-bottom;
+    DSM-5 = RAG over the manual w/ retrieval hit.
+M9. Validation: polish + boundary.
+M10. Review: REMOVE Nancy; keep handoff summary + behavioral state.
+
+### RESEARCH
+R1. Fix spacing/text-overflow in TinyML / SQL / distill minis.
+R2. webGLR + COL-VEO: perfect, don't touch.
+
+### Execution order
+0) LiveNet bounds fix (F4/M5) + global overflow fixes (A5/A8/R1)
+1) vx additions: tile glow sync (C2), glyph fixes (A2/M2), spotlight cycle (P2)
+2) Hero (H1–H4) + Index (P1) + typed case headings (C1) + chapter copy (A1/F1/M1)
+3) Scene reworks: A3,A4,A6,A7 → F2,F3,F6,F7 → M4,M6,M7,M8,M10
+4) verify on screen → commit → ledger.

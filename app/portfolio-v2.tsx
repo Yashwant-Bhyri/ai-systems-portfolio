@@ -550,7 +550,7 @@ function useAutoplaySequence(
 }
 
 function useHeroChoreography(reducedMotion: boolean) {
-  const text = "Hi—welcome to my portfolio. I’m Yashwant Bhyri, a fourth‑year Computer Science & Engineering student at CUHK-Shenzhen with 1+ year of experience building AI applications, agent runtimes, and multimodal systems through internships and research.";
+  const text = "Hi—welcome to my portfolio. I am Yashwant Bhyri, a Year-4 Computer Science & AI student at CUHK-Shenzhen (top 20 university in the world), with 1+ years of experience building advanced AI applications, agentic & orchestration systems, and production-grade multimodal systems with advanced memory and retrieval — through internships and research.";
   const [cursor, setCursor] = useState(0);
   const [phase, setPhase] = useState<"boot" | "typing" | "resolve" | "split" | "ready">("boot");
 
@@ -577,10 +577,11 @@ function useHeroChoreography(reducedMotion: boolean) {
 
   useEffect(() => {
     if (phase !== "typing") return;
+    // Deliberately slower cadence — the intro should read as writing, not loading.
     const timer = window.setTimeout(() => {
       if (cursor >= text.length) setPhase("resolve");
-      else setCursor((value) => Math.min(text.length, value + 2));
-    }, cursor >= text.length ? 0 : 19 + (cursor % 5) * 2);
+      else setCursor((value) => Math.min(text.length, value + 1));
+    }, cursor >= text.length ? 0 : 26 + (cursor % 5) * 3);
     return () => window.clearTimeout(timer);
   }, [cursor, phase, text.length]);
 
@@ -619,20 +620,49 @@ function useHeroChoreography(reducedMotion: boolean) {
   return { text, cursor, phase, ready: phase === "ready", skip };
 }
 
+/** phrases that get the painted-over highlight once typing completes */
+const PAINT_PHRASES = ["CUHK-Shenzhen", "1+ years of experience"];
+
+function CuhkCrest() {
+  return (
+    <svg className="vx-cuhk-crest" viewBox="0 0 20 24" aria-label="CUHK" role="img">
+      <path d="M2 2 h16 v13 c0 4 -4 6 -8 7 c-4 -1 -8 -3 -8 -7 Z" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M6 8 h8 M6 12 h8 M10 8 v8" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
 function TypedWords({ text, cursor }: { text: string; cursor: number }) {
   const segments = useMemo(() => {
+    const paintRanges = PAINT_PHRASES.map((p) => {
+      const at = text.indexOf(p);
+      return at < 0 ? null : ([at, at + p.length] as const);
+    }).filter(Boolean) as (readonly [number, number])[];
     const parts = text.split(/(\s+)/);
+    let paintIdx = -1;
     return parts.map((segment, index) => {
       const start = parts.slice(0, index).join("").length;
-      return { segment, start, end: start + segment.length };
+      const end = start + segment.length;
+      const painted = !/^\s+$/.test(segment) && paintRanges.some(([a, b]) => start >= a && end <= b + 1);
+      if (painted) paintIdx += 1;
+      return { segment, start, end, painted, paintIdx: painted ? paintIdx : -1 };
     });
   }, [text]);
   return (
     <>
-      {segments.map(({ segment, start, end }, index) => {
+      {segments.map(({ segment, start, end, painted, paintIdx }, index) => {
         const visible = cursor <= start ? "" : segment.slice(0, Math.min(segment.length, cursor - start));
         const active = !/^\s+$/.test(segment) && cursor > start && cursor < end;
-        return <span key={`${segment}-${index}`} className={active ? "is-typing" : cursor >= end && !/^\s+$/.test(segment) ? "is-complete" : ""}>{visible}</span>;
+        const cls = [
+          active ? "is-typing" : cursor >= end && !/^\s+$/.test(segment) ? "is-complete" : "",
+          painted ? "is-paint" : "",
+        ].join(" ").trim();
+        return (
+          <span key={`${segment}-${index}`} className={cls} style={painted ? ({ "--paint-delay": `${0.25 + paintIdx * 0.16}s` } as CSSProperties) : undefined}>
+            {segment === "CUHK-Shenzhen" && cursor >= end ? <CuhkCrest /> : null}
+            {visible}
+          </span>
+        );
       })}
     </>
   );
@@ -687,7 +717,12 @@ function GalaxyField({ reducedMotion }: { reducedMotion: boolean }) {
 
 function HeroProjectDeck({ reducedMotion, ready }: { reducedMotion: boolean; ready: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  const deck = useAutoplaySequence(PROJECTS.length, 5000, ref, reducedMotion || !ready, { loop: true });
+  // The deck flips on its own, always — only hovering the controls pauses it,
+  // never merely resting the cursor on the cards.
+  const deck = useAutoplaySequence(PROJECTS.length, 4200, ref, reducedMotion || !ready, {
+    loop: true,
+    pointerSelector: ".vx-deck-controls",
+  });
   return (
     <div ref={ref} className="vx-hero-deck" data-ready={ready} data-motion-paused={!deck.playing} aria-hidden={!ready}>
       <div className="vx-deck-status"><i className={deck.playing ? "is-live" : ""} /> SELECTED SYSTEMS <span>{String(deck.index + 1).padStart(2, "0")} / 05</span></div>
@@ -750,17 +785,84 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
   );
 }
 
+/** Types text once the element scrolls into view. Returns visible slice + done. */
+function useTypeOnView(text: string, cps = 34) {
+  const ref = useRef<HTMLElement>(null);
+  const [started, setStarted] = useState(false);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) setStarted(true);
+    }, { threshold: 0.4 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!started || n >= text.length) return;
+    const timer = window.setTimeout(() => setN((v) => v + 1), 1000 / cps);
+    return () => window.clearTimeout(timer);
+  }, [started, n, text.length, cps]);
+  return { ref, visible: text.slice(0, n), done: n >= text.length, started };
+}
+
+/** Spotlight cycle for the project cards: one quick lap, then a slow lap, looping. */
+const SPOT_DURATIONS = [1000, 1000, 1000, 1000, 1000, 2500, 2500, 2500, 2500, 2500];
+
+const INDEX_SUB = "Five AI systems that I built, explained from user input to engineering outcome.";
+
 function ProjectIndex() {
+  const hook = useTypeOnView("So — what did I build?", 22);
+  const [subN, setSubN] = useState(0);
+  useEffect(() => {
+    if (!hook.done || subN >= INDEX_SUB.length) return;
+    const timer = window.setTimeout(() => setSubN((v) => v + 1), 24);
+    return () => window.clearTimeout(timer);
+  }, [hook.done, subN]);
+  const sub = { visible: INDEX_SUB.slice(0, subN), done: subN >= INDEX_SUB.length };
+  const [spot, setSpot] = useState(-1);
+  useEffect(() => {
+    if (!sub.done) return;
+    let step = 0;
+    let timer = 0;
+    const tick = () => {
+      setSpot(step % PROJECTS.length);
+      timer = window.setTimeout(() => {
+        step += 1;
+        tick();
+      }, SPOT_DURATIONS[step % SPOT_DURATIONS.length]);
+    };
+    tick();
+    return () => window.clearTimeout(timer);
+  }, [sub.done]);
   return (
     <section id="projects" className="vx-project-index vx-section-shell">
       <div className="vx-section-heading">
         <span>SELECTED WORK / FIVE SYSTEMS</span>
-        <h2>Five AI systems, explained from user input to engineering outcome.</h2>
+        <h2 ref={hook.ref as React.RefObject<HTMLHeadingElement>} className={`vx-typed-h ${hook.done ? "is-done" : ""}`} aria-label="So — what did I build?">
+          <span className="vx-typed-live" aria-hidden="true">
+            <em className="vx-paint-target">{hook.visible}</em>
+            {hook.started && !hook.done ? <i className="vx-type-caret" /> : null}
+          </span>
+          <b className="vx-typed-ghost" aria-hidden="true">So — what did I build?</b>
+        </h2>
+        <p className="vx-typed-sub">
+          <span className="vx-typed-live" aria-hidden="true">
+            {hook.done ? sub.visible : ""}
+            {hook.done && !sub.done ? <i className="vx-type-caret" /> : null}
+          </span>
+          <b className="vx-typed-ghost" aria-hidden="true">{INDEX_SUB}</b>
+        </p>
         <p>Choose a project, or keep scrolling for a guided architecture walkthrough.</p>
       </div>
       <div className="vx-project-grid">
-        {PROJECTS.map((project) => (
-          <a href={`#${project.id}`} key={project.id} className={`vx-project-card vx-accent-${project.accent}`}>
+        {PROJECTS.map((project, cardIdx) => (
+          <a
+            href={`#${project.id}`}
+            key={project.id}
+            className={`vx-project-card vx-accent-${project.accent} ${spot === cardIdx ? "is-spotlit" : ""}`}
+          >
             <div className="vx-project-meta"><span>{project.number}</span><i>{project.brand}</i></div>
             <h3>{project.category}</h3>
             <p>{project.summary}</p>
@@ -847,11 +949,19 @@ function CaseHeading({
   copy: string;
   accent: "lime" | "violet" | "cyan";
 }) {
+  const typedTitle = useTypeOnView(title, 46);
   return (
     <div className={`vx-case-heading vx-accent-${accent}`}>
       <span>{number} / {brand}</span>
       <small>{category}</small>
-      <h2>{title}</h2>
+      <h2 ref={typedTitle.ref as React.RefObject<HTMLHeadingElement>} className="vx-typed-h" aria-label={title}>
+        <span className="vx-typed-live" aria-hidden="true">
+          {typedTitle.visible}
+          {typedTitle.started && !typedTitle.done ? <i className="vx-type-caret" /> : null}
+        </span>
+        {/* reserves final height so the layout never jumps while typing */}
+        <b className="vx-typed-ghost" aria-hidden="true">{title}</b>
+      </h2>
       <p>{copy}</p>
     </div>
   );
@@ -939,8 +1049,8 @@ function AntigravityChapter() {
       number="01"
       brand="ANTIGRAVITY"
       category="AI-NATIVE TECHNICAL INTERVIEWING PLATFORM"
-      title="A real-time AI interviewer that converts every answer into evidence—and the next question."
-      copy="I built the voice-enabled interviewing engine, its two-track agent runtime, evidence-seeking route logic, and the recruiter intelligence layer that turns a live technical conversation into a defensible hiring artifact."
+      title="Real-time AI interview software that conducts automated technical interviews at scale."
+      copy="I built the real-time voice layer and the robust multi-agent orchestration decision engine behind it: streaming speech, evidence-seeking route logic, and the recruiter intelligence layer that turns a live technical conversation into a defensible hiring artifact."
       accent="lime"
       steps={ANTIGRAVITY_STEPS}
       Overview={AntigravityOverview}
@@ -966,8 +1076,8 @@ function FilmoraChapter() {
       number="02"
       brand="WONDERSHARE FILMORA · AIGC R&D"
       category="MULTIMODAL AI VIDEO-PRODUCTION RUNTIME"
-      title="One creative brief becomes a coordinated multimodal production graph."
-      copy="During my AIGC algorithms internship, I built the orchestration layer that combines live trend intelligence, memory, recommendation, schema-bound prompting, specialist media agents, editor assembly, and workflow observability."
+      title="An end-to-end multimodal production workflow, built into the Filmora enterprise editor."
+      copy="As an AI application engineering intern at Wondershare, I built agents into the Filmora enterprise software: multi-agent planning over a multimodal production graph — video, audio, dialogue, captions, effects — with live trend intelligence, memory, schema-bound prompting, and workflow observability."
       accent="violet"
       steps={FILMORA_STEPS}
       Overview={FilmoraOverview}
@@ -990,8 +1100,8 @@ function MindScapeChapter() {
       number="03"
       brand="MINDSCAPE"
       category="MULTIMODAL CLINICAL DECISION-SUPPORT ARCHITECTURE · PROTOTYPE"
-      title="Voice and affect become an inspectable clinical evidence trail."
-      copy="I designed a seven-layer system that keeps perception, state fusion, retrieval, reasoning, validation, and clinician review separate enough to inspect—yet connected as one coherent decision-support workflow."
+      title="A clinical diagnosis-prediction tool that keeps every step of its reasoning inspectable."
+      copy="MindScape predicts and supports clinical assessment from a patient session: seven layers — perception, state fusion, retrieval, reasoning, validation, clinician review — each separately inspectable, connected as one decision-support workflow. The clinician always owns the decision."
       accent="cyan"
       steps={MINDSCAPE_STEPS}
       Overview={MindScapeOverview}

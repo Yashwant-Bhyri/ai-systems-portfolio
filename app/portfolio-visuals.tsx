@@ -1,6 +1,17 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
+
+/** Cycles a glow index across the overview nodes, synced to the packet cadence —
+ *  each tile lights up (hover treatment) as the signal reaches it. */
+function useGlowCycle(count: number, stepMs = 1600) {
+  const [glow, setGlow] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setGlow((v) => (v + 1) % count), stepMs);
+    return () => window.clearInterval(timer);
+  }, [count, stepMs]);
+  return glow;
+}
 
 type OverviewProps = {
   active: number;
@@ -20,6 +31,7 @@ function MapNode({
   detail,
   glyph,
   active,
+  glow = false,
   onSelect,
 }: {
   step: number;
@@ -28,6 +40,7 @@ function MapNode({
   detail: string;
   glyph: MapGlyph;
   active: boolean;
+  glow?: boolean;
   onSelect: (index: number) => void;
 }) {
   return (
@@ -35,6 +48,7 @@ function MapNode({
       type="button"
       className="vx-map-node"
       data-active={active}
+      data-glow={glow}
       onClick={() => onSelect(step)}
       aria-pressed={active}
     >
@@ -107,16 +121,17 @@ function SignalMesh({
 }
 
 export function AntigravityOverview({ active, onSelect }: OverviewProps) {
+  const glow = useGlowCycle(4);
   return (
     <div className="vx-overview vx-overview-antigravity" role="group" aria-label="Antigravity high-level architecture">
       <div className="vx-overview-track">
-        <MapNode step={0} kicker="INPUT" title="Candidate answer" detail="Live voice + turn state" glyph="voice" active={active === 0} onSelect={onSelect} />
+        <MapNode step={0} kicker="INPUT" title="Candidate answer" detail="Live voice + turn state" glyph="voice" active={active === 0} glow={glow === 0} onSelect={onSelect} />
         <MapLink label="audio" />
-        <MapNode step={1} kicker="INGRESS" title="Streaming speech-to-text" detail="Partial → final transcript" glyph="transcript" active={active === 1} onSelect={onSelect} />
+        <MapNode step={1} kicker="INGRESS" title="Streaming speech-to-text" detail="Partial → final transcript" glyph="transcript" active={active === 1} glow={glow === 1} onSelect={onSelect} />
         <MapLink label="turn packet" />
-        <MapNode step={5} kicker="INTELLIGENCE" title="Interview orchestrator" detail="Parallel evidence → next route" glyph="agents" active={active >= 2 && active <= 5} onSelect={onSelect} />
+        <MapNode step={5} kicker="INTELLIGENCE" title="Interview orchestrator" detail="Parallel evidence → next route" glyph="agents" active={active >= 2 && active <= 5} glow={glow === 2} onSelect={onSelect} />
         <MapLink label="question" />
-        <MapNode step={6} kicker="OUTPUT" title="Prepared response audio" detail="Cached TTS + playback" glyph="audio" active={active === 6} onSelect={onSelect} />
+        <MapNode step={6} kicker="OUTPUT" title="Prepared response audio" detail="Cached TTS + playback" glyph="audio" active={active === 6} glow={glow === 3} onSelect={onSelect} />
       </div>
       <div className="vx-overview-return" aria-hidden="true"><i /><span>adaptive follow-up returns to the candidate</span></div>
       <button className="vx-evidence-rail" type="button" onClick={() => onSelect(7)} aria-pressed={active === 7} data-active={active === 7}>
@@ -228,18 +243,19 @@ export function AntigravityVisual({ active }: VisualProps) {
 }
 
 export function FilmoraOverview({ active, onSelect }: OverviewProps) {
+  const glow = useGlowCycle(5);
   return (
     <div className="vx-overview vx-overview-filmora" role="group" aria-label="Filmora multi-agent production architecture">
       <div className="vx-overview-track vx-overview-track-six">
-        <MapNode step={0} kicker="INPUT" title="Creative brief" detail="Intent + format + constraints" glyph="brief" active={active === 0} onSelect={onSelect} />
+        <MapNode step={0} kicker="INPUT" title="Creative brief" detail="Intent + format + constraints" glyph="brief" active={active === 0} glow={glow === 0} onSelect={onSelect} />
         <MapLink label="research" />
-        <MapNode step={1} kicker="CONTEXT" title="Trend intelligence" detail="700+ creative signals" glyph="sources" active={active >= 1 && active <= 3} onSelect={onSelect} />
+        <MapNode step={1} kicker="CONTEXT" title="Trend intelligence" detail="700+ creative signals" glyph="sources" active={active >= 1 && active <= 3} glow={glow === 1} onSelect={onSelect} />
         <MapLink label="compile" />
-        <MapNode step={4} kicker="CONTRACT" title="Prompt compiler" detail="Schema-bound instructions" glyph="compiler" active={active === 4} onSelect={onSelect} />
+        <MapNode step={4} kicker="CONTRACT" title="Prompt compiler" detail="Schema-bound instructions" glyph="compiler" active={active === 4} glow={glow === 2} onSelect={onSelect} />
         <MapLink label="dispatch" />
-        <MapNode step={5} kicker="PRODUCTION" title="Agent graph" detail="Parallel editable assets" glyph="dag" active={active === 5} onSelect={onSelect} />
+        <MapNode step={5} kicker="PRODUCTION" title="Agent graph" detail="Parallel editable assets" glyph="dag" active={active === 5} glow={glow === 3} onSelect={onSelect} />
         <MapLink label="assemble" />
-        <MapNode step={6} kicker="OUTPUT" title="Filmora timeline" detail="Editor-ready media tracks" glyph="timeline" active={active === 6} onSelect={onSelect} />
+        <MapNode step={6} kicker="OUTPUT" title="Filmora timeline" detail="Editor-ready media tracks" glyph="timeline" active={active === 6} glow={glow === 4} onSelect={onSelect} />
       </div>
       <button className="vx-telemetry-rail" type="button" onClick={() => onSelect(7)} aria-pressed={active === 7} data-active={active === 7}>
         <span>OBSERVABILITY RAIL</span><i /><i /><i /><i /><i /><strong>traces · evals · guardrails · latency · cost</strong>
@@ -348,6 +364,7 @@ export function FilmoraVisual({ active }: VisualProps) {
 }
 
 export function MindScapeOverview({ active, onSelect }: OverviewProps) {
+  const glow = useGlowCycle(7);
   const nodes = [
     [0, "CAPTURE", "Voice session", "WebRTC + rolling buffer", "capture"],
     [1, "PERCEIVE", "Multimodal signals", "text + events + affect", "perceive"],
@@ -360,7 +377,7 @@ export function MindScapeOverview({ active, onSelect }: OverviewProps) {
   return (
     <div className="vx-overview vx-overview-mindscape" role="group" aria-label="MindScape seven-layer clinical intelligence architecture">
       <div className="vx-mind-overview-track">
-        {nodes.map(([step, kicker, title, detail, glyph], index) => <div className="vx-mind-overview-unit" key={kicker}><MapNode step={step} kicker={kicker} title={title} detail={detail} glyph={glyph} active={active === step} onSelect={onSelect} />{index < nodes.length - 1 ? <MapLink label={index === 2 ? "BSV" : index === 5 ? "release" : "evidence"} /> : null}</div>)}
+        {nodes.map(([step, kicker, title, detail, glyph], index) => <div className="vx-mind-overview-unit" key={kicker}><MapNode step={step} kicker={kicker} title={title} detail={detail} glyph={glyph} active={active === step} glow={glow === index} onSelect={onSelect} />{index < nodes.length - 1 ? <MapLink label={index === 2 ? "BSV" : index === 5 ? "release" : "evidence"} /> : null}</div>)}
       </div>
       <div className="vx-mind-feedback" aria-hidden="true"><i /><span>clinician feedback and longitudinal context return to the evidence layer</span></div>
       <div className="vx-map-packet vx-map-packet-mindscape" aria-hidden="true" />

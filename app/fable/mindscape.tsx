@@ -125,7 +125,7 @@ export function CaptureGraphic({ a }: { a: boolean }) {
           </g>
         );
       })}
-      <text x={30} y={314} className="svg-sub tiny">→ perception</text>
+      <text x={30} y={314} className="svg-sub tiny">patient audio → linguistic · event · affect perception</text>
 
       <text x={30} y={380} className="svg-note">
         Nothing waits for the session to end — audio ships downstream in one-second packets while the patient is still talking.
@@ -137,9 +137,17 @@ export function CaptureGraphic({ a }: { a: boolean }) {
 /* ---------- 3 · PERCEIVE — one voice splits into three live channels ---------- */
 
 const EVENT_TOKENS = [
-  { tok: "<silence>", at: 1600 },
-  { tok: "<breath>", at: 3600 },
-  { tok: "<sigh>", at: 5800 },
+  { tok: "<silence>", at: 1200 },
+  { tok: "<breath>", at: 2400 },
+  { tok: "<sigh>", at: 3600 },
+  { tok: "<tremor>", at: 4800 },
+  { tok: "<pause>", at: 6000 },
+  { tok: "<pace↓>", at: 7200 },
+];
+const LINGUISTIC = [
+  { text: "“I haven't slept well…”", at: 900 },
+  { text: "“work feels heavier…”", at: 3300 },
+  { text: "“I cancel plans a lot…”", at: 5700 },
 ];
 
 export function PerceiveGraphic({ a }: { a: boolean }) {
@@ -161,27 +169,33 @@ export function PerceiveGraphic({ a }: { a: boolean }) {
         <path key={i} d={`M 290 65 C 340 65 ${120 + i * 190} 90 ${130 + i * 190} 112`} className="lv-edge" style={{ opacity: 0.25 + 0.5 * pulse(t + i * 380, 1150) }} />
       ))}
 
-      {/* linguistic */}
+      {/* linguistic — a real stretch of session language */}
       <g className="lv-box">
         <rect x={40} y={112} width={180} height={166} rx={11} />
         <text x={54} y={136} className="svg-sub tiny">LINGUISTIC</text>
-        <text x={54} y={162} className="svg-mono tinytext">“{typed("I haven't slept", t, 900, 2400)}</text>
-        <text x={54} y={180} className="svg-mono tinytext">{typed("well since the", t, 2400, 3900)}</text>
-        <text x={54} y={198} className="svg-mono tinytext">{typed("move…”", t, 3900, 4900)}{t > 900 && t < 5100 ? caret(t) : ""}</text>
+        {LINGUISTIC.map((ln, i) => (
+          <text key={ln.text} x={54} y={160 + i * 26} className="svg-mono tinytext">
+            {typed(ln.text, t, ln.at, ln.at + 1900)}
+            {t > ln.at && t < ln.at + 2000 ? caret(t) : ""}
+          </text>
+        ))}
+        <text x={54} y={240} className="svg-sub tiny" style={{ opacity: t > 7800 ? 1 : 0.4 }}>→ embedded per sentence</text>
         <text x={54} y={262} className="svg-sub tiny">transcript embeddings</text>
       </g>
 
-      {/* event tokens */}
+      {/* event tokens — the paralinguistic stream */}
       <g className="lv-box">
         <rect x={230} y={112} width={180} height={166} rx={11} />
         <text x={244} y={136} className="svg-sub tiny">EVENT TOKENS</text>
         {EVENT_TOKENS.map((e2, i) => {
           const p = eph(t, e2.at, e2.at + 400);
+          const col = i % 2;
+          const row = Math.floor(i / 2);
           return (
             <g key={e2.tok} style={rise(p, 8)}>
               <g className={`lv-chip ${t > e2.at && t < e2.at + 1100 ? "win" : ""}`}>
-                <rect x={244} y={148 + i * 34} width={94} height={26} rx={8} />
-                <text x={291} y={165 + i * 34} textAnchor="middle" className="svg-mono tinytext">{e2.tok}</text>
+                <rect x={242 + col * 80} y={148 + row * 32} width={76} height={24} rx={8} />
+                <text x={280 + col * 80} y={164 + row * 32} textAnchor="middle" className="svg-sub tiny">{e2.tok}</text>
               </g>
             </g>
           );
@@ -246,26 +260,22 @@ export function FuseGraphic({ a }: { a: boolean }) {
         start={600}
       />
 
-      {/* the BSV, updating live */}
+      {/* the BSV — named dimensions with live magnitudes, not an audio bar */}
       <g className="lv-box hot">
         <rect x={30} y={252} width={580} height={104} rx={12} />
-        <text x={48} y={278} className="svg-sub">BEHAVIORAL STATE VECTOR · one reusable patient-state representation</text>
-        {Array.from({ length: 18 }).map((_, i) => {
-          const v = 0.2 + 0.7 * noise(i * 2 + 1, t / 2.4);
-          const settled = t > 2800;
+        <text x={48} y={276} className="svg-sub">BEHAVIORAL STATE VECTOR · one reusable patient-state representation</text>
+        {["sleep debt", "affect", "speech", "adherence", "energy", "risk"].map((dim, i) => {
+          const v = 0.25 + 0.65 * noise(i * 3 + 1, t / 2.6);
+          const on2 = eph(t, 1400 + i * 150, 2100 + i * 150);
           return (
-            <rect
-              key={i}
-              x={48 + i * 30}
-              y={q(340 - 50 * v)}
-              width={18}
-              height={q(50 * v + 4)}
-              rx={3}
-              className="lv-bar"
-              style={{ opacity: settled ? 0.9 : 0.25 + 0.65 * eph(t, 1400 + i * 80, 2000 + i * 80) }}
-            />
+            <g key={dim} style={{ opacity: 0.3 + 0.7 * on2 }}>
+              <rect x={48 + i * 94} y={286} width={86} height={40} rx={7} className="lv-bsvcell" style={{ fillOpacity: q(0.12 + 0.5 * v * on2) }} />
+              <text x={91 + i * 94} y={302} textAnchor="middle" className="svg-sub tiny">{dim}</text>
+              <text x={91 + i * 94} y={319} textAnchor="middle" className="svg-mono tinytext">{(v * on2).toFixed(2)}</text>
+            </g>
           );
         })}
+        <text x={48} y={346} className="svg-sub tiny">re-used by retrieval, reasoning, and review — the same state, everywhere</text>
       </g>
 
       <text x={30} y={392} className="svg-note">
@@ -277,23 +287,32 @@ export function FuseGraphic({ a }: { a: boolean }) {
 
 /* ---------- 5 · RETRIEVE — HNSW scatter + BM25 bars race, RRF, rerank ---------- */
 
-const HNSW_PTS: [number, number][] = [
-  [24, 30], [58, 18], [92, 44], [130, 26], [40, 66], [78, 78], [116, 62], [150, 80],
-  [30, 104], [66, 112], [104, 96], [142, 118], [20, 138], [56, 146], [96, 132], [138, 148],
+/** HNSW layers: sparse top layer → dense bottom; the search descends. */
+const HNSW_LAYERS: { y: number; xs: number[] }[] = [
+  { y: 26, xs: [40, 92, 140] },
+  { y: 72, xs: [24, 62, 96, 128, 156] },
+  { y: 122, xs: [16, 38, 60, 82, 104, 126, 148, 164] },
 ];
-const HNSW_HITS = [2, 7, 10];
-const BM25_ROWS: [string, number][] = [["“sleep disruption”", 88], ["“anxiety episode”", 73], ["check-in log terms", 61], ["note 2026-05-12", 48], ["clinic intake", 39]];
-const MERGED = ["DSM-5 §300.02 GAD", "“sleep disruption”", "session 11, turn 8", "check-in log terms", "affect baseline"];
+/** the descent path: [layer, node-index] hops */
+const HNSW_PATH: [number, number][] = [[0, 1], [1, 2], [1, 3], [2, 5], [2, 6]];
+const BM25_ROWS: [string, number][] = [["“anhedonia”", 88], ["“low mood”", 73], ["PHQ-9 mentions", 61], ["note 2026-06-02", 48], ["clinic intake", 39]];
+const MERGED = [
+  { label: "DSM-5 §296.22 MDD", src: "D1" },
+  { label: "“anhedonia”", src: "L1" },
+  { label: "session 9 · turn 4", src: "D2" },
+  { label: "“low mood”", src: "L2" },
+  { label: "PHQ-9 trend ↑", src: "D3" },
+];
 
 export function RetrievalGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 11000;
   const t = el % L;
-  const qtext = typed("sleep disruption + affect change", t, 200, 1300);
-  const probeR = 90 * eph(t, 1600, 3400);
+  const qtext = typed("persistent low mood + anhedonia", t, 200, 1300);
   const mergeP = eph(t, 5000, 6200);
   const scanStart = 6600;
   const scanRow = Math.min(4, Math.floor(Math.max(0, t - scanStart) / 480));
+  const hop = Math.min(HNSW_PATH.length - 1, Math.floor(Math.max(0, t - 1600) / 550));
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
@@ -303,23 +322,50 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
         <text x={44} y={59} className="svg-mono tinytext">“{qtext}{t < 1400 ? caret(t) : ""}”</text>
       </g>
 
-      {/* DENSE lane: HNSW neighborhood, probe expanding, hits lighting */}
+      {/* DENSE lane: HNSW descent — coarse top layer, greedy hops, dense floor */}
       <g style={{ opacity: mergeP > 0 ? Math.max(0.3, 1 - mergeP) : 1 }}>
         <text x={30} y={96} className="svg-sub tiny">DENSE · MedCPT over HNSW/Faiss</text>
         <g transform="translate(36,106)">
           <rect x={0} y={0} width={172} height={162} rx={10} className="lv-track" />
-          {probeR > 0 && probeR < 90 && <circle cx={86} cy={82} r={q(probeR)} className="lv-ripple" />}
-          {HNSW_PTS.map(([px, py], i) => {
-            const isHit = HNSW_HITS.includes(i);
-            const litAt = 2000 + HNSW_HITS.indexOf(i) * 500;
-            const lit = isHit && t > litAt;
+          {HNSW_LAYERS.map((ly, li) => (
+            <g key={li}>
+              <text x={4} y={ly.y - 8} className="svg-sub tiny" style={{ opacity: 0.55 }}>L{2 - li}</text>
+              <line x1={8} y1={ly.y - 14} x2={164} y2={ly.y - 14} className="lv-tick" style={{ opacity: 0.25 }} />
+              {ly.xs.map((px, ni) => {
+                const onPath = HNSW_PATH.some(([pl, pn], k) => pl === li && pn === ni && k <= hop && t > 1600);
+                const isFinal = t > 1600 + 4 * 550 && li === 2 && (ni === 5 || ni === 6);
+                return (
+                  <circle
+                    key={ni}
+                    cx={px}
+                    cy={ly.y}
+                    r={isFinal ? 4.6 : onPath ? 3.8 : 2.4}
+                    className={onPath || isFinal ? "lv-pulse" : "lv-hidnode"}
+                    style={{ opacity: onPath || isFinal ? 1 : 0.45 }}
+                  />
+                );
+              })}
+            </g>
+          ))}
+          {/* the greedy hops, drawn as the search descends */}
+          {HNSW_PATH.slice(0, hop + 1).map(([pl, pn], k) => {
+            if (k === 0 || t < 1600) return null;
+            const [al, an] = HNSW_PATH[k - 1];
             return (
-              <g key={i}>
-                <circle cx={px + 8} cy={py} r={lit ? 4.4 : 2.6} className={lit ? "lv-pulse" : "lv-hidnode"} style={{ opacity: lit ? 1 : 0.5 }} />
-                {lit && <text x={px + 16} y={py + 4} className="svg-sub tiny">{[0.92, 0.85, 0.77][HNSW_HITS.indexOf(i)].toFixed(2)}</text>}
-              </g>
+              <line
+                key={k}
+                x1={HNSW_LAYERS[al].xs[an]}
+                y1={HNSW_LAYERS[al].y}
+                x2={HNSW_LAYERS[pl].xs[pn]}
+                y2={HNSW_LAYERS[pl].y}
+                className="lv-edge win"
+                style={{ opacity: 0.8 }}
+              />
             );
           })}
+          <text x={86} y={156} textAnchor="middle" className="svg-sub tiny">
+            {t < 1600 ? "vector index idle" : hop < 4 ? "descending layers…" : "2 nearest found · 0.92 / 0.85"}
+          </text>
         </g>
       </g>
 
@@ -340,7 +386,7 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
       </g>
       <text x={215} y={190} textAnchor="middle" className="lv-phase small" style={{ opacity: t > 1600 && t < 5000 ? 1 : 0 }}>RACING</text>
 
-      {/* RRF merge → rerank sweep → top-k */}
+      {/* RRF merge — ranked lists visibly interleave (D=dense, L=lexical) → rerank sweep */}
       <text x={430} y={96} className="svg-sub tiny">RRF MERGE → BioLinkBERT RERANK</text>
       {MERGED.map((m, i) => {
         const p = eph(t, 5100 + i * 240, 5500 + i * 240);
@@ -349,10 +395,12 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
         const promoted = i === 3 && t > scanStart + 4 * 480;
         const yy = promoted ? 106 + 2 * 32 : 106 + i * 32 + (i === 2 && t > scanStart + 4 * 480 ? 32 : 0);
         return (
-          <g key={m} className={`lv-chip ${i < 3 && t > 9200 ? "win" : ""}`} style={{ opacity: p }}>
-            {scanning && <rect x={424} y={q(yy - 2)} width={200} height={30} rx={8} className="scanline" style={{ opacity: 0.5 + 0.4 * pulse(t, 300) }} />}
-            <rect x={430} y={q(yy)} width={188} height={26} rx={8} />
-            <text x={438} y={q(yy + 17)} className="svg-mono tinytext">{m}</text>
+          <g key={m.label} className={`lv-chip ${i < 3 && t > 9200 ? "win" : ""}`} style={{ opacity: p }}>
+            {scanning && <rect x={424} y={q(yy - 2)} width={204} height={30} rx={8} className="scanline" style={{ opacity: 0.5 + 0.4 * pulse(t, 300) }} />}
+            <rect x={430} y={q(yy)} width={192} height={26} rx={8} />
+            <rect x={434} y={q(yy + 4)} width={20} height={18} rx={5} className={m.src.startsWith("D") ? "lv-srcbadge dense" : "lv-srcbadge"} />
+            <text x={444} y={q(yy + 17)} textAnchor="middle" className="svg-sub tiny">{m.src}</text>
+            <text x={460} y={q(yy + 17)} className="svg-mono tinytext">{m.label}</text>
           </g>
         );
       })}
@@ -367,12 +415,50 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
 
 /* ---------- 6 · REASON — evidence lights up as the words appear ---------- */
 
-const DRAFT = "Sleep disruption pattern consistent with reported anxiety episodes.";
+const DRAFT = "Low-mood pattern with anhedonia, consistent across sessions.";
 const EVIDENCE = [
-  { label: "check-in log · 5 of last 7 nights", trigger: 1900, y: 198 },
-  { label: "DSM-5 criteria §300.02 · retrieval hit", trigger: 3600, y: 250 },
-  { label: "session transcript · turn 14", trigger: 5300, y: 302 },
+  { label: "check-in log · agent skims 7 nights", trigger: 1900, y: 178, kind: "log" },
+  { label: "RAG over DSM-5 · §296.22 retrieved", trigger: 3600, y: 236, kind: "rag" },
+  { label: "session transcript · turn 14 skim", trigger: 5300, y: 294, kind: "skim" },
 ];
+
+/** mini operation inside each evidence panel */
+function EvidenceInset({ kind, x, y, t, lit }: { kind: string; x: number; y: number; t: number; lit: boolean }) {
+  if (!lit) return null;
+  if (kind === "log") {
+    const scanY = 4 + (((t / 14) % 34) + 34) % 34;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        {[0, 1, 2, 3].map((i) => (
+          <rect key={i} x={0} y={4 + i * 9} width={q(52 - (i % 2) * 12)} height={4} rx={2} className="lv-feedbar" />
+        ))}
+        <rect x={-3} y={q(scanY)} width={60} height={5} rx={2.5} className="scanline" style={{ opacity: 0.85 }} />
+        <circle cx={62} cy={q(scanY + 2)} r={3} className="lv-pulse" />
+      </g>
+    );
+  }
+  if (kind === "rag") {
+    const hitOn = Math.floor(t / 700) % 2 === 0;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <rect x={0} y={0} width={44} height={42} rx={4} className="lv-track" />
+        {[0, 1, 2, 3].map((i) => (
+          <rect key={i} x={5} y={6 + i * 9} width={i === 2 ? 34 : 26} height={4} rx={2} className={i === 2 ? "lv-bar" : "lv-feedbar"} style={i === 2 ? { opacity: hitOn ? 1 : 0.5 } : undefined} />
+        ))}
+        <text x={52} y={16} className="svg-sub tiny">§296.22</text>
+        <text x={52} y={30} className="tick ok">hit ✓</text>
+      </g>
+    );
+  }
+  const u = (((t / 16) % 56) + 56) % 56;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={0} y={12} className="svg-sub tiny">“…nothing feels fun…”</text>
+      <rect x={0} y={18} width={q(Math.min(56, u) * 1.9)} height={3} rx={1.5} className="lv-bar" />
+      <text x={0} y={36} className="svg-sub tiny">skimming turn 14</text>
+    </g>
+  );
+}
 
 export function ReasonGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
@@ -394,17 +480,18 @@ export function ReasonGraphic({ a }: { a: boolean }) {
         return (
           <g key={e2.label}>
             <path
-              d={`M ${170 + i * 130} 130 C ${170 + i * 130} 166 ${200} ${e2.y + 16} 186 ${e2.y + 16}`}
+              d={`M ${170 + i * 130} 130 C ${170 + i * 130} 160 ${200} ${e2.y + 24} 186 ${e2.y + 24}`}
               className={`lv-edge ${lit ? "win" : ""}`}
               pathLength={100}
               strokeDasharray="100 100"
               strokeDashoffset={100 - p * 100}
             />
             <g className={`lv-chip ${lit && t < e2.trigger + 900 ? "win" : ""}`} style={{ opacity: Math.max(0.25, p) }}>
-              <rect x={186} y={e2.y} width={330} height={34} rx={9} />
+              <rect x={186} y={e2.y} width={400} height={50} rx={10} />
               <text x={202} y={e2.y + 22} className="svg-mono tinytext">↳ {e2.label}</text>
+              <EvidenceInset kind={e2.kind} x={470} y={e2.y + 4} t={t} lit={lit} />
             </g>
-            {lit && <text x={530} y={e2.y + 22} className="tick ok" style={rise(p, 4)}>✓</text>}
+            {lit && <text x={600} y={e2.y + 30} className="tick ok" style={rise(p, 4)}>✓</text>}
           </g>
         );
       })}
@@ -416,9 +503,9 @@ export function ReasonGraphic({ a }: { a: boolean }) {
         ["follow-ups", "3 questions"],
       ].map(([k2, v], i) => (
         <g key={k2} className="lv-chip win" style={rise(eph(t, 6800 + i * 380, 7250 + i * 380), 8)}>
-          <rect x={60 + i * 180} y={352} width={164} height={34} rx={9} />
-          <text x={74 + i * 180} y={366} className="svg-mono tinytext">{k2}</text>
-          <text x={74 + i * 180} y={380} className="svg-sub tiny">{v}</text>
+          <rect x={60 + i * 180} y={358} width={164} height={34} rx={9} />
+          <text x={74 + i * 180} y={372} className="svg-mono tinytext">{k2}</text>
+          <text x={74 + i * 180} y={386} className="svg-sub tiny">{v}</text>
         </g>
       ))}
 
@@ -432,7 +519,7 @@ export function ReasonGraphic({ a }: { a: boolean }) {
 /* ---------- 7 · VALIDATE — claims scanned live; one is stopped ---------- */
 
 const V_CLAIMS = [
-  { text: "sleep ↔ anxiety pattern", entail: 0.94, at: 800, ok: true },
+  { text: "low mood ↔ anhedonia", entail: 0.94, at: 800, ok: true },
   { text: "“responding well to CBT”", entail: 0.31, at: 3600, ok: false },
   { text: "adherence improving", entail: 0.88, at: 6400, ok: true },
 ];
@@ -498,23 +585,19 @@ export function ValidateGraphic({ a }: { a: boolean }) {
 
 /* ---------- 8 · REVIEW — handoff assembles; radar + Nancy keep it alive ---------- */
 
-const CHAT = [
-  { who: "nancy", text: "how did you sleep last night?", at: 1200 },
-  { who: "patient", text: "better — about six hours", at: 3200 },
-  { who: "nancy", text: "that's two nights improving ✓", at: 5200 },
-];
 const HANDOFF_ROWS = [
   "Timeline of 14 sessions",
   "3 flagged patterns, each sourced",
-  "Nancy async check-in digest",
+  "Between-session check-in digest",
   "Suggested — never automatic — actions",
 ];
+const RADAR_AXES = ["affect", "language", "events", "Δ baseline"];
 
 export function ReviewGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 9800;
   const t = el % L;
-  const sparkN = 3 + CHAT.filter((c) => t > c.at + 600).length * 2;
+  const sparkN = Math.min(10, 3 + Math.floor(t / 1200));
   const radarVals = [0.7, 0.5, 0.8, 0.55].map((v, i) => v * (0.85 + 0.15 * noise(i * 4 + 2, t / 3)));
   const sweep = (t / 2400) % 1;
 
@@ -533,54 +616,44 @@ export function ReviewGraphic({ a }: { a: boolean }) {
         <text x={54} y={314} className="tick ok" style={{ opacity: eph(t, 4800, 5300) }}>clinician stays the decision-maker ✓</text>
       </g>
 
-      {/* Nancy's async loop */}
+      {/* behavioral state — the fused vector the clinician actually reads */}
       <g className="lv-box hot">
-        <rect x={380} y={36} width={240} height={168} rx={12} />
-        <text x={398} y={62} className="svg-sub">NANCY · between-session check-in</text>
-        {CHAT.map((c, i) => {
-          const p = eph(t, c.at, c.at + 450);
-          if (p <= 0) return null;
-          const left = c.who === "patient";
-          return (
-            <g key={c.at} style={rise(p, 8)}>
-              <rect x={left ? 396 : 436} y={72 + i * 42} width={172} height={28} rx={10} className={left ? "lv-bubble" : "lv-bubble nancy"} />
-              <text x={left ? 406 : 446} y={90 + i * 42} className="svg-mono tinytext">{typed(c.text, t, c.at, c.at + 900)}</text>
-            </g>
-          );
-        })}
-      </g>
-
-      {/* behavioral radar + growing timeline */}
-      <g className="lv-box">
-        <rect x={380} y={224} width={240} height={132} rx={12} />
-        <text x={398} y={248} className="svg-sub tiny">BEHAVIORAL STATE</text>
-        <g transform="translate(432,306)">
-          {[12, 24, 36].map((r) => (
+        <rect x={380} y={36} width={240} height={300} rx={12} />
+        <text x={398} y={62} className="svg-sub">BEHAVIORAL STATE · live</text>
+        <g transform="translate(500,150)">
+          {[16, 32, 48].map((r) => (
             <circle key={r} cx={0} cy={0} r={r} className="lv-ring track" style={{ opacity: 0.5 }} />
           ))}
-          <line x1={0} y1={0} x2={q(36 * Math.cos(sweep * Math.PI * 2))} y2={q(36 * Math.sin(sweep * Math.PI * 2))} className="lv-edge" style={{ opacity: 0.5 }} />
+          <line x1={0} y1={0} x2={q(48 * Math.cos(sweep * Math.PI * 2))} y2={q(48 * Math.sin(sweep * Math.PI * 2))} className="lv-edge" style={{ opacity: 0.5 }} />
           <polygon
             points={radarVals
               .map((v, i) => {
                 const ang = (i / 4) * Math.PI * 2 - Math.PI / 2;
-                return `${q(36 * v * Math.cos(ang))},${q(36 * v * Math.sin(ang))}`;
+                return `${q(48 * v * Math.cos(ang))},${q(48 * v * Math.sin(ang))}`;
               })
               .join(" ")}
             className="lv-radar"
           />
+          {RADAR_AXES.map((ax, i) => {
+            const ang = (i / 4) * Math.PI * 2 - Math.PI / 2;
+            return (
+              <text key={ax} x={q(60 * Math.cos(ang))} y={q(60 * Math.sin(ang) + 3)} textAnchor="middle" className="svg-sub tiny">{ax}</text>
+            );
+          })}
         </g>
-        <text x={492} y={266} className="svg-sub tiny">timeline · growing</text>
+        <text x={398} y={244} className="svg-sub tiny">validated timeline · growing each session</text>
         <polyline
           points={Array.from({ length: sparkN })
-            .map((_, i) => `${q(492 + i * 14)},${q(330 - 26 * noise(i * 2 + 3, 1000) - (i > 5 ? 8 : 0))}`)
+            .map((_, i) => `${q(398 + i * 21)},${q(290 - 26 * noise(i * 2 + 3, 1000) - (i > 5 ? 8 : 0))}`)
             .join(" ")}
           className="lv-line"
         />
-        {t > 5800 && <circle cx={q(492 + (sparkN - 1) * 14)} cy={q(330 - 26 * noise((sparkN - 1) * 2 + 3, 1000) - 8)} r={3.4} className="lv-pulse" style={{ opacity: 0.4 + 0.6 * pulse(t, 800) }} />}
+        {t > 3600 && <circle cx={q(398 + (sparkN - 1) * 21)} cy={q(290 - 26 * noise((sparkN - 1) * 2 + 3, 1000) - (sparkN - 1 > 5 ? 8 : 0))} r={3.4} className="lv-pulse" style={{ opacity: 0.4 + 0.6 * pulse(t, 800) }} />}
+        <text x={398} y={324} className="tick ok" style={{ opacity: eph(t, 6200, 6700) }}>human-owned decision ✓</text>
       </g>
 
       <text x={30} y={392} className="svg-note">
-        The loop keeps running between sessions — each check-in you watched lands on the same validated timeline the clinician reads.
+        Everything the pipeline computed lands in one inspectable surface — and the decision stays with the clinician.
       </text>
     </svg>
   );

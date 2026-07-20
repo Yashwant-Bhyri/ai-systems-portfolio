@@ -118,7 +118,7 @@ export function LiveLogisticsVisual({ active: _active }: { active: number }) {
 function SqlMini({ a }: { a: boolean }) {
   const el = useSim(a);
   const t = el % 8800;
-  const sql = typed("SELECT route_id, delay_risk\nFROM evidence JOIN routes USING (route_id)\nWHERE risk_score > ?", t, 900, 3400);
+  const sql = typed("SELECT route_id, delay_risk\nFROM evidence JOIN routes\nWHERE risk_score > ?", t, 900, 3400);
   const lines = sql.split("\n");
   const exOk = t > 4200;
   return (

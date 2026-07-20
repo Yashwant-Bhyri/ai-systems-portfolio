@@ -178,8 +178,8 @@ export function LiveNet({
 }) {
   const inX = x + 54;
   const hidX = x + w * 0.44;
-  const coreX = x + w * 0.66;
-  const outX = x + w - 52;
+  const coreX = x + w * 0.64;
+  const outX = x + w - 110; // chip width 104 stays inside the viewBox
   const coreY = y + h / 2;
   const inY = (i: number) => y + (h * (i + 0.5)) / inputs.length;
   const hidY = (j: number) => y + (h * (j + 0.5)) / hidden;

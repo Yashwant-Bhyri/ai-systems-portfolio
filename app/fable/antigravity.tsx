@@ -42,11 +42,16 @@ export function LoopGraphic({ a }: { a: boolean }) {
         <path d={ring} className="lv-ring tip" pathLength={100} strokeDasharray="1.6 100" strokeDashoffset={-(arc - 1.6)} />
       )}
 
-      {/* candidate */}
+      {/* candidate — with an actual person in the room */}
       <g className={`lv-node ${listening ? "is-live" : ""}`}>
         <rect x={44} y={172} width={170} height={72} rx={12} />
-        <text x={129} y={198} textAnchor="middle" className="svg-label">CANDIDATE</text>
-        <text x={129} y={216} textAnchor="middle" className="svg-sub">{listening ? "speaking now" : "listening"}</text>
+        <g className="lv-avatar">
+          <circle cx={72} cy={198} r={13} />
+          <circle cx={72} cy={193} r={5} />
+          <path d="M 63 205 a 9 7 0 0 1 18 0" />
+        </g>
+        <text x={144} y={198} textAnchor="middle" className="svg-label small">CANDIDATE</text>
+        <text x={144} y={216} textAnchor="middle" className="svg-sub tiny">{listening ? "fictional · speaking" : "listening"}</text>
       </g>
       <Wave x={54} y={252} w={150} h={26} t={t} on={listening ? 1 : 0.06} />
 
@@ -67,11 +72,17 @@ export function LoopGraphic({ a }: { a: boolean }) {
         </text>
       </g>
 
-      {/* TTS */}
+      {/* TTS — the AI interviewer avatar */}
       <g className={`lv-node ${speaking ? "is-live" : ""}`}>
         <rect x={244} y={318} width={190} height={54} rx={12} />
-        <text x={339} y={340} textAnchor="middle" className="svg-label">VOICE OUT · TTS</text>
-        <text x={339} y={358} textAnchor="middle" className="svg-sub">{speaking ? "speaking the next question" : "idle"}</text>
+        <g className="lv-avatar bot">
+          <circle cx={268} cy={345} r={13} />
+          <rect x={261} y={338} width={14} height={11} rx={3} />
+          <circle cx={265.5} cy={343} r={1.6} className="lv-avatar-eye" />
+          <circle cx={270.5} cy={343} r={1.6} className="lv-avatar-eye" />
+        </g>
+        <text x={352} y={340} textAnchor="middle" className="svg-label small">ANTIGRAVITY · TTS</text>
+        <text x={352} y={358} textAnchor="middle" className="svg-sub tiny">{speaking ? "asking the next question" : "idle"}</text>
       </g>
       <Wave x={452} y={286} w={140} h={24} t={t} on={speaking ? 1 : 0.06} />
       <text x={339} y={396} textAnchor="middle" className="svg-mono small">{q}{speaking ? caret(t) : ""}</text>
@@ -156,11 +167,13 @@ export function SttGraphic({ a }: { a: boolean }) {
           <g style={rise(final1)}>
             {STT_FINAL_1.map((w, i) => {
               const p = eph(t, 3450 + i * 90, 3750 + i * 90);
+              const pw = w.length * 6.8 + 16;
+              const px = 58 + STT_FINAL_1.slice(0, i).reduce((s, ww) => s + ww.length * 6.8 + 16 + 8, 0);
               return (
                 <g key={w} style={{ opacity: p }}>
-                  <text x={58 + i * 78} y={278} className="svg-mono">{w}</text>
-                  <rect x={58 + i * 78} y={286} width={Math.max(24, w.length * 8)} height={4} rx={2} className="lv-conf" style={{ opacity: STT_CONF_1[i] }} />
-                  <text x={58 + i * 78} y={304} className="svg-sub tiny">{STT_CONF_1[i].toFixed(2)}</text>
+                  <rect x={q(px)} y={262} width={q(pw)} height={22} rx={6} className="lv-tokenpill" style={{ opacity: 0.4 + 0.6 * STT_CONF_1[i] }} />
+                  <text x={q(px + pw / 2)} y={277} textAnchor="middle" className="svg-mono small">{w}</text>
+                  <text x={q(px + pw / 2)} y={300} textAnchor="middle" className="svg-sub tiny">{STT_CONF_1[i].toFixed(2)}</text>
                 </g>
               );
             })}
@@ -183,7 +196,7 @@ export function SttGraphic({ a }: { a: boolean }) {
 
 /* ---------- 3 · TRAJECTORY MAP — built live, then routed live ---------- */
 
-const TRAJ_CLAIMS = ["Redis sharding", "dual-lane design", "“led team of 8”", "Playwright e2e"];
+const TRAJ_CLAIMS = ["claim 01", "claim 02", "claim 03", "claim 04"];
 const TRAJ_ROUTES = [
   { label: "go deeper", y: 64, score: 0.87 },
   { label: "clarify", y: 134, score: 0.41 },
@@ -194,7 +207,7 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 11000;
   const t = el % L;
-  const ans = typed("“we hash sessions across shards, so a dead node only loses its own turns…”", t, 3400, 5200);
+  const ans = typed("“we hash sessions across shards; only that node's turns die…”", t, 3400, 5200);
   const win = eph(t, 6600, 7200);
 
   return (
@@ -219,9 +232,9 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
 
       {/* probe tree */}
       {[
-        { y: 64, label: "Q1 · Redis state", sub: "claim probe" },
-        { y: 148, label: "Q2 · dual-lane", sub: "depth probe" },
-        { y: 232, label: "Q3 · failure modes", sub: "pressure probe" },
+        { y: 64, label: "Q1 · claim-1 probe", sub: "verify claim 01" },
+        { y: 148, label: "Q2 · depth probe", sub: "depth on claim 01" },
+        { y: 232, label: "Q3 · pressure question", sub: "claim 01 under stress" },
       ].map((n, i) => {
         const grow = eph(t, 1600 + i * 380, 2400 + i * 380);
         return (
@@ -279,8 +292,8 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
       )}
       {/* frontier expands after routing */}
       <g className="lv-chip win" style={rise(eph(t, 7400, 7900))}>
-        <rect x={470} y={262} width={158} height={34} rx={9} />
-        <text x={549} y={284} textAnchor="middle" className="svg-mono small">next: Q4 · shard failover</text>
+        <rect x={466} y={262} width={162} height={34} rx={9} />
+        <text x={547} y={284} textAnchor="middle" className="svg-mono tinytext">next: Q4 · failover probe</text>
       </g>
 
       <text x={26} y={402} className="svg-note">
@@ -313,14 +326,17 @@ export function FastLaneGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
+      {/* what "dual-lane" means, before anything races */}
+      <text x={laneX} y={30} className="lv-phase small">DUAL-LANE = ONE TURN, TWO CLOCKS</text>
+      <text x={laneX} y={46} className="svg-sub tiny">the fast lane answers you now (&lt;1 s) · the background lane thinks for the NEXT turn, in parallel</text>
       {/* time ruler */}
       {[0, 500, 1000, 1500, 2000, 2500, 3000, 3500].map((ms) => (
         <g key={ms}>
-          <line x1={laneX + ms * SC} y1={70} x2={laneX + ms * SC} y2={78} className="lv-tick" />
-          <text x={laneX + ms * SC} y={62} textAnchor="middle" className="svg-sub tiny">{ms}</text>
+          <line x1={laneX + ms * SC} y1={74} x2={laneX + ms * SC} y2={82} className="lv-tick" />
+          <text x={laneX + ms * SC} y={68} textAnchor="middle" className="svg-sub tiny">{ms}</text>
         </g>
       ))}
-      <text x={608} y={62} textAnchor="end" className="svg-sub tiny">ms</text>
+      <text x={608} y={68} textAnchor="end" className="svg-sub tiny">ms</text>
 
       {/* FAST LANE */}
       <text x={laneX} y={112} className="svg-sub">FAST LANE · answers the candidate now</text>
@@ -485,12 +501,58 @@ export function AgentsGraphic({ a }: { a: boolean }) {
 /* ---------- 6 · ORCHESTRATOR — signals land, reasoning types, decision fires ---------- */
 
 const ORCH_IN = [
-  { label: "LIVE ANSWER", v: "0.87" },
-  { label: "CONCEPT", v: "0.82" },
-  { label: "WEAKNESS", v: "0.61" },
-  { label: "DISCREPANCY", v: "1 flag" },
-  { label: "REASONING", v: "0.78" },
+  { label: "LIVE ANSWER", v: "0.87", icon: "wave" },
+  { label: "CONCEPT", v: "0.82", icon: "bulb" },
+  { label: "WEAKNESS", v: "0.61", icon: "crack" },
+  { label: "DISCREPANCY", v: "1 flag", icon: "scales" },
+  { label: "REASONING", v: "0.78", icon: "net" },
 ];
+
+/** tiny storytelling glyph for each orchestrator input */
+function OrchIcon({ icon, x, y, t }: { icon: string; x: number; y: number; t: number }) {
+  if (icon === "wave")
+    return (
+      <g transform={`translate(${x},${y})`}>
+        {[0, 1, 2].map((i) => {
+          const h = q(5 + 8 * noise(i * 4 + 2, t));
+          return <rect key={i} x={i * 5} y={q(8 - h / 2)} width={3.2} height={h} rx={1.5} className="lv-bar" />;
+        })}
+      </g>
+    );
+  if (icon === "bulb")
+    return (
+      <g transform={`translate(${x},${y})`} className="lv-orchicon">
+        <circle cx={7} cy={7} r={5} />
+        <line x1={7} y1={14} x2={7} y2={17} />
+        <line x1={0} y1={2} x2={2.5} y2={4} />
+        <line x1={14} y1={2} x2={11.5} y2={4} />
+      </g>
+    );
+  if (icon === "crack")
+    return (
+      <g transform={`translate(${x},${y})`} className="lv-orchicon">
+        <path d="M 7 0 L 4 6 L 9 9 L 5 16" fill="none" />
+      </g>
+    );
+  if (icon === "scales")
+    return (
+      <g transform={`translate(${x},${y})`} className="lv-orchicon">
+        <line x1={7} y1={1} x2={7} y2={14} />
+        <line x1={0} y1={4} x2={14} y2={4} />
+        <circle cx={1.5} cy={9} r={3} />
+        <circle cx={12.5} cy={9} r={3} />
+      </g>
+    );
+  return (
+    <g transform={`translate(${x},${y})`} className="lv-orchicon">
+      <circle cx={2} cy={3} r={2} />
+      <circle cx={2} cy={13} r={2} />
+      <circle cx={12} cy={8} r={2.6} />
+      <line x1={4} y1={4} x2={10} y2={7} />
+      <line x1={4} y1={12} x2={10} y2={9} />
+    </g>
+  );
+}
 
 export function OrchestratorGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
@@ -517,9 +579,10 @@ export function OrchestratorGraphic({ a }: { a: boolean }) {
         return (
           <g key={s.label}>
             <g className={`lv-node ${t > fireAt - 250 && !hasLanded ? "is-live" : ""}`}>
-              <rect x={30} y={y - 20} width={142} height={40} rx={9} />
-              <text x={44} y={y - 2} className="svg-label small">{s.label}</text>
-              <text x={158} y={y + 14} textAnchor="end" className="svg-mono tinytext" style={{ opacity: t > fireAt - 250 ? 1 : 0.35 }}>{s.v}</text>
+              <rect x={30} y={y - 22} width={142} height={44} rx={9} />
+              <OrchIcon icon={s.icon} x={40} y={y - 12} t={t} />
+              <text x={62} y={y - 4} className="svg-label small">{s.label}</text>
+              <text x={162} y={y + 14} textAnchor="end" className="svg-mono tinytext" style={{ opacity: t > fireAt - 250 ? 1 : 0.35 }}>{s.v}</text>
             </g>
             <path d={`M 172 ${y} Q 262 ${(y + 190) / 2 + 30} 330 192`} className="lv-edge" style={{ opacity: hasLanded ? 0.55 : 0.18 }} />
             {p > 0 && p < 1 && <circle cx={px} cy={py} r={4.4} className="lv-pulse" />}
@@ -604,7 +667,7 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
 
   const speakStart = doneAt + 500;
   const speaking = t > speakStart && t < speakStart + 2800;
-  const qText = typed("“walk me through what happens when a shard dies.”", t, speakStart, speakStart + 2400);
+  const qText = typed("“what happens when a shard dies?”", t, speakStart, speakStart + 2400);
 
   const SCX = 0.55;
   return (
@@ -659,14 +722,14 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
       )}
 
       {/* prepared-audio cache — the question was already synthesized */}
-      <text x={40} y={306} className="svg-sub tiny">PREPARED AUDIO CACHE · background lane keeps it warm</text>
+      <text x={40} y={302} className="svg-sub tiny">PREPARED AUDIO CACHE · background lane keeps it warm</text>
       {["arch probe", "ownership", "failure probe", "stale-state"].map((c2, i) => {
         const hit = i === 2 && t > rows[1].start + 240 * SLOW;
         return (
           <g key={c2} className={`lv-chip ${hit ? "win" : ""}`}>
-            <rect x={40 + i * 145} y={314} width={135} height={24} rx={7} style={{ opacity: hit ? 1 : 0.55 }} />
-            <text x={107 + i * 145} y={330} textAnchor="middle" className="svg-mono tinytext">
-              {c2}{hit ? " · CACHE HIT" : ""}
+            <rect x={40 + i * 150} y={310} width={144} height={24} rx={7} style={{ opacity: hit ? 1 : 0.55 }} />
+            <text x={112 + i * 150} y={326} textAnchor="middle" className="svg-mono tinytext">
+              {hit ? `${c2} · HIT ✓` : c2}
             </text>
           </g>
         );
@@ -674,8 +737,8 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
 
       {/* the voice actually speaks */}
       <text x={40} y={362} className="svg-sub">SPOKEN TO CANDIDATE</text>
-      <Wave x={200} y={346} w={150} h={26} bars={20} t={t} on={speaking ? 1 : 0.05} />
-      <text x={360} y={366} className="svg-mono small">{qText}{speaking ? caret(t) : ""}</text>
+      <Wave x={200} y={346} w={130} h={26} bars={18} t={t} on={speaking ? 1 : 0.05} />
+      <text x={344} y={364} className="svg-mono tinytext">{qText}{speaking ? caret(t) : ""}</text>
       <text x={40} y={400} className="svg-note">
         Every cycle is one turn's real budget — the question was cached before it was needed, and on alternating replays the fallback fires.
       </text>
