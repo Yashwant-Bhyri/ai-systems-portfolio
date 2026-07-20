@@ -305,3 +305,6 @@
 .vx-emph { letter-spacing: 0.005em; }
 .vx-hero-thesis { font-size: 16.5px; line-height: 1.62; }
 .vx-spark-bubble { letter-spacing: 0.005em; }
+
+/* v6 detail: swallow the stray space after the greeting line break */
+.vx-hero-typed .vx-greet-end + span { font-size: 0; }

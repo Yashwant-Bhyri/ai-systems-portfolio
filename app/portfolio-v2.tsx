@@ -19,7 +19,6 @@ import {
   LiveAntigravityVisual,
   LiveFilmoraVisual,
   LiveMindScapeVisual,
-  LiveLogisticsVisual,
   LiveResearchMini,
 } from "./live-visuals";
 
@@ -81,8 +80,8 @@ const PROJECTS = [
     id: "logistics",
     number: "04",
     brand: "LOGISTICS AI OPS",
-    category: "Role-aware logistics operations copilot",
-    summary: "A bounded AI layer answers operational questions through approved intents and parameterized data routes.",
+    category: "Bounded AI operations copilot",
+    summary: "An AI copilot with explicit authority: approved intents, parameterized queries, and visible refusals for everything else.",
     proof: ["role-based workflows", "bounded query contracts", "human-owned actions"],
     accent: "amber",
   },
@@ -136,7 +135,7 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     operation: "Evaluate staged probes and route guards",
     output: "Prepared next-question packet",
     stack: ["trajectory map", "semantic routing", "state guards"],
-    proof: "553–668 ms recorded local process-turn smoke",
+    proof: "553–668 ms measured turn latency, local",
   },
   {
     label: "Dual-lane runtime",
@@ -335,35 +334,6 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
   },
 ];
 
-const LOGISTICS_STEPS: readonly StoryStep[] = [
-  {
-    label: "Classify",
-    title: "The copilot maps an operations question to one approved intent.",
-    explanation: "Role state and an explicit intent allowlist prevent arbitrary database access or open-ended tool use.",
-    input: "Role + natural-language question",
-    operation: "Intent classification and policy check",
-    output: "Approved typed handler",
-    stack: ["RBAC", "intent allowlist", "JWT"],
-  },
-  {
-    label: "Execute",
-    title: "A parameterized handler—not the model—queries operational data.",
-    explanation: "Only approved parameters enter a fixed query route; the returned rows become the model’s entire evidence boundary.",
-    input: "Approved intent + parameters",
-    operation: "Bounded parameterized query",
-    output: "Relevant operational rows",
-    stack: ["Flask", "MySQL", "parameterized handlers"],
-  },
-  {
-    label: "Respond",
-    title: "The model summarizes returned evidence and leaves the action to an operator.",
-    explanation: "The response preserves route evidence, explains why attention is needed, and suggests a review step without executing it autonomously.",
-    input: "Returned rows + operational context",
-    operation: "Evidence-bounded response composition",
-    output: "Operational summary + next action",
-    stack: ["bounded copilot", "structured response", "human-owned action"],
-  },
-];
 
 const RESEARCH = [
   {
@@ -1154,46 +1124,10 @@ function MindScapeChapter() {
   );
 }
 
-function LogisticsChapter() {
-  const reducedMotion = useReducedMotion();
-  const ref = useRef<HTMLElement>(null);
-  const controller = useAutoplaySequence(LOGISTICS_STEPS.length, 5000, ref, reducedMotion, {
-    observeSelector: ".vx-logistics-layout",
-    pointerSelector: ".vx-logistics-copy",
-  });
-  const step = LOGISTICS_STEPS[controller.index];
-  return (
-    <section ref={ref} id="logistics" className="vx-case vx-logistics vx-accent-amber">
-      <div className="vx-section-shell">
-        <CaseHeading number="04" brand="LOGISTICS AI OPS" category="ROLE-AWARE OPERATIONS COPILOT" title="Operational AI with explicit authority boundaries." copy="Customers track shipments, drivers execute routes, and administrators assign resources. The AI layer answers questions only through approved intent and data contracts." accent="lime" />
-        <div className="vx-logistics-layout">
-          <div className="vx-logistics-copy">
-            <span>{step.label}</span><h3>{step.title}</h3><p>{step.explanation}</p>
-            <div className="vx-tech-stack">{step.stack.map((item) => <i key={item}>{item}</i>)}</div>
-            <StageControls controller={controller} total={LOGISTICS_STEPS.length} />
-            <a href="https://github.com/Yashwant-Bhyri/logistics-company" target="_blank" rel="noreferrer">Inspect the repository ↗</a>
-          </div>
-          <div className="vx-logistics-stage"><LiveLogisticsVisual active={controller.index} /><div className="vx-io-rail"><div><span>INPUT</span><strong>{step.input}</strong></div><i /><div><span>OPERATION</span><strong>{step.operation}</strong></div><i /><div><span>OUTPUT</span><strong>{step.output}</strong></div></div></div>
-        </div>
-        {controller.complete ? (
-          <div className="vx-project-handoff" role="status">
-            <i className="vx-handoff-orbit" aria-hidden="true"><b /><b /><b /></i>
-            <div>
-              <span>ORBIT / SYSTEM COMPLETE</span>
-              <strong>You have followed one operations question through intent control, bounded execution, and an evidence-owned response.</strong>
-            </div>
-            <a href="#research">Continue to research systems ↓</a>
-          </div>
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
 function ResearchSection() {
   return (
     <section id="research" className="vx-research vx-section-shell">
-      <div className="vx-section-heading"><span>05 / RESEARCH & ENGINEERING RECORD</span><h2>Research that ends in an operational measurement.</h2><p>Three compact specimens show the transformation, deployment constraint, and evaluation result—not just the model name.</p></div>
+      <div className="vx-section-heading"><span>05 / RESEARCH & ENGINEERING RECORD</span><h2>Research that ends in an operational measurement.</h2><p>Six compact specimens — each one shows the transformation, the deployment constraint, and the measured result. Never just a model name.</p></div>
       <div className="vx-research-grid">
         {RESEARCH.map((item, index) => <article key={item.title}><span>{String(index + 1).padStart(2, "0")} · {item.meta}</span><LiveResearchMini index={index} /><h3>{item.title}</h3><p>{item.copy}</p><strong>{item.proof}</strong></article>)}
       </div>
@@ -1212,8 +1146,7 @@ const GUIDE_MESSAGES: Record<string, string> = {
   antigravity: "Follow one candidate answer from live voice to the next probe, then into the recruiter report.",
   filmora: "Watch one creative brief become trend context, coordinated agent work, and an editor-ready timeline.",
   mindscape: "Here, multimodal perception, evidence retrieval, reasoning, and validation remain separately inspectable.",
-  logistics: "This copilot is useful because its authority is explicit: approved intent, approved handler, bounded rows.",
-  research: "The final chapter compresses three research systems into mechanism, constraint, and measured result.",
+  research: "The final chapter compresses six research systems into mechanism, constraint, and measured result.",
 };
 
 function useActiveChapter() {
@@ -1313,7 +1246,6 @@ export function PortfolioV2() {
       <ResearchSection />
       <GuideSpark />
       <footer className="vx-footer"><div><strong>Yashwant Bhyri</strong><span>AI Agent · AI Application · Applied AI Engineering</span></div><p>Built to make the engineering visible.</p><a href="#top">Return to orbit ↑</a></footer>
-      <OrbitGuide />
     </main>
   );
 }

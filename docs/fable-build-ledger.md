@@ -584,3 +584,32 @@ and it is used automatically; drawn phoenix-shield fallback otherwise)
 
 Trial server: launch config "trial" (stop "fable" first — same port).
 Source of truth: portfolio-fable @ d7bbf13, tag v4-polish-d7bbf13, untouched.
+
+### Session 5b — v5-enhanced (commit c0db353) — VERIFIED ON SCREEN
+
+Versioning contract:
+- v4 baseline = portfolio-fable @ d7bbf13 (tag v4-polish-d7bbf13) — pure, untouched
+- v5 baseline = portfolio-fable-trial @ 49c8723 (tag v5-baseline-49c8723) — pure
+- v5 enhanced = portfolio-fable-trial @ c0db353 (tag v5-enhanced) — this state
+Both sites saved; roll back = git checkout <tag>.
+
+Round items, all confirmed in browser (fresh load + clicks, 0 console errors):
+1 ✓ CUHK: REAL coat of arms downloaded (Wikimedia via images.weserv.nl proxy —
+  upload.wikimedia.org is sandbox-blocked; proxy route works). public/brands/
+  cuhk.png, naturalWidth>0 on screen, inline before CUHK-Shenzhen.
+2 ✓ INTELLIGENCE + OUTPUT (+ PRODUCTION dag) map glyphs → dedicated SVG minis;
+  10 svg glyphs page-wide now.
+3 ✓ Galaxy density: 3 clusters alive (primary bright ×3 + secondary ×1 = 4
+  bright, 12 visible terms at any moment).
+4 ✓ Hero thesis reworded: "I am the layer that turns a simple prototype into
+  ⟪a reliable, production-grade AI product⟫ — ⟪advanced orchestration⟫, ⟪deep
+  retrieval⟫, ⟪multimodal perception⟫, ⟪evaluation⟫, ⟪observability⟫,
+  ⟪production-grade deployment⟫." Prototype carries NO highlight.
+5 ✓ Editor DAG: 12 nodes (brief→planner→script/music/dialogue→storyboard/
+  captions→video→fx→QA·EVAL→HUMAN GATE→assembly), inspector intact.
+6 ✓ Logistics research specimen now renders the FULL operational console
+  (role pulses + risk gauge + copilot w/ refusal); "ROLE-AWARE OPERATIONS
+  COPILOT" meta replaced with "FLASK + MYSQL · BOUNDED AI OPERATIONS".
+7 ✓ Copy/typography last-pass: Year-4 · Class of 2027; tracking on kickers +
+  case headings; thesis sizing. Screenshot proof: hero shows greeting line,
+  real emblem, both paint sweeps, Spark narrating.

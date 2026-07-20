@@ -529,7 +529,7 @@ export function CompilerGraphic({ a }: { a: boolean }) {
       </g>
 
       <text x={30} y={404} className="svg-note">
-        What they asked, what the platforms reward, what's on the timeline — bound into one executable brief.
+        What they asked, what the platforms reward, what memory recalls, what's on the timeline — one executable brief.
       </text>
     </svg>
   );
