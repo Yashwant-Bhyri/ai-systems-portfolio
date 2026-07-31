@@ -1078,3 +1078,22 @@ Recurring gotchas worth remembering: python `str.replace` fails silently when
 the target has drifted — several edits no-op'd and were only caught by reading
 the rendered DOM back; and the dev server's HMR dies after large edits, which
 looks like a code error but clears with preview_stop/preview_start.
+
+### Session 9l — focus pass
+
+1. **The heading now states the question.** "What I'm built for" survives as the
+   small kicker (it is a good hook) but the H2 asks plainly: "What roles am I
+   targeting?" — unambiguous for a non-native reader. The full map's heading
+   became "Every capability, and where I built it."
+2. **Column headers read as section labels**: brighter fill (#c3ced9), weight
+   700, and a rule under each column anchoring the three-part structure.
+3. **Unused layers lose their colour, not just brightness.** A faint tint still
+   competed for attention, so tiers now carry a filter:
+   off = grayscale(1) @ 0.34 · on = grayscale(0.45) @ 0.82 · spot = untouched.
+   The eye now lands on the layers the selected role actually uses.
+4. **The floating capability rolls in** from the right like a headline instead
+   of cross-fading in place, matching the marquee language used elsewhere.
+5. **Implementation-signal emphasis moved off solid accent paint.** Solid fill
+   with dark ink fired several times a screen and shouted over the sentence it
+   served. The phrase is now WHITE on a dark accent-tinted ground with an accent
+   spine and glow — chapter identity kept, volume down.

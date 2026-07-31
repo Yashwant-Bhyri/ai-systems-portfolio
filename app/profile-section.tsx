@@ -723,8 +723,8 @@ export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full
     >
       <header className="vx-profile-head" data-compact={compactHead}>
         <div>
-          <h2>{brief ? "What I'm built for." : "Every layer, and where I built it."}</h2>
-          <p>{brief ? "Three target roles, and the five engineering areas behind them." : "The same five areas in full: every capability, and the work that proves it."}</p>
+          <h2>{brief ? "What roles am I targeting?" : "Every capability, and where I built it."}</h2>
+          <p>{brief ? "Three roles — and the five engineering layers I build them on." : "All five layers in full: every capability, and the work that proves it."}</p>
         </div>
         <div className="vx-profile-head-meta">
           <strong>{liveAreas.length}<i>areas</i></strong>
@@ -752,6 +752,9 @@ export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full
           onKeyDown={handleRoleKeys}
         >
           <text x={G.roleX} y={G.headerY} className="vx-map-col">TARGET ROLES</text>
+          <line x1={G.roleX} y1={G.headerY + 8} x2={G.roleX + G.roleW} y2={G.headerY + 8} className="vx-map-col-rule" />
+          <line x1={G.areaX} y1={G.headerY + 8} x2={G.areaX + G.areaW} y2={G.headerY + 8} className="vx-map-col-rule" />
+          <line x1={brief ? G.figureX : G.skillX} y1={G.headerY + 8} x2={brief ? G.figureX + FIGURE_W : G.skillX + G.skillW} y2={G.headerY + 8} className="vx-map-col-rule" />
           <text x={G.areaX} y={G.headerY} className="vx-map-col">HOW I BUILD AI SYSTEMS</text>
           {brief
             ? <text x={G.figureX} y={G.headerY} className="vx-map-col">HOW EACH LAYER RUNS</text>
