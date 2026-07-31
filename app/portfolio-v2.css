@@ -5733,55 +5733,6 @@ html {
   background-size: auto, 36px 36px, 36px 36px;
 }
 
-/* The wiring layer: the active role plugs into its capability domains, and the
-   lit domain plugs into the evidence it powers. Weight = relevance. */
-.vx-profile-wires {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.vx-profile-wires path {
-  fill: none;
-  stroke: var(--vx-lime);
-  stroke-linecap: round;
-  transition: opacity 420ms var(--vx-ease);
-}
-
-.vx-profile-wires path[data-kind="role"][data-strength="1"] { stroke-width: 1; opacity: 0.16; }
-.vx-profile-wires path[data-kind="role"][data-strength="2"] { stroke-width: 1.5; opacity: 0.34; }
-.vx-profile-wires path[data-kind="role"][data-strength="3"] { stroke-width: 2.5; opacity: 0.62; }
-
-.vx-profile-wires path[data-kind="role"][data-lit="true"] {
-  opacity: 0.95;
-  stroke-dasharray: 7 9;
-  animation: vxWireFlow 900ms linear infinite;
-  filter: drop-shadow(0 0 6px rgba(184, 255, 99, 0.55));
-}
-
-.vx-profile-wires path[data-kind="evidence"] {
-  stroke-width: 1.5;
-  opacity: 0.8;
-  stroke-dasharray: 4 8;
-  animation: vxWireFlow 700ms linear infinite;
-  filter: drop-shadow(0 0 5px rgba(184, 255, 99, 0.4));
-}
-
-@keyframes vxWireFlow {
-  to { stroke-dashoffset: -16; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .vx-profile-wires path { animation: none !important; stroke-dasharray: none; }
-}
-
-@media (max-width: 1050px) {
-  .vx-profile-wires { display: none; }
-}
-
 .vx-role-lens-layout > .vx-role-lens-rail,
 .vx-role-lens-layout > .vx-capability-board,
 .vx-role-lens-layout > .vx-applied-evidence {
@@ -5874,64 +5825,6 @@ html {
   animation: vxRoleLensProgress 7.2s linear both;
 }
 
-/* The fit block claims the rest of the column instead of sinking to the floor
-   and leaving a dead gap under the role tabs. */
-.vx-role-fit {
-  min-height: 0;
-  flex: 1;
-  margin-top: 12px;
-  padding: 13px 13px 4px 8px;
-  display: grid;
-  grid-template-rows: auto auto 1fr;
-  gap: 9px;
-  border-top: 1px solid var(--vx-line);
-}
-
-.vx-role-fit > span {
-  color: var(--vx-lime);
-}
-
-.vx-role-fit > strong {
-  color: #c9d2d9;
-  font-size: 12.5px;
-  font-weight: 520;
-  line-height: 1.46;
-  text-wrap: pretty;
-}
-
-.vx-role-fit ol {
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-auto-rows: max-content;
-  align-content: space-between;
-  gap: 5px;
-  list-style: none;
-  counter-reset: role-fit;
-}
-
-/* Each priority reads as a capability row, not a cramped bullet. */
-.vx-role-fit li {
-  position: relative;
-  counter-increment: role-fit;
-  padding: 6px 8px 6px 25px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-left: 2px solid color-mix(in srgb, var(--vx-lime) 45%, transparent);
-  background: rgba(255, 255, 255, 0.016);
-  color: #939ea9;
-  font: 520 10.5px/1.38 var(--font-geist-mono), monospace;
-}
-
-.vx-role-fit li::before {
-  content: "0" counter(role-fit);
-  position: absolute;
-  left: 8px;
-  top: 6px;
-  color: color-mix(in srgb, var(--vx-lime) 78%, white);
-  font-weight: 640;
-}
-
 .vx-capability-board {
   min-width: 0;
   min-height: 0;
@@ -5967,147 +5860,6 @@ html {
 .vx-capability-board > header > small {
   color: #7e8a94;
   font: 520 10px/1.25 var(--font-geist-mono), monospace;
-}
-
-.vx-capability-domains {
-  min-height: 0;
-  flex: 1;
-  display: grid;
-  grid-template-rows: repeat(5, minmax(0, 1fr));
-  border-top: 1px solid var(--vx-line);
-}
-
-.vx-capability-domains article {
-  position: relative;
-  min-width: 0;
-  min-height: 0;
-  margin: 3px 5px;
-  padding: 7px 10px;
-  display: grid;
-  grid-template-columns: minmax(126px, 0.3fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 11px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(6, 9, 11, 0.66);
-  opacity: 0.52;
-  transition: opacity 280ms ease, background 320ms var(--vx-ease), border-color 320ms ease, transform 320ms var(--vx-ease);
-}
-
-/* Wire port: where the role's beam plugs into the node. */
-.vx-capability-domains article::before {
-  content: "";
-  position: absolute;
-  left: -3px;
-  top: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  transform: translateY(-50%);
-  background: #46525c;
-  transition: background 320ms ease, box-shadow 320ms ease;
-}
-
-.vx-capability-domains article[data-strength="2"] { opacity: 0.74; }
-.vx-capability-domains article[data-strength="3"] { opacity: 0.92; }
-
-.vx-capability-domains article[data-active="true"] {
-  opacity: 1;
-  border-color: rgba(184, 255, 99, 0.42);
-  background: linear-gradient(90deg, rgba(184, 255, 99, 0.085), rgba(184, 255, 99, 0.02) 62%, rgba(6, 9, 11, 0.66));
-  transform: translateX(2px);
-}
-
-.vx-capability-domains article[data-active="true"]::before {
-  background: var(--vx-lime);
-  box-shadow: 0 0 10px rgba(184, 255, 99, 0.8);
-}
-
-.vx-domain-axis {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 11px minmax(0, 1fr);
-  gap: 3px 7px;
-  align-items: center;
-}
-
-.vx-domain-axis > i {
-  grid-row: 1 / 4;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #46515b;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.025);
-}
-
-.vx-capability-domains article[data-active="true"] .vx-domain-axis > i {
-  background: var(--vx-lime);
-  box-shadow: 0 0 0 4px rgba(184, 255, 99, 0.08), 0 0 12px rgba(184, 255, 99, 0.55);
-}
-
-.vx-domain-axis > span {
-  color: #65717c;
-  font: 580 10px/1 var(--font-geist-mono), monospace;
-}
-
-.vx-domain-axis > strong {
-  color: #ccd4da;
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.15;
-}
-
-.vx-domain-axis > small {
-  overflow: hidden;
-  color: #6f7b86;
-  font: 500 10px/1.3 var(--font-geist-mono), monospace;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.vx-capability-domains ul {
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: center;
-  gap: 4px;
-  list-style: none;
-}
-
-.vx-capability-domains li {
-  min-height: 24px;
-  padding: 4px 7px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(4, 6, 8, 0.72);
-  /* Even a low-relevance skill stays legible — dimming below reading
-     contrast made strength-1 chips look broken, not secondary. */
-  color: #97a2ac;
-  font: 510 10.5px/1.25 var(--font-geist-mono), monospace;
-}
-
-.vx-capability-domains li[data-strength="2"],
-.vx-capability-domains li[data-strength="3"] {
-  color: #c8d0d6;
-  border-color: rgba(184, 255, 99, 0.16);
-}
-
-.vx-capability-domains li > i {
-  width: 5px;
-  height: 5px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: #4d5963;
-}
-
-.vx-capability-domains li[data-strength="2"] > i { background: #8faa76; }
-.vx-capability-domains li[data-strength="3"] > i {
-  background: var(--vx-lime);
-  box-shadow: 0 0 8px rgba(184, 255, 99, 0.5);
 }
 
 .vx-domain-scan {
@@ -7502,5 +7254,298 @@ html {
   .vx-stage-signal-diagonal-sweep,
   .vx-stage-signal-micro-row > span > i {
     animation: none !important;
+  }
+}
+
+
+
+/* ============================================================
+   PROFILE — THE CAPABILITY SURFACE
+   The subject of this section is the skill set itself: twenty
+   capabilities, set in the largest type on the row. The three roles
+   are a lens over it (what the role asks for / how I hold it /
+   how much of the surface it calls on). Project names stay as quiet
+   attribution — they must never take the front seat here.
+   ============================================================ */
+
+.vx-profile {
+  gap: clamp(10px, 1.6vh, 18px);
+  display: flex;
+  flex-direction: column;
+}
+
+.vx-profile-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.56fr);
+  gap: 16px clamp(28px, 4vw, 56px);
+  align-items: end;
+}
+
+.vx-profile-head-copy > h2 {
+  margin: 8px 0 0;
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+}
+
+.vx-profile-sub {
+  margin: 8px 0 0;
+  color: #98a4af;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.vx-profile-roles {
+  display: grid;
+  gap: 6px;
+  justify-items: stretch;
+}
+
+.vx-role-tabs {
+  display: grid;
+  gap: 4px;
+}
+
+.vx-role-tabs button {
+  position: relative;
+  min-height: 40px;
+  padding: 7px 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3px 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.014);
+  color: #808c97;
+  text-align: left;
+  cursor: pointer;
+  transition: color 240ms ease, border-color 260ms ease, background 260ms var(--vx-ease);
+}
+
+.vx-role-tabs button[data-active="true"] {
+  color: #eff4ea;
+  border-color: rgba(184, 255, 99, 0.42);
+  background: linear-gradient(90deg, rgba(184, 255, 99, 0.1), rgba(184, 255, 99, 0.02) 66%, transparent);
+}
+
+.vx-role-tabs button > small {
+  color: var(--vx-lime);
+  font: 640 10px/1 var(--font-geist-mono), monospace;
+}
+
+.vx-role-tabs button > strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 590;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vx-role-tabs button > span {
+  color: #6f7b86;
+  font: 510 9.5px/1 var(--font-geist-mono), monospace;
+  white-space: nowrap;
+}
+
+.vx-role-tabs button > i {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: var(--vx-lime);
+}
+
+.vx-role-tabs button[data-active="true"][data-playing="true"] > i {
+  animation: vxRoleLensProgress 9.6s linear both;
+}
+
+.vx-profile-roles > .vx-map-pause {
+  justify-self: start;
+}
+
+/* --- the link between role and surface --- */
+
+.vx-role-brief {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 14px clamp(20px, 3vw, 40px);
+  padding: 12px 0;
+  border-block: 1px solid var(--vx-line);
+  animation: vxThesisIn 460ms var(--vx-ease) both;
+}
+
+@keyframes vxThesisIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: none; }
+}
+
+.vx-role-brief > div > p {
+  margin: 7px 0 0;
+  color: #b3bec8;
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.vx-role-coverage {
+  display: grid;
+  align-content: center;
+  justify-items: end;
+  gap: 2px;
+  padding-left: clamp(16px, 2vw, 28px);
+  border-left: 1px solid var(--vx-line);
+}
+
+.vx-role-coverage > strong {
+  color: color-mix(in srgb, var(--vx-lime) 88%, white);
+  font-size: clamp(26px, 2.4vw, 34px);
+  font-weight: 560;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.vx-role-coverage > strong > i {
+  color: #6d7883;
+  font-size: 0.5em;
+  font-style: normal;
+  font-weight: 520;
+}
+
+.vx-role-coverage > small {
+  max-width: 15ch;
+  color: #7f8b96;
+  font: 510 9.5px/1.35 var(--font-geist-mono), monospace;
+  text-align: right;
+}
+
+/* --- the surface itself: five areas, twenty capabilities --- */
+
+.vx-capability-surface {
+  min-height: 0;
+  flex: 1;
+  display: grid;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.vx-capability-surface article {
+  position: relative;
+  min-height: 0;
+  padding: 8px 14px;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: border-color 320ms ease, background 320ms var(--vx-ease);
+}
+
+.vx-capability-surface article[data-spotlit="true"] {
+  border-color: rgba(184, 255, 99, 0.22);
+  background: linear-gradient(90deg, rgba(184, 255, 99, 0.06), rgba(184, 255, 99, 0.01) 62%, transparent);
+}
+
+.vx-area-head {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.vx-area-head > i {
+  color: #5d6873;
+  font: 620 9.5px/1 var(--font-geist-mono), monospace;
+  font-style: normal;
+}
+
+/* The area name is a label, deliberately quieter than the skills below it. */
+.vx-area-head > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #8b98a4;
+  font: 620 10px/1.2 var(--font-geist-mono), monospace;
+  letter-spacing: 0.11em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.vx-area-head > b {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: #6d7883;
+  font: 560 9.5px/1 var(--font-geist-mono), monospace;
+}
+
+.vx-capability-surface article[data-spotlit="true"] .vx-area-head > b {
+  color: color-mix(in srgb, var(--vx-lime) 76%, white);
+}
+
+/* THE SUBJECT: the capabilities themselves, largest type on the row. */
+.vx-area-skills {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 480;
+  line-height: 1.42;
+  letter-spacing: -0.012em;
+  text-wrap: pretty;
+}
+
+.vx-area-skills > span {
+  color: #4e5862;
+  transition: color 320ms ease;
+}
+
+/* Lit = this role calls on it. Dimmed = still mine, just not for this role. */
+.vx-area-skills > span[data-on="true"] {
+  color: #dbe3ea;
+}
+
+.vx-capability-surface article[data-spotlit="true"] .vx-area-skills > span[data-on="true"] {
+  color: #f1f6ec;
+}
+
+.vx-area-skills > span > i {
+  color: #3d454d;
+  font-style: normal;
+}
+
+/* Attribution stays quiet — it is not the subject of this section. */
+.vx-area-source {
+  color: #5f6a75;
+  font: 510 9.5px/1 var(--font-geist-mono), monospace;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 1050px) {
+  .vx-profile-head,
+  .vx-role-brief {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vx-role-coverage {
+    justify-items: start;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .vx-role-coverage > small {
+    text-align: left;
+  }
+
+  .vx-capability-surface {
+    grid-template-rows: none;
+    grid-auto-rows: max-content;
+  }
+
+  .vx-area-skills {
+    font-size: 13px;
   }
 }

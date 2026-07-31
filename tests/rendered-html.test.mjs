@@ -101,9 +101,8 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
     readFile(new URL("../app/portfolio-v2.css", import.meta.url), "utf8"),
   ]);
 
-  const roleSource = sourceSlice(profile, "const ROLES", "const SKILLS");
-  const skillSource = sourceSlice(profile, "const SKILLS", "type CapabilityDomain");
-  const evidenceSource = sourceSlice(profile, "const EVIDENCE", "const ROLE_ADVANCE_MS");
+  const roleSource = sourceSlice(profile, "const ROLES", "type Capability");
+  const skillSource = sourceSlice(profile, "const AREAS", "const ALL_SKILLS");
   const antigravitySource = sourceSlice(portfolio, "const ANTIGRAVITY_STEPS", "const FILMORA_STEPS");
   const filmoraSource = sourceSlice(portfolio, "const FILMORA_STEPS", "const MINDSCAPE_STEPS");
   const mindscapeSource = sourceSlice(portfolio, "const MINDSCAPE_STEPS", "const RESEARCH");
@@ -115,13 +114,16 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /assetPath\("\/brands\/cuhk\.png"\)/);
   assert.match(portfolio, /CUHK · QS World #18/);
   assert.equal(countObjectIds(roleSource), 3);
-  assert.equal(countInlineObjectIds(skillSource), 24);
-  assert.equal(countObjectIds(evidenceSource), 9);
-  assert.match(profile, /vx-role-lens-layout/);
-  assert.match(profile, /vx-capability-domains/);
-  assert.match(profile, /Capability system · \{SKILLS\.length\} production skills/);
-  assert.match(profile, /vx-applied-evidence/);
-  assert.match(profile, /What I have actually built/);
+  // The section's claim: twenty capabilities across five areas, with the three
+  // target roles as a lens over them and project names as quiet attribution.
+  assert.equal((skillSource.match(/^\s{6}\{ id: "/gm) ?? []).length, 20);
+  assert.equal((skillSource.match(/^\s{4}label: "/gm) ?? []).length, 5);
+  assert.equal((skillSource.match(/^\s{4}learnedIn: "/gm) ?? []).length, 5);
+  assert.match(profile, /vx-capability-surface/);
+  assert.match(profile, /Twenty capabilities across five areas/);
+  assert.match(profile, /The role asks for/);
+  assert.match(profile, /How I hold it/);
+  assert.match(profile, /capabilities this role calls on/);
   assert.doesNotMatch(profile, /vx-role-to-skill-links/);
   assert.doesNotMatch(profile, /vx-skill-to-experience-links/);
   assert.match(portfolio, /useChapterHandoff/);

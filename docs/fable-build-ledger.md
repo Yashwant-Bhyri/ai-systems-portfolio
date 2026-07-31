@@ -852,3 +852,39 @@ https://yashwant-bhyri.github.io/ai-systems-portfolio/
 2. **Hero typing paced 20% slower** (18-30 ms/char → 22-36 ms/char) with the
    hold before backspacing extended 1180 ms → 1420 ms, so a first-time reader
    can finish each statement.
+
+### Session 9d — profile rebuilt as THE CAPABILITY SURFACE (design-first)
+
+Two prior attempts failed for framing reasons, not layout reasons:
+- v3 (chips + wires) was a *catalogue*: 24 equal-weight chips + 5 domains +
+  3 evidence cards + wires = ~40 objects of identical visual weight. Nothing
+  to land on. Also used SELF-SCORED strength meters, which have near-zero
+  credibility — a bar you assign yourself is marketing, not evidence.
+- The "capability ledger" over-corrected: it put PRODUCTION / ENTERPRISE /
+  OPEN SOURCE / RESEARCH proof cards and project names (Filmora, BIRD-SQL) in
+  the front seat. Wrong subject. This section is the one place in the site
+  that claims the SKILL SURFACE itself; the projects already have four
+  chapters of their own.
+
+Final framing (user's own words): "these are the three job positions I want to
+apply to, because my skill sets are these twenty skill sets, and these three
+jobs fit extensively inside this — and I link how a role should have the
+experience and how I have it."
+
+Structure now:
+1. Heading states the claim: "Twenty capabilities across five areas." Subline:
+   "These are the three roles that sit inside them."
+2. Role tabs (3) act as a LENS, not a grade.
+3. Role brief: THE ROLE ASKS FOR (stated as the role) · HOW I HOLD IT · a
+   coverage counter (e.g. 18/20) — the honest "this role sits inside my
+   surface" claim.
+4. Five full-width area rows. The twenty capabilities are the LARGEST type on
+   each row (14.5px) — they are the subject. Area names are 10px mono labels,
+   deliberately quieter. Capabilities the active role calls on stay lit; the
+   rest dim but remain visible (still mine, just not for this role).
+5. Project attribution ("Antigravity · Filmora") is the quietest element on the
+   row — present for grounding, never the headline.
+
+Verified at 1440×820: 0 px clipping on section, surface, brief, and all five
+rows; coverage lens confirmed (18/20 systems · 14/20 agents · 16/20 full-stack).
+tsc clean, 3/3 tests pass, static export builds.
