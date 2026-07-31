@@ -1097,3 +1097,27 @@ looks like a code error but clears with preview_stop/preview_start.
    with dark ink fired several times a screen and shouted over the sentence it
    served. The phrase is now WHITE on a dark accent-tinted ground with an accent
    spine and glow — chapter identity kept, volume down.
+
+### Session 9m — outlined inactive layers, three-weight signal emphasis
+
+1. **The unused engineering layer keeps a white outline.** Greyscale plus a low
+   group opacity made it dissolve into the page. The group opacity is gone; the
+   card now carries a rgba(255,255,255,.5) border with dimmed grey contents, so
+   it still reads as one of five cards while clearly not being in play.
+2. **Signal emphasis is now three weights, not two.** White-only was flat, and
+   full accent on every technical phrase was too loud. A CORE_SIGNAL regex
+   decides at render time:
+   - FULL (34 phrases) — terms that map onto the five engineering layers:
+     LLM gateway, model routing, Agent evaluations, RL candidates, guardrails,
+     Embeddings, reranking, MedCPT/HNSW, BM25, BioLinkBERT, structured contract,
+     schema-validated function calls, tool graph, Span-level telemetry,
+     Gated Multimodal Unit, Behavioral State Vector, DeBERTa-v3 NLI…
+     Rendered at MEDIUM accent strength (20-26% tint + accent spine), not the
+     solid slab that was shouting over the sentence.
+   - HALF (18 phrases) — real technology, incidental to the layer story:
+     WebRTC audio, WebSocket turn events, interruption recovery, Deepgram
+     partials, TTS router, SenseVoice, Emotion2Vec+, evidence ledger…
+     Light 9-13% tint, no spine.
+   - SOFT — supporting prose keeps the marker underline.
+   Classification is derived, so adding a phrase to any annotation is graded
+   automatically rather than hand-tagged.

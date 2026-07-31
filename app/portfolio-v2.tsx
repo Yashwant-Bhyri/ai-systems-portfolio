@@ -1491,7 +1491,14 @@ function SignalTicker({
   );
 }
 
-type AnnotationRange = { phrase: string; start: number; end: number; weight: "full" | "soft" };
+type AnnotationRange = { phrase: string; start: number; end: number; weight: "full" | "half" | "soft" };
+
+/** Only the terms that map onto the five engineering layers earn the full
+ *  highlight — agent runtime, knowledge & retrieval, evaluation & safety,
+ *  inference platform, application. Everything else technical (WebRTC,
+ *  Deepgram, TTS routers) is real but incidental, so it takes a half tint. */
+const CORE_SIGNAL =
+  /orchestrat|multi-agent|agent graph|agent evaluation|function call|tool call|tool graph|structured|contract|policy-valid|asynchronous|schema|json|vector|embedding|retriev|rerank|hnsw|faiss|bm25|medcpt|biolinkbert|\brag\b|memory|grounde?d?|ground|evaluation|guardrail|validat|deterministic|\bnli\b|telemetry|tracing|observab|\brl\b|regression|llm gateway|model routing|latency|token|quantiz|distill|cache|failover|fallback|deploy|\bapi\b|gated multimodal|behavioral state/i;
 
 function HighlightedStageAnnotation({
   text,
@@ -1505,18 +1512,18 @@ function HighlightedStageAnnotation({
   softHighlights?: readonly string[];
 }) {
   const visibleEnd = Math.min(cursor, text.length);
-  const locate = (phrase: string, weight: "full" | "soft"): AnnotationRange | null => {
+  const locate = (phrase: string, weight: "full" | "half" | "soft"): AnnotationRange | null => {
     const start = text.indexOf(phrase);
     return start < 0 ? null : { phrase, start, end: start + phrase.length, weight };
   };
   const ranges = [
-    ...highlights.map((phrase) => locate(phrase, "full")),
+    ...highlights.map((phrase) => locate(phrase, CORE_SIGNAL.test(phrase) ? "full" : "half")),
     ...softHighlights.map((phrase) => locate(phrase, "soft")),
   ]
     .filter((range): range is AnnotationRange => Boolean(range))
     // Technical keywords win any overlap: sort them ahead of supporting phrases
     // that begin at the same offset, then drop whatever the winner swallows.
-    .sort((a, b) => a.start - b.start || (a.weight === "full" ? -1 : 1));
+    .sort((a, b) => a.start - b.start || (a.weight === "soft" ? 1 : -1));
   const segments: React.ReactNode[] = [];
   let position = 0;
 

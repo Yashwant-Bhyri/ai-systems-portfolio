@@ -8074,11 +8074,259 @@ g[data-on="true"] .vx-map-wire.is-on {
   stroke-width: 1;
 }
 
-/* A layer this role does not use: colour removed, not merely dimmed. */
+/* A layer this role does not use: colour removed, but it keeps a clear white
+   outline so it still reads as a card rather than dissolving into the page. */
 .vx-role-map g[data-tier="off"] {
   filter: grayscale(1);
-  opacity: 0.34;
 }
+
+.vx-role-map g[data-tier="off"] .vx-map-box {
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 1.2;
+  fill: rgba(255, 255, 255, 0.016);
+}
+
+.vx-role-map g[data-tier="off"] .vx-map-panel { stroke: rgba(255, 255, 255, 0.22); }
+.vx-role-map g[data-tier="off"] .vx-map-area { fill: #838b93; }
+.vx-role-map g[data-tier="off"] .vx-map-float { fill: #737b83; }
+.vx-role-map g[data-tier="off"] .vx-map-skill { fill: #5c646c; }
+.vx-role-map g[data-tier="off"] .vx-map-src { fill: #565e66; }
+.vx-role-map g[data-tier="off"] .vx-map-glyph { stroke: #838b93; }
+.vx-role-map g[data-tier="off"] .vx-map-figure { opacity: 0.42; }
+
+/* In the role, but resting this beat: colour held back, still legible. */
+.vx-role-map g[data-tier="on"] {
+  filter: grayscale(0.45);
+  opacity: 0.82;
+}
+
+.vx-role-map g[data-tier="spot"] {
+  filter: none;
+  opacity: 1;
+}
+
+/* The capability rolls in like a headline instead of fading in place. */
+.vx-map-float {
+  animation: vxFloatRoll 620ms var(--vx-ease) both;
+}
+
+@keyframes vxFloatRoll {
+  0% { opacity: 0; transform: translateX(30px); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+
+/* Implementation signal, three weights.
+   full  — the term maps onto one of the five engineering layers: accent tint
+           at medium strength with an accent spine. Bright enough to catch, not
+           the solid slab that was shouting over the sentence.
+   half  — real technology, but incidental to the layer story: light tint only.
+   soft  — supporting prose: the marker underline.
+   ============================================================ */
+.vx-stage-annotation-emphasis[data-weight="full"] {
+  padding: 0.08em 0.34em;
+  border-radius: 2px;
+  color: color-mix(in srgb, var(--active-accent) 34%, #ffffff);
+  font-weight: 620;
+  background: color-mix(in srgb, var(--active-accent) 20%, transparent);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--active-accent) 72%, transparent);
+}
+
+.vx-stage-annotation-emphasis[data-weight="full"][data-complete="true"] {
+  color: color-mix(in srgb, var(--active-accent) 46%, #ffffff);
+  font-weight: 660;
+  background: color-mix(in srgb, var(--active-accent) 26%, transparent);
+  box-shadow:
+    inset 2px 0 0 var(--active-accent),
+    0 0 14px color-mix(in srgb, var(--active-accent) 20%, transparent);
+  animation: vxEmphasisMedium 460ms var(--vx-ease) both;
+}
+
+@keyframes vxEmphasisMedium {
+  0% { background: color-mix(in srgb, var(--active-accent) 20%, transparent); }
+  45% { box-shadow: inset 2px 0 0 var(--active-accent), 0 0 22px color-mix(in srgb, var(--active-accent) 38%, transparent); }
+  100% { background: color-mix(in srgb, var(--active-accent) 26%, transparent); }
+}
+
+.vx-stage-annotation-emphasis[data-weight="half"] {
+  padding: 0.06em 0.22em;
+  border-radius: 2px;
+  color: #dde5ec;
+  font-weight: 560;
+  background: color-mix(in srgb, var(--active-accent) 9%, transparent);
+}
+
+.vx-stage-annotation-emphasis[data-weight="half"][data-complete="true"] {
+  color: #eaf1f6;
+  background: color-mix(in srgb, var(--active-accent) 13%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-map-float { animation: none; }
+}
+
+/* Résumé exists in English and 中文 — every entry point offers the choice. */
+.vx-resume-menu { position: relative; display: inline-flex; }
+
+.vx-resume-menu > button > i {
+  margin-left: 5px;
+  font-size: 0.8em;
+  font-style: normal;
+  opacity: 0.75;
+}
+
+.vx-resume-options {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 148px;
+  display: grid;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid rgba(184, 255, 99, 0.34);
+  background: rgba(6, 9, 11, 0.97);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(18px);
+  animation: vxResumeIn 180ms var(--vx-ease) both;
+}
+
+@keyframes vxResumeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.vx-resume-options > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  color: #d5dce2;
+  font: 560 12px/1 var(--font-geist-mono), monospace;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.vx-resume-options > a:hover {
+  background: rgba(184, 255, 99, 0.12);
+  color: var(--vx-lime);
+}
+
+.vx-resume-options > a > i { font-style: normal; opacity: 0.7; }
+
+/* the hero's résumé entry keeps the shape of its neighbouring buttons */
+.vx-hero-actions .vx-resume-menu { width: 100%; }
+.vx-hero-actions .vx-resume-menu > button {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--vx-line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.vx-contact-page-actions .vx-resume-menu > button {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--vx-line-strong);
+  background: transparent;
+  color: #d7dee4;
+  font: 560 13px/1 var(--font-geist-mono), monospace;
+  cursor: pointer;
+}
+
+/* rerank actually reorders: rank 2 rises past rank 1 and back */
+.vx-fig-rank-up { animation: vxRankUp 3.4s var(--vx-ease) infinite; }
+.vx-fig-rank-down { animation: vxRankDown 3.4s var(--vx-ease) infinite; }
+
+@keyframes vxRankUp {
+  0%, 22% { transform: translateY(0); }
+  46%, 78% { transform: translateY(-15px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes vxRankDown {
+  0%, 22% { transform: translateY(0); }
+  46%, 78% { transform: translateY(15px); }
+  100% { transform: translateY(0); }
+}
+
+.vx-fig-track { fill: rgba(255, 255, 255, 0.08); }
+.vx-fig-bar.warn { fill: rgba(255, 194, 103, 0.8); }
+
+/* regression suite cells */
+.vx-fig-cell {
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 34%, transparent);
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 46%, transparent);
+  stroke-width: 1;
+  animation: vxFigNode 2.6s ease-in-out infinite;
+}
+
+.vx-fig-cell.bad {
+  fill: rgba(255, 120, 120, 0.4);
+  stroke: rgba(255, 120, 120, 0.9);
+}
+
+/* the RL refinement loop */
+.vx-fig-loop {
+  fill: none;
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 42%, transparent);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: vxFigureSpin 18s linear infinite;
+}
+
+@keyframes vxFigureSpin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-fig-rank-up, .vx-fig-rank-down, .vx-fig-cell, .vx-fig-loop { animation: none; }
+}
+
+/* ============================================================
+   FOCUS PASS
+   Column headers read as real section labels, and any engineering
+   layer this role does not call on drops to greyscale so the eye is
+   pulled to the ones that matter instead of a field of faint colour.
+   ============================================================ */
+
+.vx-map-col {
+  fill: #c3ced9;
+  font-weight: 700;
+}
+
+.vx-map-col-rule {
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 1;
+}
+
+/* A layer this role does not use: colour removed, but it keeps a clear white
+   outline so it still reads as a card rather than dissolving into the page. */
+.vx-role-map g[data-tier="off"] {
+  filter: grayscale(1);
+}
+
+.vx-role-map g[data-tier="off"] .vx-map-box {
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 1.2;
+  fill: rgba(255, 255, 255, 0.016);
+}
+
+.vx-role-map g[data-tier="off"] .vx-map-panel { stroke: rgba(255, 255, 255, 0.22); }
+.vx-role-map g[data-tier="off"] .vx-map-area { fill: #838b93; }
+.vx-role-map g[data-tier="off"] .vx-map-float { fill: #737b83; }
+.vx-role-map g[data-tier="off"] .vx-map-skill { fill: #5c646c; }
+.vx-role-map g[data-tier="off"] .vx-map-src { fill: #565e66; }
+.vx-role-map g[data-tier="off"] .vx-map-glyph { stroke: #838b93; }
+.vx-role-map g[data-tier="off"] .vx-map-figure { opacity: 0.42; }
 
 /* In the role, but resting this beat: colour held back, still legible. */
 .vx-role-map g[data-tier="on"] {
