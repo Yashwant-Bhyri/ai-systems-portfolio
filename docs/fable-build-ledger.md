@@ -1044,3 +1044,37 @@ Two concrete defects, both geometry:
 
 Verified: 0 header/box overlaps, 0 capability collisions, 0 capabilities
 outside their panel, 0 area labels or attributions outside their box.
+
+### Session 9k — two-beat profile, per-capability figures, bilingual résumé
+
+**Structure.** The profile now renders TWICE from one component via a `variant`
+prop. "brief" sits right after the hero: roles → the five engineering areas
+(name on one line) → each area's operational figure, with ONE capability
+floating under the area name and swapping every few seconds. "full" sits after
+the research chapters, just before Contact: the same spine plus all 25
+capabilities, three rotating highlights, and evidence naming the real projects —
+legitimate there because the reader has met them by then. Nav gained
+"Capabilities"; the brief keeps "Profile".
+
+**Figures are now per capability, not per area.** Areas 1-3 dispatch a distinct
+drawing for each of their five capabilities; areas 4-5 likewise after this pass:
+- application: layered app · api boundary · build·ship · schema check · human gate
+- runtime: workflow dag · reasoning chain · tool call · hand-off · voice loop
+- knowledge: hnsw index · rerank (rows actually reorder) · grounding ·
+  session recall · ingest pipeline
+- control: eval harness · regression suite (24 cells, one caught) · policy gate ·
+  RL refinement (a real closed loop) · otel trace
+- platform: model routing · latency budget · cache·fallback · compression · ci/cd
+
+**Résumé is bilingual.** English + 中文 PDFs in public/, and every entry point
+(header, hero, contact) opens a chooser that closes on Escape or outside click.
+
+**Fit discipline.** Both canvases are sized so the rendered SVG fits its
+container by height and the content bbox stays inside the viewBox; verified by
+measurement, not by eye. Two capability strings were shortened to stop text
+leaving its box ("OpenTelemetry & distributed tracing", "Filmora · Lalamove R&D").
+
+Recurring gotchas worth remembering: python `str.replace` fails silently when
+the target has drifted — several edits no-op'd and were only caught by reading
+the rendered DOM back; and the dev server's HMR dies after large edits, which
+looks like a code error but clears with preview_stop/preview_start.

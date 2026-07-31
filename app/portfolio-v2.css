@@ -7358,6 +7358,12 @@ g[data-on="true"] .vx-map-wire.is-on {
   display: flex;
   align-items: center;
   gap: clamp(14px, 1.6vw, 24px);
+  /* clear the fixed CONTACT ME dock in the top-right corner */
+  padding-right: clamp(0px, 12vw, 186px);
+}
+
+@media (max-width: 900px) {
+  .vx-profile-head-meta { padding-right: 0; }
 }
 
 .vx-profile-head-meta > strong {
@@ -7406,7 +7412,7 @@ g[data-on="true"] .vx-map-wire.is-on {
 /* Column headers */
 .vx-map-col {
   fill: #7c8894;
-  font: 640 13px/1 var(--font-geist-mono), monospace;
+  font: 640 11.5px/1 var(--font-geist-mono), monospace;
   letter-spacing: 0.16em;
 }
 
@@ -7444,7 +7450,7 @@ g[data-on="true"] .vx-map-wire.is-on {
 
 .vx-map-role {
   fill: #b9c3cd;
-  font: 600 20px/1 var(--font-geist-sans), system-ui, sans-serif;
+  font: 600 18px/1 var(--font-geist-sans), system-ui, sans-serif;
   letter-spacing: -0.018em;
 }
 
@@ -7452,7 +7458,7 @@ g[data-on="true"] .vx-map-wire.is-on {
 
 .vx-map-area {
   fill: #c2ccd6;
-  font: 600 17px/1 var(--font-geist-sans), system-ui, sans-serif;
+  font: 600 15px/1 var(--font-geist-sans), system-ui, sans-serif;
   letter-spacing: -0.012em;
 }
 
@@ -7460,7 +7466,7 @@ g[data-on="true"] .vx-map-wire.is-on {
 
 .vx-map-sub {
   fill: #7f8b96;
-  font: 510 12.5px/1 var(--font-geist-mono), monospace;
+  font: 510 11px/1 var(--font-geist-mono), monospace;
 }
 
 .vx-map-src {
@@ -7472,7 +7478,7 @@ g[data-on="true"] .vx-map-wire.is-on {
 /* The skills — always legible, brighter when the role calls on them. */
 .vx-map-skill {
   fill: #94a0ab;
-  font: 520 14.5px/1 var(--font-geist-mono), monospace;
+  font: 520 11.5px/1 var(--font-geist-mono), monospace;
 }
 
 .vx-map-skill.is-on { fill: #e3ebf2; }
@@ -7585,4 +7591,468 @@ g[data-on="true"] .vx-map-wire.is-on {
   .vx-reason-bar {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* --- rotating spotlight: three capabilities lit at a time, and the spotlit
+   area's live cluster figure in the panel gutter --- */
+
+.vx-role-map g[data-spot="true"] .vx-map-panel.is-on {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 52%, transparent);
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 6%, rgba(255, 255, 255, 0.016));
+}
+
+.vx-role-map g[data-lit="true"] .vx-map-skill.is-on {
+  fill: #ffffff;
+  font-weight: 620;
+}
+
+.vx-role-map g[data-lit="true"] .vx-map-dot.is-on {
+  filter: drop-shadow(0 0 7px var(--area, var(--vx-lime)));
+}
+
+.vx-map-figure {
+  animation: vxFigureIn 420ms var(--vx-ease) both;
+}
+
+@keyframes vxFigureIn {
+  from { opacity: 0; transform: translateX(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.vx-fig-frame {
+  fill: none;
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 30%, transparent);
+  stroke-width: 1;
+}
+
+.vx-fig-line {
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1;
+}
+
+.vx-fig-bar {
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 72%, transparent);
+  animation: vxFigBar 2.4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+
+.vx-fig-bar.dim {
+  fill: rgba(255, 255, 255, 0.16);
+}
+
+@keyframes vxFigBar {
+  0%, 100% { transform: scaleX(0.55); }
+  50% { transform: scaleX(1); }
+}
+
+.vx-fig-node {
+  fill: #4d5761;
+}
+
+.vx-fig-node.is-on {
+  fill: var(--area, var(--vx-lime));
+  filter: drop-shadow(0 0 6px var(--area, var(--vx-lime)));
+  animation: vxFigNode 2.2s ease-in-out infinite;
+}
+
+@keyframes vxFigNode {
+  0%, 100% { opacity: 0.62; }
+  50% { opacity: 1; }
+}
+
+.vx-fig-hub {
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 82%, white);
+  filter: drop-shadow(0 0 8px var(--area, var(--vx-lime)));
+}
+
+.vx-fig-spoke {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 1;
+}
+
+.vx-fig-spoke.is-on {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 62%, transparent);
+  stroke-width: 1.5;
+}
+
+/* a packet crossing the boundary / the track */
+.vx-fig-travel {
+  fill: var(--area, var(--vx-lime));
+  filter: drop-shadow(0 0 6px var(--area, var(--vx-lime)));
+  animation: vxFigTravel 2.6s linear infinite;
+}
+
+@keyframes vxFigTravel {
+  0% { transform: translateX(0); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateX(84px); opacity: 0; }
+}
+
+/* a request riding one routed lane */
+.vx-fig-orbit {
+  fill: var(--area, var(--vx-lime));
+  filter: drop-shadow(0 0 6px var(--area, var(--vx-lime)));
+  offset-rotate: 0deg;
+  animation: vxFigOrbit 2.2s linear infinite;
+}
+
+@keyframes vxFigOrbit {
+  from { offset-distance: 0%; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  to { offset-distance: 100%; opacity: 0; }
+}
+
+/* the query expanding through vector space */
+.vx-fig-ripple {
+  fill: none;
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 55%, transparent);
+  stroke-width: 1.2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: vxFigRipple 2.6s ease-out infinite;
+}
+
+@keyframes vxFigRipple {
+  0% { transform: scale(0.3); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.vx-fig-gate {
+  fill: rgba(255, 255, 255, 0.2);
+  animation: vxFigGate 2.4s ease-in-out infinite;
+}
+
+.vx-fig-gate.is-on {
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 78%, transparent);
+}
+
+@keyframes vxFigGate {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.vx-fig-check {
+  fill: none;
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 88%, white);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-map-figure,
+  .vx-fig-bar,
+  .vx-fig-node.is-on,
+  .vx-fig-travel,
+  .vx-fig-orbit,
+  .vx-fig-ripple,
+  .vx-fig-gate {
+    animation: none;
+  }
+}
+
+/* extra figure vocabulary */
+.vx-fig-frame.lit {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 62%, transparent);
+}
+
+.vx-fig-tag {
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 78%, white);
+  font: 620 9px/1 var(--font-geist-mono), monospace;
+  text-anchor: middle;
+}
+
+.vx-fig-tag.start { text-anchor: start; fill: #6f7a85; }
+
+.vx-fig-lane {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 1;
+}
+
+.vx-fig-lane.is-on {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 50%, transparent);
+}
+
+.vx-fig-orbit.slow { animation-duration: 3.4s; }
+
+/* --- figure plate + structural vocabulary, mirroring the chapter graphics --- */
+.vx-fig-plate {
+  fill: rgba(255, 255, 255, 0.016);
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 24%, transparent);
+  stroke-width: 1;
+}
+
+.vx-fig-axis {
+  fill: #6d7883;
+  font: 560 8.5px/1 var(--font-geist-mono), monospace;
+}
+
+.vx-fig-axis.end { text-anchor: end; }
+
+.vx-fig-rule {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.vx-fig-chip {
+  fill: rgba(255, 255, 255, 0.05);
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 1;
+}
+
+.vx-fig-chip.pass {
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 16%, transparent);
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 62%, transparent);
+}
+
+.vx-fig-gateline {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 55%, transparent);
+  stroke-width: 1.4;
+  stroke-dasharray: 3 3;
+}
+
+/* ============================================================
+   THREE-TIER READING ORDER
+   spot  — this area holds one of the three live highlights
+   on    — the role calls on this area, but it is resting right now
+   off   — the role does not call on this area: dropped right out
+   Within a spot area exactly one capability is bright; its siblings pull
+   back but stay comfortably readable. De-emphasis is done with colour and
+   weight, never a blur filter — blurring 11px mono just looks broken.
+   ============================================================ */
+
+.vx-role-map g[data-tier="spot"] .vx-map-skill { fill: #a8b3be; }
+.vx-role-map g[data-tier="on"] .vx-map-skill { fill: #79838d; }
+.vx-role-map g[data-tier="off"] .vx-map-skill { fill: #565f68; }
+
+/* the one live capability in each spotlit area */
+.vx-role-map g[data-tier="spot"] g[data-lit="true"] .vx-map-skill {
+  fill: #ffffff;
+  font-weight: 640;
+}
+
+.vx-map-dot { fill: #4a535c; transition: fill 320ms ease, r 320ms ease; }
+.vx-role-map g[data-tier="spot"] .vx-map-dot { fill: color-mix(in srgb, var(--area, var(--vx-lime)) 46%, #55606a); }
+.vx-role-map g[data-tier="on"] .vx-map-dot { fill: #4f5962; }
+.vx-role-map g[data-tier="off"] .vx-map-dot { fill: #3d454d; }
+
+.vx-role-map g[data-tier="spot"] g[data-lit="true"] .vx-map-dot {
+  fill: var(--area, var(--vx-lime));
+  filter: drop-shadow(0 0 7px var(--area, var(--vx-lime)));
+}
+
+/* area identity follows the same three tiers */
+.vx-role-map g[data-tier="spot"] .vx-map-glyph {
+  stroke: var(--area, var(--vx-lime));
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--area, var(--vx-lime)) 40%, transparent));
+}
+.vx-role-map g[data-tier="on"] .vx-map-glyph { stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 50%, #6f7a85); filter: none; }
+.vx-role-map g[data-tier="off"] .vx-map-glyph { stroke: #5b656f; filter: none; }
+
+.vx-role-map g[data-tier="spot"] .vx-map-area { fill: #f4f8f2; }
+.vx-role-map g[data-tier="on"] .vx-map-area { fill: #9aa5b0; }
+.vx-role-map g[data-tier="off"] .vx-map-area { fill: #6a737d; }
+
+.vx-role-map g[data-tier="spot"] .vx-map-box {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 58%, transparent);
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 8%, rgba(255, 255, 255, 0.02));
+}
+.vx-role-map g[data-tier="on"] .vx-map-box {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 22%, rgba(255, 255, 255, 0.09));
+  fill: rgba(255, 255, 255, 0.014);
+}
+.vx-role-map g[data-tier="off"] .vx-map-box {
+  stroke: rgba(255, 255, 255, 0.07);
+  fill: rgba(255, 255, 255, 0.008);
+}
+
+.vx-role-map g[data-tier="spot"] .vx-map-panel {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 30%, transparent);
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 4%, rgba(255, 255, 255, 0.016));
+}
+.vx-role-map g[data-tier="on"] .vx-map-panel { stroke: rgba(255, 255, 255, 0.08); }
+.vx-role-map g[data-tier="off"] .vx-map-panel { stroke: rgba(255, 255, 255, 0.05); fill: rgba(255, 255, 255, 0.006); }
+
+.vx-role-map g[data-tier="spot"] .vx-map-wire { stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 48%, transparent); }
+.vx-role-map g[data-tier="off"] .vx-map-wire { stroke: rgba(255, 255, 255, 0.06); }
+
+/* The live capability is painted in its area's accent — the same emphasis
+   language the implementation-signal console uses, scaled down for a list. */
+.vx-map-skill-paint {
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 20%, transparent);
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 52%, transparent);
+  stroke-width: 1;
+  animation: vxSkillPaint 380ms var(--vx-ease) both;
+}
+
+@keyframes vxSkillPaint {
+  from { opacity: 0; transform: translateX(-3px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* the operation the figure is currently steered to */
+.vx-fig-focus {
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 90%, white);
+  font: 640 9px/1 var(--font-geist-mono), monospace;
+  text-anchor: end;
+}
+
+.vx-fig-chip.block {
+  fill: rgba(255, 120, 120, 0.14);
+  stroke: rgba(255, 120, 120, 0.6);
+}
+
+.vx-fig-check.block { stroke: #ff8b8b; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-map-skill-paint { animation: none; }
+}
+
+/* One capability floats under each area name in the brief map, swapping every
+   few seconds — the operational figure beside it changes to match. */
+.vx-map-float {
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 86%, white);
+  font: 560 11.5px/1 var(--font-geist-mono), monospace;
+  animation: vxFloatIn 520ms var(--vx-ease) both;
+}
+
+@keyframes vxFloatIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-map-float { animation: none; }
+}
+
+/* Résumé exists in English and 中文 — every entry point offers the choice. */
+.vx-resume-menu { position: relative; display: inline-flex; }
+
+.vx-resume-menu > button > i {
+  margin-left: 5px;
+  font-size: 0.8em;
+  font-style: normal;
+  opacity: 0.75;
+}
+
+.vx-resume-options {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 148px;
+  display: grid;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid rgba(184, 255, 99, 0.34);
+  background: rgba(6, 9, 11, 0.97);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(18px);
+  animation: vxResumeIn 180ms var(--vx-ease) both;
+}
+
+@keyframes vxResumeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.vx-resume-options > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  color: #d5dce2;
+  font: 560 12px/1 var(--font-geist-mono), monospace;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.vx-resume-options > a:hover {
+  background: rgba(184, 255, 99, 0.12);
+  color: var(--vx-lime);
+}
+
+.vx-resume-options > a > i { font-style: normal; opacity: 0.7; }
+
+/* the hero's résumé entry keeps the shape of its neighbouring buttons */
+.vx-hero-actions .vx-resume-menu { width: 100%; }
+.vx-hero-actions .vx-resume-menu > button {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--vx-line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.vx-contact-page-actions .vx-resume-menu > button {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--vx-line-strong);
+  background: transparent;
+  color: #d7dee4;
+  font: 560 13px/1 var(--font-geist-mono), monospace;
+  cursor: pointer;
+}
+
+/* rerank actually reorders: rank 2 rises past rank 1 and back */
+.vx-fig-rank-up { animation: vxRankUp 3.4s var(--vx-ease) infinite; }
+.vx-fig-rank-down { animation: vxRankDown 3.4s var(--vx-ease) infinite; }
+
+@keyframes vxRankUp {
+  0%, 22% { transform: translateY(0); }
+  46%, 78% { transform: translateY(-15px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes vxRankDown {
+  0%, 22% { transform: translateY(0); }
+  46%, 78% { transform: translateY(15px); }
+  100% { transform: translateY(0); }
+}
+
+.vx-fig-track { fill: rgba(255, 255, 255, 0.08); }
+.vx-fig-bar.warn { fill: rgba(255, 194, 103, 0.8); }
+
+/* regression suite cells */
+.vx-fig-cell {
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 34%, transparent);
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 46%, transparent);
+  stroke-width: 1;
+  animation: vxFigNode 2.6s ease-in-out infinite;
+}
+
+.vx-fig-cell.bad {
+  fill: rgba(255, 120, 120, 0.4);
+  stroke: rgba(255, 120, 120, 0.9);
+}
+
+/* the RL refinement loop */
+.vx-fig-loop {
+  fill: none;
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 42%, transparent);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: vxFigureSpin 18s linear infinite;
+}
+
+@keyframes vxFigureSpin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-fig-rank-up, .vx-fig-rank-down, .vx-fig-cell, .vx-fig-loop { animation: none; }
 }

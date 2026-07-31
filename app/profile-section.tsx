@@ -69,10 +69,13 @@ type Area = {
   label: readonly [string, string];
   /** The curated, concrete skills this engineering area actually covers. */
   skills: readonly string[];
-  /** Supplementary only, and by number: the projects are introduced later. */
-  appliedIn: string;
   /** Which target roles call on this area. */
   roles: readonly [boolean, boolean, boolean];
+  /** One short operation name per capability — the figure steers to it. */
+  focus: readonly string[];
+  /** Where this layer was actually built. Only shown in the full map, which
+   *  sits after the project chapters, so the names mean something by then. */
+  evidence: string;
 };
 
 const AREAS: readonly Area[] = [
@@ -87,8 +90,9 @@ const AREAS: readonly Area[] = [
       "structured outputs & schema contracts",
       "human-in-the-loop product workflows",
     ],
-    appliedIn: "applied in projects 02 · 04",
     roles: [false, true, true],
+    focus: ["architecture", "api call", "delivery", "schema", "human gate"],
+    evidence: "Filmora · Lalamove R&D",
   },
   {
     id: "runtime",
@@ -101,8 +105,9 @@ const AREAS: readonly Area[] = [
       "state machines, hand-offs & async execution",
       "real-time voice & streaming agent runtimes",
     ],
-    appliedIn: "applied in projects 01 · 02",
     roles: [true, true, false],
+    focus: ["orchestrate", "reason", "tool call", "hand-off", "stream"],
+    evidence: "Antigravity · Filmora",
   },
   {
     id: "knowledge",
@@ -115,8 +120,9 @@ const AREAS: readonly Area[] = [
       "working, long-term & longitudinal memory",
       "data ingestion & knowledge pipelines",
     ],
-    appliedIn: "applied in projects 02 · 03",
     roles: [true, true, true],
+    focus: ["index", "rerank", "ground", "memory", "ingest"],
+    evidence: "MindScape · Filmora",
   },
   {
     id: "control",
@@ -127,10 +133,11 @@ const AREAS: readonly Area[] = [
       "regression testing & failure analysis",
       "guardrails, validation & policy control",
       "RL-style observability & refinement",
-      "OpenTelemetry, distributed tracing & production traces",
+      "OpenTelemetry & distributed tracing",
     ],
-    appliedIn: "applied in projects 01 · 04",
     roles: [true, true, true],
+    focus: ["evals", "regression", "guardrails", "rl loop", "tracing"],
+    evidence: "Antigravity · SLM distillation",
   },
   {
     id: "platform",
@@ -143,30 +150,51 @@ const AREAS: readonly Area[] = [
       "quantization, distillation & efficient inference",
       "cloud deployment, containers & CI/CD",
     ],
-    appliedIn: "applied in projects 01 · 04",
     roles: [true, false, true],
+    focus: ["routing", "latency", "cache", "quantize", "deploy"],
+    evidence: "Optek embedded · Antigravity",
   },
 ] as const;
 
 const ROLE_ADVANCE_MS = 10400;
 
-/* --- map geometry (viewBox 1340 × 646).
-   The column headers own a band of their own: previously they sat at y=16
-   while the first area box began at y=4, so they overlapped it. --- */
-const HEADER_Y = 20;
-const ROLE_X = 8;
-const ROLE_W = 282;
-const ROLE_H = 115;
-const ROLE_Y = [142, 283, 424];
-const AREA_X = 358;
-const AREA_W = 352;
-const AREA_H = 115;
-const AREA_Y = [40, 161, 282, 403, 524];
-const SKILL_X = 748;
-const SKILL_W = 584;
-/* five capabilities per area, with real air between them */
-const SKILL_TOP = 22;
-const SKILL_PITCH = 22;
+/* --- The section renders twice.
+   "brief" sits right after the hero: roles → the five engineering areas →
+   their operational figures. No capability lists, bigger type, lots of air.
+   "full" sits just before Contact, once the projects have been seen: the same
+   spine plus all 25 capabilities, the rotating highlights, and the evidence
+   behind each layer. --- */
+const FIGURE_W = 172;
+const FIGURE_H = 92;
+
+type Geometry = {
+  viewBox: string;
+  headerY: number;
+  roleX: number; roleW: number; roleH: number; roleY: readonly number[];
+  areaX: number; areaW: number; areaH: number; areaY: readonly number[];
+  figureX: number;
+  skillX: number; skillW: number; skillTop: number; skillPitch: number;
+};
+
+const BRIEF: Geometry = {
+  // aspect ~2.0 so the map fits its container by height instead of
+  // overflowing and clipping the last row; header owns its own band
+  viewBox: "0 0 1010 456",
+  headerY: 15,
+  roleX: 8, roleW: 280, roleH: 96, roleY: [87, 183, 279],
+  areaX: 372, areaW: 416, areaH: 74, areaY: [22, 108, 194, 280, 366],
+  figureX: 806,
+  skillX: 0, skillW: 0, skillTop: 0, skillPitch: 0,
+};
+
+const FULL: Geometry = {
+  viewBox: "0 0 1320 602",
+  headerY: 18,
+  roleX: 8, roleW: 240, roleH: 104, roleY: [146, 256, 366],
+  areaX: 296, areaW: 300, areaH: 104, areaY: [38, 150, 262, 374, 486],
+  figureX: 1112,
+  skillX: 640, skillW: 452, skillTop: 20, skillPitch: 18,
+};
 
 
 /** One mark per engineering area: recognised before it is read. */
@@ -208,6 +236,395 @@ function AreaGlyph({ id, x, y }: { id: string; x: number; y: number }) {
   </>);
 }
 
+/** Three highlights at a time, each from a DIFFERENT engineering area, chosen
+ *  across the whole capability set. Integer LCG, so SSR and the client agree
+ *  on the first frame — no float drift, no hydration mismatch. */
+function pickHighlights(tick: number, areas: readonly Area[]): Map<string, number> {
+  const picked = new Map<string, number>();
+  if (areas.length === 0) return picked;
+  // Math.imul keeps the multiply exact at 32 bits. Plain `*` overflows the
+  // safe-integer range and starts repeating, which silently dropped a pick.
+  let seed = (Math.imul(tick + 1, 7919) + 13) & 0x7fffffff;
+  const next = () => {
+    seed = (Math.imul(seed, 1103515245) + 12345) & 0x7fffffff;
+    return seed;
+  };
+  const want = Math.min(3, areas.length);
+  for (let guard = 0; guard < 64 && picked.size < want; guard += 1) {
+    const area = areas[next() % areas.length];
+    if (picked.has(area.id)) continue;
+    picked.set(area.id, next() % area.skills.length);
+  }
+  return picked;
+}
+
+/** Every capability draws its OWN operation. Areas 1-3 dispatch a distinct
+ *  figure per capability (orchestration vs tool calling vs streaming are not
+ *  the same picture); areas 4-5 keep one figure that steers by capability.
+ *  Box is FIGURE_W x FIGURE_H centred on (x, y). All motion is CSS. */
+function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: number; variant: number; focus: string }) {
+  const top = y - FIGURE_H / 2;
+  const mid = top + 52;
+  const v = variant;
+  const wrap = (label: string, children: React.ReactNode) => (
+    <g className="vx-map-figure" aria-hidden="true">
+      <rect x={x} y={top} width={FIGURE_W} height={FIGURE_H} rx={7} className="vx-fig-plate" />
+      <text x={x + 9} y={top + 14} className="vx-fig-tag start">{label}</text>
+      <text x={x + FIGURE_W - 9} y={top + 14} className="vx-fig-focus">{focus}</text>
+      {children}
+    </g>
+  );
+  const flow = (d: string, delay = 0, slow = false) => (
+    <circle r={2.8} className={slow ? "vx-fig-orbit slow" : "vx-fig-orbit"}
+      style={{ offsetPath: `path("${d}")`, animationDelay: `${delay}s` } as CSSProperties} />
+  );
+
+  /* ---------- 1 · AI application & product engineering ---------- */
+  if (id === "application") {
+    if (v === 0) return wrap("layered app", <>
+      {["ui", "api", "data"].map((tier, i) => (
+        <g key={tier}>
+          <rect x={x + 24} y={mid - 26 + i * 22} width={92} height={17} rx={3} className={i === 0 ? "vx-fig-frame lit" : "vx-fig-frame"} />
+          <text x={x + 32} y={mid - 14 + i * 22} className="vx-fig-axis">{tier}</text>
+          <rect x={x + 66} y={mid - 21 + i * 22} width={42 - i * 10} height={5} rx={2.5} className={i === 0 ? "vx-fig-bar" : "vx-fig-bar dim"} style={{ animationDelay: `${i * 0.3}s` } as CSSProperties} />
+        </g>
+      ))}
+      <path d={`M ${x + 130} ${mid - 18} L ${x + 130} ${mid + 22}`} className="vx-fig-spoke is-on" />
+      {flow(`M ${x + 130} ${mid - 18} L ${x + 130} ${mid + 22}`)}
+    </>);
+    if (v === 1) return wrap("api boundary", <>
+      <rect x={x + 10} y={mid - 18} width={34} height={36} rx={4} className="vx-fig-frame lit" />
+      <rect x={x + 128} y={mid - 18} width={34} height={36} rx={4} className="vx-fig-frame" />
+      <text x={x + 145} y={mid + 4} className="vx-fig-tag">svc</text>
+      <path d={`M ${x + 46} ${mid - 8} L ${x + 126} ${mid - 8}`} className="vx-fig-spoke is-on" />
+      <path d={`M ${x + 126} ${mid + 10} L ${x + 46} ${mid + 10}`} className="vx-fig-spoke" />
+      {flow(`M ${x + 46} ${mid - 8} L ${x + 126} ${mid - 8}`)}
+      {flow(`M ${x + 126} ${mid + 10} L ${x + 46} ${mid + 10}`, 0, true)}
+    </>);
+    if (v === 2) return wrap("build · ship", <>
+      {["build", "test", "ship"].map((stage, i) => (
+        <g key={stage}>
+          <rect x={x + 12 + i * 52} y={mid - 12} width={40} height={24} rx={4} className={i === 2 ? "vx-fig-frame lit" : "vx-fig-frame"} />
+          <text x={x + 32 + i * 52} y={mid + 3} className="vx-fig-tag">{stage}</text>
+          {i < 2 ? <path d={`M ${x + 54 + i * 52} ${mid} L ${x + 62 + i * 52} ${mid}`} className="vx-fig-spoke is-on" /> : null}
+        </g>
+      ))}
+      {flow(`M ${x + 12} ${mid} L ${x + 156} ${mid}`)}
+    </>);
+    if (v === 3) return wrap("schema check", <>
+      <rect x={x + 14} y={mid - 24} width={96} height={50} rx={4} className="vx-fig-frame lit" />
+      <text x={x + 22} y={mid - 12} className="vx-fig-axis">{"{ }"}</text>
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect x={x + 42} y={mid - 18 + i * 14} width={38} height={5} rx={2.5} className="vx-fig-bar dim" style={{ animationDelay: `${i * 0.25}s` } as CSSProperties} />
+          <path d={`M ${x + 88} ${mid - 16 + i * 14} l 3 3 l 6 -6`} className="vx-fig-check" />
+        </g>
+      ))}
+      <rect x={x + 122} y={mid - 8} width={36} height={16} rx={3} className="vx-fig-chip pass" />
+      <text x={x + 140} y={mid + 4} className="vx-fig-tag">valid</text>
+    </>);
+    return wrap("human gate", <>
+      <rect x={x + 14} y={mid - 24} width={80} height={48} rx={4} className="vx-fig-frame" />
+      {[0, 1, 2].map((i) => (
+        <rect key={i} x={x + 24} y={mid - 14 + i * 12} width={58 - i * 14} height={5} rx={2.5} className="vx-fig-bar dim" style={{ animationDelay: `${i * 0.25}s` } as CSSProperties} />
+      ))}
+      <rect x={x + 106} y={mid - 20} width={52} height={18} rx={4} className="vx-fig-chip pass" />
+      <text x={x + 132} y={mid - 8} className="vx-fig-tag">approve</text>
+      <rect x={x + 106} y={mid + 4} width={52} height={18} rx={4} className="vx-fig-chip" />
+      <text x={x + 132} y={mid + 16} className="vx-fig-tag">hold</text>
+    </>);
+  }
+
+  /* ---------- 2 · Agent runtime & orchestration ---------- */
+  if (id === "runtime") {
+    if (v === 0) return wrap("workflow dag", <>
+      <rect x={x + 10} y={mid - 12} width={30} height={24} rx={4} className="vx-fig-frame lit" />
+      <text x={x + 25} y={mid + 4} className="vx-fig-tag">plan</text>
+      <path d={`M ${x + 42} ${mid} L ${x + 54} ${mid}`} className="vx-fig-spoke is-on" />
+      <path d={`M ${x + 54} ${mid - 24} L ${x + 54} ${mid + 24}`} className="vx-fig-spoke is-on" />
+      {[-24, 0, 24].map((dy, i) => (
+        <g key={i}>
+          <path d={`M ${x + 54} ${mid + dy} L ${x + 66} ${mid + dy}`} className="vx-fig-spoke is-on" />
+          <rect x={x + 68} y={mid + dy - 9} width={44} height={18} rx={3} className="vx-fig-frame" />
+          <circle cx={x + 78} cy={mid + dy} r={3} className="vx-fig-node is-on" style={{ animationDelay: `${i * 0.45}s` } as CSSProperties} />
+          <rect x={x + 86} y={mid + dy - 2} width={18} height={4} rx={2} className="vx-fig-bar dim" style={{ animationDelay: `${i * 0.45}s` } as CSSProperties} />
+          <path d={`M ${x + 114} ${mid + dy} L ${x + 126} ${mid + dy}`} className="vx-fig-spoke" />
+        </g>
+      ))}
+      <path d={`M ${x + 126} ${mid - 24} L ${x + 126} ${mid + 24}`} className="vx-fig-spoke" />
+      <path d={`M ${x + 126} ${mid} L ${x + 138} ${mid}`} className="vx-fig-spoke is-on" />
+      <circle cx={x + 148} cy={mid} r={8} className="vx-fig-hub" />
+      {flow(`M ${x + 42} ${mid} L ${x + 54} ${mid} L ${x + 54} ${mid - 24} L ${x + 66} ${mid - 24}`)}
+    </>);
+    if (v === 1) return wrap("reasoning chain", <>
+      {[0, 1, 2, 3].map((i) => (
+        <g key={i}>
+          <circle cx={x + 24 + i * 40} cy={mid} r={9} className={i < 3 ? "vx-fig-node is-on" : "vx-fig-node"} style={{ animationDelay: `${i * 0.45}s` } as CSSProperties} />
+          <text x={x + 24 + i * 40} y={mid + 3} className="vx-fig-tag">{i + 1}</text>
+          {i < 3 ? <path d={`M ${x + 34 + i * 40} ${mid} L ${x + 55 + i * 40} ${mid}`} className="vx-fig-spoke is-on" /> : null}
+        </g>
+      ))}
+      {flow(`M ${x + 24} ${mid} L ${x + 144} ${mid}`)}
+      <text x={x + 9} y={top + 84} className="vx-fig-axis">step by step</text>
+    </>);
+    if (v === 2) return wrap("tool call", <>
+      <rect x={x + 10} y={mid - 16} width={44} height={32} rx={4} className="vx-fig-frame lit" />
+      <text x={x + 32} y={mid + 3} className="vx-fig-tag">agent</text>
+      <rect x={x + 112} y={mid - 16} width={50} height={32} rx={4} className="vx-fig-frame" />
+      <text x={x + 137} y={mid + 3} className="vx-fig-tag">tool</text>
+      <path d={`M ${x + 56} ${mid - 8} L ${x + 110} ${mid - 8}`} className="vx-fig-spoke is-on" />
+      <text x={x + 83} y={mid - 13} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>call</text>
+      <path d={`M ${x + 110} ${mid + 9} L ${x + 56} ${mid + 9}`} className="vx-fig-spoke" />
+      <text x={x + 83} y={mid + 21} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>typed result</text>
+      {flow(`M ${x + 56} ${mid - 8} L ${x + 110} ${mid - 8}`)}
+      {flow(`M ${x + 110} ${mid + 9} L ${x + 56} ${mid + 9}`, 0, true)}
+    </>);
+    if (v === 3) return wrap("hand-off", <>
+      <rect x={x + 12} y={mid - 16} width={46} height={32} rx={4} className="vx-fig-frame lit" />
+      <text x={x + 35} y={mid + 3} className="vx-fig-tag">A</text>
+      <rect x={x + 114} y={mid - 16} width={46} height={32} rx={4} className="vx-fig-frame" />
+      <text x={x + 137} y={mid + 3} className="vx-fig-tag">B</text>
+      <path d={`M ${x + 60} ${mid} L ${x + 112} ${mid}`} className="vx-fig-spoke is-on" />
+      <rect x={x + 78} y={mid - 20} width={18} height={9} rx={2} className="vx-fig-chip" />
+      <text x={x + 87} y={mid - 13} className="vx-fig-tag">ctx</text>
+      {flow(`M ${x + 60} ${mid} L ${x + 112} ${mid}`)}
+    </>);
+    return wrap("voice loop", <>
+      <text x={x + 10} y={mid - 22} className="vx-fig-axis">mic</text>
+      {Array.from({ length: 14 }).map((_, i) => (
+        <rect key={i} x={x + 10 + i * 8} y={mid - 14 + (7 - [4, 9, 5, 12, 7, 14, 6, 11, 4, 9, 13, 6, 10, 5][i]) / 2}
+          width={4} height={[4, 9, 5, 12, 7, 14, 6, 11, 4, 9, 13, 6, 10, 5][i]} rx={2}
+          className="vx-fig-bar" style={{ animationDelay: `${i * 0.09}s` } as CSSProperties} />
+      ))}
+      <rect x={x + 10} y={mid + 4} width={100} height={14} rx={3} className="vx-fig-frame lit" />
+      <text x={x + 16} y={mid + 14} className="vx-fig-axis">partial → final</text>
+      <path d={`M ${x + 114} ${mid + 11} L ${x + 130} ${mid + 11}`} className="vx-fig-spoke is-on" />
+      <circle cx={x + 146} cy={mid + 11} r={9} className="vx-fig-hub" />
+      <text x={x + 146} y={mid + 14} className="vx-fig-tag">tts</text>
+      {flow(`M ${x + 114} ${mid + 11} L ${x + 130} ${mid + 11}`)}
+    </>);
+  }
+
+  /* ---------- 3 · Knowledge, memory & retrieval ---------- */
+  if (id === "knowledge") {
+    if (v === 0) {
+      const layers = [
+        { label: "L2", ly: top + 32, xs: [22, 62, 104, 146] },
+        { label: "L1", ly: top + 54, xs: [16, 42, 68, 94, 120, 150] },
+        { label: "L0", ly: top + 76, xs: [12, 30, 48, 66, 84, 102, 120, 138, 156] },
+      ];
+      const path: [number, number][] = [[0, 2], [1, 3], [2, 5]];
+      return wrap("hnsw index", <>
+        {layers.map((layer, li) => (
+          <g key={layer.label}>
+            <text x={x + 4} y={layer.ly + 3} className="vx-fig-axis">{layer.label}</text>
+            <line x1={x + 14} y1={layer.ly} x2={x + FIGURE_W - 8} y2={layer.ly} className="vx-fig-rule" />
+            {layer.xs.map((px, ni) => {
+              const on = path.some(([pl, pn]) => pl === li && pn === ni) || (li === 2 && (ni === 5 || ni === 6));
+              return <circle key={ni} cx={x + px} cy={layer.ly} r={on ? 3.4 : 1.9} className={on ? "vx-fig-node is-on" : "vx-fig-node"} style={{ animationDelay: `${li * 0.3}s` } as CSSProperties} />;
+            })}
+          </g>
+        ))}
+        {path.slice(1).map(([pl, pn], k) => {
+          const [al, an] = path[k];
+          return <line key={k} x1={x + layers[al].xs[an]} y1={layers[al].ly} x2={x + layers[pl].xs[pn]} y2={layers[pl].ly} className="vx-fig-spoke is-on" />;
+        })}
+        {flow(`M ${x + layers[0].xs[2]} ${layers[0].ly} L ${x + layers[1].xs[3]} ${layers[1].ly} L ${x + layers[2].xs[5]} ${layers[2].ly}`)}
+      </>);
+    }
+    if (v === 1) return wrap("rerank", <>
+      {[
+        { w: 74, cls: "vx-fig-rank-down", rank: "1", lit: false },
+        { w: 108, cls: "vx-fig-rank-up", rank: "2", lit: true },
+        { w: 86, cls: "", rank: "3", lit: false },
+        { w: 58, cls: "", rank: "4", lit: false },
+      ].map((row, i) => (
+        <g key={i} className={row.cls}>
+          <text x={x + 12} y={mid - 15 + i * 15} className="vx-fig-axis">{row.rank}</text>
+          <rect x={x + 26} y={mid - 22 + i * 15} width={row.w} height={9} rx={3}
+            className={row.lit ? "vx-fig-bar" : "vx-fig-bar dim"} style={{ animationDelay: `${i * 0.2}s` } as CSSProperties} />
+        </g>
+      ))}
+      <text x={x + FIGURE_W - 8} y={top + 84} className="vx-fig-axis end">cross-encoder reorder</text>
+    </>);
+    if (v === 2) return wrap("grounding", <>
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect x={x + 12} y={mid - 24 + i * 17} width={42} height={13} rx={3} className={i === 1 ? "vx-fig-frame lit" : "vx-fig-frame"} />
+          <text x={x + 33} y={mid - 15 + i * 17} className="vx-fig-tag">doc</text>
+          <path d={`M ${x + 56} ${mid - 18 + i * 17} L ${x + 104} ${mid}`} className={i === 1 ? "vx-fig-spoke is-on" : "vx-fig-spoke"} />
+        </g>
+      ))}
+      <rect x={x + 106} y={mid - 14} width={56} height={28} rx={4} className="vx-fig-frame lit" />
+      <text x={x + 134} y={mid + 3} className="vx-fig-tag">cited</text>
+      {flow(`M ${x + 56} ${mid - 1} L ${x + 104} ${mid}`)}
+    </>);
+    if (v === 3) return wrap("session recall", <>
+      <line x1={x + 12} y1={mid + 18} x2={x + 122} y2={mid + 18} className="vx-fig-line" />
+      {["s1", "s2", "s3"].map((label, i) => (
+        <g key={label}>
+          <rect x={x + 12 + i * 38} y={mid - 6} width={30} height={18} rx={3} className="vx-fig-frame" />
+          <text x={x + 27 + i * 38} y={mid + 7} className="vx-fig-tag">{label}</text>
+          <circle cx={x + 27 + i * 38} cy={mid + 18} r={2.6} className="vx-fig-node is-on" style={{ animationDelay: `${i * 0.35}s` } as CSSProperties} />
+        </g>
+      ))}
+      <rect x={x + 128} y={mid - 10} width={34} height={26} rx={4} className="vx-fig-frame lit" />
+      <text x={x + 145} y={mid + 6} className="vx-fig-tag">now</text>
+      <path d={`M ${x + 27} ${mid - 8} Q ${x + 88} ${mid - 30}, ${x + 145} ${mid - 12}`} className="vx-fig-spoke is-on" />
+      {flow(`M ${x + 27} ${mid - 8} Q ${x + 88} ${mid - 30}, ${x + 145} ${mid - 12}`)}
+      <text x={x + 12} y={top + 84} className="vx-fig-axis">longitudinal recall</text>
+    </>);
+    return wrap("ingest pipeline", <>
+      {["src", "chunk", "embed"].map((stage, i) => (
+        <g key={stage}>
+          <rect x={x + 12 + i * 50} y={mid - 24} width={40} height={20} rx={3} className={i === 2 ? "vx-fig-frame lit" : "vx-fig-frame"} />
+          <text x={x + 32 + i * 50} y={mid - 11} className="vx-fig-tag">{stage}</text>
+          {i < 2 ? <path d={`M ${x + 53 + i * 50} ${mid - 14} L ${x + 61 + i * 50} ${mid - 14}`} className="vx-fig-spoke is-on" /> : null}
+        </g>
+      ))}
+      <path d={`M ${x + 132} ${mid - 4} L ${x + 132} ${mid + 8}`} className="vx-fig-spoke is-on" />
+      <g className="vx-fig-store">
+        <ellipse cx={x + 86} cy={mid + 14} rx={48} ry={6} className="vx-fig-frame lit" />
+        <path d={`M ${x + 38} ${mid + 14} v 10 a 48 6 0 0 0 96 0 v -10`} className="vx-fig-frame lit" />
+        <text x={x + 86} y={mid + 26} className="vx-fig-tag">vector store</text>
+      </g>
+      {flow(`M ${x + 12} ${mid - 14} L ${x + 132} ${mid - 14} L ${x + 132} ${mid + 8}`)}
+    </>);
+  }
+
+  /* ---------- 4 · Evaluation, safety & observability ---------- */
+  if (id === "control") {
+    if (v === 0) return wrap("eval harness", <>
+      {["accuracy", "coverage", "tone"].map((metric, i) => (
+        <g key={metric}>
+          <text x={x + 12} y={mid - 12 + i * 18} className="vx-fig-axis">{metric}</text>
+          <rect x={x + 74} y={mid - 20 + i * 18} width={76} height={7} rx={3.5} className="vx-fig-track" />
+          <rect x={x + 74} y={mid - 20 + i * 18} width={[68, 52, 61][i]} height={7} rx={3.5}
+            className="vx-fig-bar" style={{ animationDelay: `${i * 0.25}s` } as CSSProperties} />
+        </g>
+      ))}
+      <text x={x + FIGURE_W - 8} y={top + 84} className="vx-fig-axis end">llm-judge scored</text>
+    </>);
+    if (v === 1) return wrap("regression suite", <>
+      {Array.from({ length: 24 }).map((_, i) => (
+        <rect key={i} x={x + 12 + (i % 8) * 18} y={mid - 24 + Math.floor(i / 8) * 15} width={13} height={11} rx={2.5}
+          className={i === 13 ? "vx-fig-cell bad" : "vx-fig-cell"} style={{ animationDelay: `${i * 0.05}s` } as CSSProperties} />
+      ))}
+      <text x={x + 12} y={mid + 30} className="vx-fig-axis">23 pass</text>
+      <text x={x + FIGURE_W - 8} y={mid + 30} className="vx-fig-axis end">1 caught</text>
+    </>);
+    if (v === 2) return wrap("policy gate", <>
+      <line x1={x + 8} y1={mid} x2={x + 118} y2={mid} className="vx-fig-line" />
+      {[0, 1, 2].map((i) => (
+        <rect key={i} x={x + 30 + i * 28} y={mid - 14} width={4} height={28} rx={2}
+          className={i === 2 ? "vx-fig-gate is-on" : "vx-fig-gate"} style={{ animationDelay: `${i * 0.5}s` } as CSSProperties} />
+      ))}
+      <line x1={x + 122} y1={mid - 24} x2={x + 122} y2={mid + 24} className="vx-fig-gateline" />
+      <rect x={x + 130} y={mid - 9} width={32} height={18} rx={4} className="vx-fig-chip block" />
+      <path d={`M ${x + 141} ${mid - 4} l 9 9 M ${x + 150} ${mid - 4} l -9 9`} className="vx-fig-check block" />
+      {flow(`M ${x + 8} ${mid} L ${x + 118} ${mid}`)}
+      <text x={x + 8} y={top + 84} className="vx-fig-axis">unsupported claim blocked</text>
+    </>);
+    if (v === 3) return wrap("rl refinement", <>
+      {/* a closed loop: traces feed scoring, scoring updates the policy */}
+      <ellipse cx={x + 62} cy={mid} rx={44} ry={26} className="vx-fig-loop" />
+      <circle r={3.4} className="vx-fig-orbit" style={{ offsetPath: `path("M ${x + 106} ${mid} A 44 26 0 1 1 ${x + 18} ${mid} A 44 26 0 1 1 ${x + 106} ${mid}")` } as CSSProperties} />
+      <rect x={x + 34} y={mid - 34} width={56} height={16} rx={3} className="vx-fig-frame lit" />
+      <text x={x + 62} y={mid - 23} className="vx-fig-tag">traces</text>
+      <rect x={x + 34} y={mid + 18} width={56} height={16} rx={3} className="vx-fig-frame" />
+      <text x={x + 62} y={mid + 29} className="vx-fig-tag">policy</text>
+      <rect x={x + 118} y={mid - 9} width={44} height={18} rx={3} className="vx-fig-chip pass" />
+      <text x={x + 140} y={mid + 4} className="vx-fig-tag">gated</text>
+      <path d={`M ${x + 106} ${mid} L ${x + 116} ${mid}`} className="vx-fig-spoke is-on" />
+    </>);
+    const spans = [{ off: 0, len: 74 }, { off: 12, len: 46 }, { off: 30, len: 58 }, { off: 52, len: 34 }];
+    return wrap("otel trace", <>
+      {spans.map((span, i) => (
+        <g key={i}>
+          <rect x={x + 10 + span.off} y={mid - 26 + i * 14} width={span.len} height={7} rx={3.5}
+            className={i === 0 ? "vx-fig-bar" : "vx-fig-bar dim"} style={{ animationDelay: `${i * 0.24}s` } as CSSProperties} />
+          <text x={x + 6 + span.off} y={mid - 20 + i * 14} className="vx-fig-axis end">·</text>
+        </g>
+      ))}
+      <line x1={x + 10} y1={mid + 22} x2={x + 162} y2={mid + 22} className="vx-fig-rule" />
+      <text x={x + 10} y={top + 84} className="vx-fig-axis">4 spans · 1 trace</text>
+      {flow(`M ${x + 10} ${mid - 22} L ${x + 84} ${mid - 22}`)}
+    </>);
+  }
+
+  /* ---------- 5 · Inference platform & production systems ---------- */
+  if (v === 1) return wrap("latency budget", <>
+    {[{ k: "p50", w: 44 }, { k: "p95", w: 88 }, { k: "cost", w: 62 }].map((row, i) => (
+      <g key={row.k}>
+        <text x={x + 12} y={mid - 12 + i * 18} className="vx-fig-axis">{row.k}</text>
+        <rect x={x + 46} y={mid - 20 + i * 18} width={104} height={7} rx={3.5} className="vx-fig-track" />
+        <rect x={x + 46} y={mid - 20 + i * 18} width={row.w} height={7} rx={3.5}
+          className={i === 1 ? "vx-fig-bar warn" : "vx-fig-bar"} style={{ animationDelay: `${i * 0.25}s` } as CSSProperties} />
+      </g>
+    ))}
+    <line x1={x + 132} y1={mid - 26} x2={x + 132} y2={mid + 26} className="vx-fig-gateline" />
+    <text x={x + FIGURE_W - 8} y={top + 84} className="vx-fig-axis end">budget</text>
+  </>);
+  if (v === 2) return wrap("cache · fallback", <>
+    <rect x={x + 10} y={mid - 16} width={40} height={32} rx={4} className="vx-fig-frame lit" />
+    <text x={x + 30} y={mid + 3} className="vx-fig-tag">cache</text>
+    <path d={`M ${x + 52} ${mid - 8} L ${x + 116} ${mid - 8}`} className="vx-fig-spoke is-on" />
+    <text x={x + 84} y={mid - 13} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>hit</text>
+    <path d={`M ${x + 52} ${mid + 10} L ${x + 116} ${mid + 10}`} className="vx-fig-spoke" />
+    <text x={x + 84} y={mid + 22} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>miss → fallback</text>
+    <rect x={x + 118} y={mid - 18} width={44} height={16} rx={3} className="vx-fig-chip pass" />
+    <text x={x + 140} y={mid - 6} className="vx-fig-tag">served</text>
+    <rect x={x + 118} y={mid + 2} width={44} height={16} rx={3} className="vx-fig-chip" />
+    <text x={x + 140} y={mid + 14} className="vx-fig-tag">backup</text>
+    {flow(`M ${x + 52} ${mid - 8} L ${x + 116} ${mid - 8}`)}
+  </>);
+  if (v === 3) return wrap("compression", <>
+    <rect x={x + 12} y={mid - 26} width={52} height={52} rx={5} className="vx-fig-frame" />
+    <text x={x + 38} y={mid + 3} className="vx-fig-tag">fp32</text>
+    <path d={`M ${x + 68} ${mid} L ${x + 96} ${mid}`} className="vx-fig-spoke is-on" />
+    <text x={x + 82} y={mid - 6} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>4×</text>
+    <rect x={x + 100} y={mid - 13} width={26} height={26} rx={4} className="vx-fig-frame lit" />
+    <text x={x + 113} y={mid + 4} className="vx-fig-tag">int8</text>
+    <rect x={x + 132} y={mid - 9} width={30} height={18} rx={3} className="vx-fig-chip pass" />
+    <text x={x + 147} y={mid + 4} className="vx-fig-tag">edge</text>
+    {flow(`M ${x + 68} ${mid} L ${x + 96} ${mid}`)}
+  </>);
+  if (v === 4) return wrap("ci/cd deploy", <>
+    {["ci", "img", "prod"].map((stage, i) => (
+      <g key={stage}>
+        <rect x={x + 10 + i * 46} y={mid - 22} width={38} height={18} rx={3} className={i === 2 ? "vx-fig-frame lit" : "vx-fig-frame"} />
+        <text x={x + 29 + i * 46} y={mid - 10} className="vx-fig-tag">{stage}</text>
+        {i < 2 ? <path d={`M ${x + 49 + i * 46} ${mid - 13} L ${x + 55 + i * 46} ${mid - 13}`} className="vx-fig-spoke is-on" /> : null}
+      </g>
+    ))}
+    {[0, 1, 2].map((i) => (
+      <rect key={i} x={x + 106 + i * 20} y={mid + 8} width={16} height={16} rx={3}
+        className="vx-fig-cell" style={{ animationDelay: `${i * 0.3}s` } as CSSProperties} />
+    ))}
+    <text x={x + 10} y={mid + 20} className="vx-fig-axis">replicas</text>
+    {flow(`M ${x + 10} ${mid - 13} L ${x + 146} ${mid - 13}`)}
+  </>);
+  const lanes = [
+    { dy: -22, w: 58, tag: "fast" },
+    { dy: 0, w: 40, tag: "deep" },
+    { dy: 22, w: 26, tag: "fallback" },
+  ].map((lane, i) => ({ ...lane, lit: i === 0 }));
+  return wrap("model routing", <>
+    <rect x={x + 8} y={mid - 14} width={26} height={28} rx={4} className="vx-fig-frame lit" />
+    <text x={x + 21} y={mid + 3} className="vx-fig-tag">gw</text>
+    {lanes.map((lane, i) => (
+      <g key={i}>
+        <path d={`M ${x + 35} ${mid} Q ${x + 52} ${mid}, ${x + 62} ${mid + lane.dy}`} className={lane.lit ? "vx-fig-spoke is-on" : "vx-fig-spoke"} />
+        <rect x={x + 64} y={mid + lane.dy - 7} width={lane.w} height={14} rx={3} className={lane.lit ? "vx-fig-lane is-on" : "vx-fig-lane"} />
+        <rect x={x + 66} y={mid + lane.dy - 5} width={lane.w - 10} height={10} rx={2}
+          className={lane.lit ? "vx-fig-bar" : "vx-fig-bar dim"} style={{ animationDelay: `${i * 0.32}s` } as CSSProperties} />
+        <text x={x + 66 + lane.w + 6} y={mid + lane.dy + 4} className="vx-fig-axis">{lane.tag}</text>
+      </g>
+    ))}
+    {flow(`M ${x + 35} ${mid} Q ${x + 52} ${mid}, ${x + 62} ${mid - 22}`)}
+  </>);
+}
+
 const SR_ONLY_STYLE: CSSProperties = {
   position: "absolute",
   width: 1,
@@ -220,11 +637,12 @@ const SR_ONLY_STYLE: CSSProperties = {
   border: 0,
 };
 
-export function ProfileSection() {
+export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full" } = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
   const [compactHead, setCompactHead] = useState(false);
   const [activeRole, setActiveRole] = useState(0);
+  const [spotTick, setSpotTick] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -269,8 +687,20 @@ export function ProfileSection() {
     return () => window.clearInterval(timer);
   }, [running]);
 
+  // Three capabilities stay lit at a time and move every few seconds, so the
+  // chain role → area → capability keeps drawing the eye along itself.
+  useEffect(() => {
+    if (!running) return;
+    const timer = window.setInterval(() => setSpotTick((value) => value + 1), 3000);
+    return () => window.clearInterval(timer);
+  }, [running]);
+
+  const brief = variant === "brief";
+  const G = brief ? BRIEF : FULL;
   const role = ROLES[activeRole];
   const liveAreas = AREAS.filter((area) => area.roles[activeRole]);
+  // Three highlights, three different areas, re-rolled every few seconds.
+  const highlights = pickHighlights(spotTick, liveAreas);
   const skillCount = liveAreas.reduce((sum, area) => sum + area.skills.length, 0);
 
   function handleRoleKeys(event: KeyboardEvent<SVGSVGElement>) {
@@ -285,7 +715,7 @@ export function ProfileSection() {
   return (
     <section
       ref={sectionRef}
-      id="profile"
+      id={brief ? "profile" : "capabilities"}
       className="vx-profile vx-section-shell vx-accent-lime vx-page"
       data-vx-page
       data-role={role.id}
@@ -293,12 +723,12 @@ export function ProfileSection() {
     >
       <header className="vx-profile-head" data-compact={compactHead}>
         <div>
-          <h2>What I&apos;m built for.</h2>
-          <p>Three target roles — and the engineering areas and skills behind each one.</p>
+          <h2>{brief ? "What I'm built for." : "Every layer, and where I built it."}</h2>
+          <p>{brief ? "Three target roles, and the five engineering areas behind them." : "The same five areas in full: every capability, and the work that proves it."}</p>
         </div>
         <div className="vx-profile-head-meta">
           <strong>{liveAreas.length}<i>areas</i></strong>
-          <strong>{skillCount}<i>skills</i></strong>
+          {brief ? null : <strong>{skillCount}<i>skills</i></strong>}
           <button
             type="button"
             className="vx-map-pause"
@@ -314,24 +744,26 @@ export function ProfileSection() {
 
       <div className="vx-role-map">
         <svg
-          viewBox="0 0 1340 646"
+          viewBox={G.viewBox}
           className="op-svg"
           role="tablist"
           aria-label="Target roles mapped to engineering areas and skills"
           tabIndex={0}
           onKeyDown={handleRoleKeys}
         >
-          <text x={ROLE_X} y={HEADER_Y} className="vx-map-col">TARGET ROLES</text>
-          <text x={AREA_X} y={HEADER_Y} className="vx-map-col">HOW I BUILD AI SYSTEMS</text>
-          <text x={SKILL_X} y={HEADER_Y} className="vx-map-col">MY CORE CAPABILITIES IN EACH AREA</text>
+          <text x={G.roleX} y={G.headerY} className="vx-map-col">TARGET ROLES</text>
+          <text x={G.areaX} y={G.headerY} className="vx-map-col">HOW I BUILD AI SYSTEMS</text>
+          {brief
+            ? <text x={G.figureX} y={G.headerY} className="vx-map-col">HOW EACH LAYER RUNS</text>
+            : <text x={G.skillX} y={G.headerY} className="vx-map-col">MY CORE CAPABILITIES IN EACH AREA</text>}
 
           {/* Only the active role's edges are drawn: role → its engineering areas. */}
           {AREAS.map((area, areaIndex) => {
             if (!area.roles[activeRole]) return null;
-            const roleCy = ROLE_Y[activeRole] + ROLE_H / 2;
-            const areaCy = AREA_Y[areaIndex] + AREA_H / 2;
-            const from = ROLE_X + ROLE_W;
-            const path = `M ${from} ${roleCy} C ${from + 44} ${roleCy}, ${AREA_X - 44} ${areaCy}, ${AREA_X} ${areaCy}`;
+            const roleCy = G.roleY[activeRole] + G.roleH / 2;
+            const areaCy = G.areaY[areaIndex] + G.areaH / 2;
+            const from = G.roleX + G.roleW;
+            const path = `M ${from} ${roleCy} C ${from + 44} ${roleCy}, ${G.areaX - 44} ${areaCy}, ${G.areaX} ${areaCy}`;
             return (
               <g key={`edge-${area.id}`}>
                 <path d={path} className="vx-map-beam" />
@@ -348,7 +780,7 @@ export function ProfileSection() {
 
           {ROLES.map((item, index) => {
             const active = index === activeRole;
-            const y = ROLE_Y[index];
+            const y = G.roleY[index];
             return (
               <g
                 key={item.id}
@@ -359,65 +791,102 @@ export function ProfileSection() {
                 style={{ cursor: "pointer" }}
               >
                 <rect
-                  x={ROLE_X}
+                  x={G.roleX}
                   y={y}
-                  width={ROLE_W}
-                  height={ROLE_H}
+                  width={G.roleW}
+                  height={G.roleH}
                   rx={10}
                   className={active ? "vx-map-box is-on" : "vx-map-box"}
                 />
-                <rect x={ROLE_X} y={y} width={3} height={ROLE_H} className={active ? "vx-map-spine is-on" : "vx-map-spine"} />
-                <text x={ROLE_X + 18} y={y + 26} className="vx-map-num">{String(index + 1).padStart(2, "0")}</text>
+                <rect x={G.roleX} y={y} width={3} height={G.roleH} className={active ? "vx-map-spine is-on" : "vx-map-spine"} />
+                <text x={G.roleX + 18} y={y + 26} className="vx-map-num">{String(index + 1).padStart(2, "0")}</text>
                 {item.lines.map((line, lineIndex) => (
                   <text
                     key={line}
-                    x={ROLE_X + 18}
+                    x={G.roleX + 18}
                     y={y + 50 + lineIndex * 20}
                     className={active ? "vx-map-role is-on" : "vx-map-role"}
                   >
                     {line}
                   </text>
                 ))}
-                <text x={ROLE_X + 18} y={y + 86} className="vx-map-sub">{item.short}</text>
+                <text x={G.roleX + 18} y={y + 86} className="vx-map-sub">{item.short}</text>
               </g>
             );
           })}
 
           {AREAS.map((area, areaIndex) => {
             const on = area.roles[activeRole];
-            const y = AREA_Y[areaIndex];
+            const highlightIndex = on ? highlights.get(area.id) : undefined;
+            const spot = highlightIndex !== undefined;
+            const rotate = (spotTick + areaIndex * 2) % area.skills.length;
+            const figureVariant = brief ? rotate : highlightIndex ?? 0;
+            const y = G.areaY[areaIndex];
             return (
-              <g key={area.id} data-on={on} style={{ "--area": area.accent } as CSSProperties}>
+              <g
+                key={area.id}
+                data-on={on}
+                data-spot={spot}
+                /* spot = holds one highlight · on = in the role, resting ·
+                   off = not called on by this role at all */
+                data-tier={spot ? "spot" : on ? "on" : "off"}
+                style={{ "--area": area.accent } as CSSProperties}
+              >
                 {/* engineering area */}
-                <rect x={AREA_X} y={y} width={AREA_W} height={AREA_H} rx={9} className={on ? "vx-map-box is-on" : "vx-map-box"} />
-                <AreaGlyph id={area.id} x={AREA_X + 20} y={y + 24} />
-                {area.label.map((line, lineIndex) => (
-                  <text
-                    key={line}
-                    x={AREA_X + 54}
-                    y={y + 38 + lineIndex * 22}
-                    className={on ? "vx-map-area is-on" : "vx-map-area"}
-                  >
-                    {line}
-                  </text>
-                ))}
-                <text x={AREA_X + 54} y={y + 98} className="vx-map-src">{area.appliedIn}</text>
-
-                {/* area → skills connector */}
-                <path d={`M ${AREA_X + AREA_W} ${y + AREA_H / 2} L ${SKILL_X} ${y + AREA_H / 2}`} className={on ? "vx-map-wire is-on" : "vx-map-wire"} />
+                <rect x={G.areaX} y={y} width={G.areaW} height={G.areaH} rx={9} className={on ? "vx-map-box is-on" : "vx-map-box"} />
+                <AreaGlyph id={area.id} x={G.areaX + 16} y={y + G.areaH / 2 - (brief ? 10 : 22)} />
+                {brief ? (
+                  <>
+                    <text x={G.areaX + 54} y={y + G.areaH / 2 - 4} className="vx-map-area is-on">{area.label.join(" ")}</text>
+                    {/* one capability at a time; the figure beside it follows */}
+                    <text key={rotate} x={G.areaX + 54} y={y + G.areaH / 2 + 17} className="vx-map-float">{area.skills[rotate]}</text>
+                  </>
+                ) : (
+                  area.label.map((line, lineIndex) => (
+                    <text
+                      key={line}
+                      x={G.areaX + 54}
+                      y={y + 38 + lineIndex * 22}
+                      className={on ? "vx-map-area is-on" : "vx-map-area"}
+                    >
+                      {line}
+                    </text>
+                  ))
+                )}
+                {/* area → skills connector (full map only) */}
+                {brief ? null : <>
+                <path d={`M ${G.areaX + G.areaW} ${y + G.areaH / 2} L ${G.skillX} ${y + G.areaH / 2}`} className={on ? "vx-map-wire is-on" : "vx-map-wire"} />
 
                 {/* the skills themselves */}
-                <rect x={SKILL_X} y={y} width={SKILL_W} height={AREA_H} rx={9} className={on ? "vx-map-panel is-on" : "vx-map-panel"} />
+                <rect x={G.skillX} y={y} width={G.skillW} height={G.areaH} rx={9} className={on ? "vx-map-panel is-on" : "vx-map-panel"} />
                 {area.skills.map((skill, skillIndex) => {
-                  const sx = SKILL_X + 24;
-                  const sy = y + SKILL_TOP + skillIndex * SKILL_PITCH;
+                  const sx = G.skillX + 16;
+                  const sy = y + G.skillTop + skillIndex * G.skillPitch;
                   return (
-                    <g key={skill}>
-                      <circle cx={sx + 3} cy={sy - 4} r={3} className={on ? "vx-map-dot is-on" : "vx-map-dot"} />
-                      <text x={sx + 16} y={sy} className={on ? "vx-map-skill is-on" : "vx-map-skill"}>{skill}</text>
+                    <g key={skill} data-lit={skillIndex === highlightIndex}>
+                      {skillIndex === highlightIndex ? (
+                        /* monospace, so the paint width is exact from the glyph count */
+                        <rect
+                          x={sx + 11}
+                          y={sy - 11}
+                          width={skill.length * 6.9 + 12}
+                          height={15}
+                          rx={3}
+                          className="vx-map-skill-paint"
+                        />
+                      ) : null}
+                      <circle cx={sx + 3} cy={sy - 4} r={skillIndex === highlightIndex ? 4.2 : 2.8} className="vx-map-dot" />
+                      <text x={sx + 16} y={sy} className="vx-map-skill">{skill}</text>
                     </g>
                   );
                 })}
+                </>}
+                <text x={G.areaX + 46} y={y + 84} className="vx-map-src" style={{ opacity: brief ? 0 : 1 }}>{area.evidence}</text>
+                {spot || brief ? (
+                  <g transform={brief ? `translate(${G.figureX},${y + G.areaH / 2}) scale(0.86) translate(${-G.figureX},${-(y + G.areaH / 2)})` : undefined}>
+                    <AreaFigure id={area.id} x={G.figureX} y={y + G.areaH / 2} variant={figureVariant} focus={area.focus[figureVariant]} />
+                  </g>
+                ) : null}
               </g>
             );
           })}

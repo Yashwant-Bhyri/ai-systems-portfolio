@@ -79,7 +79,8 @@ test("server-renders the recruiter-first portfolio", async () => {
   assert.match(html, /vx-stage-signal-console/);
   assert.match(html, /vx-signal-ticker-track-base/);
   assert.match(html, /vx-signal-ticker-track-mask/);
-  assert.match(html, /href="\/yashwant-bhyri-resume\.pdf"/);
+  // the résumé ships in two languages behind a chooser
+  assert.match(html, /vx-resume-menu/);
 });
 
 test("removes the rejected imitation Antigravity walkthrough route", async () => {
@@ -112,15 +113,27 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /IntersectionObserver/);
   assert.match(portfolio, /className="vx-hero-highlight"/);
   assert.match(portfolio, /assetPath\("\/brands\/cuhk\.png"\)/);
+  assert.match(portfolio, /yashwant-bhyri-resume-en\.pdf/);
+  assert.match(portfolio, /yashwant-bhyri-resume-zh\.pdf/);
   assert.match(portfolio, /CUHK · QS World #18/);
   assert.equal(countObjectIds(roleSource), 3);
   // The chain IS the argument: role -> engineering areas -> the concrete
   // skills each area covers. Project names are supplementary attribution only.
   assert.equal((skillSource.match(/^\s{4}id: "/gm) ?? []).length, 5);
-  assert.equal((skillSource.match(/^\s{4}appliedIn: "/gm) ?? []).length, 5);
-  // Projects are referenced by number here: they are introduced later in the
-  // page, so naming them in this section would mean nothing to a new reader.
-  assert.doesNotMatch(skillSource, /Antigravity|MindScape|Filmora|Lalamove|Optek/);
+  // The section renders twice: a light frame after the hero, and the full map
+  // after the project chapters. Only the full map may name projects, because
+  // only by then has the reader met them.
+  assert.match(profile, /variant\s*===\s*"brief"/);
+  assert.match(profile, /evidence: "/);
+  assert.match(profile, /opacity: brief \? 0 : 1/);
+  assert.match(portfolio, /<ProfileSection variant="brief" \/>/);
+  assert.match(portfolio, /<ProfileSection variant="full" \/>/);
+  assert.match(portfolio, /href="#capabilities"/);
+  // Each area carries its own operational figure, not one shared decoration.
+  assert.match(profile, /function AreaFigure/);
+  ["application", "runtime", "knowledge", "control"].forEach((area) => {
+    assert.match(profile, new RegExp(`id === "${area}"`));
+  });
   assert.equal((skillSource.match(/^\s{6}"/gm) ?? []).length, 25);
   assert.match(profile, /vx-role-map/);
   assert.match(profile, /TARGET ROLES/);

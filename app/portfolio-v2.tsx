@@ -1105,6 +1105,50 @@ function ContactChannels({ compact = false }: { compact?: boolean }) {
   );
 }
 
+const RESUMES = [
+  { lang: "English", file: "/yashwant-bhyri-resume-en.pdf" },
+  { lang: "中文", file: "/yashwant-bhyri-resume-zh.pdf" },
+] as const;
+
+/** The résumé exists in two languages, so every entry point asks which. */
+function ResumeMenu({ className, label }: { className?: string; label: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: MouseEvent) => {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="vx-resume-menu" data-open={open}>
+      <button type="button" className={className} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+        {label} <i aria-hidden="true">▾</i>
+      </button>
+      {open ? (
+        <div className="vx-resume-options" role="menu">
+          {RESUMES.map((item) => (
+            <a key={item.lang} role="menuitem" href={assetPath(item.file)} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>
+              {item.lang} <i aria-hidden="true">↗</i>
+            </a>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function Hero({ reducedMotion }: { reducedMotion: boolean }) {
   const hero = useHeroChoreography(reducedMotion);
   return (
@@ -1162,7 +1206,7 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
               </ul>
               <div className="vx-hero-actions">
                 <a className="vx-primary-action" href="#projects">Explore my projects <i>↓</i></a>
-                <a href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">View my résumé ↗</a>
+                <ResumeMenu label="View my résumé" />
                 <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">Open GitHub ↗</a>
                 <a href="#hero-contact">Contact me ↘</a>
               </div>
@@ -2264,7 +2308,7 @@ function ContactSection() {
           <p>Reach me directly for a relevant role, an applied AI system, a research collaboration, or a short technical conversation.</p>
           <div className="vx-contact-page-actions">
             <a className="vx-primary-action" href={SHORT_CALL_HREF}>Request a 15-minute call ↗</a>
-            <a href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">Open résumé ↗</a>
+            <ResumeMenu label="Open résumé" />
             <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">Open GitHub ↗</a>
           </div>
         </div>
@@ -2324,16 +2368,19 @@ export function PortfolioV2() {
         <div className="vx-cursor-light" aria-hidden="true" />
         <header className="vx-header">
           <a href="#top" className="vx-brand" aria-label="Yashwant Bhyri, portfolio home"><span>YB</span><div><strong>Yashwant Bhyri</strong><small>AI systems &amp; application engineer</small></div></a>
-          <nav aria-label="Portfolio navigation"><a href="#profile">Profile</a><a href="#projects">Projects</a><a href="#antigravity">Interview AI</a><a href="#filmora">Filmora</a><a href="#mindscape">Medical AI</a><a href="#research">Research</a><a href="#contact">Contact</a></nav>
-          <a className="vx-header-resume" href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">Résumé ↗</a>
+          <nav aria-label="Portfolio navigation"><a href="#profile">Profile</a><a href="#projects">Projects</a><a href="#antigravity">Interview AI</a><a href="#filmora">Filmora</a><a href="#mindscape">Medical AI</a><a href="#research">Research</a><a href="#capabilities">Capabilities</a><a href="#contact">Contact</a></nav>
+          <ResumeMenu className="vx-header-resume" label="Résumé" />
         </header>
         <Hero reducedMotion={reducedMotion} />
-        <ProfileSection />
+        {/* Beat one: the light frame — roles and the five engineering areas. */}
+        <ProfileSection variant="brief" />
         <ProjectIndex />
         <AntigravityChapter />
         <FilmoraChapter />
         <MindScapeChapter />
         <ResearchSection />
+        {/* Beat two: the full map, once the systems have been seen. */}
+        <ProfileSection variant="full" />
         <ContactSection />
         <ContactDock />
       </main>
