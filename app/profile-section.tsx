@@ -4,16 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import "./live-scenes.css";
 
-/** How heavily a target role draws on an engineering pillar. */
-type Draw = 1 | 2 | 3;
-type DrawByRole = readonly [Draw, Draw, Draw];
+type RoleId = "systems" | "agents" | "full-stack";
 
 type TargetRole = {
-  id: string;
+  id: RoleId;
   lines: readonly [string, string];
   short: string;
-  /** Why this is a target role — always argued from the capabilities. */
-  why: string;
+  /** Short reasoning fragments that roll continuously under the map. */
+  reasoning: readonly string[];
 };
 
 const ROLES: readonly TargetRole[] = [
@@ -21,79 +19,132 @@ const ROLES: readonly TargetRole[] = [
     id: "systems",
     lines: ["AI Systems", "Engineer"],
     short: "runtime · reliability",
-    why: "Agent runtime, evaluation and the inference platform are where most of my capabilities concentrate — so owning a production AI system end to end is the role that fits.",
+    reasoning: [
+      "the runtime around the model is where my depth is",
+      "I built and ran a dual-lane multi-agent orchestration engine",
+      "evaluation, tracing and guardrails designed in — not bolted on",
+      "latency and token budgets treated as engineering, not afterthoughts",
+      "model routing and failover under a real production load",
+    ],
   },
   {
     id: "agents",
     lines: ["AI Agent &", "Application Developer"],
     short: "agents as products",
-    why: "My depth sits in agent orchestration, knowledge and the product surface — the role is turning that into agents people can actually use.",
+    reasoning: [
+      "every agent system I built shipped with a real product surface on it",
+      "orchestration graphs, reasoning agents and tool calling in production",
+      "grounded in retrieval and memory so the agent stays honest",
+      "human-in-the-loop approval wherever the stakes justify it",
+      "a live voice interview room, an editor timeline, a clinician workflow",
+    ],
   },
   {
     id: "full-stack",
     lines: ["Full-Stack", "AI / ML Engineer"],
     short: "data to deployment",
-    why: "Knowledge and modeling, the inference platform and the application path are all covered — so I can carry an AI feature from data through to deployment.",
+    reasoning: [
+      "I carry the path from data and models through to deployment",
+      "distillation, quantization and evaluation on the model side",
+      "backend services, APIs and workflow management on the product side",
+      "retrieval and recommendation systems built end to end",
+      "cloud deployment with CI/CD, monitoring and cost control",
+    ],
   },
 ] as const;
 
-type Pillar = {
+type Area = {
   id: string;
-  label: string;
-  /** Broad capability names, never narrowed to a single vendor or tool. */
+  label: readonly [string, string];
+  /** The curated, concrete skills this engineering area actually covers. */
   skills: readonly string[];
-  draw: DrawByRole;
+  /** Supplementary only: where these were built. Never the headline. */
+  learnedIn: string;
+  /** Which target roles call on this area. */
+  roles: readonly [boolean, boolean, boolean];
 };
 
-/** Five engineering pillars, twenty capabilities. This is the evidence for the
- *  role claim above it — the mapping IS the argument. */
-const PILLARS: readonly Pillar[] = [
+const AREAS: readonly Area[] = [
   {
     id: "application",
-    label: "AI application & product engineering",
-    skills: ["full-stack AI applications", "API & service design", "structured JSON contracts", "product & UX research"],
-    draw: [1, 3, 2],
+    label: ["AI application &", "product engineering"],
+    skills: [
+      "API integrations & management",
+      "full-stack AI application delivery",
+      "workflow management systems",
+      "structured JSON & schema contracts",
+      "product & UX research",
+    ],
+    learnedIn: "Filmora · Lalamove",
+    roles: [false, true, true],
   },
   {
     id: "runtime",
-    label: "Agent runtime & orchestration",
-    skills: ["multi-agent orchestration", "agent graphs & hand-offs", "tool & function calling", "real-time voice runtime"],
-    draw: [3, 3, 1],
+    label: ["Agent runtime &", "orchestration"],
+    skills: [
+      "multi-agent orchestration graphs",
+      "reasoning agents",
+      "function calling & tool use",
+      "agent hand-offs & state machines",
+      "real-time voice agent runtime",
+    ],
+    learnedIn: "Antigravity · Filmora",
+    roles: [true, true, false],
   },
   {
     id: "knowledge",
-    label: "Knowledge, memory & retrieval",
-    skills: ["vector search & embeddings", "hybrid retrieval & reranking", "long-term agent memory", "data & knowledge pipelines"],
-    draw: [2, 3, 3],
+    label: ["Knowledge, memory", "& retrieval"],
+    skills: [
+      "vector search & embeddings",
+      "hybrid retrieval & reranking",
+      "recommendation systems",
+      "long-term agent memory",
+      "data & knowledge pipelines",
+    ],
+    learnedIn: "MindScape · Filmora",
+    roles: [true, true, true],
   },
   {
     id: "control",
-    label: "Evaluation, safety & observability",
-    skills: ["agent & LLM evaluation", "guardrails & policy control", "OpenTelemetry observability", "RL refinement frameworks"],
-    draw: [3, 2, 3],
+    label: ["Evaluation, safety", "& observability"],
+    skills: [
+      "agent & LLM evaluation harnesses",
+      "guardrails & policy control",
+      "human-in-the-loop workflows",
+      "RL-style observability & refinement",
+      "OpenTelemetry tracing",
+    ],
+    learnedIn: "Antigravity · SLM distillation",
+    roles: [true, true, true],
   },
   {
     id: "platform",
-    label: "Inference platform & production systems",
-    skills: ["model routing intelligence", "latency & token optimization", "quantization & distillation", "cloud deployment & CI/CD"],
-    draw: [3, 1, 3],
+    label: ["Inference platform", "& production systems"],
+    skills: [
+      "model routing intelligence",
+      "LLM gateways",
+      "latency & token optimization",
+      "quantization & distillation",
+      "cloud deployment & CI/CD",
+    ],
+    learnedIn: "Optek · Antigravity",
+    roles: [true, false, true],
   },
 ] as const;
 
-const TOTAL_SKILLS = PILLARS.reduce((sum, pillar) => sum + pillar.skills.length, 0);
-const ROLE_ADVANCE_MS = 9600;
+const ROLE_ADVANCE_MS = 10400;
 
-/* --- map geometry (viewBox 1320 x 440) --- */
-const ROLE_X = 14;
-const ROLE_W = 290;
+/* --- map geometry (viewBox 1320 × 470) --- */
+const ROLE_X = 8;
+const ROLE_W = 220;
 const ROLE_H = 94;
-const ROLE_Y = [66, 186, 306];
-const PILLAR_X = 560;
-const PILLAR_W = 746;
-const PILLAR_H = 76;
-const PILLAR_Y = [28, 110, 192, 274, 356];
-const EDGE_FROM = ROLE_X + ROLE_W;
-const EDGE_TO = PILLAR_X;
+const ROLE_Y = [92, 198, 304];
+const AREA_X = 350;
+const AREA_W = 280;
+const AREA_H = 80;
+const AREA_Y = [30, 118, 206, 294, 382];
+const SKILL_X = 650;
+const SKILL_W = 662;
 
 const SR_ONLY_STYLE: CSSProperties = {
   position: "absolute",
@@ -109,7 +160,6 @@ const SR_ONLY_STYLE: CSSProperties = {
 
 export function ProfileSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const mapRef = useRef<SVGSVGElement>(null);
   const [visible, setVisible] = useState(false);
   const [activeRole, setActiveRole] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -146,10 +196,8 @@ export function ProfileSection() {
   }, [running]);
 
   const role = ROLES[activeRole];
-  const drawn = PILLARS.reduce(
-    (sum, pillar) => sum + (pillar.draw[activeRole] >= 2 ? pillar.skills.length : 0),
-    0,
-  );
+  const liveAreas = AREAS.filter((area) => area.roles[activeRole]);
+  const skillCount = liveAreas.reduce((sum, area) => sum + area.skills.length, 0);
 
   function handleRoleKeys(event: KeyboardEvent<SVGSVGElement>) {
     if (!["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
@@ -172,60 +220,52 @@ export function ProfileSection() {
       <header className="vx-profile-head">
         <div>
           <span className="vx-lens-label">What I&apos;m built for</span>
-          <h2>These are the roles I am targeting — and the capabilities that put me there.</h2>
+          <h2>Three target roles, and the engineering areas and skills behind each one.</h2>
         </div>
-        <button
-          type="button"
-          className="vx-map-pause"
-          aria-pressed={!autoplaying}
-          disabled={reducedMotion}
-          onClick={() => setPlaying((value) => !value)}
-        >
-          <i data-playing={autoplaying} aria-hidden="true" />
-          {reducedMotion ? "Static view" : autoplaying ? "Pause" : "Resume"}
-        </button>
+        <div className="vx-profile-head-meta">
+          <strong>{liveAreas.length}<i>areas</i></strong>
+          <strong>{skillCount}<i>skills</i></strong>
+          <button
+            type="button"
+            className="vx-map-pause"
+            aria-pressed={!autoplaying}
+            disabled={reducedMotion}
+            onClick={() => setPlaying((value) => !value)}
+          >
+            <i data-playing={autoplaying} aria-hidden="true" />
+            {reducedMotion ? "Static" : autoplaying ? "Pause" : "Resume"}
+          </button>
+        </div>
       </header>
 
-      {/* The argument, stated before the map demonstrates it. */}
-      <div className="vx-role-why" key={role.id}>
-        <span className="vx-lens-label">Why this role</span>
-        <p>{role.why}</p>
-        <strong>{drawn}<i>/{TOTAL_SKILLS}</i><small>capabilities drawn on</small></strong>
-      </div>
-
-      <div className="vx-role-map" data-motion-paused={!autoplaying}>
+      <div className="vx-role-map">
         <svg
-          ref={mapRef}
-          viewBox="0 0 1320 440"
+          viewBox="0 0 1320 470"
           className="op-svg"
           role="tablist"
-          aria-label="Target roles mapped to engineering pillars"
+          aria-label="Target roles mapped to engineering areas and skills"
           tabIndex={0}
           onKeyDown={handleRoleKeys}
         >
-          <text x={ROLE_X} y={18} className="lv-phase small">TARGET ROLES</text>
-          <text x={PILLAR_X} y={18} className="lv-phase small">
-            FIVE ENGINEERING PILLARS · {TOTAL_SKILLS} CAPABILITIES
-          </text>
+          <text x={ROLE_X} y={16} className="vx-map-col">TARGET ROLE</text>
+          <text x={AREA_X} y={16} className="vx-map-col">ENGINEERING AREAS</text>
+          <text x={SKILL_X} y={16} className="vx-map-col">THE SKILLS EACH AREA COVERS</text>
 
-          {/* Only the active role's edges are ever drawn — five lines, never fifteen. */}
-          {PILLARS.map((pillar, pillarIndex) => {
-            const weight = pillar.draw[activeRole];
+          {/* Only the active role's edges are drawn: role → its engineering areas. */}
+          {AREAS.map((area, areaIndex) => {
+            if (!area.roles[activeRole]) return null;
             const roleCy = ROLE_Y[activeRole] + ROLE_H / 2;
-            const pillarCy = PILLAR_Y[pillarIndex] + PILLAR_H / 2;
-            const path = `M ${EDGE_FROM} ${roleCy} C ${EDGE_FROM + 82} ${roleCy}, ${EDGE_TO - 82} ${pillarCy}, ${EDGE_TO} ${pillarCy}`;
+            const areaCy = AREA_Y[areaIndex] + AREA_H / 2;
+            const from = ROLE_X + ROLE_W;
+            const path = `M ${from} ${roleCy} C ${from + 44} ${roleCy}, ${AREA_X - 44} ${areaCy}, ${AREA_X} ${areaCy}`;
             return (
-              <g key={pillar.id}>
-                <path
-                  d={path}
-                  className={weight === 3 ? "lv-edge win" : "lv-edge"}
-                  style={{ strokeWidth: 0.9 + weight * 0.85, opacity: 0.28 + weight * 0.24 }}
-                />
-                {weight >= 2 && !reducedMotion ? (
+              <g key={`edge-${area.id}`}>
+                <path d={path} className="vx-map-beam" />
+                {!reducedMotion ? (
                   <circle
-                    r={weight === 3 ? 4.2 : 3.2}
-                    className="lv-pulse vx-map-pulse"
-                    style={{ offsetPath: `path("${path}")`, animationDelay: `${-pillarIndex * 0.36}s` } as CSSProperties}
+                    r={3.6}
+                    className="vx-map-pulse"
+                    style={{ offsetPath: `path("${path}")`, animationDelay: `${-areaIndex * 0.44}s` } as CSSProperties}
                   />
                 ) : null}
               </g>
@@ -244,69 +284,61 @@ export function ProfileSection() {
                 onClick={() => setActiveRole(index)}
                 style={{ cursor: "pointer" }}
               >
-                <g className={`lv-node ${active ? "is-live" : ""}`}>
-                  <rect x={ROLE_X} y={y} width={ROLE_W} height={ROLE_H} rx={10} style={{ opacity: active ? 1 : 0.5 }} />
-                </g>
                 <rect
                   x={ROLE_X}
                   y={y}
-                  width={3}
+                  width={ROLE_W}
                   height={ROLE_H}
-                  className="lv-bar"
-                  style={{ opacity: active ? 1 : 0.15 }}
+                  rx={10}
+                  className={active ? "vx-map-box is-on" : "vx-map-box"}
                 />
-                <text x={ROLE_X + 18} y={y + 24} className="svg-sub" style={{ opacity: active ? 1 : 0.55 }}>
-                  {String(index + 1).padStart(2, "0")}
-                </text>
+                <rect x={ROLE_X} y={y} width={3} height={ROLE_H} className={active ? "vx-map-spine is-on" : "vx-map-spine"} />
+                <text x={ROLE_X + 18} y={y + 26} className="vx-map-num">{String(index + 1).padStart(2, "0")}</text>
                 {item.lines.map((line, lineIndex) => (
                   <text
                     key={line}
                     x={ROLE_X + 18}
-                    y={y + 48 + lineIndex * 20}
-                    className="svg-label"
-                    style={{ fontSize: 17, opacity: active ? 1 : 0.5 }}
+                    y={y + 50 + lineIndex * 20}
+                    className={active ? "vx-map-role is-on" : "vx-map-role"}
                   >
                     {line}
                   </text>
                 ))}
-                <text x={ROLE_X + 18} y={y + 84} className="svg-sub tiny" style={{ opacity: active ? 0.9 : 0.4 }}>
-                  {item.short}
-                </text>
+                <text x={ROLE_X + 18} y={y + 86} className="vx-map-sub">{item.short}</text>
               </g>
             );
           })}
 
-          {PILLARS.map((pillar, pillarIndex) => {
-            const weight = pillar.draw[activeRole];
-            const y = PILLAR_Y[pillarIndex];
+          {AREAS.map((area, areaIndex) => {
+            const on = area.roles[activeRole];
+            const y = AREA_Y[areaIndex];
             return (
-              <g key={pillar.id}>
-                <g className={`lv-node ${weight === 3 ? "is-live" : ""}`}>
-                  <rect x={PILLAR_X} y={y} width={PILLAR_W} height={PILLAR_H} rx={10} style={{ opacity: weight === 1 ? 0.62 : 1 }} />
-                </g>
-                <text x={PILLAR_X + 18} y={y + 26} className="svg-label" style={{ fontSize: 15, opacity: weight === 1 ? 0.68 : 1 }}>
-                  {pillar.label}
-                </text>
-                {/* Degree of responsibility this role places on the pillar. */}
-                {[0, 1, 2].map((segment) => (
-                  <rect
-                    key={segment}
-                    x={PILLAR_X + PILLAR_W - 62 + segment * 16}
-                    y={y + 15}
-                    width={11}
-                    height={5}
-                    rx={2.5}
-                    className={segment < weight ? "lv-bar" : "lv-bar bg"}
-                    style={{ opacity: segment < weight ? 1 : 0.3 }}
-                  />
+              <g key={area.id} data-on={on}>
+                {/* engineering area */}
+                <rect x={AREA_X} y={y} width={AREA_W} height={AREA_H} rx={9} className={on ? "vx-map-box is-on" : "vx-map-box"} />
+                {area.label.map((line, lineIndex) => (
+                  <text
+                    key={line}
+                    x={AREA_X + 16}
+                    y={y + 28 + lineIndex * 19}
+                    className={on ? "vx-map-area is-on" : "vx-map-area"}
+                  >
+                    {line}
+                  </text>
                 ))}
-                {pillar.skills.map((skill, skillIndex) => (
+                <text x={AREA_X + 16} y={y + 68} className="vx-map-src">{area.learnedIn}</text>
+
+                {/* area → skills connector */}
+                <path d={`M ${AREA_X + AREA_W} ${y + AREA_H / 2} L ${SKILL_X} ${y + AREA_H / 2}`} className={on ? "vx-map-wire is-on" : "vx-map-wire"} />
+
+                {/* the skills themselves */}
+                <rect x={SKILL_X} y={y} width={SKILL_W} height={AREA_H} rx={9} className={on ? "vx-map-panel is-on" : "vx-map-panel"} />
+                {area.skills.map((skill, skillIndex) => (
                   <text
                     key={skill}
-                    x={PILLAR_X + 18 + (skillIndex % 2) * 372}
-                    y={y + 48 + Math.floor(skillIndex / 2) * 18}
-                    className="svg-mono tinytext"
-                    style={{ fontSize: 12.5, opacity: weight === 1 ? 0.5 : weight === 2 ? 0.8 : 1 }}
+                    x={SKILL_X + 20 + Math.floor(skillIndex / 3) * 330}
+                    y={y + 26 + (skillIndex % 3) * 21}
+                    className={on ? "vx-map-skill is-on" : "vx-map-skill"}
                   >
                     {skill}
                   </text>
@@ -317,8 +349,24 @@ export function ProfileSection() {
         </svg>
       </div>
 
+      {/* The reasoning rolls continuously under the map. */}
+      <div className="vx-reason-bar" data-motion-paused={!autoplaying} aria-label={`Why ${role.lines.join(" ")}`}>
+        <span className="vx-lens-label">Why this role</span>
+        <div className="vx-reason-viewport">
+          <div className="vx-reason-track" key={role.id}>
+            {[0, 1].map((copy) => (
+              <div className="vx-reason-run" key={copy} aria-hidden={copy === 1}>
+                {role.reasoning.map((line) => (
+                  <span key={line}><i aria-hidden="true">✦</i>{line}</span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <output style={SR_ONLY_STYLE} aria-live="polite">
-        {role.lines.join(" ")}: draws on {drawn} of {TOTAL_SKILLS} capabilities.
+        {role.lines.join(" ")}: {liveAreas.length} engineering areas, {skillCount} skills.
       </output>
     </section>
   );

@@ -931,3 +931,37 @@ Engineering notes:
   "Maximum update depth" errors were stale from that crashed process. A clean
   preview_stop/preview_start cleared it — worth checking before debugging a
   React loop that isn't there.
+
+### Session 9f — profile = ROLE → ENGINEERING AREAS → SKILLS (three-tier chain)
+
+ROOT CAUSE of "nothing is visible": the op-svg vocabulary (.svg-label,
+.svg-sub, .svg-mono) resolves its fills from --text-hi / --text / --text-dim,
+which are declared ONLY on `.vx-live-stage`. The profile map was hosted outside
+that class, so every fill was an invalid var() and the SVG text painted BLACK
+ON BLACK. Fixed by declaring a dedicated, self-contained class set
+(.vx-map-role/.vx-map-area/.vx-map-skill/.vx-map-box/.vx-map-beam/…) with
+explicit fills. A test now asserts those fills exist.
+
+Structure, per the user's stated chain:
+  TARGET ROLE  →  4 of 5 ENGINEERING AREAS  →  THE SKILLS EACH AREA COVERS
+- 3 role nodes (clickable). Each role calls on exactly four areas, and each
+  role excludes a different one (systems ✗application · agents ✗platform ·
+  full-stack ✗runtime), so the lens genuinely differentiates.
+- 5 engineering areas: AI application & product engineering · Agent runtime &
+  orchestration · Knowledge, memory & retrieval · Evaluation, safety &
+  observability · Inference platform & production systems.
+- 25 concrete skills (5 per area) in the user's own vocabulary: API
+  integrations & management, workflow management systems, multi-agent
+  orchestration graphs, reasoning agents, function calling & tool use,
+  recommendation systems, human-in-the-loop workflows, RL-style observability
+  & refinement, OpenTelemetry tracing, model routing intelligence, LLM
+  gateways, cloud deployment & CI/CD, …
+- Project attribution ("Antigravity · Filmora") is the smallest text in each
+  area node — supplementary, explicitly NOT the subject.
+- Live beams role→area with CSS offset-path pulses; unlit areas stay clearly
+  readable rather than fading out.
+- The static "why this role" line became a continuously ROLLING REASONING BAR
+  (seamless -50% marquee over a duplicated track), swapping content per role.
+
+Verified: 0 label collisions and 0 labels outside their panel (measured across
+all 25), SVG fills 1228×437, tsc clean, 3/3 tests, static export builds.

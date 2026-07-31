@@ -101,8 +101,8 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
     readFile(new URL("../app/portfolio-v2.css", import.meta.url), "utf8"),
   ]);
 
-  const roleSource = sourceSlice(profile, "const ROLES", "type Pillar");
-  const skillSource = sourceSlice(profile, "const PILLARS", "const TOTAL_SKILLS");
+  const roleSource = sourceSlice(profile, "const ROLES", "type Area");
+  const skillSource = sourceSlice(profile, "const AREAS", "const ROLE_ADVANCE_MS");
   const antigravitySource = sourceSlice(portfolio, "const ANTIGRAVITY_STEPS", "const FILMORA_STEPS");
   const filmoraSource = sourceSlice(portfolio, "const FILMORA_STEPS", "const MINDSCAPE_STEPS");
   const mindscapeSource = sourceSlice(portfolio, "const MINDSCAPE_STEPS", "const RESEARCH");
@@ -114,17 +114,20 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /assetPath\("\/brands\/cuhk\.png"\)/);
   assert.match(portfolio, /CUHK · QS World #18/);
   assert.equal(countObjectIds(roleSource), 3);
-  // The section's argument: twenty capabilities across five engineering
-  // pillars are the REASON these three roles are the targets. Evidence is
-  // deliberately absent here — the four project chapters already carry it.
-  assert.equal((skillSource.match(/^\s{4}label: "/gm) ?? []).length, 5);
-  assert.equal((skillSource.match(/^\s{4}draw: \[/gm) ?? []).length, 5);
-  assert.equal((skillSource.match(/^\s{6}"/gm) ?? []).length, 0);
+  // The chain IS the argument: role -> engineering areas -> the concrete
+  // skills each area covers. Project names are supplementary attribution only.
+  assert.equal((skillSource.match(/^\s{4}id: "/gm) ?? []).length, 5);
+  assert.equal((skillSource.match(/^\s{4}learnedIn: "/gm) ?? []).length, 5);
+  assert.equal((skillSource.match(/^\s{6}"/gm) ?? []).length, 25);
   assert.match(profile, /vx-role-map/);
-  assert.match(profile, /FIVE ENGINEERING PILLARS/);
-  assert.match(profile, /roles I am targeting/);
-  assert.match(profile, /Why this role/);
-  assert.match(profile, /capabilities drawn on/);
+  assert.match(profile, /TARGET ROLE/);
+  assert.match(profile, /ENGINEERING AREAS/);
+  assert.match(profile, /THE SKILLS EACH AREA COVERS/);
+  assert.match(profile, /vx-reason-track/);
+  // op-svg text inherits its fill tokens from .vx-live-stage; a graphic hosted
+  // outside that class must declare its own or it renders black on black.
+  assert.match(css, /\.vx-map-skill \{[^}]*fill:/);
+  assert.match(css, /\.vx-map-role \{[^}]*fill:/);
   assert.doesNotMatch(profile, /vx-role-to-skill-links/);
   assert.doesNotMatch(profile, /vx-skill-to-experience-links/);
   assert.match(portfolio, /useChapterHandoff/);
