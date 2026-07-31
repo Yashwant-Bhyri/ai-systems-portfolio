@@ -987,3 +987,22 @@ Role subtitles set to the user's wording: "runtime systems & reliability",
 Verified: heading collapses, all five accents resolve to distinct colours
 (lime/cyan/amber/blue, inactive grey), 0 skill collisions, 0 skills outside
 their panel, 0 area labels outside their box. tsc clean, 3/3 tests, build ok.
+
+### Session 9h — no internals before the projects exist
+
+The profile sits BEFORE the four project chapters, so naming Antigravity /
+Filmora / MindScape / Optek / Lalamove there is meaningless to a first-time
+reader. Attribution now references projects by NUMBER — "applied in projects
+01 · 02" — which the reader can resolve a moment later. A test asserts no
+project name appears in the profile source.
+
+Also: role 02 is "AI Agent & Application Engineer" (was Developer); the
+AI application & product engineering area now leans engineering (API design &
+integrations · full-stack AI application delivery · real-time streaming
+interfaces · workflow & session state management · structured JSON & schema
+contracts) with product & UX research retained as the sixth — the 2x3 skill
+grid already had the slot. The rolling reasoning bar carries seven lines per
+role (was five) at a proportionally longer 68 s lap so reading speed is
+unchanged, with slightly more height and larger type.
+
+Verified: 26 skills, 0 collisions, 0 overflow, attribution inside every box.

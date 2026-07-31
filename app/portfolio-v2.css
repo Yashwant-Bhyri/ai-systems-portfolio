@@ -7513,11 +7513,12 @@ g[data-on="true"] .vx-map-wire.is-on {
 
 .vx-reason-bar {
   flex: 0 0 auto;
+  min-height: 46px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: clamp(14px, 2vw, 26px);
-  padding: 10px 0 0;
+  padding: 12px 0 4px;
   border-top: 1px solid var(--vx-line);
 }
 
@@ -7535,7 +7536,7 @@ g[data-on="true"] .vx-map-wire.is-on {
 .vx-reason-track {
   width: max-content;
   display: flex;
-  animation: vxReasonRoll 46s linear infinite;
+  animation: vxReasonRoll 68s linear infinite;
 }
 
 .vx-reason-run {
@@ -7547,9 +7548,9 @@ g[data-on="true"] .vx-map-wire.is-on {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  padding-right: 40px;
-  color: #c0cad4;
-  font-size: 13.5px;
+  padding-right: 46px;
+  color: #c6d0da;
+  font-size: 14px;
   line-height: 1.4;
   white-space: nowrap;
 }

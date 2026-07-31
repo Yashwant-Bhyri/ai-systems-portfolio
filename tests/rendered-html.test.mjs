@@ -117,8 +117,11 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   // The chain IS the argument: role -> engineering areas -> the concrete
   // skills each area covers. Project names are supplementary attribution only.
   assert.equal((skillSource.match(/^\s{4}id: "/gm) ?? []).length, 5);
-  assert.equal((skillSource.match(/^\s{4}learnedIn: "/gm) ?? []).length, 5);
-  assert.equal((skillSource.match(/^\s{6}"/gm) ?? []).length, 25);
+  assert.equal((skillSource.match(/^\s{4}appliedIn: "/gm) ?? []).length, 5);
+  // Projects are referenced by number here: they are introduced later in the
+  // page, so naming them in this section would mean nothing to a new reader.
+  assert.doesNotMatch(skillSource, /Antigravity|MindScape|Filmora|Lalamove|Optek/);
+  assert.equal((skillSource.match(/^\s{6}"/gm) ?? []).length, 26);
   assert.match(profile, /vx-role-map/);
   assert.match(profile, /TARGET ROLE/);
   assert.match(profile, /ENGINEERING AREAS/);

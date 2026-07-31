@@ -21,22 +21,26 @@ const ROLES: readonly TargetRole[] = [
     short: "runtime systems & reliability",
     reasoning: [
       "the runtime around the model is where my depth is",
-      "I built and ran a dual-lane multi-agent orchestration engine",
-      "evaluation, tracing and guardrails designed in — not bolted on",
+      "I have built and run a dual-lane multi-agent orchestration engine",
+      "evaluation, tracing and guardrails designed in, not bolted on",
       "latency and token budgets treated as engineering, not afterthoughts",
-      "model routing and failover under a real production load",
+      "model routing and failover under real production load",
+      "state, recovery and fallback paths owned end to end",
+      "the system stays inspectable after it ships, not just before",
     ],
   },
   {
     id: "agents",
-    lines: ["AI Agent &", "Application Developer"],
+    lines: ["AI Agent &", "Application Engineer"],
     short: "agentic systems as products",
     reasoning: [
       "every agent system I built shipped with a real product surface on it",
       "orchestration graphs, reasoning agents and tool calling in production",
       "grounded in retrieval and memory so the agent stays honest",
       "human-in-the-loop approval wherever the stakes justify it",
-      "a live voice interview room, an editor timeline, a clinician workflow",
+      "real-time voice and streaming interaction, not a chat box",
+      "typed contracts between agents so behaviour stays predictable",
+      "I own the interface as well as the engine behind it",
     ],
   },
   {
@@ -49,6 +53,8 @@ const ROLES: readonly TargetRole[] = [
       "backend services, APIs and workflow management on the product side",
       "retrieval and recommendation systems built end to end",
       "cloud deployment with CI/CD, monitoring and cost control",
+      "data pipelines that keep the model fed and measurable",
+      "one owner from the dataset through to the running service",
     ],
   },
 ] as const;
@@ -60,8 +66,8 @@ type Area = {
   label: readonly [string, string];
   /** The curated, concrete skills this engineering area actually covers. */
   skills: readonly string[];
-  /** Supplementary only: where these were built. Never the headline. */
-  learnedIn: string;
+  /** Supplementary only, and by number: the projects are introduced later. */
+  appliedIn: string;
   /** Which target roles call on this area. */
   roles: readonly [boolean, boolean, boolean];
 };
@@ -72,13 +78,14 @@ const AREAS: readonly Area[] = [
     accent: "var(--vx-violet)",
     label: ["AI application &", "product engineering"],
     skills: [
-      "API integrations & management",
+      "API design & integrations",
       "full-stack AI application delivery",
-      "workflow management systems",
+      "real-time streaming interfaces",
+      "workflow & session state management",
       "structured JSON & schema contracts",
       "product & UX research",
     ],
-    learnedIn: "Filmora · Lalamove",
+    appliedIn: "applied in projects 02 · 04",
     roles: [false, true, true],
   },
   {
@@ -92,7 +99,7 @@ const AREAS: readonly Area[] = [
       "agent hand-offs & state machines",
       "real-time voice agent runtime",
     ],
-    learnedIn: "Antigravity · Filmora",
+    appliedIn: "applied in projects 01 · 02",
     roles: [true, true, false],
   },
   {
@@ -106,7 +113,7 @@ const AREAS: readonly Area[] = [
       "long-term agent memory",
       "data & knowledge pipelines",
     ],
-    learnedIn: "MindScape · Filmora",
+    appliedIn: "applied in projects 02 · 03",
     roles: [true, true, true],
   },
   {
@@ -120,7 +127,7 @@ const AREAS: readonly Area[] = [
       "RL-style observability & refinement",
       "OpenTelemetry tracing",
     ],
-    learnedIn: "Antigravity · SLM distillation",
+    appliedIn: "applied in projects 01 · 04",
     roles: [true, true, true],
   },
   {
@@ -134,7 +141,7 @@ const AREAS: readonly Area[] = [
       "quantization & distillation",
       "cloud deployment & CI/CD",
     ],
-    learnedIn: "Optek · Antigravity",
+    appliedIn: "applied in projects 01 · 04",
     roles: [true, false, true],
   },
 ] as const;
@@ -386,7 +393,7 @@ export function ProfileSection() {
                     {line}
                   </text>
                 ))}
-                <text x={AREA_X + 46} y={y + 70} className="vx-map-src">{area.learnedIn}</text>
+                <text x={AREA_X + 46} y={y + 70} className="vx-map-src">{area.appliedIn}</text>
 
                 {/* area → skills connector */}
                 <path d={`M ${AREA_X + AREA_W} ${y + AREA_H / 2} L ${SKILL_X} ${y + AREA_H / 2}`} className={on ? "vx-map-wire is-on" : "vx-map-wire"} />
