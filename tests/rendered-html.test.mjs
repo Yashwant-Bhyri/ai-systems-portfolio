@@ -101,8 +101,8 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
     readFile(new URL("../app/portfolio-v2.css", import.meta.url), "utf8"),
   ]);
 
-  const roleSource = sourceSlice(profile, "const ROLES", "type Capability");
-  const skillSource = sourceSlice(profile, "const AREAS", "const ALL_SKILLS");
+  const roleSource = sourceSlice(profile, "const ROLES", "type Pillar");
+  const skillSource = sourceSlice(profile, "const PILLARS", "const TOTAL_SKILLS");
   const antigravitySource = sourceSlice(portfolio, "const ANTIGRAVITY_STEPS", "const FILMORA_STEPS");
   const filmoraSource = sourceSlice(portfolio, "const FILMORA_STEPS", "const MINDSCAPE_STEPS");
   const mindscapeSource = sourceSlice(portfolio, "const MINDSCAPE_STEPS", "const RESEARCH");
@@ -114,16 +114,17 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /assetPath\("\/brands\/cuhk\.png"\)/);
   assert.match(portfolio, /CUHK · QS World #18/);
   assert.equal(countObjectIds(roleSource), 3);
-  // The section's claim: twenty capabilities across five areas, with the three
-  // target roles as a lens over them and project names as quiet attribution.
-  assert.equal((skillSource.match(/^\s{6}\{ id: "/gm) ?? []).length, 20);
+  // The section's argument: twenty capabilities across five engineering
+  // pillars are the REASON these three roles are the targets. Evidence is
+  // deliberately absent here — the four project chapters already carry it.
   assert.equal((skillSource.match(/^\s{4}label: "/gm) ?? []).length, 5);
-  assert.equal((skillSource.match(/^\s{4}learnedIn: "/gm) ?? []).length, 5);
-  assert.match(profile, /vx-capability-surface/);
-  assert.match(profile, /Twenty capabilities across five areas/);
-  assert.match(profile, /The role asks for/);
-  assert.match(profile, /How I hold it/);
-  assert.match(profile, /capabilities this role calls on/);
+  assert.equal((skillSource.match(/^\s{4}draw: \[/gm) ?? []).length, 5);
+  assert.equal((skillSource.match(/^\s{6}"/gm) ?? []).length, 0);
+  assert.match(profile, /vx-role-map/);
+  assert.match(profile, /FIVE ENGINEERING PILLARS/);
+  assert.match(profile, /roles I am targeting/);
+  assert.match(profile, /Why this role/);
+  assert.match(profile, /capabilities drawn on/);
   assert.doesNotMatch(profile, /vx-role-to-skill-links/);
   assert.doesNotMatch(profile, /vx-skill-to-experience-links/);
   assert.match(portfolio, /useChapterHandoff/);

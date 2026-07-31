@@ -888,3 +888,46 @@ Structure now:
 Verified at 1440×820: 0 px clipping on section, surface, brief, and all five
 rows; coverage lens confirmed (18/20 systems · 14/20 agents · 16/20 full-stack).
 tsc clean, 3/3 tests pass, static export builds.
+
+### Session 9e — profile becomes THE ROLE ↔ CAPABILITY MAP (final framing)
+
+User's framing, finally captured correctly: the argument runs
+CAPABILITIES → THEREFORE THESE TARGET ROLES. Mapping the skill set to the
+three target roles IS the section. Linking skills to project evidence is
+explicitly downstream and unimportant here — the four project chapters already
+carry it — so evidence was REMOVED from this section entirely.
+
+Why the earlier cuts failed:
+- chips/wires version: a catalogue of ~40 equal-weight objects; also used
+  SELF-SCORED strength meters (a bar you assign yourself proves nothing).
+- "capability ledger": put PRODUCTION/ENTERPRISE/OPEN SOURCE/RESEARCH proof
+  cards and project names in the front seat — wrong subject.
+- "capability surface": right subject, but still a bunch of text.
+
+Final build — an operational graphic, in the same visual language as the
+project chapters (op-svg / lv-node / lv-edge / lv-pulse):
+- THREE role nodes on the left, clickable, only the active one lit.
+- FIVE engineering pillars on the right, each carrying FOUR broad capabilities
+  (20 total): AI application & product engineering · Agent runtime &
+  orchestration · Knowledge, memory & retrieval · Evaluation, safety &
+  observability · Inference platform & production systems. Capabilities are
+  deliberately broad ("cloud deployment & CI/CD", not "Kubernetes").
+- Live curved edges from the ACTIVE role only (five lines, never fifteen),
+  stroke weight = how heavily the role draws on the pillar, with signal pulses
+  flowing along them. Each pillar shows a 3-segment degree-of-responsibility
+  meter for the active role.
+- A "WHY THIS ROLE" line above the map argues the claim in words, with a live
+  count (16/20, 14/20, 16/20) of capabilities that role draws on.
+
+Engineering notes:
+- Pulses are driven by CSS `offset-path` + `offset-distance`, NOT a React sim
+  clock: a 60 fps re-render of a 40-element SVG was both wasteful and fragile.
+  They pause via the existing [data-motion-paused] rule.
+- The SVG must be `position:absolute; inset:…` inside `.vx-role-map`: an
+  inherited `display:grid` was letting it fall back to its 300 px intrinsic
+  width instead of filling the panel (measured 332×494 → 1228×409 after fix).
+- The dev server's workerd runner had crashed after many HMR cycles and was
+  serving SSR errors ("Network connection lost"); the client's
+  "Maximum update depth" errors were stale from that crashed process. A clean
+  preview_stop/preview_start cleared it — worth checking before debugging a
+  React loop that isn't there.

@@ -7259,293 +7259,165 @@ html {
 
 
 
+
 /* ============================================================
-   PROFILE — THE CAPABILITY SURFACE
-   The subject of this section is the skill set itself: twenty
-   capabilities, set in the largest type on the row. The three roles
-   are a lens over it (what the role asks for / how I hold it /
-   how much of the surface it calls on). Project names stay as quiet
-   attribution — they must never take the front seat here.
+   PROFILE — THE ROLE ↔ CAPABILITY MAP
+   The argument runs one way: these capabilities are why these are
+   my target roles. So the map is the section — three role nodes
+   wired live into five engineering pillars carrying twenty
+   capabilities, in the same operational-graphic language as the
+   project chapters. Evidence is deliberately absent here; the four
+   project chapters already carry it.
    ============================================================ */
 
 .vx-profile {
-  gap: clamp(10px, 1.6vh, 18px);
+  gap: clamp(10px, 1.5vh, 16px);
   display: flex;
   flex-direction: column;
 }
 
 .vx-profile-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.56fr);
-  gap: 16px clamp(28px, 4vw, 56px);
-  align-items: end;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
 }
 
-.vx-profile-head-copy > h2 {
+.vx-profile-head > div {
+  min-width: 0;
+}
+
+.vx-profile-head h2 {
   margin: 8px 0 0;
-  font-size: clamp(28px, 3vw, 42px);
+  max-width: 30ch;
+  font-size: clamp(26px, 2.7vw, 38px);
   font-weight: 500;
-  line-height: 1.02;
-  letter-spacing: -0.045em;
+  line-height: 1.04;
+  letter-spacing: -0.042em;
 }
 
-.vx-profile-sub {
-  margin: 8px 0 0;
-  color: #98a4af;
-  font-size: 14px;
-  line-height: 1.5;
+.vx-profile-head > .vx-map-pause {
+  flex: 0 0 auto;
 }
 
-.vx-profile-roles {
-  display: grid;
-  gap: 6px;
-  justify-items: stretch;
-}
-
-.vx-role-tabs {
-  display: grid;
-  gap: 4px;
-}
-
-.vx-role-tabs button {
-  position: relative;
-  min-height: 40px;
-  padding: 7px 12px;
+/* The claim, stated in words before the map demonstrates it. */
+.vx-role-why {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 3px 10px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.014);
-  color: #808c97;
-  text-align: left;
-  cursor: pointer;
-  transition: color 240ms ease, border-color 260ms ease, background 260ms var(--vx-ease);
-}
-
-.vx-role-tabs button[data-active="true"] {
-  color: #eff4ea;
-  border-color: rgba(184, 255, 99, 0.42);
-  background: linear-gradient(90deg, rgba(184, 255, 99, 0.1), rgba(184, 255, 99, 0.02) 66%, transparent);
-}
-
-.vx-role-tabs button > small {
-  color: var(--vx-lime);
-  font: 640 10px/1 var(--font-geist-mono), monospace;
-}
-
-.vx-role-tabs button > strong {
-  min-width: 0;
-  overflow: hidden;
-  font-size: 13px;
-  font-weight: 590;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.vx-role-tabs button > span {
-  color: #6f7b86;
-  font: 510 9.5px/1 var(--font-geist-mono), monospace;
-  white-space: nowrap;
-}
-
-.vx-role-tabs button > i {
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 2px;
-  transform: scaleX(0);
-  transform-origin: left;
-  background: var(--vx-lime);
-}
-
-.vx-role-tabs button[data-active="true"][data-playing="true"] > i {
-  animation: vxRoleLensProgress 9.6s linear both;
-}
-
-.vx-profile-roles > .vx-map-pause {
-  justify-self: start;
-}
-
-/* --- the link between role and surface --- */
-
-.vx-role-brief {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 14px clamp(20px, 3vw, 40px);
-  padding: 12px 0;
+  gap: 8px clamp(18px, 2.4vw, 30px);
+  padding: 11px 0;
   border-block: 1px solid var(--vx-line);
-  animation: vxThesisIn 460ms var(--vx-ease) both;
+  animation: vxWhyIn 460ms var(--vx-ease) both;
 }
 
-@keyframes vxThesisIn {
-  from { opacity: 0; transform: translateY(5px); }
+@keyframes vxWhyIn {
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 }
 
-.vx-role-brief > div > p {
-  margin: 7px 0 0;
-  color: #b3bec8;
-  font-size: 12.5px;
+.vx-role-why > .vx-lens-label {
+  color: var(--vx-lime);
+  white-space: nowrap;
+}
+
+.vx-role-why > p {
+  margin: 0;
+  color: #bcc6d0;
+  font-size: 13.5px;
   line-height: 1.5;
   text-wrap: pretty;
 }
 
-.vx-role-coverage {
-  display: grid;
-  align-content: center;
-  justify-items: end;
-  gap: 2px;
-  padding-left: clamp(16px, 2vw, 28px);
-  border-left: 1px solid var(--vx-line);
-}
-
-.vx-role-coverage > strong {
+.vx-role-why > strong {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   color: color-mix(in srgb, var(--vx-lime) 88%, white);
-  font-size: clamp(26px, 2.4vw, 34px);
+  font-size: clamp(22px, 2vw, 29px);
   font-weight: 560;
   line-height: 1;
   letter-spacing: -0.04em;
+  white-space: nowrap;
 }
 
-.vx-role-coverage > strong > i {
+.vx-role-why > strong > i {
   color: #6d7883;
-  font-size: 0.5em;
+  font-size: 0.55em;
   font-style: normal;
   font-weight: 520;
 }
 
-.vx-role-coverage > small {
-  max-width: 15ch;
+.vx-role-why > strong > small {
+  max-width: 11ch;
   color: #7f8b96;
-  font: 510 9.5px/1.35 var(--font-geist-mono), monospace;
-  text-align: right;
+  font: 510 9.5px/1.3 var(--font-geist-mono), monospace;
+  letter-spacing: 0;
+  white-space: normal;
 }
 
-/* --- the surface itself: five areas, twenty capabilities --- */
-
-.vx-capability-surface {
+/* The map owns the rest of the page. */
+.vx-role-map {
+  --accent: var(--vx-lime);
   min-height: 0;
   flex: 1;
-  display: grid;
-  grid-template-rows: repeat(5, minmax(0, 1fr));
-  gap: 5px;
-}
-
-.vx-capability-surface article {
   position: relative;
-  min-height: 0;
-  padding: 8px 14px;
-  display: grid;
-  align-content: center;
-  gap: 5px;
+  padding: 10px 4px 4px;
   overflow: hidden;
-  border: 1px solid transparent;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  transition: border-color 320ms ease, background 320ms var(--vx-ease);
+  background:
+    radial-gradient(circle at 46% 50%, rgba(184, 255, 99, 0.05), transparent 42%),
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: auto, 38px 38px, 38px 38px;
 }
 
-.vx-capability-surface article[data-spotlit="true"] {
-  border-color: rgba(184, 255, 99, 0.22);
-  background: linear-gradient(90deg, rgba(184, 255, 99, 0.06), rgba(184, 255, 99, 0.01) 62%, transparent);
+/* Pin the SVG to the container: an inherited grid display was letting it fall
+   back to its 300px intrinsic width instead of filling the panel. */
+.vx-role-map {
+  display: block;
 }
 
-.vx-area-head {
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+.vx-role-map .op-svg {
+  position: absolute;
+  inset: 10px 6px 6px;
+  display: block;
+  width: auto;
+  height: auto;
 }
 
-.vx-area-head > i {
-  color: #5d6873;
-  font: 620 9.5px/1 var(--font-geist-mono), monospace;
-  font-style: normal;
-}
-
-/* The area name is a label, deliberately quieter than the skills below it. */
-.vx-area-head > strong {
-  min-width: 0;
-  overflow: hidden;
-  color: #8b98a4;
-  font: 620 10px/1.2 var(--font-geist-mono), monospace;
-  letter-spacing: 0.11em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.vx-area-head > b {
-  margin-left: auto;
-  flex: 0 0 auto;
-  color: #6d7883;
-  font: 560 9.5px/1 var(--font-geist-mono), monospace;
-}
-
-.vx-capability-surface article[data-spotlit="true"] .vx-area-head > b {
-  color: color-mix(in srgb, var(--vx-lime) 76%, white);
-}
-
-/* THE SUBJECT: the capabilities themselves, largest type on the row. */
-.vx-area-skills {
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  font-size: 14.5px;
-  font-weight: 480;
-  line-height: 1.42;
-  letter-spacing: -0.012em;
-  text-wrap: pretty;
-}
-
-.vx-area-skills > span {
-  color: #4e5862;
-  transition: color 320ms ease;
-}
-
-/* Lit = this role calls on it. Dimmed = still mine, just not for this role. */
-.vx-area-skills > span[data-on="true"] {
-  color: #dbe3ea;
-}
-
-.vx-capability-surface article[data-spotlit="true"] .vx-area-skills > span[data-on="true"] {
-  color: #f1f6ec;
-}
-
-.vx-area-skills > span > i {
-  color: #3d454d;
-  font-style: normal;
-}
-
-/* Attribution stays quiet — it is not the subject of this section. */
-.vx-area-source {
-  color: #5f6a75;
-  font: 510 9.5px/1 var(--font-geist-mono), monospace;
-  letter-spacing: 0.05em;
+.vx-role-map svg:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--vx-lime) 60%, transparent);
+  outline-offset: 2px;
 }
 
 @media (max-width: 1050px) {
-  .vx-profile-head,
-  .vx-role-brief {
+  .vx-role-why {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .vx-role-coverage {
-    justify-items: start;
-    padding-left: 0;
-    border-left: 0;
+  .vx-role-why > strong {
+    justify-self: start;
   }
 
-  .vx-role-coverage > small {
-    text-align: left;
+  .vx-role-map {
+    min-height: 460px;
   }
+}
 
-  .vx-capability-surface {
-    grid-template-rows: none;
-    grid-auto-rows: max-content;
-  }
+/* Signal flow along the map edges, driven by CSS rather than a React clock —
+   the section renders once per role change instead of sixty times a second. */
+.vx-map-pulse {
+  offset-rotate: 0deg;
+  animation: vxMapFlow 2.6s linear infinite;
+}
 
-  .vx-area-skills {
-    font-size: 13px;
-  }
+@keyframes vxMapFlow {
+  from { offset-distance: 0%; opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  to { offset-distance: 100%; opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-map-pulse { display: none; }
 }
