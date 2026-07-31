@@ -7191,24 +7191,29 @@ html {
   visibility: hidden;
 }
 
-/* Authoritative highlight: the key phrase is painted solid in the chapter
-   accent with dark ink — the same treatment the hero uses — so the eye cannot
-   slide past it. A soft underlay glow lifts it off the console background. */
+/* Two-tier emphasis. FULL is reserved for the technical / AI keywords that
+   carry the profile (WebRTC, LLM gateway, agent evaluations, MedCPT, GMU…):
+   painted solid in the chapter accent with dark ink, like the hero. SOFT marks
+   the supporting phrases with the lighter marker underline so the technical
+   terms are never competing with ordinary prose for attention. */
 .vx-stage-annotation-emphasis {
-  padding: 0.08em 0.34em;
-  border-radius: 2px;
-  color: #f2f6ee;
   font-style: normal;
-  font-weight: 600;
-  background: color-mix(in srgb, var(--active-accent) 26%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--active-accent) 34%, transparent);
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
   transition: background 260ms var(--vx-ease), color 260ms var(--vx-ease), box-shadow 260ms var(--vx-ease);
 }
 
-/* Once the line finishes typing over it, the phrase locks in at full paint. */
-.vx-stage-annotation-emphasis[data-complete="true"] {
+.vx-stage-annotation-emphasis[data-weight="full"] {
+  padding: 0.08em 0.34em;
+  border-radius: 2px;
+  color: #f2f6ee;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--active-accent) 26%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--active-accent) 34%, transparent);
+}
+
+/* Once the line finishes typing over it, the keyword locks in at full paint. */
+.vx-stage-annotation-emphasis[data-weight="full"][data-complete="true"] {
   color: #08110a;
   font-weight: 680;
   background: var(--active-accent);
@@ -7216,6 +7221,28 @@ html {
     0 0 0 1px var(--active-accent),
     0 0 18px color-mix(in srgb, var(--active-accent) 42%, transparent);
   animation: vxEmphasisLock 460ms var(--vx-ease) both;
+}
+
+.vx-stage-annotation-emphasis[data-weight="soft"] {
+  padding: 0 0.08em;
+  color: #dfe6ec;
+  font-weight: 560;
+  background: linear-gradient(
+    180deg,
+    transparent 58%,
+    color-mix(in srgb, var(--active-accent) 22%, transparent) 58% 96%,
+    transparent 96%
+  );
+}
+
+.vx-stage-annotation-emphasis[data-weight="soft"][data-complete="true"] {
+  color: #eef3f7;
+  background: linear-gradient(
+    180deg,
+    transparent 56%,
+    color-mix(in srgb, var(--active-accent) 34%, transparent) 56% 97%,
+    transparent 97%
+  );
 }
 
 @keyframes vxEmphasisLock {

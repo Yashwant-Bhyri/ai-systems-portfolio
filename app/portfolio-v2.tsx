@@ -42,7 +42,10 @@ type StoryStep = {
   title: string;
   explanation: string;
   annotation: string;
+  /** Technical / AI keywords — painted solid. */
   annotationHighlights: readonly string[];
+  /** Supporting phrases — marked with the lighter underline. */
+  annotationSoftHighlights?: readonly string[];
   signals: readonly string[];
   maturity?: string;
   input: string;
@@ -133,7 +136,8 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     title: "The candidate speaks inside a controlled technical interview—not a chat form.",
     explanation: "The actual room owns turn-taking, microphone state, interruption recovery, and the visible exchange between candidate and AI interviewer.",
     annotation: "WebRTC audio and WebSocket turn events share one session state, so interruption recovery resumes the microphone, active question, and interviewer response together.",
-    annotationHighlights: ["WebRTC audio", "interruption recovery"],
+    annotationHighlights: ["WebRTC audio", "WebSocket turn events", "interruption recovery"],
+    annotationSoftHighlights: ["one session state"],
     signals: ["WebRTC", "WebSockets", "React", "FastAPI"],
     maturity: "PRODUCTION RUNTIME",
     input: "Active question + live candidate voice",
@@ -148,6 +152,7 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     explanation: "Deepgram streams partial hypotheses while the candidate speaks, then commits a stable transcript. Early text can warm the next-turn pipeline without entering the evidence record.",
     annotation: "Deepgram partials warm next-turn processing while the candidate speaks; only the confidence-scored final transcript writes to interview state and recruiter evidence.",
     annotationHighlights: ["Deepgram partials", "confidence-scored final transcript"],
+    annotationSoftHighlights: ["interview state and recruiter evidence"],
     signals: ["Deepgram", "StreamingSTT", "ASR", "PartialFinalTranscripts"],
     maturity: "PRODUCTION RUNTIME",
     input: "16 kHz voice frames",
@@ -161,7 +166,8 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     title: "The interview map keeps the current question, evidence gaps, and prepared probes in one live graph.",
     explanation: "The foreground path selects the next legal question while a deeper reasoning path continues updating the future interview route.",
     annotation: "The fast path selects the current question from the live interview graph; background agents reason deeper and promote a guardrail-checked packet into a future branch.",
-    annotationHighlights: ["fast path selects the current question from the live interview graph", "guardrail-checked packet"],
+    annotationHighlights: ["live interview graph", "guardrail-checked packet"],
+    annotationSoftHighlights: ["The fast path", "background agents"],
     signals: ["InterviewGraph", "SemanticRouting", "StateGuards", "OrchestrationGraph"],
     maturity: "PRODUCTION RUNTIME",
     input: "Transcript + trajectory state",
@@ -175,7 +181,8 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     title: "The ⟪foreground lane returns the next question in about 900 ms⟫ while deeper interview reasoning continues.",
     explanation: "The low-latency route asks the immediate question. In parallel, specialist agents prepare a richer packet; only policy-validated packets enter the future interview map.",
     annotation: "An LLM gateway routes the live question to a low-latency model in about 900 ms while deeper agents build and validate the next-turn packet off the critical path.",
-    annotationHighlights: ["LLM gateway", "about 900 ms", "off the critical path"],
+    annotationHighlights: ["LLM gateway", "low-latency model"],
+    annotationSoftHighlights: ["about 900 ms", "off the critical path"],
     signals: ["LLMGateway", "ModelRouting", "DualLaneRouting", "QuestionGuardrails", "RedisFallback"],
     maturity: "PRODUCTION RUNTIME",
     input: "Committed turn + prepared packet",
@@ -187,13 +194,14 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
   {
     label: "Evidence agents",
     title: "Four specialist agents inspect the same answer from different angles.",
-    explanation: "Concept coverage, weakness detection, résumé-claim discrepancy, and observable reasoning behavior run concurrently and emit typed findings.",
-    annotation: "Concept, weakness, discrepancy, and reasoning agents execute concurrently, emitting typed, turn-linked findings into the shared interview state.",
-    annotationHighlights: ["execute concurrently", "typed, turn-linked findings"],
+    explanation: "Concept coverage, weakness detection, résumé-claim discrepancy, and observable reasoning behavior run asynchronously and emit typed findings.",
+    annotation: "Concept, weakness, discrepancy, and reasoning agents execute asynchronously, emitting typed, turn-linked findings into the shared interview state.",
+    annotationHighlights: ["execute asynchronously", "typed, turn-linked findings"],
+    annotationSoftHighlights: ["shared interview state"],
     signals: ["ConceptAgent", "WeaknessAgent", "DiscrepancyAgent", "ReasoningAgent", "AgentGraph", "AgentEvaluation"],
     maturity: "PRODUCTION RUNTIME",
     input: "Committed candidate answer",
-    operation: "Parallel evidence extraction",
+    operation: "Asynchronous evidence extraction",
     output: "Four structured evidence packets",
     stack: [],
     proof: "Parallel background intelligence",
@@ -203,7 +211,8 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     title: "The system converges on the single next probe with the highest evidence value.",
     explanation: "Answer state, trajectory position, agent findings, coverage, and agenda converge into a bounded route decision and updated interview state.",
     annotation: "Answer state, coverage gaps, and parallel findings converge in the orchestrator, which ranks evidence gain and emits one policy-valid probe through a structured contract.",
-    annotationHighlights: ["ranks evidence gain", "policy-valid probe", "structured contract"],
+    annotationHighlights: ["policy-valid probe", "structured contract"],
+    annotationSoftHighlights: ["ranks evidence gain"],
     signals: ["AsyncOrchestration", "RoutePolicy", "StateCheckpoints", "StructuredOutputs"],
     maturity: "PRODUCTION RUNTIME",
     input: "Interview state + parallel findings",
@@ -218,6 +227,7 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     explanation: "The selected question first checks prepared audio, then routes synthesis through a timed provider gateway. Cache, provider fallback, and an acknowledgement bridge keep the voice turn recoverable.",
     annotation: "A prepared-audio cache serves known questions first; misses enter a timeout-bound TTS router with automatic provider failover and a recovery acknowledgement.",
     annotationHighlights: ["prepared-audio cache", "timeout-bound TTS router", "automatic provider failover"],
+    annotationSoftHighlights: ["recovery acknowledgement"],
     signals: ["TTSGateway", "ProviderFailover", "FallbackHandling", "LatencyBudget", "ModelRouting"],
     maturity: "PRODUCTION RUNTIME",
     input: "Selected next question",
@@ -231,7 +241,8 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     title: "The interview ends as an evidence record—not an unexplained score.",
     explanation: "Turn evidence assembles into demonstrated depth, claim credibility, coverage, strengths, risks, uncertainty, and explicitly untested dimensions.",
     annotation: "The evidence ledger maps every hiring signal to its transcript timestamp, confidence, and coverage, including dimensions the interview never tested.",
-    annotationHighlights: ["evidence ledger", "transcript timestamp, confidence, and coverage"],
+    annotationHighlights: ["evidence ledger"],
+    annotationSoftHighlights: ["transcript timestamp, confidence, and coverage", "dimensions the interview never tested"],
     signals: ["EvidenceLedger", "Coverage", "Uncertainty", "RecruiterIntelligence"],
     maturity: "PRODUCTION OUTPUT",
     input: "Turn-level evidence ledger",
@@ -245,7 +256,8 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     title: "Post-interview traces expose where the agent was too hard, vague, leading, or punitive.",
     explanation: "Telemetry, agent evaluations, route-policy checks, token and latency traces, and recruiter feedback drive an offline refinement loop. Regression suites gate every prompt, route, and policy update.",
     annotation: "Agent evaluations score question value, coverage, route quality, tone, tokens, and latency; RL candidates must pass replay, regression, and human approval.",
-    annotationHighlights: ["Agent evaluations", "RL candidates", "replay, regression, and human approval"],
+    annotationHighlights: ["Agent evaluations", "RL candidates"],
+    annotationSoftHighlights: ["replay, regression, and human approval"],
     signals: ["AgentEvaluations", "RLRefinement", "RegressionReplay", "TokenOptimization", "LatencyTracing", "HumanInTheLoop", "Guardrails", "Observability"],
     maturity: "OFFLINE REFINEMENT",
     input: "Interview traces + evaluator signals",
@@ -262,7 +274,8 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     title: "A product brief is grounded in audience, market, and creative context before generation begins.",
     explanation: "Format, audience, product truth, duration, mood, platform, and approval constraints become one structured production contract.",
     annotation: "An underspecified product brief becomes a typed production contract that drives research, retrieval, multimodal tool calls, and editable Filmora timeline assembly.",
-    annotationHighlights: ["typed production contract", "multimodal tool calls", "editable Filmora timeline assembly"],
+    annotationHighlights: ["typed production contract", "multimodal tool calls"],
+    annotationSoftHighlights: ["editable Filmora timeline assembly"],
     signals: ["SchemaContract", "ApprovalGate", "FilmoraIntegration", "Python", "TypeScript"],
     maturity: "INTERNSHIP SYSTEM",
     input: "Underspecified creative prompt",
@@ -275,7 +288,8 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     title: "Real-time market research and product intelligence become retrievable production context.",
     explanation: "Cross-platform research, product facts, and creative analytics are distilled into hooks, audio, themes, palettes, tempo, caption behavior, and effects that can guide the current brief.",
     annotation: "Research agents scan six content surfaces, deduplicate and brief-score patterns, then package 700+ product-linked creative signals for retrieval.",
-    annotationHighlights: ["scan six content surfaces", "deduplicate and brief-score patterns", "700+ product-linked creative signals"],
+    annotationHighlights: ["Research agents"],
+    annotationSoftHighlights: ["deduplicate and brief-score patterns", "700+ product-linked creative signals"],
     signals: ["ResearchAgents", "ProductIntelligence", "FeatureExtraction", "BriefScoring", "AgentMemory"],
     maturity: "INTERNSHIP SYSTEM",
     input: "Cross-platform creative trends",
@@ -289,7 +303,8 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     title: "Raw signals compile into durable, versioned skill files.",
     explanation: "Trend evidence becomes reusable playbooks, design rules, and editor parameters that the production agents can execute consistently.",
     annotation: "A signal compiler turns ranked evidence into versioned skill files, design rules, and Filmora-native parameters that agents reuse across briefs.",
-    annotationHighlights: ["signal compiler", "versioned skill files", "Filmora-native parameters"],
+    annotationHighlights: ["signal compiler", "versioned skill files"],
+    annotationSoftHighlights: ["Filmora-native parameters"],
     signals: ["SkillCompiler", "skill.md", "VersionedSkills", "DesignRules", "AgentMemory"],
     maturity: "INTERNSHIP SYSTEM",
     input: "Market, product, and creative signals",
@@ -303,7 +318,8 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     title: "The current brief retrieves relevant memory, then a recommendation layer ranks creative choices.",
     explanation: "The query activates skill files, context packets, design knowledge, and Filmora parameters before producing a context-aware creative recipe.",
     annotation: "Embeddings retrieve matching skills, product context, and editor presets; reranking selects the hook, audio, and edit recipe for the current brief.",
-    annotationHighlights: ["Embeddings retrieve", "reranking selects", "hook, audio, and edit recipe"],
+    annotationHighlights: ["Embeddings", "reranking"],
+    annotationSoftHighlights: ["hook, audio, and edit recipe"],
     signals: ["Embeddings", "VectorRetrieval", "Reranking", "Recommendation", "AgenticMemory", "CreativeMemory"],
     maturity: "INTERNSHIP SYSTEM",
     input: "Brief + live trend context",
@@ -317,6 +333,7 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     explanation: "User intent, recommendations, agent output, and production state are normalized into versioned tool contracts and dependencies.",
     annotation: "Brief intent, market evidence, retrieved memory, and live timeline state compile into schema-validated function calls with explicit dependencies.",
     annotationHighlights: ["schema-validated function calls", "explicit dependencies"],
+    annotationSoftHighlights: ["retrieved memory"],
     signals: ["FunctionCalling", "SchemaValidation", "PromptTuning", "DependencyGraph", "VersionedContracts", "Guardrails", "LLMEvaluation"],
     maturity: "INTERNSHIP SYSTEM",
     input: "Intent + context + production state",
@@ -329,7 +346,8 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     title: "Specialist agents generate independent media assets in a coordinated DAG.",
     explanation: "Video, music, dialogue/TTS, captions, transitions, effects, and editor assembly execute with handoffs, checkpoints, retries, and approval gates.",
     annotation: "An LLM gateway routes six specialist agents; typed tool calls run in parallel where dependencies allow, with schema, safety, retry, and checkpoint gates.",
-    annotationHighlights: ["LLM gateway routes six specialist agents", "typed tool calls run in parallel", "schema, safety, retry, and checkpoint gates"],
+    annotationHighlights: ["LLM gateway", "typed tool calls", "schema, safety, retry, and checkpoint gates"],
+    annotationSoftHighlights: ["six specialist agents"],
     signals: ["MultiAgentDAG", "LLMGateway", "ToolCalling", "Checkpointing", "RetryFallback", "Guardrails", "MultiAgentOrchestration"],
     maturity: "REPRESENTATIVE ABSTRACTION",
     input: "Compiled production graph",
@@ -342,7 +360,8 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     title: "Generated assets arrive as an editor-ready timeline—not one opaque video blob.",
     explanation: "Video, dialogue, music, captions, transitions, effects, and metadata remain individually editable inside the production timeline.",
     annotation: "The tool graph keeps video, music, dialogue, captions, effects, and metadata separate, then assembles them behind a human gate into editable Filmora tracks.",
-    annotationHighlights: ["metadata separate", "human gate", "editable Filmora tracks"],
+    annotationHighlights: ["tool graph", "human gate"],
+    annotationSoftHighlights: ["editable Filmora tracks"],
     signals: ["ToolInspection", "HumanInTheLoopApproval", "EditableTimeline", "MultimodalIO"],
     maturity: "INTERNSHIP OUTPUT",
     input: "Completed media artifacts",
@@ -356,6 +375,7 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     explanation: "Runtime traces and agent evaluations feed a reinforcement-learning refinement loop across prompts, model routes, tool policies, token budgets, and regression suites before human approval.",
     annotation: "Span-level telemetry attributes model route, tokens, tool cost, latency, retries, and creative scores; RL candidates pass regression, guardrail, and human-release gates.",
     annotationHighlights: ["Span-level telemetry", "RL candidates", "regression, guardrail, and human-release gates"],
+    annotationSoftHighlights: ["model route, tokens, tool cost, latency"],
     signals: ["Observability", "AgentEvaluations", "RLRefinement", "TokenCost", "LatencyTracing", "ModelRouting"],
     maturity: "INTERNSHIP RESULT",
     input: "Runtime traces + agent evaluations",
@@ -372,7 +392,8 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     title: "Patient-language fragments become traceable, time-aligned analysis packets.",
     explanation: "A synthetic voice session enters a rolling buffer so language, event, and affect models inspect the same moment and retain the words that produced each packet.",
     annotation: "A one-second WebRTC rolling buffer emits timestamped packets that retain the exact source words, keeping every downstream signal traceable to the session.",
-    annotationHighlights: ["one-second WebRTC rolling buffer", "exact source words", "traceable to the session"],
+    annotationHighlights: ["one-second WebRTC rolling buffer"],
+    annotationSoftHighlights: ["exact source words", "traceable to the session"],
     signals: ["WebRTC", "StreamingCapture", "RollingBuffer", "16kHzAudio"],
     maturity: "IMPLEMENTED LOCAL ENGINE",
     input: "Synthetic 16 kHz mono audio",
@@ -385,7 +406,8 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     title: "One audio stream becomes language, event, and affect representations.",
     explanation: "Transcript content, SenseVoice paralinguistic tokens, and Emotion2Vec+ affect features remain synchronized but independently inspectable.",
     annotation: "ASR captures language, SenseVoice extracts speech events, and Emotion2Vec+ encodes affect on one shared timeline while each signal remains independently inspectable.",
-    annotationHighlights: ["SenseVoice extracts speech events", "Emotion2Vec+ encodes affect", "shared timeline"],
+    annotationHighlights: ["ASR captures language", "SenseVoice extracts speech events", "Emotion2Vec+ encodes affect"],
+    annotationSoftHighlights: ["one shared timeline"],
     signals: ["SenseVoice", "Emotion2Vec+", "ASR", "EventDetection"],
     maturity: "R&D PROTOTYPE",
     input: "Buffered speech frames",
@@ -399,6 +421,7 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     explanation: "Linguistic, paralinguistic, acoustic-affect, and longitudinal signals propagate through a fusion network into one patient-state representation.",
     annotation: "A Gated Multimodal Unit weights linguistic, paralinguistic, acoustic, and longitudinal vectors into one Behavioral State Vector reused downstream.",
     annotationHighlights: ["Gated Multimodal Unit", "Behavioral State Vector"],
+    annotationSoftHighlights: ["linguistic, paralinguistic, acoustic, and longitudinal vectors"],
     signals: ["GatedMultimodalUnit", "MultimodalFusion", "BehavioralStateVector", "LongitudinalMemory"],
     maturity: "FULL ARCHITECTURE",
     input: "Aligned modality vectors",
@@ -412,6 +435,7 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     explanation: "Dense and lexical retrieval run together, merge their candidates, and return a grounded source set for validation and clinician review.",
     annotation: "MedCPT and HNSW dense search run beside BM25 lexical search; RRF merges candidates and BioLinkBERT reranks five source-linked passages.",
     annotationHighlights: ["MedCPT and HNSW dense search", "BM25 lexical search", "BioLinkBERT reranks"],
+    annotationSoftHighlights: ["RRF merges candidates"],
     signals: ["MedCPT", "HNSW", "FAISS", "BM25", "RRF", "BioLinkBERT", "HybridRetrieval"],
     maturity: "FULL RETRIEVAL ARCHITECTURE",
     input: "State-aware clinical query",
@@ -424,7 +448,8 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     title: "Ranked evidence becomes a structured hypothesis with visible uncertainty.",
     explanation: "The reasoning layer attaches evidence to a bounded hypothesis, preserves conflicting or missing context, and emits targeted follow-up questions.",
     annotation: "A retrieval-grounded LLM emits a structured hypothesis only with linked session evidence, cited references, visible uncertainty, conflicts, and follow-up questions.",
-    annotationHighlights: ["retrieval-grounded LLM", "structured hypothesis", "visible uncertainty"],
+    annotationHighlights: ["retrieval-grounded LLM", "structured hypothesis"],
+    annotationSoftHighlights: ["visible uncertainty"],
     signals: ["RAG", "StructuredOutputs", "EvidenceCitations", "Uncertainty"],
     maturity: "R&D PROTOTYPE",
     input: "Ranked clinical evidence + session context",
@@ -437,7 +462,8 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     title: "Independent model and deterministic rule gates challenge unsupported output.",
     explanation: "DeBERTa-v3 NLI checks claim support while DSM-aligned deterministic rules block unsupported diagnostic language before review.",
     annotation: "DeBERTa-v3 NLI tests every claim against its citations; DSM-aligned deterministic rules block unsupported diagnostic language before review.",
-    annotationHighlights: ["DeBERTa-v3 NLI", "DSM-aligned deterministic rules", "block unsupported diagnostic language"],
+    annotationHighlights: ["DeBERTa-v3 NLI", "DSM-aligned deterministic rules"],
+    annotationSoftHighlights: ["block unsupported diagnostic language"],
     signals: ["DeBERTaV3", "NLI", "DSMRules", "ConfidenceGate", "Guardrails"],
     maturity: "VALIDATION DESIGN TARGET",
     input: "Structured claims + cited evidence",
@@ -450,7 +476,8 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     title: "The clinician receives the source, supported claim, uncertainty, warning state, and suggested follow-up together.",
     explanation: "Every recommendation remains editable and reviewable, and clinical judgment stays outside the model boundary.",
     annotation: "The review UI binds each observation to its source, validation state, and uncertainty; the clinician can edit, ask a follow-up, or hold.",
-    annotationHighlights: ["source, validation state, and uncertainty", "edit, ask a follow-up, or hold"],
+    annotationHighlights: ["validation state"],
+    annotationSoftHighlights: ["edit, ask a follow-up, or hold"],
     signals: ["ClinicianInTheLoop", "SourceLinked", "EditableReview", "HumanJudgment"],
     maturity: "HUMAN-OWNED PROTOTYPE",
     input: "Validated review packet",
@@ -464,7 +491,8 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     title: "Clinician feedback enters an offline evaluation queue, never a live self-training loop.",
     explanation: "Approved review outcomes, retrieval quality, safety-gate behavior, latency, and subgroup monitoring feed offline reinforcement-learning refinement. Regression and human review gate every future release.",
     annotation: "Approved, de-identified clinician actions enter an offline RL and evaluation queue; grounding, subgroup, safety, regression, and human-release gates govern each candidate.",
-    annotationHighlights: ["Approved, de-identified clinician actions", "offline RL and evaluation queue", "human-release gates"],
+    annotationHighlights: ["offline RL and evaluation queue", "grounding, subgroup, safety, regression, and human-release gates"],
+    annotationSoftHighlights: ["Approved, de-identified clinician actions"],
     signals: ["OfflineRL", "RLRefinement", "SafetyRegression", "SubgroupMonitoring", "HumanReleaseGate", "Observability"],
     maturity: "R&D DESIGN TARGET",
     input: "Approved review feedback + runtime traces",
@@ -843,13 +871,15 @@ function useHeroChoreography(reducedMotion: boolean) {
     const timer = window.setTimeout(() => {
       if (cursor >= text.length) setPhase("holding");
       else setCursor((value) => Math.min(text.length, value + 1));
-    }, cursor >= text.length ? 0 : 18 + (cursor % 5) * 3);
+      // Paced 20% slower than the original 18-30 ms/char so a first-time
+      // reader can finish each statement before it backspaces away.
+    }, cursor >= text.length ? 0 : 22 + (cursor % 5) * 3.6);
     return () => window.clearTimeout(timer);
   }, [cursor, phase, text.length]);
 
   useEffect(() => {
     if (phase !== "holding") return;
-    const timer = window.setTimeout(() => setPhase("deleting"), 1180);
+    const timer = window.setTimeout(() => setPhase("deleting"), 1420);
     return () => window.clearTimeout(timer);
   }, [phase]);
 
@@ -1417,23 +1447,32 @@ function SignalTicker({
   );
 }
 
+type AnnotationRange = { phrase: string; start: number; end: number; weight: "full" | "soft" };
+
 function HighlightedStageAnnotation({
   text,
   cursor,
   highlights,
+  softHighlights = [],
 }: {
   text: string;
   cursor: number;
   highlights: readonly string[];
+  softHighlights?: readonly string[];
 }) {
   const visibleEnd = Math.min(cursor, text.length);
-  const ranges = highlights
-    .map((phrase) => {
-      const start = text.indexOf(phrase);
-      return start < 0 ? null : { phrase, start, end: start + phrase.length };
-    })
-    .filter((range): range is { phrase: string; start: number; end: number } => Boolean(range))
-    .sort((a, b) => a.start - b.start);
+  const locate = (phrase: string, weight: "full" | "soft"): AnnotationRange | null => {
+    const start = text.indexOf(phrase);
+    return start < 0 ? null : { phrase, start, end: start + phrase.length, weight };
+  };
+  const ranges = [
+    ...highlights.map((phrase) => locate(phrase, "full")),
+    ...softHighlights.map((phrase) => locate(phrase, "soft")),
+  ]
+    .filter((range): range is AnnotationRange => Boolean(range))
+    // Technical keywords win any overlap: sort them ahead of supporting phrases
+    // that begin at the same offset, then drop whatever the winner swallows.
+    .sort((a, b) => a.start - b.start || (a.weight === "full" ? -1 : 1));
   const segments: React.ReactNode[] = [];
   let position = 0;
 
@@ -1447,6 +1486,7 @@ function HighlightedStageAnnotation({
         <em
           key={`${range.phrase}-${index}`}
           className="vx-stage-annotation-emphasis"
+          data-weight={range.weight}
           data-complete={visibleEnd >= range.end}
         >
           {text.slice(range.start, Math.min(range.end, visibleEnd))}
@@ -1484,7 +1524,12 @@ function StageSignalConsole({ step, active }: { step: StoryStep; active: boolean
       <i className="vx-stage-signal-diagonal-sweep" aria-hidden="true" />
       <div className="vx-stage-annotation" aria-label={step.annotation}>
         <span className="vx-stage-annotation-live" aria-hidden="true">
-          <HighlightedStageAnnotation text={step.annotation} cursor={visibleCursor} highlights={step.annotationHighlights} />
+          <HighlightedStageAnnotation
+            text={step.annotation}
+            cursor={visibleCursor}
+            highlights={step.annotationHighlights}
+            softHighlights={step.annotationSoftHighlights}
+          />
           {visibleCursor < step.annotation.length ? <i /> : null}
         </span>
         <b className="vx-stage-annotation-ghost" aria-hidden="true">{step.annotation}</b>
@@ -1604,7 +1649,8 @@ function SystemWalkthrough({
         title: "The complete system resolves into six recruiter-ready signals.",
         explanation: "Product, contribution, runtime, output, impact, and reliability take the stage one at a time for a fast final revision.",
         annotation: "The completed walkthrough resolves its strongest product, runtime, output, impact, and reliability evidence into one recruiter-ready summary.",
-        annotationHighlights: ["recruiter-ready summary"],
+        annotationHighlights: [],
+        annotationSoftHighlights: ["recruiter-ready summary"],
         signals: ["Product", "Contribution", "Runtime", "Output", "Impact", "Reliability"],
         input: "Complete component walkthrough",
         operation: "Consolidate the strongest engineering evidence",

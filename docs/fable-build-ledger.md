@@ -824,3 +824,31 @@ Corrected here:
 Deployment: GitHub Pages via `.github/workflows/deploy-pages.yml`
 (`npm run build:pages`, basePath `/ai-systems-portfolio`) →
 https://yashwant-bhyri.github.io/ai-systems-portfolio/
+
+### Session 9c — two-tier keyword emphasis + slower hero
+
+1. **Two-tier annotation emphasis.** `StoryStep` gained
+   `annotationSoftHighlights`; `HighlightedStageAnnotation` merges both lists,
+   tags each range `data-weight="full" | "soft"`, and sorts so a technical
+   keyword always wins an overlap with a supporting phrase.
+   - FULL (solid accent paint, dark ink, lock-in flash) is reserved for the
+     technical / AI keywords that carry the profile: WebRTC audio, WebSocket
+     turn events, interruption recovery, Deepgram partials, live interview
+     graph, guardrail-checked packet, LLM gateway, execute asynchronously,
+     policy-valid probe, structured contract, prepared-audio cache, TTS router,
+     provider failover, evidence ledger, Agent evaluations, RL candidates,
+     typed production contract, multimodal tool calls, signal compiler,
+     Embeddings, reranking, schema-validated function calls, typed tool calls,
+     tool graph, human gate, Span-level telemetry, WebRTC rolling buffer,
+     SenseVoice extracts speech events, Emotion2Vec+ encodes affect, Gated
+     Multimodal Unit, Behavioral State Vector, MedCPT and HNSW dense search,
+     BM25 lexical search, BioLinkBERT reranks, retrieval-grounded LLM,
+     structured hypothesis, DeBERTa-v3 NLI, DSM-aligned deterministic rules,
+     offline RL and evaluation queue, guardrail/regression/human-release gates.
+   - SOFT (the previous marker underline) now carries the descriptive phrases.
+   All 25 annotations remapped by script, every phrase asserted present in its
+   annotation. "execute concurrently" reworded to "execute asynchronously"
+   (explanation and the step's operation label follow).
+2. **Hero typing paced 20% slower** (18-30 ms/char → 22-36 ms/char) with the
+   hold before backspacing extended 1180 ms → 1420 ms, so a first-time reader
+   can finish each statement.
