@@ -724,3 +724,61 @@ Colors = the five vx accents (lime/cyan/violet/amber/blue). Quant annotations:
 "SKILL-SPACE PROJECTION · n = 1,024 mapped skills · 5 territories claimed",
 axis labels "systems depth →" / "↑ product proximity". Keyword tray dropped
 (domains carry the keywords now).
+
+---
+
+## 2026-07-31 — Session 9 (Fable): v8-elite — the final elite polish pass (portfolio-elite fork)
+
+### Setup
+- New working duplicate: `/Users/yash/Documents/Resume/portfolio-elite` (rsync of
+  portfolio-fable-trial @ cb21c11, node_modules symlinked). The deployed
+  original (ai-systems-portfolio-ecru.vercel.app ← portfolio-fable-trial) is untouched.
+- Dev on port 7600 (`npm run dev -- --port 7600`; launch config "elite").
+
+### What changed (all verified: tsc clean, build + 3/3 tests pass, DOM overflow audit = 0)
+1. **SignalTicker → continuous seamless marquee.** The keyword rails
+   (implementation-signal consoles, research cards) previously stepped item-by-item
+   and snapped from the last keyword back to the first. Now: 3 rendered laps,
+   `@keyframes vxSignalLap` translating exactly one lap-width (linear, infinite,
+   seamless reconnect), slower cadence (1750 ms/slot default). The center-lens
+   highlight is *measured from real track geometry* every 200 ms (nearest item to
+   lens), so it stays true through pause/resume/data-motion-paused.
+   Long hashtags compress (reinforcement-learning→RL, optimization→Opt,
+   orchestration→Orch) + ellipsis so no mid-glyph clipping.
+2. **Conclusion stage rework (all three flagships).** Rail labels no longer
+   truncate ("MY CONTRIBUTION"→"CONTRIBUTION"); focus metric value is bright
+   (#f2f5f7 + accent glow) and sized to never overlap heading/rail; the demo CTA /
+   confidentiality / safety blocks are compact (62 px) and visible from the first
+   beat (previously hidden until a full 13 s metric cycle — read as a dead hole);
+   NEW "FULL SYSTEM SIGNAL RAIL": every signal+stack keyword from every walkthrough
+   step, deduplicated, drifting through the slow infinite marquee — the final
+   revision loop the user asked for.
+3. **Overview pages breathe.** `.vx-case-overview-page .vx-overview` now flex-centers
+   its node row vertically — the dead band under the Antigravity architecture row is
+   gone (also improves Filmora/MindScape).
+4. **Contribution tile: synced 3D light pass.** Tilt + diagonal shine share one
+   5.6 s cadence (card leans as the light crosses; brighter sweep) instead of
+   6 s/3 s desynced loops.
+5. **Hero end-state.** Background deck cards are silhouettes (body copy hidden,
+   tighter offsets/opacity) — no more text bleeding around the active card into the
+   controls. Compact contact = one row per channel with right-aligned ellipsized
+   values + title tooltips (emails no longer fragment). Hero grid rows are
+   content-sized (`auto auto` + align-content center) so the capsule can never
+   underlap the contact card; all four action buttons visible.
+6. **Profile ("What I'm built for").** Evidence proofs rewritten tighter so the
+   3-line clamp never cuts mid-sentence; strength-1 skill chips raised to reading
+   contrast (#97a2ac); crop-gap media escape for 1051–1160 px wide short viewports.
+7. **Research records.** webGLR + COL-VEO copy tightened (all technical keywords
+   kept: SAM, INT8 Depth Anything V2, seeds, lifecycle gates); cards clip inside
+   their border (`overflow:hidden`); page copy 12.5 px so tickers never spill.
+8. **Tests updated** to assert the new marquee contract (`vxSignalLap`,
+   `--vx-signal-lap-width`, `data-signal-index`) instead of the old `cycleMs={7600}`.
+
+### Environment notes for future sessions
+- In the hidden preview, screenshots only render reliably on the FIRST paint after
+  a fresh `navigate`; later DOM mutations screenshot black — use fresh reloads per
+  section, or assert via DOM geometry (getBoundingClientRect / scrollHeight).
+- `document.hidden` in the preview sets data-motion-paused everywhere → CSS
+  animations report "paused"; force-run with a temporary style tag to verify motion.
+- getComputedStyle(transform) returns "none" for display:none subtrees — query
+  *visible* instances when probing animations.

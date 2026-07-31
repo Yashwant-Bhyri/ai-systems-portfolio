@@ -177,7 +177,11 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /items=\{item\.stack\.map\(\(technology\) => \(\{ label: technology \}\)\)\}/);
   assert.match(portfolio, /items=\{item\.signals\}/);
   assert.match(portfolio, /variant="metrics"/);
-  assert.match(portfolio, /cycleMs=\{7600\}/);
+  // The signal rail is a continuous seamless marquee: the track animates one
+  // full lap via CSS while the center highlight is measured from real geometry.
+  assert.match(portfolio, /data-signal-index/);
+  assert.match(css, /@keyframes vxSignalLap/);
+  assert.match(css, /--vx-signal-lap-width/);
   assert.match(portfolio, /Real-time AI-Native Interviewing Platform/);
   assert.match(portfolio, /End-to-End Multimodal AI Production System/);
   assert.match(portfolio, /Medical AI Clinician-Support Product/);
@@ -199,7 +203,7 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /OUTPUT/);
   assert.match(portfolio, /Flask/);
   assert.match(portfolio, /SAM segmentation/);
-  assert.match(portfolio, /INT8-quantized Depth Anything V2 Small/);
+  assert.match(portfolio, /INT8-quantized Depth Anything V2/);
   assert.match(portfolio, /five GPU texture controls/);
   assert.match(portfolio, /MEDICAL AI R&D PROJECT · CLINICIAN-SUPPORT PRODUCT/);
   assert.match(portfolio, /overviewComplete: overviewController\.complete/);

@@ -536,7 +536,7 @@ const RESEARCH = [
     badge: "BROWSER-NATIVE PERCEPTION R&D",
     title: "webGLR Browser Perception Engine",
     meta: "PERCEPTION → TEMPORAL CONTROL → WEBGL SHADER",
-    copy: "Built a browser-native perception-to-shader engine that fuses SAM segmentation masks with INT8-quantized Depth Anything V2 Small maps and compiles them into five GPU texture controls. A low-latency live lane drives subject lift and background falloff while an HQ lane performs scene-aware sampling, cut guards, cache blending, and memory-budgeted analysis.",
+    copy: "A browser-native perception-to-shader engine that fuses SAM segmentation masks with INT8-quantized Depth Anything V2 maps into five GPU texture controls. A low-latency live lane drives subject lift and background falloff; an HQ lane adds scene-aware sampling, cut guards, and cache blending.",
     signals: [
       { label: "segmentation", value: "SAM" },
       { label: "depth", value: "INT8 Depth Anything V2" },
@@ -551,7 +551,7 @@ const RESEARCH = [
     badge: "CONTROLLED GENERATIVE VIDEO R&D",
     title: "COL-VEO Controlled Video Orchestration",
     meta: "PROMPT STEERING · SEED-AWARE REGENERATION · CONTROL LAYER",
-    copy: "Built a FastAPI creative-control prototype that compiles a 15-control style surface into structured per-shot Veo prompts. Soft regeneration reuses the seed for style-safe changes; hard regeneration assigns a new seed for structural changes. Exact prompt preview, lifecycle gates, sequential shot extension, and browser WebGL Post-FX keep the loop inspectable.",
+    copy: "A FastAPI creative-control engine that compiles a 15-control style surface into structured per-shot Veo prompts. Soft regeneration reuses the seed for style-safe edits; hard regeneration reseeds for structural change. Lifecycle gates and WebGL post-FX keep the loop inspectable.",
     signals: [
       { label: "control", value: "deterministic prompt compiler" },
       { label: "soft regeneration", value: "same seed" },
@@ -1064,7 +1064,7 @@ function ContactChannels({ compact = false }: { compact?: boolean }) {
   return (
     <div className="vx-contact-channels" data-compact={compact}>
       {CONTACT_CHANNELS.map((channel) => (
-        <a key={channel.label} href={channel.href}>
+        <a key={channel.label} href={channel.href} title={`${channel.label}: ${channel.value}`}>
           <span>{channel.label}</span>
           <strong>{channel.value}</strong>
         </a>
@@ -1301,7 +1301,13 @@ type SignalTickerEntry = {
 };
 
 function signalHashtag(label: string) {
-  return `#${label.replace(/[^a-zA-Z0-9+#]+/g, "")}`;
+  // Compress the longest engineering phrases so a hashtag never exceeds its
+  // marquee slot and gets clipped on both ends mid-word.
+  const compact = label
+    .replace(/reinforcement[- ]learning/gi, "RL")
+    .replace(/optimization/gi, "Opt")
+    .replace(/orchestration/gi, "Orch");
+  return `#${compact.replace(/[^a-zA-Z0-9+#]+/g, "")}`;
 }
 
 function SignalTicker({
@@ -1310,7 +1316,7 @@ function SignalTicker({
   active,
   reducedMotion,
   variant = "tags",
-  cycleMs = 7600,
+  cycleMs,
 }: {
   items: readonly SignalTickerEntry[];
   label: string;
@@ -1319,18 +1325,43 @@ function SignalTicker({
   variant?: "tags" | "metrics";
   cycleMs?: number;
 }) {
+  // One continuous lap: every item drifts through the center lens at a calm,
+  // readable pace, and the loop reconnects seamlessly instead of snapping
+  // from the last keyword back to the first. The highlighted item is measured
+  // from the track's real position, so it stays true through pause/resume.
   const [centerIndex, setCenterIndex] = useState(0);
-  const slotMs = Math.max(640, Math.min(2200, Math.floor(cycleMs / Math.max(1, items.length))));
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const slotMs = useMemo(() => {
+    if (!cycleMs) return 1750;
+    return Math.max(1150, Math.min(2600, Math.floor(cycleMs / Math.max(1, items.length))));
+  }, [cycleMs, items.length]);
   const itemWidth = variant === "metrics" ? 210 : 144;
   const starWidth = variant === "metrics" ? 22 : 18;
 
   useEffect(() => {
-    if (!active || reducedMotion || items.length < 2) return;
-    const timer = window.setInterval(() => {
-      setCenterIndex((current) => (current + 1) % items.length);
-    }, slotMs);
+    if (reducedMotion || items.length < 2) return;
+    const sync = () => {
+      const viewport = viewportRef.current;
+      if (!viewport) return;
+      const viewportRect = viewport.getBoundingClientRect();
+      if (viewportRect.width === 0) return;
+      const lensX = viewportRect.left + viewportRect.width / 2;
+      let nearest = -1;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+      viewport.querySelectorAll<HTMLElement>(".vx-signal-ticker-track-base > li[data-signal-index]").forEach((node) => {
+        const rect = node.getBoundingClientRect();
+        const distance = Math.abs(rect.left + rect.width / 2 - lensX);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = Number(node.dataset.signalIndex);
+        }
+      });
+      if (nearest >= 0) setCenterIndex((current) => (current === nearest ? current : nearest));
+    };
+    sync();
+    const timer = window.setInterval(sync, 200);
     return () => window.clearInterval(timer);
-  }, [active, items.length, reducedMotion, slotMs]);
+  }, [items.length, reducedMotion]);
 
   if (items.length === 0) return null;
 
@@ -1352,14 +1383,14 @@ function SignalTicker({
     </li>,
     <li key={`${cycle}-${item.label}-star`} className="vx-signal-ticker-star" aria-hidden="true">✦</li>,
   ]);
+  const lapMs = slotMs * items.length;
   const tickerStyle = {
     "--vx-signal-count": items.length,
-    "--vx-signal-index": centerIndex,
     "--vx-signal-slot-ms": `${slotMs}ms`,
-    "--vx-signal-cycle-ms": `${cycleMs}ms`,
+    "--vx-signal-lap-ms": `${lapMs}ms`,
     "--vx-signal-item-width": `${itemWidth}px`,
     "--vx-signal-star-width": `${starWidth}px`,
-    "--vx-signal-offset": `${-(centerIndex * (itemWidth + starWidth) + itemWidth / 2)}px`,
+    "--vx-signal-lap-width": `${items.length * (itemWidth + starWidth)}px`,
   } as CSSProperties;
 
   return (
@@ -1370,14 +1401,16 @@ function SignalTicker({
       data-reduced-motion={reducedMotion}
       style={tickerStyle}
     >
-      <div className="vx-signal-ticker-viewport">
+      <div ref={viewportRef} className="vx-signal-ticker-viewport">
         <ul className="vx-signal-ticker-track vx-signal-ticker-track-base" aria-label={label} role="list">
           {renderCycle(0, true)}
           {renderCycle(1, false)}
+          {renderCycle(2, false)}
         </ul>
         <ul className="vx-signal-ticker-track vx-signal-ticker-track-mask" aria-hidden="true" role="presentation">
           {renderCycle(0, false)}
           {renderCycle(1, false)}
+          {renderCycle(2, false)}
         </ul>
         <i className="vx-signal-ticker-center-lens" aria-hidden="true" />
       </div>
@@ -1470,10 +1503,12 @@ function StageSignalConsole({ step, active }: { step: StoryStep; active: boolean
 function ProjectConclusion({
   name,
   metrics,
+  signals,
   extra,
 }: {
   name: string;
   metrics: readonly ConclusionMetric[];
+  signals?: readonly SignalTickerEntry[];
   extra?: React.ReactNode;
 }) {
   const reducedMotion = useReducedMotion();
@@ -1523,6 +1558,17 @@ function ProjectConclusion({
           </button>
         ))}
       </div>
+      {signals && signals.length > 0 ? (
+        <div className="vx-conclusion-signal-rail" aria-label={`${name} complete engineering signal rail`}>
+          <span><i />FULL SYSTEM SIGNAL RAIL</span>
+          <SignalTicker
+            items={signals}
+            label={`${name} engineering signals across every component`}
+            active
+            reducedMotion={reducedMotion}
+          />
+        </div>
+      ) : null}
       {extra ? <div className="vx-conclusion-extra">{extra}</div> : null}
     </div>
   );
@@ -1546,6 +1592,12 @@ function SystemWalkthrough({
   conclusionExtra?: React.ReactNode;
 }) {
   const isConclusion = controller.index === steps.length;
+  // Every technology and engineering capability the walkthrough demonstrated,
+  // deduplicated into one slow revision loop for the conclusion stage.
+  const systemSignals = useMemo(
+    () => Array.from(new Set(steps.flatMap((item) => [...item.signals, ...item.stack]))).map((label) => ({ label })),
+    [steps],
+  );
   const componentStep = steps[Math.min(controller.index, steps.length - 1)];
   const step: StoryStep = isConclusion
     ? {
@@ -1621,7 +1673,7 @@ function SystemWalkthrough({
         ) : null}
         <div className="vx-visual-window">
           {isConclusion ? (
-            <ProjectConclusion name={name} metrics={proof} extra={conclusionExtra} />
+            <ProjectConclusion name={name} metrics={proof} signals={systemSignals} extra={conclusionExtra} />
           ) : (
             <Visual active={controller.index} />
           )}
@@ -1860,7 +1912,7 @@ function AntigravityChapter() {
       architecturePath={[0, 1, 5, 6]}
       proof={[
         { label: "PRODUCT", value: "Voice-native technical interviewing", detail: "Adaptive interviews designed to operate at screening scale" },
-        { label: "MY CONTRIBUTION", value: "Multi-agent orchestration + decision engine", detail: "Question routing, agent convergence, guarded prepared-question promotion, and report logic" },
+        { label: "CONTRIBUTION", value: "Multi-agent orchestration + decision engine", detail: "Question routing, agent convergence, guarded prepared-question promotion, and report logic" },
         { label: "RUNTIME", value: "Guarded dual-lane interview graph", detail: "Latency-aware foreground routing while deeper next-turn analysis continues" },
         { label: "OUTPUT", value: "Evidence-linked recruiter report", detail: "Ability, credibility, coverage, uncertainty, and untested dimensions" },
         { label: "IMPACT", value: "250+ completed interviews", detail: "A deployed workflow with a real three-turn portfolio replay" },
@@ -1891,7 +1943,7 @@ function FilmoraChapter() {
       architecturePath={[0, 1, 4, 5, 6]}
       proof={[
         { label: "PRODUCT", value: "End-to-end multimodal AI production runtime", detail: "Research, planning, generation, editable assembly, and human review integrated into Filmora Enterprise" },
-        { label: "MY CONTRIBUTION", value: "Research-to-production orchestration layer", detail: "Memory, retrieval, function contracts, agent handoffs, guardrails, tracing, and evaluation" },
+        { label: "CONTRIBUTION", value: "Research-to-production orchestration layer", detail: "Memory, retrieval, function contracts, agent handoffs, guardrails, tracing, and evaluation" },
         { label: "INPUT", value: "Research + product intelligence", detail: "700+ reusable signals become ranked production context and executable skills" },
         { label: "OUTPUT", value: "Editable multimodal timeline", detail: "Video, music, dialogue, captions, effects, and metadata stay separable" },
         { label: "IMPACT", value: "Trace-led cost + latency optimization", detail: "Token, route, retry, and generation traces expose cost and latency at every handoff" },
@@ -1919,7 +1971,7 @@ function MindScapeChapter() {
       architecturePath={[0, 1, 2, 3, 4, 5, 6]}
       proof={[
         { label: "PRODUCT", value: "Medical AI clinician-support R&D product", detail: "A synthetic-data prototype for traceable review, not production clinical software" },
-        { label: "MY CONTRIBUTION", value: "Inspectable session-to-review workflow", detail: "Capture, perception, fusion, retrieval, reasoning, validation, review, and governed RL refinement" },
+        { label: "CONTRIBUTION", value: "Inspectable session-to-review workflow", detail: "Capture, perception, fusion, retrieval, reasoning, validation, review, and governed RL refinement" },
         { label: "RUNTIME", value: "Streaming session-to-review path", detail: "Time-aligned packets preserve the words and signals behind each state" },
         { label: "GROUNDING", value: "Dense + lexical + rerank", detail: "Clinical evidence is retrieved, merged, reranked, and attached to claims" },
         { label: "SAFETY", value: "Model + deterministic validation", detail: "Unsupported language is challenged before the review surface" },
@@ -1998,7 +2050,6 @@ function ResearchCard({
             active={active && playing}
             reducedMotion={reducedMotion}
             variant="tags"
-            cycleMs={7600}
           />
           <SignalTicker
             items={item.signals}
@@ -2006,7 +2057,6 @@ function ResearchCard({
             active={active && playing}
             reducedMotion={reducedMotion}
             variant="metrics"
-            cycleMs={7600}
           />
         </div>
       </div>

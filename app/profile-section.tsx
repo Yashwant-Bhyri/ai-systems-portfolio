@@ -98,7 +98,7 @@ const EVIDENCE: readonly Evidence[] = [
     role: "systems",
     source: "ANTI-GRAVITY · PRODUCTION SOFTWARE",
     title: "Voice-native decision runtime",
-    proof: "Built dual-lane multi-agent interview orchestration with adaptive routing, prepared-audio fallback, agent evaluation, and evidence-linked recruiter output.",
+    proof: "Dual-lane multi-agent orchestration: adaptive routing, prepared-audio fallback, agent evaluation, and evidence-linked recruiter output.",
     domains: ["agents", "reliability", "performance"],
   },
   {
@@ -106,7 +106,7 @@ const EVIDENCE: readonly Evidence[] = [
     role: "systems",
     source: "FILMORA · AI ENGINEERING INTERNSHIP",
     title: "Observable multimodal production graph",
-    proof: "Integrated market research, product intelligence, retrieval, function calls, specialist media agents, guardrails, cost controls, and human approval into Filmora Enterprise.",
+    proof: "Research, product intelligence, retrieval, function calling, media agents, guardrails, and human approval integrated into Filmora Enterprise.",
     domains: ["retrieval", "reliability", "performance"],
   },
   {
@@ -114,7 +114,7 @@ const EVIDENCE: readonly Evidence[] = [
     role: "systems",
     source: "MEDICAL AI · R&D PROJECT",
     title: "Grounded clinician-review pipeline",
-    proof: "Designed hybrid clinical retrieval, evidence validation, clinician-controlled review, observability, and an offline RL refinement and release loop.",
+    proof: "Hybrid clinical retrieval, evidence validation, clinician-controlled review, and an offline RL refinement and release loop.",
     domains: ["retrieval", "reliability", "delivery"],
   },
   {
@@ -122,7 +122,7 @@ const EVIDENCE: readonly Evidence[] = [
     role: "agents",
     source: "ANTI-GRAVITY · PRODUCTION SOFTWARE",
     title: "Adaptive interview agent graph",
-    proof: "The live agent interprets answers, fires specialist analysis, updates the future question map, and responds through a real-time voice channel.",
+    proof: "Interprets answers live, fires specialist agents, updates the future question map, and responds over a real-time voice channel.",
     domains: ["agents", "retrieval", "performance"],
   },
   {
@@ -130,7 +130,7 @@ const EVIDENCE: readonly Evidence[] = [
     role: "agents",
     source: "FILMORA · AI ENGINEERING INTERNSHIP",
     title: "Multimodal tool orchestration",
-    proof: "Compiled brief and research context into typed tool contracts for video, audio, dialogue, captions, effects, and an editable Filmora timeline.",
+    proof: "Brief and research context compile into typed tool contracts for video, audio, dialogue, captions, effects, and an editable timeline.",
     domains: ["agents", "retrieval", "delivery"],
   },
   {
@@ -138,7 +138,7 @@ const EVIDENCE: readonly Evidence[] = [
     role: "agents",
     source: "MEDICAL AI · R&D PROJECT",
     title: "Memory, retrieval, and validation loop",
-    proof: "Linked longitudinal session memory to clinical retrieval, grounded reasoning, independent validation, and a clinician-owned review surface.",
+    proof: "Longitudinal memory linked to clinical retrieval, grounded reasoning, independent validation, and a clinician-owned review surface.",
     domains: ["retrieval", "reliability", "agents"],
   },
   {
@@ -146,7 +146,7 @@ const EVIDENCE: readonly Evidence[] = [
     role: "full-stack",
     source: "EMBEDDED + BROWSER-NATIVE PERCEPTION R&D",
     title: "Model delivery across edge and browser runtimes",
-    proof: "Worked with TFLM INT8 inference, SAM segmentation, quantized depth, GPU texture contracts, latency profiling, and deployable APIs.",
+    proof: "TFLM INT8 inference, SAM segmentation, quantized depth, GPU texture contracts, latency profiling, and deployable APIs.",
     domains: ["performance", "delivery"],
   },
   {
@@ -154,7 +154,7 @@ const EVIDENCE: readonly Evidence[] = [
     role: "full-stack",
     source: "BIRD-SQL + SLM RESEARCH",
     title: "Execution-grounded model evaluation",
-    proof: "Built evaluation workflows around schema-aware text-to-SQL execution, failure diagnosis, distillation quality, factuality, and smaller-model tradeoffs.",
+    proof: "Evaluation workflows for schema-aware text-to-SQL execution, failure diagnosis, distillation quality, and factuality tradeoffs.",
     domains: ["reliability", "performance", "delivery"],
   },
   {
@@ -162,7 +162,7 @@ const EVIDENCE: readonly Evidence[] = [
     role: "full-stack",
     source: "COL-VEO + LOGISTICS R&D",
     title: "Controlled generation and operational APIs",
-    proof: "Connected prompt steering, seed-aware regeneration, lifecycle gates, role-based operations, data services, and observable runtime behavior.",
+    proof: "Prompt steering, seed-aware regeneration, lifecycle gates, role-based operations, and observable runtime behavior.",
     domains: ["agents", "performance", "delivery"],
   },
 ] as const;
