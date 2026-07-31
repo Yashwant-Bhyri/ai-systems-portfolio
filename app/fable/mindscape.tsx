@@ -9,10 +9,11 @@ import { useSim, ph, eph, pulse, noise, bez, typed, caret, rise, Wave, LiveNet, 
 /* ---------- 1 · THE PIPELINE — a session traverses; an ungrounded claim is blocked ---------- */
 
 const STAGES = ["CAPTURE", "PERCEIVE", "FUSE", "RETRIEVE", "REASON", "VALIDATE", "REVIEW"];
+const MINDSCAPE_STEP_MS = 11800;
 
 export function PipelineGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 10400;
+  const L = MINDSCAPE_STEP_MS;
   const t = el % L;
   const y = 176;
   const stageX = (i: number) => 24 + i * 86 + 36;
@@ -61,7 +62,7 @@ export function PipelineGraphic({ a }: { a: boolean }) {
       {t > 2200 && dropP < 1 && (
         <g style={{ opacity: 1 - dropP }}>
           <circle cx={q(sX)} cy={q(y + 66 + dropP * 60)} r={5} className="lv-pulse bad" />
-          <text x={q(sX)} y={q(y + 84 + dropP * 60)} textAnchor="middle" className="svg-sub tiny">{blocked ? "ungrounded claim" : "draft claim"}</text>
+          <text x={q(sX)} y={q(y + 84 + dropP * 60)} textAnchor="middle" className="svg-sub">{blocked ? "ungrounded claim" : "draft claim"}</text>
         </g>
       )}
       {blocked && dropP < 1 && (
@@ -69,10 +70,10 @@ export function PipelineGraphic({ a }: { a: boolean }) {
       )}
 
       <text x={24} y={356} className="svg-note">
-        Watch two travelers: the validated session reaches the clinician; the ungrounded claim is stopped
+        The session advances only when each stage can support the next one.
       </text>
       <text x={24} y={374} className="svg-note">
-        at the gate and never crosses. Seven stages, in order, every time.
+        Unsupported claims stop at validation; only traceable context reaches clinician review.
       </text>
     </svg>
   );
@@ -80,20 +81,46 @@ export function PipelineGraphic({ a }: { a: boolean }) {
 
 /* ---------- 2 · CAPTURE — WebRTC audio in a rolling buffer, packets shipping ---------- */
 
+const CAPTURE_MOMENTS = [
+  { words: "“I could not sleep well last night.”", cue: "sleep cue" },
+  { words: "“I have felt low for most of this week.”", cue: "mood trend" },
+  { words: "“Things I normally enjoy feel distant.”", cue: "interest change" },
+  { words: "“It has been harder to focus at work.”", cue: "focus change" },
+  { words: "“I cancelled plans again this weekend.”", cue: "activity change" },
+];
+
+function sessionClock(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+}
+
 export function CaptureGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 8800;
+  const L = MINDSCAPE_STEP_MS;
   const t = el % L;
   const k = Math.floor(el / 1100); // lifetime packet counter
   const flyP = (el % 1100) / 1100;
+  const latestPacket = 196 + (k % 600);
+  // The chip in flight is `latestPacket`; the ledger shows the three packets
+  // that have already landed. When k advances, the prior chip becomes row 3.
+  const traceablePackets = [3, 2, 1].map((offset) => {
+    const packetId = latestPacket - offset;
+    const moment = CAPTURE_MOMENTS[((packetId % CAPTURE_MOMENTS.length) + CAPTURE_MOMENTS.length) % CAPTURE_MOMENTS.length];
+    return {
+      tag: `A-${packetId}`,
+      words: moment.words,
+      signal: `${sessionClock(18 + packetId - 196)} · ${moment.cue}`,
+    };
+  });
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
       <g className="lv-node is-live">
         <rect x={30} y={40} width={168} height={78} rx={12} />
         <text x={114} y={68} textAnchor="middle" className="svg-label small">SIMULATED SESSION</text>
-        <text x={114} y={86} textAnchor="middle" className="svg-mono tinytext">WebRTC audio</text>
-        <text x={114} y={102} textAnchor="middle" className="svg-sub tiny">16 kHz mono</text>
+        <text x={114} y={86} textAnchor="middle" className="svg-mono">WebRTC audio</text>
+        <text x={114} y={102} textAnchor="middle" className="svg-sub">16 kHz mono</text>
       </g>
       <circle cx={48} cy={58} r={4} className="lv-pulse bad" style={{ opacity: 0.4 + 0.6 * pulse(t, 900) }} />
 
@@ -103,7 +130,7 @@ export function CaptureGraphic({ a }: { a: boolean }) {
         <text x={48} y={164} className="svg-sub">ROLLING BUFFER · last 1000 ms, always live</text>
         <Wave x={48} y={172} w={520} h={48} bars={42} t={t} on={1} />
         {["−1000", "−750", "−500", "−250", "NOW"].map((m2, i) => (
-          <text key={m2} x={48 + i * 130} y={242} className="svg-sub tiny">{m2}{i < 4 ? " ms" : ""}</text>
+          <text key={m2} x={48 + i * 130} y={242} className="svg-sub">{m2}{i < 4 ? " ms" : ""}</text>
         ))}
         <line x1={568} y1={168} x2={568} y2={224} className="lv-playhead" style={{ opacity: 0.5 + 0.5 * pulse(t, 700) }} />
         {/* V2's analysis window, sweeping the buffer */}
@@ -121,26 +148,24 @@ export function CaptureGraphic({ a }: { a: boolean }) {
 
       {/* packets shipping downstream every ~1.1 s */}
       {flyP < 1 && (
-        <g className="lv-chip" transform={`translate(${q(bez(flyP, [568, 196], [560, 290], [402, 310])[0])},${q(bez(flyP, [568, 196], [560, 290], [402, 310])[1])})`}>
+        <g className="lv-chip" transform={`translate(${q(bez(flyP, [568, 196], [612, 234], [574, 258])[0])},${q(bez(flyP, [568, 196], [612, 234], [574, 258])[1])})`}>
           <rect x={-26} y={-11} width={52} height={22} rx={7} />
-          <text x={0} y={4} textAnchor="middle" className="svg-mono tinytext">A-{184 + (k % 600)}</text>
+          <text x={0} y={4} textAnchor="middle" className="svg-mono">A-{latestPacket}</text>
         </g>
       )}
-      {[1, 2, 3].map((j) => {
-        const idx = k - j;
-        if (idx < 0) return null;
-        return (
-          <g key={j} className="lv-chip" style={{ opacity: 1 - j * 0.25 }}>
-            <rect x={376 - j * 62} y={299} width={52} height={22} rx={7} />
-            <text x={402 - j * 62} y={314} textAnchor="middle" className="svg-mono tinytext">A-{184 + (idx % 600)}</text>
-          </g>
-        );
-      })}
-      <text x={30} y={314} className="svg-sub tiny">patient audio → linguistic · event · affect perception</text>
+      <text x={30} y={282} className="svg-sub">SOURCE-LINKED PACKETS · DERIVED SIGNALS RETAIN THE SPOKEN WORDS</text>
+      {traceablePackets.map((packet, index) => (
+        <g key={packet.tag} className={`lv-chip ${index === 2 && k > 0 && flyP < 0.28 ? "win" : ""}`}>
+          <rect x={30} y={292 + index * 28} width={580} height={24} rx={7} />
+          <rect x={38} y={296 + index * 28} width={54} height={16} rx={5} className="lv-srcbadge dense" />
+          <text x={65} y={308 + index * 28} textAnchor="middle" className="svg-mono">{packet.tag}</text>
+          <text x={104} y={309 + index * 28} className="svg-mono">{packet.words}</text>
+          <text x={594} y={309 + index * 28} textAnchor="end" className="svg-sub">{packet.signal}</text>
+        </g>
+      ))}
 
-      <text x={30} y={380} className="svg-note">
-        Nothing waits for the session to end — audio ships downstream in one-second packets while the patient is still talking.
-      </text>
+      <text x={30} y={394} className="svg-note">New packets replace older rows as the session advances.</text>
+      <text x={30} y={410} className="svg-note">Every derived signal remains linked to its timestamped source words.</text>
     </svg>
   );
 }
@@ -163,7 +188,7 @@ const LINGUISTIC = [
 
 export function PerceiveGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 9600;
+  const L = MINDSCAPE_STEP_MS;
   const t = el % L;
   // affect point drifts toward low valence / rising arousal over the loop
   const drift = eph(t, 1000, 8600);
@@ -172,7 +197,7 @@ export function PerceiveGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={40} y={40} className="svg-sub">SYNCHRONIZED AUDIO · one stream, three perceptions</text>
+      <text x={40} y={40} className="svg-sub">SYNCHRONIZED AUDIO · SIMULATED STREAM · THREE SIGNALS</text>
       <Wave x={40} y={50} w={250} h={30} bars={26} t={t} on={t % 3400 < 2500 ? 1 : 0.1} />
 
       {/* branch edges firing */}
@@ -183,21 +208,21 @@ export function PerceiveGraphic({ a }: { a: boolean }) {
       {/* linguistic — a real stretch of session language */}
       <g className="lv-box">
         <rect x={40} y={112} width={180} height={166} rx={11} />
-        <text x={54} y={136} className="svg-sub tiny">LINGUISTIC</text>
+        <text x={54} y={136} className="svg-sub">LINGUISTIC</text>
         {LINGUISTIC.map((ln, i) => (
-          <text key={ln.text} x={54} y={160 + i * 26} className="svg-mono tinytext">
+          <text key={ln.text} x={54} y={160 + i * 26} className="svg-mono small">
             {typed(ln.text, t, ln.at, ln.at + 1900)}
             {t > ln.at && t < ln.at + 2000 ? caret(t) : ""}
           </text>
         ))}
-        <text x={54} y={240} className="svg-sub tiny" style={{ opacity: t > 7800 ? 1 : 0.4 }}>→ embedded per sentence</text>
-        <text x={54} y={262} className="svg-sub tiny">transcript embeddings</text>
+        <text x={54} y={240} className="svg-sub" style={{ opacity: t > 7800 ? 1 : 0.4 }}>→ embedded per sentence</text>
+        <text x={54} y={262} className="svg-sub">transcript embeddings</text>
       </g>
 
       {/* event tokens — the paralinguistic stream */}
       <g className="lv-box">
         <rect x={230} y={112} width={180} height={166} rx={11} />
-        <text x={244} y={136} className="svg-sub tiny">EVENT TOKENS</text>
+        <text x={244} y={136} className="svg-sub">EVENT TOKENS</text>
         {EVENT_TOKENS.map((e2, i) => {
           const p = eph(t, e2.at, e2.at + 400);
           const col = i % 2;
@@ -206,18 +231,18 @@ export function PerceiveGraphic({ a }: { a: boolean }) {
             <g key={e2.tok} style={rise(p, 8)}>
               <g className={`lv-chip ${t > e2.at && t < e2.at + 1100 ? "win" : ""}`}>
                 <rect x={242 + col * 80} y={148 + row * 32} width={76} height={24} rx={8} />
-                <text x={280 + col * 80} y={164 + row * 32} textAnchor="middle" className="svg-sub tiny">{e2.tok}</text>
+                <text x={280 + col * 80} y={164 + row * 32} textAnchor="middle" className="svg-sub">{e2.tok}</text>
               </g>
             </g>
           );
         })}
-        <text x={244} y={262} className="svg-sub tiny">SenseVoice events</text>
+        <text x={244} y={262} className="svg-sub">SenseVoice events</text>
       </g>
 
       {/* acoustic affect — live point on the valence/arousal plane */}
       <g className="lv-box">
         <rect x={420} y={112} width={180} height={166} rx={11} />
-        <text x={434} y={136} className="svg-sub tiny">ACOUSTIC AFFECT</text>
+        <text x={434} y={136} className="svg-sub">ACOUSTIC AFFECT</text>
         <g transform="translate(450,148)">
           <rect x={0} y={0} width={124} height={92} rx={6} className="lv-track" />
           <line x1={62} y1={0} x2={62} y2={92} className="lv-tick" style={{ opacity: 0.4 }} />
@@ -229,15 +254,15 @@ export function PerceiveGraphic({ a }: { a: boolean }) {
             return <circle key={g2} cx={q(70 - 34 * dr + 7 * Math.sin(td / 700))} cy={q(62 - 30 * dr + 6 * Math.cos(td / 900))} r={2.4} className="lv-pulse" style={{ opacity: 0.12 * (5 - g2) }} />;
           })}
           <circle cx={q(ax)} cy={q(ay)} r={4.4} className="lv-pulse" />
-          <text x={4} y={88} className="svg-sub tiny">valence →</text>
-          <text x={4} y={12} className="svg-sub tiny">arousal ↑</text>
+          <text x={4} y={88} className="svg-sub">valence →</text>
+          <text x={4} y={12} className="svg-sub">arousal ↑</text>
         </g>
-        <text x={434} y={262} className="svg-sub tiny">Emotion2Vec+ space</text>
+        <text x={434} y={262} className="svg-sub">Emotion2Vec+ space</text>
       </g>
 
       <text x={40} y={320} className="svg-sub" style={{ opacity: eph(t, 8600, 9100) }}>alignment tick ✓ — three channels, one clock → fusion</text>
       <text x={40} y={380} className="svg-note">
-        What was said, how it was said, and what the voice betrayed — split live, timestamped together.
+        Three timestamped channels describe the same moment; none is treated as a diagnosis on its own.
       </text>
     </svg>
   );
@@ -247,7 +272,7 @@ export function PerceiveGraphic({ a }: { a: boolean }) {
 
 export function FuseGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 9200;
+  const L = MINDSCAPE_STEP_MS;
   const t = el % L;
 
   return (
@@ -274,23 +299,23 @@ export function FuseGraphic({ a }: { a: boolean }) {
       {/* the BSV — named dimensions with live magnitudes, not an audio bar */}
       <g className="lv-box hot">
         <rect x={30} y={252} width={580} height={104} rx={12} />
-        <text x={48} y={276} className="svg-sub">BEHAVIORAL STATE VECTOR · one reusable patient-state representation</text>
+        <text x={48} y={276} className="svg-sub">BEHAVIORAL STATE VECTOR · SIMULATED SESSION STATE</text>
         {["sleep debt", "affect", "speech", "adherence", "energy", "risk"].map((dim, i) => {
           const v = 0.25 + 0.65 * noise(i * 3 + 1, t / 2.6);
           const on2 = eph(t, 1400 + i * 150, 2100 + i * 150);
           return (
             <g key={dim} style={{ opacity: 0.3 + 0.7 * on2 }}>
               <rect x={48 + i * 94} y={286} width={86} height={40} rx={7} className="lv-bsvcell" style={{ fillOpacity: q(0.12 + 0.5 * v * on2) }} />
-              <text x={91 + i * 94} y={302} textAnchor="middle" className="svg-sub tiny">{dim}</text>
-              <text x={91 + i * 94} y={319} textAnchor="middle" className="svg-mono tinytext">{(v * on2).toFixed(2)}</text>
+              <text x={91 + i * 94} y={302} textAnchor="middle" className="svg-sub">{dim}</text>
+              <text x={91 + i * 94} y={319} textAnchor="middle" className="svg-mono">{(v * on2).toFixed(2)}</text>
             </g>
           );
         })}
-        <text x={48} y={346} className="svg-sub tiny">re-used by retrieval, reasoning, and review — the same state, everywhere</text>
+        <text x={48} y={346} className="svg-sub">One session-state representation is reused by retrieval, reasoning, and review.</text>
       </g>
 
       <text x={30} y={392} className="svg-note">
-        A shaky voice, a missed check-in, and last month's baseline fuse into one vector — the state every later stage reasons over.
+        Fusion weighs each synchronized signal before evidence retrieval begins.
       </text>
     </svg>
   );
@@ -308,7 +333,7 @@ const HNSW_LAYERS: { y: number; xs: number[] }[] = [
 const HNSW_PATH: [number, number][] = [[0, 1], [1, 2], [1, 3], [2, 5], [2, 6]];
 const BM25_ROWS: [string, number][] = [["“anhedonia”", 88], ["“low mood”", 73], ["PHQ-9 mentions", 61], ["note 2026-06-02", 48], ["clinic intake", 39]];
 const MERGED = [
-  { label: "DSM-5 §296.22 MDD", src: "D1" },
+  { label: "DSM-5 criteria", src: "D1" },
   { label: "“anhedonia”", src: "L1" },
   { label: "session 9 · turn 4", src: "D2" },
   { label: "“low mood”", src: "L2" },
@@ -317,7 +342,7 @@ const MERGED = [
 
 export function RetrievalGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 11000;
+  const L = MINDSCAPE_STEP_MS;
   const t = el % L;
   const qtext = typed("persistent low mood + anhedonia", t, 200, 1300);
   const mergeP = eph(t, 5000, 6200);
@@ -330,12 +355,28 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
       <g className="lv-box hot">
         <rect x={30} y={24} width={330} height={44} rx={10} />
         <text x={44} y={42} className="svg-sub">QUERY STATE · BSV + transcript</text>
-        <text x={44} y={59} className="svg-mono tinytext">“{qtext}{t < 1400 ? caret(t) : ""}”</text>
+        <text x={44} y={59} className="svg-mono">“{qtext}{t < 1400 ? caret(t) : ""}”</text>
+      </g>
+
+      <g className="lv-box">
+        <rect x={380} y={24} width={240} height={54} rx={10} />
+        <text x={392} y={42} className="svg-sub">RETRIEVAL AGENT · TRUSTED CORPUS</text>
+        <text x={392} y={62} className="svg-sub">references + session notes</text>
+        {Array.from({ length: 5 }).map((_, index) => {
+          const active = index === Math.floor(t / 260) % 5;
+          return (
+            <g key={index} style={{ opacity: active ? 1 : 0.3 }}>
+              <rect x={546 + index * 13} y={49} width={9} height={14} rx={2} className={active ? "lv-bar" : "lv-track"} />
+              <line x1={548 + index * 13} y1={53} x2={553 + index * 13} y2={53} className="lv-tick" />
+              <line x1={548 + index * 13} y1={58} x2={553 + index * 13} y2={58} className="lv-tick" />
+            </g>
+          );
+        })}
       </g>
 
       {/* DENSE lane: HNSW descent — coarse top layer, greedy hops, dense floor */}
       <g style={{ opacity: mergeP > 0 ? Math.max(0.3, 1 - mergeP) : 1 }}>
-        <text x={30} y={96} className="svg-sub tiny">DENSE · MedCPT over HNSW/Faiss</text>
+        <text x={30} y={96} className="svg-sub">DENSE · MedCPT over HNSW/Faiss</text>
         <g transform="translate(36,106)">
           <rect x={0} y={0} width={172} height={162} rx={10} className="lv-track" />
           {HNSW_LAYERS.map((ly, li) => (
@@ -374,63 +415,61 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
               />
             );
           })}
-          <text x={86} y={156} textAnchor="middle" className="svg-sub tiny">
-            {t < 1600 ? "vector index idle" : hop < 4 ? "descending layers…" : "2 nearest found · 0.92 / 0.85"}
+          <text x={86} y={156} textAnchor="middle" className="svg-sub">
+            {t < 1600 ? "vector index ready" : hop < 4 ? "descending layers…" : "2 source-linked neighbors"}
           </text>
         </g>
       </g>
 
       {/* LEXICAL lane: BM25 score bars filling */}
       <g style={{ opacity: mergeP > 0 ? Math.max(0.3, 1 - mergeP) : 1 }}>
-        <text x={232} y={96} className="svg-sub tiny">LEXICAL · BM25 exact terms</text>
+        <text x={232} y={96} className="svg-sub">LEXICAL · BM25 SAMPLE RANKING</text>
         {BM25_ROWS.map(([label, v], i) => {
           const p = eph(t, 1800 + i * 320, 2600 + i * 320);
           return (
             <g key={label}>
-              <text x={232} y={122 + i * 30} className="svg-mono tinytext">{label}</text>
+              <text x={232} y={122 + i * 30} className="svg-mono">{label}</text>
               <rect x={232} y={128 + i * 30} width={150} height={7} rx={3.5} className="lv-track thin" />
               <rect x={232} y={128 + i * 30} width={q(150 * (v / 100) * p)} height={7} rx={3.5} className="lv-bar" />
-              <text x={392} y={136 + i * 30} textAnchor="end" className="svg-sub tiny">{Math.round(v * p)}</text>
+              <text x={392} y={136 + i * 30} textAnchor="end" className="svg-sub">{Math.round(v * p)}</text>
             </g>
           );
         })}
       </g>
-      <text x={215} y={190} textAnchor="middle" className="lv-phase small" style={{ opacity: t > 1600 && t < 5000 ? 1 : 0 }}>RACING</text>
-
       {/* RRF merge — ranked lists visibly interleave (D=dense, L=lexical) → rerank sweep */}
-      <text x={430} y={96} className="svg-sub tiny">RRF MERGE → BioLinkBERT RERANK</text>
+      <text x={430} y={96} className="svg-sub">RRF MERGE → BioLinkBERT RERANK</text>
       {MERGED.map((m, i) => {
         const p = eph(t, 5100 + i * 240, 5500 + i * 240);
         if (p <= 0) return null;
         const scanning = scanRow === i && t > scanStart && t < scanStart + 5 * 480;
         const promoted = i === 3 && t > scanStart + 4 * 480;
         const yy = promoted ? 106 + 2 * 32 : 106 + i * 32 + (i === 2 && t > scanStart + 4 * 480 ? 32 : 0);
+        const isFinalTop = t > 9200 && (i === 0 || i === 1 || i === 3);
         return (
-          <g key={m.label} className={`lv-chip ${i < 3 && t > 9200 ? "win" : ""}`} style={{ opacity: p }}>
+          <g key={m.label} className={`lv-chip ${isFinalTop ? "win" : ""}`} style={{ opacity: p }}>
             {scanning && <rect x={424} y={q(yy - 2)} width={204} height={30} rx={8} className="scanline" style={{ opacity: 0.5 + 0.4 * pulse(t, 300) }} />}
             <rect x={430} y={q(yy)} width={192} height={26} rx={8} />
             <rect x={434} y={q(yy + 4)} width={20} height={18} rx={5} className={m.src.startsWith("D") ? "lv-srcbadge dense" : "lv-srcbadge"} />
-            <text x={444} y={q(yy + 17)} textAnchor="middle" className="svg-sub tiny">{m.src}</text>
-            <text x={460} y={q(yy + 17)} className="svg-mono tinytext">{m.label}</text>
+            <text x={444} y={q(yy + 17)} textAnchor="middle" className="svg-sub">{m.src}</text>
+            <text x={460} y={q(yy + 17)} className="svg-mono">{m.label}</text>
           </g>
         );
       })}
-      <text x={430} y={288} className="svg-sub tiny" style={{ opacity: t > 9200 ? 1 : 0 }}>top-k evidence → reasoning ✓</text>
+      <text x={430} y={288} className="svg-sub" style={{ opacity: t > 9200 ? 1 : 0 }}>evidence set → reasoning ✓</text>
 
-      <text x={30} y={330} className="svg-note">Two philosophies fire at once — a vector neighborhood probe and exact clinical terms.</text>
-      <text x={30} y={348} className="svg-note">Reciprocal-rank fusion interleaves them; the biomedical reranker sweeps and reorders.</text>
-      <text x={30} y={366} className="svg-note">Recall without noise, live.</text>
+      <text x={30} y={330} className="svg-note">Dense retrieval finds related session context; lexical search finds exact clinical language.</text>
+      <text x={30} y={348} className="svg-note">Rank fusion and biomedical reranking return a compact, source-linked evidence set.</text>
     </svg>
   );
 }
 
 /* ---------- 6 · REASON — evidence lights up as the words appear ---------- */
 
-const DRAFT = "Low-mood pattern with anhedonia, consistent across sessions.";
+const DRAFT = "Recent low-mood pattern warrants clinician follow-up.";
 const EVIDENCE = [
-  { label: "check-in log · agent skims 7 nights", trigger: 1900, y: 178, kind: "log" },
-  { label: "RAG over DSM-5 · §296.22 retrieved", trigger: 3600, y: 236, kind: "rag" },
-  { label: "session transcript · turn 14 skim", trigger: 5300, y: 294, kind: "skim" },
+  { label: "check-ins · 7-night pattern", trigger: 1900, y: 178, kind: "log" },
+  { label: "clinical reference · excerpt", trigger: 3600, y: 236, kind: "rag" },
+  { label: "transcript · source turn 14", trigger: 5300, y: 294, kind: "skim" },
 ];
 
 /** mini operation inside each evidence panel */
@@ -456,24 +495,24 @@ function EvidenceInset({ kind, x, y, t, lit }: { kind: string; x: number; y: num
         {[0, 1, 2, 3].map((i) => (
           <rect key={i} x={5} y={6 + i * 9} width={i === 2 ? 34 : 26} height={4} rx={2} className={i === 2 ? "lv-bar" : "lv-feedbar"} style={i === 2 ? { opacity: hitOn ? 1 : 0.5 } : undefined} />
         ))}
-        <text x={52} y={16} className="svg-sub tiny">§296.22</text>
-        <text x={52} y={30} className="tick ok">hit ✓</text>
+        <text x={52} y={16} className="svg-sub">criteria</text>
+        <text x={52} y={30} className="tick ok">matched ✓</text>
       </g>
     );
   }
   const u = (((t / 16) % 56) + 56) % 56;
   return (
     <g transform={`translate(${x},${y})`}>
-      <text x={0} y={12} className="svg-sub tiny">“…nothing feels fun…”</text>
+      <text x={0} y={12} className="svg-sub">“nothing feels fun”</text>
       <rect x={0} y={18} width={q(Math.min(56, u) * 1.9)} height={3} rx={1.5} className="lv-bar" />
-      <text x={0} y={36} className="svg-sub tiny">skimming turn 14</text>
+      <text x={0} y={36} className="svg-sub">turn 14 matched</text>
     </g>
   );
 }
 
 export function ReasonGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 9800;
+  const L = MINDSCAPE_STEP_MS;
   const t = el % L;
   const draft = typed(DRAFT, t, 600, 6100);
 
@@ -481,7 +520,7 @@ export function ReasonGraphic({ a }: { a: boolean }) {
     <svg viewBox="0 0 640 420" className="op-svg">
       <g className="lv-box hot">
         <rect x={40} y={46} width={560} height={84} rx={12} />
-        <text x={58} y={74} className="svg-sub">DRAFT CLINICAL OBSERVATION · being written</text>
+        <text x={58} y={74} className="svg-sub">DRAFT CLINICAL OBSERVATION · SOURCE-LINKED AS IT IS WRITTEN</text>
         <text x={58} y={104} className="svg-mono">“{draft}{t < 6200 ? caret(t) : ""}”</text>
       </g>
 
@@ -499,7 +538,7 @@ export function ReasonGraphic({ a }: { a: boolean }) {
             />
             <g className={`lv-chip ${lit && t < e2.trigger + 900 ? "win" : ""}`} style={{ opacity: Math.max(0.25, p) }}>
               <rect x={186} y={e2.y} width={400} height={50} rx={10} />
-              <text x={202} y={e2.y + 22} className="svg-mono tinytext">↳ {e2.label}</text>
+              <text x={202} y={e2.y + 22} className="svg-mono">↳ {e2.label}</text>
               <EvidenceInset kind={e2.kind} x={470} y={e2.y + 4} t={t} lit={lit} />
             </g>
             {lit && <text x={600} y={e2.y + 30} className="tick ok" style={rise(p, 4)}>✓</text>}
@@ -515,13 +554,13 @@ export function ReasonGraphic({ a }: { a: boolean }) {
       ].map(([k2, v], i) => (
         <g key={k2} className="lv-chip win" style={rise(eph(t, 6800 + i * 380, 7250 + i * 380), 8)}>
           <rect x={60 + i * 180} y={358} width={164} height={34} rx={9} />
-          <text x={74 + i * 180} y={372} className="svg-mono tinytext">{k2}</text>
-          <text x={74 + i * 180} y={386} className="svg-sub tiny">{v}</text>
+          <text x={74 + i * 180} y={372} className="svg-mono">{k2}</text>
+          <text x={74 + i * 180} y={386} className="svg-sub">{v}</text>
         </g>
       ))}
 
       <text x={40} y={412} className="svg-note">
-        The sentence and its sources appear together — and what ships is a bounded hypothesis, never a diagnosis.
+        Every observation retains evidence and uncertainty; the system does not issue a diagnosis.
       </text>
     </svg>
   );
@@ -530,15 +569,15 @@ export function ReasonGraphic({ a }: { a: boolean }) {
 /* ---------- 7 · VALIDATE — claims scanned live; one is stopped ---------- */
 
 const V_CLAIMS = [
-  { text: "low mood ↔ anhedonia", clause: "§296.22 · A1+A2", verdict: "pass", entail: 0.94, at: 900 },
-  { text: "“responding well to CBT”", clause: "policy R-04 · outcome claims", verdict: "block", entail: 0.31, at: 4300 },
-  { text: "adherence improving", clause: "§B-criteria · course", verdict: "pass", entail: 0.88, at: 7700 },
+  { text: "low mood ↔ anhedonia", clause: "criterion A1+A2", verdict: "pass", at: 900 },
+  { text: "“CBT is working”", clause: "R-04 outcome rule", verdict: "block", at: 4300 },
+  { text: "adherence improving", clause: "course criterion B", verdict: "pass", at: 7700 },
 ];
 const RULEBOOK_LINES = ["A. five+ symptoms / 2 wks", "B. functional impairment", "C. not substance-induced", "R-04 no outcome claims", "R-11 risk language screen"];
 
 export function ValidateGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 11400;
+  const L = MINDSCAPE_STEP_MS;
   const t = el % L;
   const active = V_CLAIMS.findIndex((c) => t >= c.at && t < c.at + 3200);
   const clauseFor = active >= 0 ? V_CLAIMS[active] : null;
@@ -547,7 +586,7 @@ export function ValidateGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={30} y={32} className="lv-phase small">VALIDATION = CHECK THE CLAIM AGAINST THE RULEBOOK — NEVER AGAINST A VIBE</text>
+      <text x={30} y={32} className="lv-phase small">VALIDATION REPLAY · EVIDENCE SUPPORT + FIXED SAFETY RULES</text>
 
       {/* claims queue, left */}
       {V_CLAIMS.map((c, i) => {
@@ -556,13 +595,13 @@ export function ValidateGraphic({ a }: { a: boolean }) {
           <g key={c.text}>
             <g className={`lv-chip ${phase === "retrieve" || phase === "check" ? "win" : ""}`} style={{ opacity: phase === "wait" ? 0.4 : 1 }}>
               <rect x={30} y={54 + i * 58} width={190} height={44} rx={10} />
-              <text x={44} y={73 + i * 58} className="svg-mono tinytext">{c.text}</text>
-              <text x={44} y={90 + i * 58} className="svg-sub tiny">
-                {phase === "wait" ? "queued" : phase === "retrieve" ? "finding its clause…" : phase === "check" ? `entail ${(c.entail * ph(t, c.at + 1100, c.at + 2100)).toFixed(2)}…` : c.verdict === "pass" ? `✓ ${c.clause}` : `✗ ${c.clause}`}
+              <text x={44} y={73 + i * 58} className="svg-mono">{c.text}</text>
+              <text x={44} y={90 + i * 58} className="svg-sub">
+                {phase === "wait" ? "queued" : phase === "retrieve" ? "finding evidence…" : phase === "check" ? "checking support…" : c.verdict === "pass" ? `✓ ${c.clause}` : `✗ ${c.clause}`}
               </text>
             </g>
-            {phase !== "wait" && (
-              <path d={`M 220 ${76 + i * 58} C 260 ${76 + i * 58} 260 150 296 150`} className={`lv-edge ${phase !== "done" ? "win" : ""}`} style={{ opacity: phase === "done" ? 0.25 : 0.8 }} />
+            {(phase === "retrieve" || phase === "check") && (
+              <path d={`M 220 ${76 + i * 58} C 260 ${76 + i * 58} 260 150 296 150`} className="lv-edge win" style={{ opacity: 0.8 }} />
             )}
           </g>
         );
@@ -571,29 +610,29 @@ export function ValidateGraphic({ a }: { a: boolean }) {
       {/* THE RULEBOOK — DSM-5 + policy, an actual open book being consulted */}
       <g className="lv-box hot">
         <rect x={296} y={54} width={210} height={200} rx={12} />
-        <text x={312} y={78} className="svg-sub">RULEBOOK · DSM-5 + policy</text>
+        <text x={312} y={78} className="svg-sub">TRUSTED REFERENCES + POLICY</text>
         {RULEBOOK_LINES.map((ln, i) => {
           const hit = clauseFor && i === clauseLine && t > V_CLAIMS[active].at + 500;
           return (
             <g key={ln}>
               {hit && <rect x={306} y={88 + i * 30} width={190} height={24} rx={6} className="scanline" style={{ opacity: 0.5 + 0.4 * pulse(t, 400) }} />}
-              <text x={314} y={104 + i * 30} className={hit ? "svg-mono tinytext" : "svg-mono tinytext dim"}>{ln}</text>
+              <text x={314} y={104 + i * 30} className={hit ? "svg-mono" : "svg-mono dim"}>{ln}</text>
             </g>
           );
         })}
-        <text x={312} y={246} className="svg-sub tiny">{clauseFor && t > V_CLAIMS[active].at + 500 ? `retrieved: ${clauseFor.clause}` : "awaiting claim…"}</text>
+        <text x={312} y={246} className="svg-sub">{clauseFor && t > V_CLAIMS[active].at + 500 ? `matched: ${clauseFor.clause}` : "awaiting claim…"}</text>
       </g>
 
       {/* verdict lane, right */}
       <g className="lv-box">
         <rect x={528} y={54} width={92} height={200} rx={12} />
-        <text x={574} y={78} textAnchor="middle" className="svg-sub tiny">VERDICTS</text>
+        <text x={574} y={78} textAnchor="middle" className="svg-sub">VERDICTS</text>
         {V_CLAIMS.map((c, i) => {
           const done = t > c.at + 2300;
           return (
             <g key={c.text} style={rise(done ? 1 : 0, 6)}>
               <text x={574} y={106 + i * 44} textAnchor="middle" className={c.verdict === "pass" ? "tick ok" : "tick bad"}>{c.verdict === "pass" ? "✓ pass" : "✗ block"}</text>
-              <text x={574} y={120 + i * 44} textAnchor="middle" className="svg-sub tiny">{c.verdict === "pass" ? "cited" : "removed"}</text>
+              <text x={574} y={120 + i * 44} textAnchor="middle" className="svg-sub">{c.verdict === "pass" ? "cited" : "removed"}</text>
             </g>
           );
         })}
@@ -602,96 +641,192 @@ export function ValidateGraphic({ a }: { a: boolean }) {
       {/* the double gate beneath: model check + deterministic rules */}
       <g className="lv-box">
         <rect x={30} y={274} width={476} height={72} rx={10} />
-        <text x={46} y={296} className="svg-sub tiny">TWO GATES, IN ORDER</text>
-        <text x={46} y={316} className="svg-mono tinytext">1 · DeBERTa NLI — is the claim entailed by its evidence? {t % 3000 < 1600 ? "checking…" : "scored ✓"}</text>
-        <text x={46} y={334} className="svg-mono tinytext">2 · deterministic clauses — DSM-5 + risk language {t % 3000 < 2300 ? "…" : "enforced ✓"}</text>
+        <text x={46} y={296} className="svg-sub">TWO RELEASE GATES</text>
+        <text x={46} y={316} className="svg-mono">1 · NLI evidence-support check</text>
+        <text x={490} y={316} textAnchor="end" className="tick ok">{t % 3000 < 1600 ? "checking…" : "scored ✓"}</text>
+        <text x={46} y={334} className="svg-mono">2 · deterministic criteria + risk-language rules</text>
+        <text x={490} y={334} textAnchor="end" className="tick ok">{t % 3000 < 2300 ? "checking…" : "enforced ✓"}</text>
       </g>
       <g className="lv-chip">
         <rect x={528} y={274} width={92} height={72} rx={10} />
-        <text x={574} y={300} textAnchor="middle" className="svg-mono tinytext">2 ✓ · 1 ✗</text>
-        <text x={574} y={318} textAnchor="middle" className="svg-sub tiny">this replay</text>
+        <text x={574} y={300} textAnchor="middle" className="svg-mono">2 ✓ · 1 ✗</text>
+        <text x={574} y={318} textAnchor="middle" className="svg-sub">this replay</text>
         <text x={574} y={336} textAnchor="middle" className="tick ok" style={{ opacity: eph(t, 10200, 10700) }}>cited ✓</text>
       </g>
 
-      <text x={30} y={382} className="svg-note">
-        Every verdict carries its clause — a claim passes with a citation, or it is removed. The model never negotiates with the book.
-      </text>
+      <text x={30} y={376} className="svg-note">A claim passes only when evidence and fixed rules support it.</text>
+      <text x={30} y={394} className="svg-note">Failed claims are removed before review; the clinician still owns the final judgment.</text>
     </svg>
   );
 }
 
-/* ---------- 8 · REVIEW — handoff assembles; radar + Nancy keep it alive ---------- */
-
-const HANDOFF_ROWS = [
-  "Timeline of 14 sessions",
-  "3 flagged patterns, each sourced",
-  "Between-session check-in digest",
-  "Suggested — never automatic — actions",
-];
-const RADAR_AXES = ["affect", "language", "events", "Δ baseline"];
+/* ---------- 8 · REVIEW — source-linked context stays under clinician control ---------- */
 
 export function ReviewGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 9800;
+  const L = MINDSCAPE_STEP_MS;
   const t = el % L;
-  const sparkN = Math.min(10, 3 + Math.floor(t / 1200));
-  const radarVals = [0.7, 0.5, 0.8, 0.55].map((v, i) => v * (0.85 + 0.15 * noise(i * 4 + 2, t / 3)));
-  const sweep = (t / 2400) % 1;
+  const reviewStep = Math.min(2, Math.floor(t / 2200));
+  const sources = [
+    { id: "A-197", lines: ["“I have felt low", "most of this week.”"], support: "session evidence" },
+    { id: "R-04", lines: ["Low-mood pattern", "requires follow-up."], support: "retrieved reference" },
+    { id: "V-02", lines: ["Evidence supports a", "bounded observation."], support: "validation gate" },
+  ];
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
+      <g className="lv-box hot">
+        <rect x={24} y={20} width={592} height={42} rx={10} />
+        <text x={40} y={39} className="svg-label small">CLINICIAN REVIEW SURFACE</text>
+        <text x={40} y={54} className="svg-sub">source → supported claim → uncertainty → human action</text>
+        <text x={600} y={46} textAnchor="end" className="tick ok">HUMAN-OWNED ✓</text>
+      </g>
+
       <g className="lv-box">
-        <rect x={30} y={36} width={320} height={300} rx={14} />
-        <text x={54} y={68} className="svg-label big">HANDOFF SUMMARY</text>
-        <text x={54} y={88} className="svg-sub">assembled for the clinician, not the model</text>
-        {HANDOFF_ROWS.map((r, i) => (
-          <g key={r} style={rise(eph(t, 900 + i * 900, 1400 + i * 900), 7)}>
-            <text x={54} y={122 + i * 34} className="svg-mono tinytext">• {r}</text>
+        <rect x={24} y={78} width={260} height={258} rx={12} />
+        <text x={40} y={101} className="svg-sub">TRACEABLE SOURCE PACKET</text>
+        {sources.map((source, index) => (
+          <g key={source.id} className={`lv-chip ${reviewStep >= index ? "win" : ""}`} style={rise(eph(t, 500 + index * 700, 1050 + index * 700), 6)}>
+            <rect x={38} y={114 + index * 64} width={232} height={54} rx={8} />
+            <rect x={46} y={122 + index * 64} width={42} height={18} rx={5} className="lv-srcbadge dense" />
+            <text x={67} y={135 + index * 64} textAnchor="middle" className="svg-mono">{source.id}</text>
+            <text x={96} y={131 + index * 64} className="svg-mono">{source.lines[0]}</text>
+            <text x={96} y={146 + index * 64} className="svg-mono">{source.lines[1]}</text>
+            <text x={96} y={160 + index * 64} className="svg-sub">{source.support}</text>
           </g>
         ))}
-        <text x={54} y={286} className="svg-sub tiny">status: clinician-support MVP · synthetic data</text>
-        <text x={54} y={314} className="tick ok" style={{ opacity: eph(t, 4800, 5300) }}>clinician stays the decision-maker ✓</text>
+        <text x={40} y={320} className="svg-sub">Every claim opens its source packet.</text>
       </g>
 
-      {/* behavioral state — the fused vector the clinician actually reads */}
       <g className="lv-box hot">
-        <rect x={380} y={36} width={240} height={300} rx={12} />
-        <text x={398} y={62} className="svg-sub">BEHAVIORAL STATE · live</text>
-        <g transform="translate(500,150)">
-          {[16, 32, 48].map((r) => (
-            <circle key={r} cx={0} cy={0} r={r} className="lv-ring track" style={{ opacity: 0.5 }} />
-          ))}
-          <line x1={0} y1={0} x2={q(48 * Math.cos(sweep * Math.PI * 2))} y2={q(48 * Math.sin(sweep * Math.PI * 2))} className="lv-edge" style={{ opacity: 0.5 }} />
-          <polygon
-            points={radarVals
-              .map((v, i) => {
-                const ang = (i / 4) * Math.PI * 2 - Math.PI / 2;
-                return `${q(48 * v * Math.cos(ang))},${q(48 * v * Math.sin(ang))}`;
-              })
-              .join(" ")}
-            className="lv-radar"
-          />
-          {RADAR_AXES.map((ax, i) => {
-            const ang = (i / 4) * Math.PI * 2 - Math.PI / 2;
-            return (
-              <text key={ax} x={q(60 * Math.cos(ang))} y={q(60 * Math.sin(ang) + 3)} textAnchor="middle" className="svg-sub tiny">{ax}</text>
-            );
-          })}
+        <rect x={300} y={78} width={316} height={158} rx={12} />
+        <text x={318} y={101} className="svg-sub">SUPPORTED REVIEW STATEMENT</text>
+        <text x={318} y={126} className="svg-label">Recent sessions show a persistent</text>
+        <text x={318} y={143} className="svg-label">low-mood pattern for follow-up.</text>
+        <text x={318} y={162} className="svg-mono">evidence linked · uncertainty retained</text>
+        <text x={318} y={178} className="svg-mono">longitudinal context</text>
+        <g className="lv-chip win">
+          <rect x={318} y={188} width={132} height={25} rx={7} />
+          <text x={384} y={204} textAnchor="middle" className="tick ok">SUPPORTED ✓</text>
         </g>
-        <text x={398} y={244} className="svg-sub tiny">validated timeline · growing each session</text>
-        <polyline
-          points={Array.from({ length: sparkN })
-            .map((_, i) => `${q(398 + i * 21)},${q(290 - 26 * noise(i * 2 + 3, 1000) - (i > 5 ? 8 : 0))}`)
-            .join(" ")}
-          className="lv-line"
-        />
-        {t > 3600 && <circle cx={q(398 + (sparkN - 1) * 21)} cy={q(290 - 26 * noise((sparkN - 1) * 2 + 3, 1000) - (sparkN - 1 > 5 ? 8 : 0))} r={3.4} className="lv-pulse" style={{ opacity: 0.4 + 0.6 * pulse(t, 800) }} />}
-        <text x={398} y={324} className="tick ok" style={{ opacity: eph(t, 6200, 6700) }}>human-owned decision ✓</text>
+        <g className="lv-chip">
+          <rect x={460} y={188} width={138} height={25} rx={7} />
+          <text x={529} y={204} textAnchor="middle" className="svg-sub">UNCERTAINTY SHOWN</text>
+        </g>
+        <text x={318} y={228} className="svg-sub">No autonomous diagnosis · clinician decides.</text>
       </g>
 
-      <text x={30} y={392} className="svg-note">
-        Everything the pipeline computed lands in one inspectable surface — and the decision stays with the clinician.
-      </text>
+      <g className="lv-box">
+        <rect x={300} y={250} width={316} height={86} rx={12} />
+        <text x={318} y={273} className="svg-sub">CLINICIAN ACTIONS</text>
+        {[
+          { x: 318, label: "EDIT NOTE" },
+          { x: 410, label: "ASK FOLLOW-UP" },
+          { x: 516, label: "HOLD" },
+        ].map((action, index) => (
+          <g key={action.label} className={`lv-chip ${reviewStep === index ? "win" : ""}`}>
+            <rect x={action.x} y={286} width={index === 1 ? 98 : 82} height={30} rx={7} />
+            <text x={action.x + (index === 1 ? 49 : 41)} y={305} textAnchor="middle" className={reviewStep === index ? "tick ok" : "svg-sub"}>{action.label}</text>
+          </g>
+        ))}
+      </g>
+
+      <path d="M 284 198 C 292 198 292 144 300 144 M 284 262 C 292 262 292 294 300 294" className="lv-edge win" style={{ opacity: 0.65 }} />
+      <text x={24} y={374} className="svg-note">Source, support, uncertainty, and available clinician actions stay together.</text>
+      <text x={24} y={396} className="svg-note">Synthetic-data support prototype: the system proposes context; the clinician decides.</text>
+    </svg>
+  );
+}
+
+/* ---------- 9 · GOVERNED REFINEMENT — feedback cannot self-train live ---------- */
+
+export function ClinicalRefinementGraphic({ a }: { a: boolean }) {
+  const el = useSim(a);
+  const L = MINDSCAPE_STEP_MS;
+  const t = el % L;
+  const queueP = eph(t, 500, 2400);
+  const evalP = eph(t, 2200, 5200);
+  const candidateP = eph(t, 5000, 6900);
+  const gateP = eph(t, 6800, 8600);
+  const releaseP = eph(t, 8500, 9400);
+
+  return (
+    <svg viewBox="0 0 640 420" className="op-svg">
+      <text x={24} y={28} className="lv-phase small">GOVERNED RL REFINEMENT · OFFLINE ONLY</text>
+      <g className="lv-chip">
+        <rect x={476} y={10} width={142} height={28} rx={8} />
+        <text x={547} y={28} textAnchor="middle" className="svg-mono">R&amp;D DESIGN TARGET</text>
+      </g>
+
+      <g className="lv-box hot">
+        <rect x={24} y={58} width={152} height={170} rx={11} />
+        <text x={100} y={82} textAnchor="middle" className="svg-label small">CLINICIAN ACTION</text>
+        {["accept context", "revise note", "request evidence", "escalate"].map((label, index) => (
+          <g key={label} className={`lv-chip ${queueP > (index + 1) / 5 ? "win" : ""}`}>
+            <rect x={38} y={96 + index * 29} width={124} height={22} rx={6} />
+            <text x={100} y={111 + index * 29} textAnchor="middle" className="svg-mono small">{label}</text>
+          </g>
+        ))}
+      </g>
+
+      <g className={`lv-node ${queueP > 0 && evalP < 0.2 ? "is-live" : ""}`}>
+        <rect x={208} y={58} width={154} height={78} rx={11} />
+        <text x={285} y={83} textAnchor="middle" className="svg-label small">GOVERNED QUEUE</text>
+        <text x={285} y={103} textAnchor="middle" className="svg-sub">approved · de-ID</text>
+        <text x={285} y={121} textAnchor="middle" className="tick ok">offline only ✓</text>
+      </g>
+      <path d="M 176 142 C 190 142 194 98 208 98" className="lv-edge win" style={{ opacity: queueP }} />
+
+      <g className="lv-box">
+        <rect x={208} y={154} width={154} height={154} rx={11} />
+        <text x={285} y={178} textAnchor="middle" className="svg-label small">OFFLINE RL + EVAL</text>
+        {["retrieval grounding", "safety behavior", "latency + drift", "subgroup review"].map((label, index) => {
+          const rowP = eph(t, 2600 + index * 480, 3300 + index * 480);
+          return (
+            <g key={label} style={{ opacity: 0.25 + rowP * 0.75 }}>
+              <text x={222} y={205 + index * 25} className="svg-mono small">{label}</text>
+              <text x={348} y={205 + index * 25} textAnchor="end" className="tick ok">{rowP > 0.8 ? "✓" : "·"}</text>
+            </g>
+          );
+        })}
+      </g>
+
+      <g className={`lv-node ${candidateP > 0 && gateP === 0 ? "is-live" : ""}`}>
+        <rect x={400} y={58} width={216} height={112} rx={11} />
+        <text x={508} y={82} textAnchor="middle" className="svg-label small">VERSION CANDIDATE</text>
+        {["prompt policy", "retrieval path", "safety rules", "review UI"].map((label, index) => (
+          <g key={label} className={`lv-chip ${candidateP > (index + 1) / 5 ? "win" : ""}`}>
+            <rect x={414 + (index % 2) * 96} y={96 + Math.floor(index / 2) * 32} width={90} height={24} rx={6} />
+            <text x={459 + (index % 2) * 96} y={112 + Math.floor(index / 2) * 32} textAnchor="middle" className="svg-mono small">{label}</text>
+          </g>
+        ))}
+      </g>
+      <path d="M 362 232 C 388 232 382 116 400 116" className="lv-edge win" style={{ opacity: candidateP }} />
+
+      <g className="lv-box hot">
+        <rect x={400} y={194} width={216} height={114} rx={11} />
+        <text x={508} y={218} textAnchor="middle" className="svg-label small">SAFETY + REGRESSION GATE</text>
+        {["unsupported claims", "retrieval grounding", "clinical boundary", "human review"].map((label, index) => (
+          <g key={label} style={{ opacity: 0.28 + gateP * 0.72 }}>
+            <text x={416} y={243 + index * 17} className="svg-mono small">
+              {gateP > (index + 1) / 5 ? "✓ " : "… "}{label}
+            </text>
+          </g>
+        ))}
+      </g>
+
+      <g className="lv-box">
+        <rect x={24} y={334} width={592} height={58} rx={10} />
+        <text x={42} y={358} className="svg-sub">NO LIVE WEIGHT UPDATES FROM CLINICIAN ACTIONS</text>
+        <text x={42} y={377} className="svg-mono small">approved feedback → offline RL/eval → regression suite → human release</text>
+        <g className={`lv-stamp ${releaseP > 0 ? "big" : ""}`} style={rise(releaseP, 6)}>
+          <rect x={476} y={344} width={124} height={36} rx={8} />
+          <text x={538} y={367} textAnchor="middle" className="tick ok">FUTURE RELEASE ✓</text>
+        </g>
+      </g>
+
+      <path d="M 508 308 C 508 326 538 326 538 344" className="lv-edge win" style={{ opacity: releaseP }} />
+      <text x={24} y={414} className="svg-note">Offline evaluation and a human release board decide whether a candidate ships.</text>
     </svg>
   );
 }
@@ -704,7 +839,7 @@ const STEPS: StepDef[] = [
     sub: "high-level architecture",
     pilotTitle: "Seven gates between a session and a clinician's desk",
     pilotBody:
-      "MindScape turns raw psychiatric sessions and between-session signals into a clinician-ready timeline. Watch a session travel capture → perceive → fuse → retrieve → reason → validate → review — and watch an ungrounded claim get stopped at the gate, in the same replay.",
+      "MindScape converts live session signals into source-linked context for clinician review. Capture, perception, fusion, retrieval, reasoning, and validation run in order; unsupported claims stop before the handoff.",
     metrics: [
       { k: "stages", v: "7, ordered" },
       { k: "stack", v: "FastAPI + Next.js" },
@@ -717,7 +852,7 @@ const STEPS: StepDef[] = [
     sub: "the rolling buffer",
     pilotTitle: "The session is already data while the patient is still talking",
     pilotBody:
-      "WebRTC audio lands in a one-second rolling buffer — the waveform you see is the buffer, live — and ships downstream as timestamped packets. No batch upload at the end of the hour; the pipeline starts at second one.",
+      "WebRTC audio enters a one-second rolling buffer and leaves as timestamped analysis packets. Each new packet carries the exact source words forward, so later signals remain traceable to the live session.",
     metrics: [
       { k: "transport", v: "WebRTC · 16 kHz mono" },
       { k: "buffer", v: "rolling 1000 ms" },
@@ -728,9 +863,9 @@ const STEPS: StepDef[] = [
   {
     label: "Perception",
     sub: "one voice, three channels",
-    pilotTitle: "What was said, how it was said, and what the voice betrayed",
+    pilotTitle: "One voice becomes three synchronized, bounded signals",
     pilotBody:
-      "One synchronized stream splits live into three perceptions: the transcript writing itself, SenseVoice event tokens — a silence, a breath, a sigh — popping as they're detected, and an Emotion2Vec+ affect point drifting across the valence–arousal plane. All three share one clock.",
+      "One synchronized stream becomes three bounded signals: transcript meaning, speech-event tokens, and an acoustic affect representation. Shared timestamps let the system compare them without treating any single signal as clinical proof.",
     metrics: [
       { k: "linguistic", v: "transcript embeddings" },
       { k: "events", v: "SenseVoice tokens" },
@@ -743,7 +878,7 @@ const STEPS: StepDef[] = [
     sub: "streams → state",
     pilotTitle: "A neural gate decides what each stream contributes",
     pilotBody:
-      "Text at 768 dimensions, sparse event tokens, 1024-dimensional affect, and the longitudinal baseline fire through a gated multimodal unit — edges firing layer to layer in front of you — and out comes the Behavioral State Vector: one reusable representation of the patient's state, updating live.",
+      "A gated multimodal unit weighs transcript, speech-event, acoustic, and longitudinal context. It produces one Behavioral State Vector that gives retrieval, reasoning, and review the same synchronized session context.",
     metrics: [
       { k: "fusion", v: "GMU, gated" },
       { k: "inputs", v: "768d + sparse + 1024d" },
@@ -756,7 +891,7 @@ const STEPS: StepDef[] = [
     sub: "recall without noise",
     pilotTitle: "A vector neighborhood and exact terms, racing",
     pilotBody:
-      "The query fires both lanes at once — a probe expanding through the MedCPT/HNSW neighborhood lights its nearest neighbors while BM25 scores exact clinical terms bar by bar. Reciprocal-rank fusion interleaves the lists in front of you; the BioLinkBERT sweep reorders them. What survives is top-k evidence.",
+      "Dense retrieval finds semantically related session context while BM25 finds exact language in trusted clinical references and prior notes. Rank fusion and biomedical reranking reduce both result sets to compact, source-linked evidence.",
     metrics: [
       { k: "dense", v: "MedCPT · HNSW/Faiss" },
       { k: "lexical", v: "BM25 → RRF" },
@@ -769,7 +904,7 @@ const STEPS: StepDef[] = [
     sub: "every claim, sourced",
     pilotTitle: "Conclusions you can trace backwards",
     pilotBody:
-      "The draft observation writes itself word by word — and as each phrase lands, the evidence that licenses it lights up and links in. What ships is structured: a bounded hypothesis, visible uncertainty, and three follow-up questions. Never a diagnosis.",
+      "The reasoning layer writes a bounded clinical observation only after linking it to session evidence and trusted references. Its output keeps uncertainty visible and proposes follow-up questions; it does not issue a diagnosis.",
     metrics: [
       { k: "grounding", v: "retrieval-first" },
       { k: "lineage", v: "per sentence" },
@@ -782,7 +917,7 @@ const STEPS: StepDef[] = [
     sub: "the hard stop",
     pilotTitle: "Unsupported claims don't get softened — they get stopped",
     pilotBody:
-      "Three claims approach the gate. The DeBERTa NLI scan runs on each — entailment scores computing live — and the one that can't find its evidence is blocked and drops away, while deterministic DSM-5 and risk-language rules run alongside. What's released is released with its uncertainty attached.",
+      "Every draft claim must pass an evidence-support check and deterministic clinical-safety rules. Supported claims retain their source and uncertainty; failed claims are removed before a clinician sees them.",
     metrics: [
       { k: "NLI check", v: "DeBERTa entailment" },
       { k: "rules", v: "DSM-5, deterministic" },
@@ -795,13 +930,26 @@ const STEPS: StepDef[] = [
     sub: "the handoff",
     pilotTitle: "The clinician stays the decision-maker",
     pilotBody:
-      "The handoff assembles row by row; the behavioral radar holds the fused state; Nancy, the async companion, runs a real check-in exchange — and each exchange lands as a new point on the validated timeline. Framed honestly: a clinician-support MVP on synthetic data, built to production discipline.",
+      "The review surface keeps each supported statement beside its source, uncertainty, and available clinician actions. The system can propose context or follow-ups, but the clinician edits, holds, or advances the case.",
     metrics: [
-      { k: "output", v: "handoff summary" },
-      { k: "async loop", v: "Nancy companion" },
+      { k: "output", v: "source-linked review" },
+      { k: "decision owner", v: "clinician" },
       { k: "status", v: "MVP · synthetic data" },
     ],
     graphic: (a) => <ReviewGraphic a={a} />,
+  },
+  {
+    label: "Governed RL refinement",
+    sub: "offline improvement loop",
+    pilotTitle: "Feedback can improve a future version—not rewrite the live system",
+    pilotBody:
+      "Approved, de-identified clinician feedback enters an offline reinforcement-learning and evaluation harness. Candidate changes must pass grounding, safety, subgroup, and regression checks before a human release board can approve them.",
+    metrics: [
+      { k: "feedback", v: "approved + de-identified" },
+      { k: "refinement", v: "offline RL + evaluation" },
+      { k: "release", v: "regression + human gate" },
+    ],
+    graphic: (a) => <ClinicalRefinementGraphic a={a} />,
   },
 ];
 
@@ -810,11 +958,11 @@ export function MindscapeChapter() {
     <ChapterShell
       id="mindscape"
       accent="#8ef0c0"
-      kicker="PROJECT 03 · CLINICAL AI"
+      kicker="PROJECT 03 · MEDICAL AI R&D"
       title="MindScape"
-      subtitle="A clinical AI workflow engine — psychiatric sessions become validated, clinician-ready intelligence."
+      subtitle="A medical AI assistant for evidence-grounded, clinician-controlled mental-health screening and diagnostic review."
       steps={STEPS}
-      stepMs={9200}
+      stepMs={MINDSCAPE_STEP_MS}
     />
   );
 }

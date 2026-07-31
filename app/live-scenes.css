@@ -17,11 +17,19 @@
   --fable-sans: var(--font-geist-sans), system-ui, sans-serif;
   width: 100%;
   height: 100%;
+  min-height: 0;
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 
-.op-svg { width: 100%; height: auto; max-height: 100%; }
+.op-svg { width: 100%; height: 100%; max-height: none; }
+.op-svg g[role="button"]:focus { outline: none; }
+.op-svg g[role="button"]:focus-visible .lv-node rect {
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--accent) 62%, transparent));
+}
 
 .svg-label { fill: var(--text-hi); font-family: var(--fable-sans); font-size: 13px; font-weight: 600; }
 .svg-label.small { font-size: 11px; }
@@ -254,12 +262,12 @@
 .lv-windowedge { stroke: color-mix(in srgb, var(--accent) 85%, transparent); stroke-width: 1.6; }
 
 /* Spark — the tour guide */
-.vx-spark-dock { position: fixed; left: 22px; bottom: 22px; z-index: 60; display: flex; flex-direction: column; gap: 8px; max-width: 300px; transition: transform 0.4s cubic-bezier(0.34, 1.4, 0.44, 1); }
+.vx-spark-dock { position: fixed; left: auto; right: 16px; top: 8px; bottom: auto; z-index: 220; display: flex; flex-direction: column; gap: 0; max-width: 74px; transition: transform 0.4s cubic-bezier(0.34, 1.4, 0.44, 1); }
 .vx-spark-dock.is-hopping { animation: sparkHop 0.72s cubic-bezier(0.4, 0, 0.2, 1); }
 @keyframes sparkHop { 0% { transform: translateY(0); } 35% { transform: translateY(-26px) rotate(-5deg); } 70% { transform: translateY(4px); } 100% { transform: translateY(0); } }
-.vx-spark-bubble { padding: 10px 13px; border: 1px solid color-mix(in srgb, var(--active-accent, var(--vx-lime)) 35%, var(--vx-line)); background: rgba(7, 9, 13, 0.94); color: #cfd8e2; font: 500 12px/1.5 var(--font-geist-mono), monospace; border-radius: 10px 10px 10px 3px; min-height: 38px; }
+.vx-spark-bubble { display: none; }
 .vx-spark-row { display: flex; align-items: flex-end; gap: 6px; }
-.vx-spark-fig { width: 58px; height: 58px; color: var(--active-accent, var(--vx-lime)); filter: drop-shadow(0 0 12px color-mix(in srgb, var(--active-accent, var(--vx-lime)) 35%, transparent)); animation: sparkBreathe 3.4s ease-in-out infinite; }
+.vx-spark-fig { width: 44px; height: 44px; color: var(--active-accent, var(--vx-lime)); filter: drop-shadow(0 0 12px color-mix(in srgb, var(--active-accent, var(--vx-lime)) 35%, transparent)); animation: sparkBreathe 3.4s ease-in-out infinite; }
 @keyframes sparkBreathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .spark-body { fill: rgba(10, 13, 18, 0.95); stroke: currentColor; stroke-width: 2; }
 .spark-ring { fill: none; stroke: color-mix(in srgb, currentColor 40%, transparent); stroke-width: 1.2; stroke-dasharray: 4 5; }
@@ -269,8 +277,8 @@
 .spark-eye { fill: #eef3f7; }
 .spark-pupil { fill: #0b0e13; transition: cx 0.5s ease, cy 0.5s ease; }
 .spark-mouth { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
-.vx-spark-dismiss { width: 26px; height: 26px; border: 1px solid var(--vx-line); background: rgba(10, 13, 18, 0.9); color: #8d97a5; border-radius: 50%; cursor: pointer; }
-.vx-spark-summon { position: fixed; left: 22px; bottom: 22px; z-index: 60; width: 40px; height: 40px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--vx-lime) 45%, var(--vx-line)); background: rgba(7, 9, 13, 0.94); color: var(--vx-lime); font-size: 16px; cursor: pointer; }
+.vx-spark-dismiss { width: 20px; height: 20px; border: 1px solid var(--vx-line); background: rgba(10, 13, 18, 0.9); color: #8d97a5; border-radius: 50%; cursor: pointer; }
+.vx-spark-summon { position: fixed; left: auto; right: 16px; top: 16px; bottom: auto; z-index: 220; width: 40px; height: 40px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--vx-lime) 45%, var(--vx-line)); background: rgba(7, 9, 13, 0.94); color: var(--vx-lime); font-size: 16px; cursor: pointer; }
 @media (max-width: 940px) { .vx-spark-dock { max-width: 230px; } }
 
 /* mindscape dedicated map glyphs */
@@ -317,7 +325,7 @@
 .vx-profile-grid { margin-top: 52px; display: grid; grid-template-columns: minmax(300px, 0.38fr) minmax(0, 0.62fr); gap: 18px; align-items: start; }
 
 .vx-role-rail { display: flex; flex-direction: column; gap: 10px; }
-.vx-role-card { position: relative; text-align: left; padding: 16px 18px; border: 1px solid var(--vx-line); background: rgba(255, 255, 255, 0.018); cursor: pointer; transition: 260ms var(--vx-ease); }
+.vx-role-card { position: relative; text-align: left; padding: 16px 18px; border: 1px solid var(--vx-line); background: rgba(255, 255, 255, 0.018); cursor: pointer; transition: transform 260ms var(--vx-ease), border-color 260ms var(--vx-ease), background-color 260ms var(--vx-ease), color 260ms var(--vx-ease); }
 .vx-role-card > span { color: var(--vx-lime); font: 600 11px/1 var(--font-geist-mono), monospace; }
 .vx-role-card > strong { display: block; margin-top: 8px; font-size: 19px; font-weight: 560; letter-spacing: -0.03em; color: #e8edf3; }
 .vx-role-card > p { margin: 7px 0 0; color: #9aa5b1; font-size: 13px; line-height: 1.5; }
@@ -327,11 +335,11 @@
 .vx-role-weights i[data-w="1"] { background: color-mix(in srgb, var(--vx-lime) 35%, transparent); }
 .vx-role-weights i[data-w="2"] { background: var(--vx-lime); box-shadow: 0 0 8px color-mix(in srgb, var(--vx-lime) 55%, transparent); }
 .vx-role-evidence { margin-top: 10px; display: flex; gap: 7px; flex-wrap: wrap; }
-.vx-role-evidence a { padding: 5px 8px; border: 1px solid var(--vx-line); color: #b9c3cf; font: 550 10.5px/1 var(--font-geist-mono), monospace; text-decoration: none; transition: 200ms ease; }
+.vx-role-evidence a { padding: 5px 8px; border: 1px solid var(--vx-line); color: #b9c3cf; font: 550 10.5px/1 var(--font-geist-mono), monospace; text-decoration: none; transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease; }
 .vx-role-evidence a:hover { border-color: color-mix(in srgb, var(--vx-lime) 45%, var(--vx-line)); color: var(--vx-lime); }
 
 .vx-domain-stack { display: flex; flex-direction: column; gap: 8px; }
-.vx-domain-row { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; padding: 13px 16px; border: 1px solid var(--vx-line); background: rgba(255, 255, 255, 0.014); transition: 280ms var(--vx-ease); }
+.vx-domain-row { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; padding: 13px 16px; border: 1px solid var(--vx-line); background: rgba(255, 255, 255, 0.014); transition: opacity 280ms var(--vx-ease), transform 280ms var(--vx-ease), border-color 280ms var(--vx-ease), background-color 280ms var(--vx-ease); }
 .vx-domain-row.is-lit { border-color: color-mix(in srgb, var(--vx-lime) 42%, var(--vx-line)); background: rgba(255, 255, 255, 0.032); }
 .vx-domain-row.is-weighted { border-left: 2px solid color-mix(in srgb, var(--vx-lime) 65%, transparent); }
 .vx-domain-row strong { display: block; font-size: 14.5px; font-weight: 570; letter-spacing: -0.015em; color: #e4eaf1; }
@@ -345,7 +353,7 @@
 .vx-kw-tray { margin-top: 42px; border: 1px solid var(--vx-line); background: rgba(6, 8, 11, 0.9); padding: 18px 22px; }
 .vx-kw-tray > span { color: var(--vx-lime); font: 600 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.15em; }
 .vx-kw-tray > div { margin-top: 13px; display: flex; gap: 9px; flex-wrap: wrap; }
-.vx-kw-tray em { padding: 8px 12px; border: 1px solid var(--vx-line); color: #b3bdc9; font: 550 12.5px/1 var(--font-geist-mono), monospace; font-style: normal; transition: 420ms ease; }
+.vx-kw-tray em { padding: 8px 12px; border: 1px solid var(--vx-line); color: #b3bdc9; font: 550 12.5px/1 var(--font-geist-mono), monospace; font-style: normal; transition: opacity 420ms ease, transform 420ms ease, border-color 420ms ease, background-color 420ms ease, color 420ms ease; }
 .vx-kw-tray em[data-flare="true"] { color: #0c1207; background: var(--vx-lime); border-color: var(--vx-lime); box-shadow: 0 0 22px color-mix(in srgb, var(--vx-lime) 45%, transparent); }
 
 @media (max-width: 940px) {

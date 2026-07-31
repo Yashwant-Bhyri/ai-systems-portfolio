@@ -69,6 +69,9 @@ export function HeroChapter() {
   const [phase, setPhase] = useState<"typing" | "split">("typing");
   const [skipped, setSkipped] = useState(false);
   const doneRef = useRef(false);
+  const introResolved = reducedMotion || skipped;
+  const displayedPhase = introResolved ? "split" : phase;
+  const displayedText = introResolved ? FINAL_TEXT : typed;
 
   useEffect(() => {
     registerSection("hero", sectionRef.current);
@@ -76,11 +79,7 @@ export function HeroChapter() {
 
   // Typing engine
   useEffect(() => {
-    if (reducedMotion || skipped) {
-      setTyped(FINAL_TEXT);
-      setPhase("split");
-      return;
-    }
+    if (introResolved) return;
     let alive = true;
     let timer: ReturnType<typeof setTimeout>;
     let opIdx = 0;
@@ -128,33 +127,33 @@ export function HeroChapter() {
       alive = false;
       clearTimeout(timer);
     };
-  }, [reducedMotion, skipped]);
+  }, [introResolved]);
 
   // Cards auto-present themselves: one lifts and flips at a time, forever.
   const [flipIdx] = useStepper(HERO_CARDS.length, {
-    active: phase === "split",
+    active: displayedPhase === "split",
     stepMs: 2600,
     startDelayMs: 1800,
   });
 
   // Once the split has landed and the first card has presented, the tour begins.
   useEffect(() => {
-    if (phase !== "split" || doneRef.current) return;
+    if (displayedPhase !== "split" || doneRef.current) return;
     const t = setTimeout(() => {
       doneRef.current = true;
       chapterDone("hero");
       beginTour();
     }, 6500);
     return () => clearTimeout(t);
-  }, [phase, chapterDone, beginTour]);
+  }, [displayedPhase, chapterDone, beginTour]);
 
   // Neon sweep: the freshest characters carry a fading highlight.
-  const chars = typed.split("");
+  const chars = displayedText.split("");
   const tail = chars.length;
 
   return (
-    <section ref={sectionRef} data-chapter="hero" className={`fable-section hero ${phase === "split" ? "is-split" : ""}`}>
-      <KeywordGalaxy dimmed={phase === "split"} />
+    <section ref={sectionRef} data-chapter="hero" className={`fable-section hero ${displayedPhase === "split" ? "is-split" : ""}`}>
+      <KeywordGalaxy dimmed={displayedPhase === "split"} />
       <div className="hero-grid">
         <div className="hero-copy">
           <div className="hero-kicker">
@@ -165,14 +164,14 @@ export function HeroChapter() {
               c === "\n" ? (
                 <br key={i} />
               ) : (
-                <span key={i} className={`h-ch ${phase === "typing" && tail - i <= 14 ? "is-fresh" : ""}`}>
+                <span key={i} className={`h-ch ${displayedPhase === "typing" && tail - i <= 14 ? "is-fresh" : ""}`}>
                   {c}
                 </span>
               ),
             )}
-            {phase === "typing" && <span className="hero-caret" />}
+            {displayedPhase === "typing" && <span className="hero-caret" />}
           </h1>
-          <div className={`hero-actions ${phase === "split" ? "is-on" : ""}`}>
+          <div className={`hero-actions ${displayedPhase === "split" ? "is-on" : ""}`}>
             <a className="btn btn-primary" href="#index" onClick={() => {}}>
               Explore my projects
             </a>
@@ -185,13 +184,13 @@ export function HeroChapter() {
           </div>
         </div>
 
-        <div className={`hero-cards ${phase === "split" ? "is-on" : ""}`} aria-hidden={phase !== "split"}>
+        <div className={`hero-cards ${displayedPhase === "split" ? "is-on" : ""}`} aria-hidden={displayedPhase !== "split"}>
           {HERO_CARDS.map((card, i) => (
             <a
               key={card.no}
               href={`#${card.id}`}
-              className={`hero-card ${flipIdx === i && phase === "split" ? "is-flipped" : ""}`}
-              style={{ transitionDelay: phase === "split" ? `${i * 120}ms` : "0ms" }}
+              className={`hero-card ${flipIdx === i && displayedPhase === "split" ? "is-flipped" : ""}`}
+              style={{ transitionDelay: displayedPhase === "split" ? `${i * 120}ms` : "0ms" }}
             >
               <span className="hero-card-inner">
                 <span className="hero-card-face front">
@@ -212,7 +211,7 @@ export function HeroChapter() {
         </div>
       </div>
 
-      {phase === "typing" && !reducedMotion && (
+      {displayedPhase === "typing" && !reducedMotion && (
         <button className="hero-skip" onClick={() => setSkipped(true)}>
           Skip intro ↵
         </button>

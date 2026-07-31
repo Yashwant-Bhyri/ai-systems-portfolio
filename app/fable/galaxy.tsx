@@ -44,7 +44,10 @@ type Star = {
 export function KeywordGalaxy({ dimmed }: { dimmed?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dimRef = useRef(!!dimmed);
-  dimRef.current = !!dimmed;
+
+  useEffect(() => {
+    dimRef.current = !!dimmed;
+  }, [dimmed]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

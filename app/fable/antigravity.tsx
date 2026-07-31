@@ -51,7 +51,9 @@ export function LoopGraphic({ a }: { a: boolean }) {
           <path d="M 63 205 a 9 7 0 0 1 18 0" />
         </g>
         <text x={144} y={198} textAnchor="middle" className="svg-label small">CANDIDATE</text>
-        <text x={144} y={216} textAnchor="middle" className="svg-sub tiny">{listening ? "fictional · speaking" : "listening"}</text>
+        <text x={144} y={216} textAnchor="middle" className="svg-sub">
+          {listening ? "answer streaming" : deciding ? "route pending" : speaking ? "hearing question" : "turn complete"}
+        </text>
       </g>
       <Wave x={54} y={252} w={150} h={26} t={t} on={listening ? 1 : 0.06} />
 
@@ -68,7 +70,7 @@ export function LoopGraphic({ a }: { a: boolean }) {
         <rect x={432} y={172} width={172} height={72} rx={12} />
         <text x={518} y={198} textAnchor="middle" className="svg-label">ORCHESTRATOR</text>
         <text x={518} y={216} textAnchor="middle" className="svg-sub">
-          {deciding ? "fusing 5 signals…" : t >= 3800 ? "follow-up chosen ✓" : "fast + background lanes"}
+          {deciding ? "evaluating the turn…" : t >= 3800 ? "next question ready ✓" : "two reasoning lanes"}
         </text>
       </g>
 
@@ -82,7 +84,7 @@ export function LoopGraphic({ a }: { a: boolean }) {
           <circle cx={270.5} cy={343} r={1.6} className="lv-avatar-eye" />
         </g>
         <text x={352} y={340} textAnchor="middle" className="svg-label small">ANTIGRAVITY · TTS</text>
-        <text x={352} y={358} textAnchor="middle" className="svg-sub tiny">{speaking ? "asking the next question" : "idle"}</text>
+        <text x={352} y={358} textAnchor="middle" className="svg-sub">{speaking ? "next question" : "standby"}</text>
       </g>
       <Wave x={452} y={286} w={140} h={24} t={t} on={speaking ? 1 : 0.06} />
       <text x={339} y={396} textAnchor="middle" className="svg-mono small">{q}{speaking ? caret(t) : ""}</text>
@@ -97,8 +99,8 @@ export function LoopGraphic({ a }: { a: boolean }) {
         )}
         {closed && (
           <g style={rise(eph(t, 6600, 7100))}>
-            <text x={320} y={206} textAnchor="middle" className="lv-counter">0.94 s</text>
-            <text x={320} y={230} textAnchor="middle" className="svg-sub">full loop · under a second ✓</text>
+            <text x={320} y={206} textAnchor="middle" className="lv-counter">≈ 0.9 s</text>
+            <text x={320} y={230} textAnchor="middle" className="svg-sub">answer → decision → voice · under one second ✓</text>
           </g>
         )}
         {(listening || speaking) && (
@@ -126,14 +128,13 @@ export function SttGraphic({ a }: { a: boolean }) {
       { at: 1700, end: 2400, text: "i sharded the redis state" },
       { at: 2500, end: 3100, text: "i sharded the redis state by sess" },
       { at: 3300, end: 3650, text: "" },
-      { at: 4600, end: 5500, text: "so each interview no" },
-      { at: 5600, end: 6300, text: "so each interview node keeps its own state" },
+      { at: 4600, end: 5500, text: "the fallback store keeps the turn al" },
+      { at: 5600, end: 6300, text: "the fallback store keeps the turn alive if redis drops" },
       { at: 7000, end: 7350, text: "" },
     ],
     t,
   );
 
-  const lat = 168 + Math.round(noise(Math.floor(t / 420) % 23, 999) * 34);
   const final1 = eph(t, 3350, 3750);
   const final2 = eph(t, 7050, 7450);
 
@@ -142,45 +143,53 @@ export function SttGraphic({ a }: { a: boolean }) {
       {/* live mic feed */}
       <text x={40} y={52} className="svg-sub">LIVE AUDIO · 16 kHz</text>
       <Wave x={40} y={64} w={220} h={56} bars={26} t={t} on={talking ? 1 : 0.05} />
-      <text x={40} y={150} className="svg-mono small">{talking ? "● capturing" : "○ endpoint detected"}</text>
+      <text x={40} y={150} className="svg-mono small">{talking ? "● listening live" : "○ final transcript ready"}</text>
 
       {/* latency ticker */}
       <g className="lv-chip">
         <rect x={452} y={40} width={158} height={46} rx={10} />
-        <text x={466} y={59} className="svg-sub">partial → screen</text>
-        <text x={466} y={78} className="svg-mono">{lat} ms</text>
+        <text x={466} y={59} className="svg-sub">LIVE TRANSCRIPT</text>
+        <text x={466} y={78} className="svg-mono tinytext">while speaking</text>
       </g>
 
-      {/* partial hypothesis lane — V2's token grid: provisional words as pills */}
+      {/* live transcript lane — words may revise until the turn is committed */}
       <g className="lv-box hot">
         <rect x={300} y={96} width={310} height={76} rx={10} />
-        <text x={314} y={116} className="svg-sub">PARTIAL HYPOTHESIS · provisional words revise live</text>
+        <text x={314} y={116} className="svg-sub">WORDS REVISE WHILE THE CANDIDATE SPEAKS</text>
+        {partial && <text x={598} y={116} textAnchor="end" className="svg-sub tiny">LIVE{caret(t)}</text>}
         {(() => {
           const words = partial.replace(/[“”]/g, "").split(" ").filter(Boolean);
-          let px = 314;
-          let py = 134;
-          return words.map((w, i) => {
-            const pw = w.length * 6.4 + 12;
-            if (px + pw > 596) { px = 314; py += 24; }
-            const gx = px;
-            px += pw + 6;
-            const provisional = i >= words.length - 2;
+          const layout = words.reduce<{
+            nextX: number;
+            y: number;
+            tokens: Array<{ word: string; x: number; y: number; width: number; provisional: boolean }>;
+          }>((state, word, index) => {
+            const width = word.length * 6.4 + 12;
+            const wraps = state.nextX + width > 596;
+            const x = wraps ? 314 : state.nextX;
+            const y = wraps ? state.y + 24 : state.y;
+            return {
+              nextX: x + width + 6,
+              y,
+              tokens: [...state.tokens, { word, x, y, width, provisional: index >= words.length - 2 }],
+            };
+          }, { nextX: 314, y: 134, tokens: [] });
+          return layout.tokens.map(({ word, x, y, width, provisional }, index) => {
             return (
-              <g key={`${w}-${i}`}>
-                <rect x={q(gx)} y={py - 13} width={q(pw)} height={19} rx={5} className="lv-tokenpill" style={{ opacity: provisional ? 0.55 : 0.95 }} />
-                <text x={q(gx + pw / 2)} y={py} textAnchor="middle" className="svg-mono tinytext">{w}</text>
+              <g key={`${word}-${index}`}>
+                <rect x={q(x)} y={y - 13} width={q(width)} height={19} rx={5} className="lv-tokenpill" style={{ opacity: provisional ? 0.55 : 0.95 }} />
+                <text x={q(x + width / 2)} y={y} textAnchor="middle" className="svg-mono tinytext">{word}</text>
               </g>
             );
           });
         })()}
-        {partial && <text x={598} y={166} textAnchor="end" className="svg-sub tiny">revising{caret(t)}</text>}
       </g>
 
       {/* committed transcript log */}
       <g className="lv-box">
         <rect x={40} y={190} width={570} height={170} rx={12} />
-        <text x={58} y={216} className="svg-sub">COMMITTED TRANSCRIPT · endpoint-tuned finals</text>
-        <text x={58} y={244} className="svg-mono small dim">…and the interviewer keeps the session context warm.</text>
+        <text x={58} y={216} className="svg-sub">COMMITTED TRANSCRIPT · STABLE INPUT FOR REASONING</text>
+        <text x={58} y={244} className="svg-mono small dim">…the interview state retains the full turn context.</text>
         {final1 > 0 && (
           <g style={rise(final1)}>
             {STT_FINAL_1.map((w, i) => {
@@ -199,14 +208,14 @@ export function SttGraphic({ a }: { a: boolean }) {
         )}
         {final2 > 0 && (
           <g style={rise(final2)}>
-            <text x={58} y={334} className="svg-mono">So each interview node keeps its own state.</text>
+            <text x={58} y={334} className="svg-mono">In-memory fallback keeps the turn running if Redis drops.</text>
             <text x={520} y={334} className="tick ok" style={{ opacity: final2 }}>✓ final</text>
           </g>
         )}
       </g>
 
       <text x={40} y={396} className="svg-note">
-        Watch the hypothesis correct itself mid-word — the room hears you the way a person does.
+        Reasoning can start early, but only the stable final is stored as interview evidence.
       </text>
     </svg>
   );
@@ -235,11 +244,11 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
       <g style={{ opacity: introP }}>
         <g className="lv-chip win">
           <rect x={186} y={14} width={200} height={30} rx={9} />
-          <text x={286} y={33} textAnchor="middle" className="svg-mono tinytext">HOT PATH · answer now</text>
+          <text x={286} y={33} textAnchor="middle" className="svg-mono tinytext">CURRENT TURN · choose now</text>
         </g>
         <g className="lv-chip">
           <rect x={398} y={14} width={216} height={30} rx={9} />
-          <text x={506} y={33} textAnchor="middle" className="svg-mono tinytext">REASONING PATH · think deep</text>
+          <text x={506} y={33} textAnchor="middle" className="svg-mono tinytext">FUTURE PATH · analyze deeper</text>
         </g>
       </g>
       {/* résumé source */}
@@ -288,7 +297,7 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
       {/* live answer being routed */}
       <g className="lv-box hot" style={{ opacity: t > 3200 ? 1 : 0 }}>
         <rect x={186} y={318} width={424} height={54} rx={10} />
-        <text x={200} y={338} className="svg-sub">LIVE ANSWER · being scored against every branch</text>
+        <text x={200} y={338} className="svg-sub">LIVE ANSWER · MATCHING THE NEXT VALID PROBE</text>
         <text x={200} y={358} className="svg-mono small">{ans}{t > 3400 && t < 5400 ? caret(t) : ""}</text>
       </g>
 
@@ -327,7 +336,7 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
       </g>
 
       <text x={26} y={402} className="svg-note">
-        Edges are scored by semantic similarity to the live answer — the strongest branch wins, and the map grows.
+        The strongest valid branch becomes the next probe; deeper findings extend the future path.
       </text>
     </svg>
   );
@@ -337,107 +346,127 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
 
 export function FastLaneGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 10200;
+  const L = 9800;
   const t = el % L;
-  const SC = 1 / 7.2; // px per sim-ms on the ruler
-
-  // turn 1: starts 600 — fast completes 900ms, bg completes 3600ms
-  const f1 = Math.min(900, Math.max(0, t - 600));
-  const b1 = Math.min(3600, Math.max(0, t - 600));
-  const replyFly = eph(t, 1500, 2150);
-  const pkgFly = eph(t, 4200, 4900);
-  // turn 2: queue consumed, fast lane fires again
-  const consume = eph(t, 5600, 6250);
-  const f2 = Math.min(900, Math.max(0, t - 6400));
-
-  const laneX = 60;
-  const fastY = 128;
-  const bgY = 236;
+  const fastP = eph(t, 500, 2300);
+  const deepP = eph(t, 900, 4700);
+  const packetP = eph(t, 4200, 5200);
+  const promoteP = eph(t, 5400, 6600);
+  const fastNodes = [
+    { label: "MODEL ROUTER", sub: "fast model", x: 138 },
+    { label: "TURN GUARD", sub: "state + policy", x: 254 },
+    { label: "NEXT QUESTION", sub: "ready now", x: 370 },
+    { label: "VOICE OUT", sub: "cache → TTS", x: 486 },
+  ];
+  const agentNodes = [
+    { label: "CONCEPT", x: 132, y: 196, at: 1100 },
+    { label: "WEAKNESS", x: 228, y: 196, at: 1380 },
+    { label: "DISCREPANCY", x: 132, y: 242, at: 1660 },
+    { label: "REASONING", x: 228, y: 242, at: 1940 },
+  ];
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      {/* what "dual-lane" means, before anything races */}
-      <text x={laneX} y={30} className="lv-phase small">DUAL-LANE = ONE TURN, TWO CLOCKS</text>
-      <text x={laneX} y={46} className="svg-sub tiny">the fast lane answers you now (&lt;1 s) · the background lane thinks for the NEXT turn, in parallel</text>
-      {/* time ruler */}
-      {[0, 500, 1000, 1500, 2000, 2500, 3000, 3500].map((ms) => (
-        <g key={ms}>
-          <line x1={laneX + ms * SC} y1={74} x2={laneX + ms * SC} y2={82} className="lv-tick" />
-          <text x={laneX + ms * SC} y={68} textAnchor="middle" className="svg-sub tiny">{ms}</text>
+      <text x={22} y={26} className="lv-phase small">ONE ANSWER · TWO COORDINATED PATHS</text>
+      <g className="lv-chip win">
+        <rect x={474} y={10} width={144} height={28} rx={8} />
+        <text x={546} y={28} textAnchor="middle" className="svg-mono tinytext">REPLY PATH · ~900 ms</text>
+      </g>
+
+      <g className="lv-node is-live">
+        <rect x={22} y={70} width={96} height={62} rx={10} />
+        <text x={70} y={92} textAnchor="middle" className="svg-sub">CURRENT TURN</text>
+        <text x={70} y={110} textAnchor="middle" className="svg-mono tinytext">answer + state</text>
+        <text x={70} y={126} textAnchor="middle" className="tick ok">committed ✓</text>
+      </g>
+
+      <text x={138} y={56} className="svg-sub">FOREGROUND · RETURN A SAFE NEXT QUESTION NOW</text>
+      {fastNodes.map((node, index) => {
+        const live = fastP >= index / fastNodes.length;
+        const previousX = index === 0 ? 118 : fastNodes[index - 1].x + 104;
+        return (
+          <g key={node.label}>
+            <path d={`M ${previousX} 101 L ${node.x} 101`} className="lv-edge win" style={{ opacity: 0.3 + fastP * 0.7 }} />
+            <g className={`lv-node ${live ? "is-live" : ""}`}>
+              <rect x={node.x} y={72} width={104} height={58} rx={9} />
+              <text x={node.x + 52} y={96} textAnchor="middle" className="svg-label small">{node.label}</text>
+              <text x={node.x + 52} y={116} textAnchor="middle" className="svg-sub">{node.sub}</text>
+            </g>
+          </g>
+        );
+      })}
+      {fastP > 0 && fastP < 1 && (
+        <circle cx={q(118 + fastP * 472)} cy={101} r={4.5} className="lv-pulse" />
+      )}
+
+      <text x={132} y={172} className="svg-sub">BACKGROUND · ANALYZE DEPTH AND PREPARE A FUTURE PROBE</text>
+      <path d="M 70 132 C 70 188 96 226 118 226" className="lv-edge" style={{ opacity: 0.25 + deepP * 0.45 }} />
+      {agentNodes.map((node, index) => {
+        const live = t > node.at && t < 4300;
+        return (
+          <g key={node.label}>
+            <path d={`M 118 226 Q 124 ${node.y + 17} ${node.x} ${node.y + 17}`} className="lv-edge" style={{ opacity: deepP * 0.4 }} />
+            <g className={`lv-node ${live ? "is-live" : ""}`}>
+              <rect x={node.x} y={node.y} width={86} height={34} rx={9} />
+              <text x={node.x + 43} y={node.y + 21} textAnchor="middle" className="svg-sub">{node.label}</text>
+            </g>
+            {live && <circle cx={node.x + 76} cy={node.y + 9} r={2.5 + pulse(t + index * 140, 600) * 2} className="lv-pulse" />}
+          </g>
+        );
+      })}
+
+      <g className="lv-core" style={{ opacity: deepP > 0.45 ? 1 : 0.58 }}>
+        <circle cx={354} cy={233} r={37} className="lv-corering" />
+        <text x={354} y={229} textAnchor="middle" className="svg-label small">FUSE</text>
+        <text x={354} y={247} textAnchor="middle" className="svg-sub">rank signals</text>
+      </g>
+      {agentNodes.map((node) => (
+        <path key={`fusion-${node.label}`} d={`M ${node.x + 86} ${node.y + 17} Q 326 233 320 233`} className="lv-edge" style={{ opacity: deepP * 0.42 }} />
+      ))}
+
+      <g className={`lv-node ${packetP > 0 && promoteP === 0 ? "is-live" : ""}`}>
+        <rect x={398} y={194} width={94} height={78} rx={10} />
+        <text x={445} y={216} textAnchor="middle" className="svg-label small">Q PACKET</text>
+        <text x={445} y={236} textAnchor="middle" className="svg-mono tinytext">probe + link</text>
+        <text x={445} y={256} textAnchor="middle" className="svg-sub">guarded ✓</text>
+      </g>
+      <path d="M 388 233 L 398 233" className="lv-edge win" style={{ opacity: packetP }} />
+
+      <g className="lv-box hot">
+        <rect x={512} y={178} width={108} height={132} rx={11} />
+        <text x={566} y={199} textAnchor="middle" className="svg-label small">FUTURE MAP</text>
+        {[
+          { y: 220, label: "Q5", state: "current" },
+          { y: 254, label: "Q6", state: "ready" },
+          { y: 288, label: "Q7", state: promoteP === 1 ? "promoted" : "analyzing" },
+        ].map((node, index) => (
+          <g key={node.label} className={`lv-chip ${index === 0 || (index === 2 && promoteP === 1) ? "win" : ""}`}>
+            <rect x={520} y={node.y - 12} width={92} height={24} rx={7} />
+            <text x={528} y={node.y + 3} className="svg-mono tinytext">{node.label}</text>
+            <text x={606} y={node.y + 3} textAnchor="end" className="svg-sub">{node.state}</text>
+          </g>
+        ))}
+      </g>
+      <path d="M 492 233 C 510 246 510 278 528 288" className="lv-edge win" style={{ opacity: promoteP * 0.65 }} />
+
+      {promoteP > 0 && promoteP < 1 && (
+        <g transform={`translate(${bez(promoteP, [492, 233], [510, 252], [528, 288])[0]},${bez(promoteP, [492, 233], [510, 252], [528, 288])[1]})`}>
+          <circle cx={0} cy={0} r={5} className="lv-pulse" />
+        </g>
+      )}
+
+      {[
+        ["MODEL ROUTING", "fast · deep · fallback"],
+        ["QUESTION GUARD", "state · scope · policy"],
+        ["RUNTIME", "cache · token caps · traces"],
+      ].map(([label, value], index) => (
+        <g key={label} className="lv-chip">
+          <rect x={22 + index * 200} y={348} width={190} height={48} rx={9} />
+          <text x={34 + index * 200} y={367} className="svg-sub">{label}</text>
+          <text x={34 + index * 200} y={386} className="svg-mono tinytext">{value}</text>
         </g>
       ))}
-      <text x={608} y={68} textAnchor="end" className="svg-sub tiny">ms</text>
-
-      {/* FAST LANE */}
-      <text x={laneX} y={112} className="svg-sub">FAST LANE · answers the candidate now</text>
-      <rect x={laneX} y={fastY} width={520} height={24} rx={7} className="lv-track" />
-      {(t < 5600 ? f1 : 0) > 0 && (
-        <>
-          <rect x={laneX} y={fastY} width={f1 * SC} height={24} rx={7} className="lv-bar" />
-          <text x={laneX + f1 * SC + 8} y={fastY + 16} className="svg-mono small">{f1 < 900 ? fmtMs(f1) : "reply out · 900 ms"}</text>
-        </>
-      )}
-      {t >= 6400 && (
-        <>
-          <rect x={laneX} y={fastY} width={f2 * SC} height={24} rx={7} className="lv-bar" />
-          <text x={laneX + f2 * SC + 8} y={fastY + 16} className="svg-mono small">{f2 < 900 ? fmtMs(f2) : "reply out · 900 ms"}</text>
-        </>
-      )}
-
-      {/* reply chip flies to the candidate */}
-      {replyFly > 0 && replyFly < 1 && (
-        <g className="lv-chip win" transform={`translate(${bez(replyFly, [laneX + 900 * SC, fastY + 12], [400, 40], [520, 84])[0]},${bez(replyFly, [laneX + 900 * SC, fastY + 12], [400, 40], [520, 84])[1]})`}>
-          <rect x={-32} y={-12} width={64} height={22} rx={7} />
-          <text x={0} y={3} textAnchor="middle" className="svg-mono small">REPLY</text>
-        </g>
-      )}
-      <g style={{ opacity: t > 2100 ? 1 : 0.35 }}>
-        <text x={558} y={90} textAnchor="middle" className="svg-sub">🗣 candidate hears it</text>
-        {t > 2100 && t < 5600 && <text x={558} y={106} textAnchor="middle" className="tick ok">✓ 0.9 s</text>}
-      </g>
-
-      {/* BACKGROUND LANE */}
-      <text x={laneX} y={220} className="svg-sub">BACKGROUND LANE · builds the NEXT question in parallel</text>
-      <rect x={laneX} y={bgY} width={520} height={24} rx={7} className="lv-track" />
-      {b1 > 0 && t < 5600 && (
-        <>
-          <rect x={laneX} y={bgY} width={b1 * SC} height={24} rx={7} className="lv-bar bg" />
-          <text x={laneX + b1 * SC + 8} y={bgY + 16} className="svg-mono small">
-            {b1 < 3600 ? `${fmtMs(b1)} · analyzing` : "package ready"}
-          </text>
-        </>
-      )}
-
-      {/* ready queue */}
-      <g className="lv-box">
-        <rect x={470} y={296} width={150} height={74} rx={12} />
-        <text x={545} y={318} textAnchor="middle" className="svg-sub">READY QUEUE</text>
-        {pkgFly === 1 && consume === 0 && (
-          <g className="lv-chip">
-            <rect x={488} y={330} width={114} height={26} rx={7} />
-            <text x={545} y={347} textAnchor="middle" className="svg-mono small">NEXT-Q pkg</text>
-          </g>
-        )}
-        {pkgFly === 1 && consume > 0 && consume < 1 && <text x={545} y={347} textAnchor="middle" className="svg-sub tiny">consuming…</text>}
-        {consume === 1 && <text x={545} y={347} textAnchor="middle" className="tick ok">consumed ✓</text>}
-      </g>
-      {pkgFly > 0 && pkgFly < 1 && (
-        <g className="lv-chip" transform={`translate(${bez(pkgFly, [laneX + 3600 * SC, bgY + 12], [600, 280], [545, 343])[0]},${bez(pkgFly, [laneX + 3600 * SC, bgY + 12], [600, 280], [545, 343])[1]})`}>
-          <rect x={-42} y={-12} width={84} height={22} rx={7} />
-          <text x={0} y={3} textAnchor="middle" className="svg-mono small">NEXT-Q pkg</text>
-        </g>
-      )}
-      {consume > 0 && consume < 1 && (
-        <g className="lv-chip" transform={`translate(${bez(consume, [545, 343], [220, 400], [laneX + 12, fastY + 12])[0]},${bez(consume, [545, 343], [220, 400], [laneX + 12, fastY + 12])[1]})`}>
-          <rect x={-42} y={-12} width={84} height={22} rx={7} />
-          <text x={0} y={3} textAnchor="middle" className="svg-mono small">NEXT-Q pkg</text>
-        </g>
-      )}
-
-      <text x={laneX} y={334} className="lv-phase small">{t < 5600 ? "TURN N" : "TURN N+1 · prepared while you spoke"}</text>
-      <text x={laneX} y={398} className="svg-note">
-        The fast lane replies in 0.9 s while the heavy analysis keeps running — depth never costs latency.
-      </text>
+      <text x={22} y={414} className="svg-note">The foreground question ships now; the validated deep-analysis packet updates a later turn.</text>
     </svg>
   );
 }
@@ -445,14 +474,14 @@ export function FastLaneGraphic({ a }: { a: boolean }) {
 /* ---------- 5 · AGENT PANEL — four analysts, working concurrently ---------- */
 
 const AGENTS = [
-  { name: "CONCEPT", find: "explains consistent hashing correctly", val: 0.82, done: 3400 },
-  { name: "WEAKNESS", find: "no mention of the failover path", val: 0.61, done: 4300 },
-  { name: "REASONING", find: "reasons from constraints, not recall", val: 0.78, done: 5200 },
+  { name: "CONCEPT", find: "consistent hashing is explained", val: 0.82, done: 3400 },
+  { name: "WEAKNESS", find: "failover mechanism is missing", val: 0.61, done: 4300 },
+  { name: "REASONING", find: "reasoning follows system constraints", val: 0.78, done: 5200 },
 ];
 const CLAIMS = [
   { label: "Redis session sharding", ok: true },
   { label: "Dual-lane orchestration", ok: true },
-  { label: "“Led team of 8”", ok: false },
+  { label: "Team-of-eight ownership", ok: false },
   { label: "Playwright e2e suite", ok: true },
 ];
 
@@ -486,9 +515,6 @@ export function AgentsGraphic({ a }: { a: boolean }) {
             <text x={46} y={130 + i * 86} className="svg-mono tinytext">{finding}{t > start + 300 && !complete ? caret(t) : ""}</text>
             <rect x={46} y={140 + i * 86} width={248} height={5} rx={2.5} className="lv-track thin" />
             <rect x={46} y={140 + i * 86} width={248 * ag.val * p} height={5} rx={2.5} className="lv-bar" />
-            {complete && (
-              <circle cx={330 + ((t - ag.done) / 3) % 280} cy={123 + i * 86} r={3.4} className="lv-pulse" style={{ opacity: 0.7 }} />
-            )}
           </g>
         );
       })}
@@ -497,7 +523,7 @@ export function AgentsGraphic({ a }: { a: boolean }) {
       <g className="lv-box">
         <rect x={330} y={86} width={280} height={244} rx={12} />
         <text x={348} y={112} className="svg-label small">DISCREPANCY AGENT</text>
-        <text x={348} y={130} className="svg-sub">holds the résumé · checks every claim</text>
+        <text x={348} y={130} className="svg-sub">checks résumé claims against live answers</text>
         {CLAIMS.map((c, i) => {
           const s = 2200 + i * 1050;
           const scanning = t >= s && t < s + 780;
@@ -506,7 +532,7 @@ export function AgentsGraphic({ a }: { a: boolean }) {
             <g key={c.label}>
               {scanning && <rect x={342} y={142 + i * 40} width={256} height={32} rx={7} className="scanline" style={{ opacity: 0.4 + 0.5 * pulse(t, 420) }} />}
               <text x={352} y={163 + i * 40} className="svg-mono tinytext">{c.label}</text>
-              {scanning && <text x={594} y={163 + i * 40} textAnchor="end" className="svg-sub tiny">probing…</text>}
+              {scanning && <text x={594} y={163 + i * 40} textAnchor="end" className="svg-sub">probing…</text>}
               {stamped && (
                 <text x={594} y={163 + i * 40} textAnchor="end" className={c.ok ? "tick ok" : "tick bad"} style={rise(eph(t, s + 780, s + 1000), 4)}>
                   {c.ok ? "✓ verified" : "✗ unverified"}
@@ -515,7 +541,7 @@ export function AgentsGraphic({ a }: { a: boolean }) {
             </g>
           );
         })}
-        <text x={348} y={318} className="svg-sub" style={{ opacity: t > 6600 ? 1 : 0 }}>3 of 4 claims held under live probing</text>
+        <text x={348} y={318} className="svg-sub" style={{ opacity: t > 6600 ? 1 : 0 }}>Claim status links to transcript evidence.</text>
       </g>
 
       {/* converging output */}
@@ -523,7 +549,7 @@ export function AgentsGraphic({ a }: { a: boolean }) {
       {[0, 1, 2, 3].map((i) => (
         <circle key={i} cx={40 + ((t / 4 + i * 140) % 560)} cy={368} r={3.2} className="lv-pulse" style={{ opacity: t > 3400 ? 0.8 : 0 }} />
       ))}
-      <text x={320} y={392} textAnchor="middle" className="svg-sub">every signal streams to the orchestrator, every turn</text>
+      <text x={320} y={392} textAnchor="middle" className="svg-sub">Concurrent findings converge into the next-question decision.</text>
     </svg>
   );
 }
@@ -592,14 +618,15 @@ export function OrchestratorGraphic({ a }: { a: boolean }) {
   const landed = ORCH_IN.filter((_, i) => t > 900 + i * 480 + 700).length;
   const reason =
     cycle === 0
-      ? "depth reached on retrieval claim → ask the prepared follow-up"
-      : "failover gap + weakness signal → escalate to a deeper probe";
+      ? "retrieval depth confirmed → use the prepared follow-up"
+      : "failover gap detected → promote a deeper probe";
   const reasonTxt = typed(reason, t, 3400, 5700);
   const decided = t > 6000;
   const chosen = cycle === 0 ? 0 : 1;
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
+      <text x={320} y={18} textAnchor="middle" className="svg-sub">SPECIALIST AGENTS FIRE IN PARALLEL · ONE GOVERNED DECISION</text>
       {ORCH_IN.map((s, i) => {
         const y = 48 + i * 62;
         const fireAt = 900 + i * 480;
@@ -627,12 +654,12 @@ export function OrchestratorGraphic({ a }: { a: boolean }) {
           const ang = t / 320 + (i * Math.PI * 2) / 3;
           return <circle key={i} cx={q(372 + Math.cos(ang) * 30)} cy={q(192 + Math.sin(ang) * 30)} r={3.4} className="lv-pulse" />;
         })}
-        <text x={372} y={188} textAnchor="middle" className="svg-label">ORCH.</text>
-        <text x={372} y={204} textAnchor="middle" className="svg-sub">{landed < 5 ? `${landed}/5 signals` : "resolving"}</text>
+        <text x={372} y={188} textAnchor="middle" className="svg-label">DECIDE</text>
+        <text x={372} y={204} textAnchor="middle" className="svg-sub">{landed < 5 ? `${landed}/5 inputs` : "route ready"}</text>
       </g>
 
       {/* decision routes */}
-      {["ASK NOW", "ESCALATE"].map((d, i) => {
+      {["ASK NEXT", "DEEPER PROBE"].map((d, i) => {
         const y = i === 0 ? 96 : 288;
         const isChosen = decided && chosen === i;
         const p = eph(t, 6000, 6500);
@@ -644,7 +671,7 @@ export function OrchestratorGraphic({ a }: { a: boolean }) {
             <g className={`lv-node ${isChosen ? "is-live" : ""}`} style={{ opacity: isChosen || !decided ? 1 : 0.35 }}>
               <rect x={520} y={y} width={104} height={44} rx={10} />
               <text x={572} y={y + 19} textAnchor="middle" className="svg-label small">{d}</text>
-              <text x={572} y={y + 35} textAnchor="middle" className="svg-sub tiny">{i === 0 ? "fast lane" : "deeper probe"}</text>
+              <text x={572} y={y + 35} textAnchor="middle" className="svg-sub">{i === 0 ? "ready question" : "future path"}</text>
             </g>
           </g>
         );
@@ -652,15 +679,15 @@ export function OrchestratorGraphic({ a }: { a: boolean }) {
 
       {/* live reasoning trace */}
       <g className="lv-box">
-        <rect x={186} y={330} width={438} height={58} rx={10} />
-        <text x={200} y={352} className="svg-sub">ORCHESTRATOR REASONING · logged every turn</text>
-        <text x={200} y={372} className="svg-mono tinytext">{reasonTxt}{t > 3400 && t < 5800 ? caret(t) : ""}</text>
+        <rect x={186} y={338} width={438} height={56} rx={10} />
+        <text x={200} y={359} className="svg-sub">WHY THIS ROUTE · REVIEWABLE AFTER THE INTERVIEW</text>
+        <text x={200} y={379} className="svg-mono tinytext">{reasonTxt}{t > 3400 && t < 5800 ? caret(t) : ""}</text>
       </g>
       <text x={30} y={382} className="svg-sub" style={{ opacity: decided ? 1 : 0 }}>
         decision:{" "}
       </text>
       <text x={30} y={400} className="svg-mono small" style={{ opacity: decided ? 1 : 0 }}>
-        {chosen === 0 ? "ASK NOW ✓" : "ESCALATE ✓"}
+        {chosen === 0 ? "ASK NEXT ✓" : "DEEPER PROBE ✓"}
       </text>
     </svg>
   );
@@ -672,28 +699,27 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 10600;
   const t = el % L;
-  const cycle = Math.floor(el / L) % 2; // odd cycles: Cartesia fails over
   const SLOW = 4;
   const rows = [
-    { label: "STT partial", ms: 180, start: 600 },
-    { label: "orchestrate", ms: 240, start: 600 + 180 * SLOW },
-    { label: "TTS first byte", ms: 320, start: 600 + 420 * SLOW },
+    { key: "stt", label: "live transcript", ms: 180, start: 600 },
+    { key: "route", label: "question route", ms: 240, start: 600 + 180 * SLOW },
+    { key: "tts", label: "primary speech", ms: 320, start: 600 + 420 * SLOW },
   ];
   const failAt = rows[2].start + 320 * SLOW * 0.35;
-  const failed = cycle === 1 && t > failAt;
+  const failed = t > failAt;
   const fbStart = failAt + 250;
   const fbMs = 290;
-  const doneAt = cycle === 0 ? rows[2].start + 320 * SLOW : fbStart + fbMs * SLOW;
+  const doneAt = fbStart + fbMs * SLOW;
 
   let total = 0;
   for (const r of rows) {
-    if (cycle === 1 && r.label === "TTS first byte") {
+    if (r.key === "tts") {
       total += 320 * 0.35 * ph(t, r.start, failAt);
     } else {
       total += r.ms * ph(t, r.start, r.start + r.ms * SLOW);
     }
   }
-  if (cycle === 1) total += fbMs * ph(t, fbStart, fbStart + fbMs * SLOW);
+  total += fbMs * ph(t, fbStart, fbStart + fbMs * SLOW);
 
   const speakStart = doneAt + 500;
   const speaking = t > speakStart && t < speakStart + 2800;
@@ -702,39 +728,41 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
   const SCX = 0.55;
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={40} y={44} className="lv-phase small">ONE REAL TURN · REPLAYED AT 0.25× SPEED</text>
+      <text x={40} y={44} className="lv-phase small">VOICE DELIVERY · CACHE-FIRST WITH PROVIDER RECOVERY</text>
       <g className="lv-chip">
-        <rect x={470} y={26} width={140} height={44} rx={10} />
-        <text x={484} y={44} className="svg-sub">running total</text>
-        <text x={484} y={62} className="svg-mono">{fmtMs(total)}</text>
+        <rect x={452} y={26} width={158} height={44} rx={10} />
+        <text x={466} y={44} className="svg-sub">MODEL ROUTER</text>
+        <text x={466} y={62} className="svg-mono tinytext">
+          {t > doneAt ? "fallback delivered" : failed ? "fallback engaged" : total > 0 ? "primary active" : "fallback armed"}
+        </text>
       </g>
 
       {rows.map((r, i) => {
-        const isTts = r.label === "TTS first byte";
-        const prog = cycle === 1 && isTts ? Math.min(0.35, ph(t, r.start, failAt) * 0.35) : ph(t, r.start, r.start + r.ms * SLOW);
+        const isTts = r.key === "tts";
+        const prog = isTts ? Math.min(0.35, ph(t, r.start, failAt) * 0.35) : ph(t, r.start, r.start + r.ms * SLOW);
         const x0 = 200 + rows.slice(0, i).reduce((s, q) => s + q.ms * SCX, 0);
         return (
           <g key={r.label}>
-            <text x={190} y={106 + i * 52} textAnchor="end" className="svg-mono small">{cycle === 1 && isTts ? "Cartesia TTS" : r.label}</text>
+            <text x={190} y={106 + i * 52} textAnchor="end" className="svg-mono small">{r.label}</text>
             <rect x={x0} y={92 + i * 52} width={r.ms * SCX} height={20} rx={6} className="lv-track" />
-            <rect x={x0} y={92 + i * 52} width={r.ms * SCX * prog} height={20} rx={6} className={`lv-bar ${cycle === 1 && isTts && failed ? "bad" : ""}`} />
-            {prog > 0 && prog < 1 && !(cycle === 1 && isTts && failed) && (
+            <rect x={x0} y={92 + i * 52} width={r.ms * SCX * prog} height={20} rx={6} className={`lv-bar ${isTts && failed ? "bad" : ""}`} />
+            {prog > 0 && prog < 1 && !(isTts && failed) && (
               <text x={x0 + r.ms * SCX * prog + 6} y={106 + i * 52} className="svg-mono tinytext">{fmtMs(r.ms * prog)}</text>
             )}
-            {cycle === 1 && isTts && failed && (
-              <text x={x0 + r.ms * SCX * 0.35 + 8} y={106 + i * 52} className="tick bad">✗ 400 ms cap hit</text>
+            {isTts && failed && (
+              <text x={x0 + r.ms * SCX * 0.35 + 8} y={106 + i * 52} className="tick bad">✗ timeout → reroute</text>
             )}
           </g>
         );
       })}
 
-      {/* automatic fallback route, odd cycles */}
-      {cycle === 1 && t > fbStart - 200 && (
+      {/* automatic fallback route after the primary provider crosses its cap */}
+      {t > fbStart - 200 && (
         <g style={rise(eph(t, fbStart - 200, fbStart + 300))}>
-          <text x={190} y={106 + 3 * 52} textAnchor="end" className="svg-mono small">ElevenLabs</text>
+          <text x={190} y={106 + 3 * 52} textAnchor="end" className="svg-mono small">fallback speech</text>
           <rect x={200 + 420 * SCX} y={92 + 3 * 52} width={fbMs * SCX} height={20} rx={6} className="lv-track" />
           <rect x={200 + 420 * SCX} y={92 + 3 * 52} width={fbMs * SCX * ph(t, fbStart, fbStart + fbMs * SLOW)} height={20} rx={6} className="lv-bar warm" />
-          <text x={196 + 420 * SCX} y={126 + 3 * 52} className="svg-sub tiny">automatic fallback — no human, no retry logic exposed</text>
+          <text x={196 + 420 * SCX} y={126 + 3 * 52} className="svg-sub">automatic provider recovery</text>
         </g>
       )}
 
@@ -743,16 +771,14 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
         <g className="lv-stamp" style={rise(eph(t, doneAt + 150, doneAt + 550), 6)}>
           <rect x={40} y={244} width={180} height={40} rx={9} />
           <text x={130} y={262} textAnchor="middle" className="svg-label small">
-            {cycle === 0 ? "740 ms · ✓ in budget" : "852 ms · ✓ in budget"}
+            WITHIN TURN BUDGET ✓
           </text>
-          <text x={130} y={277} textAnchor="middle" className="svg-sub tiny">
-            {cycle === 0 ? "260 ms headroom" : "fallback fired, budget held"}
-          </text>
+          <text x={130} y={277} textAnchor="middle" className="svg-sub">fallback recovered the turn</text>
         </g>
       )}
 
-      {/* prepared-audio cache — the question was already synthesized */}
-      <text x={40} y={302} className="svg-sub tiny">PREPARED AUDIO CACHE · background lane keeps it warm</text>
+      {/* prepared-audio cache — likely future questions are synthesized in advance */}
+      <text x={40} y={302} className="svg-sub">PREPARED AUDIO CACHE · CHECKED BEFORE A PROVIDER CALL</text>
       {["arch probe", "ownership", "failure probe", "stale-state"].map((c2, i) => {
         const hit = i === 2 && t > rows[1].start + 240 * SLOW;
         return (
@@ -766,11 +792,11 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
       })}
 
       {/* the voice actually speaks */}
-      <text x={40} y={362} className="svg-sub">SPOKEN TO CANDIDATE</text>
+      <text x={40} y={362} className="svg-sub">VOICE RESPONSE TO CANDIDATE</text>
       <Wave x={200} y={346} w={130} h={26} bars={18} t={t} on={speaking ? 1 : 0.05} />
       <text x={344} y={364} className="svg-mono tinytext">{qText}{speaking ? caret(t) : ""}</text>
       <text x={40} y={400} className="svg-note">
-        Every cycle is one turn's real budget — the question was cached before it was needed, and on alternating replays the fallback fires.
+        Cache hit, primary synthesis, or fallback recovery all return through one guarded voice route.
       </text>
     </svg>
   );
@@ -779,16 +805,16 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
 /* ---------- 8 · EVIDENCE REPORT — assembled from moments, live ---------- */
 
 const MOMENTS = [
-  { at: "14:22", quote: "consistent hashing answer" },
-  { at: "18:05", quote: "failover probe recovery" },
-  { at: "22:41", quote: "claim check: 3 of 4 held" },
-  { at: "27:19", quote: "clear under 2 escalations" },
+  { at: "14:22", quote: "hashing explanation" },
+  { at: "18:05", quote: "failover recovery" },
+  { at: "22:41", quote: "résumé claim challenged" },
+  { at: "27:19", quote: "reasoning under pressure" },
 ];
 const REPORT_ROWS = [
-  ["Distributed state design", "evidence: 3 answers, depth 4/5"],
-  ["Failure-mode reasoning", "evidence: live probe, recovered well"],
-  ["Claim verification", "3 of 4 résumé claims held under probing"],
-  ["Communication under pressure", "clear at 2 escalations"],
+  ["Distributed-systems depth", "Linked to the answer and its follow-up probe."],
+  ["Failure-mode reasoning", "Linked to the failover probe and recovery."],
+  ["Résumé claim verification", "Claim status linked to the transcript."],
+  ["Reasoning under pressure", "Escalation turns remain directly reviewable."],
 ];
 
 export function ReportGraphic({ a }: { a: boolean }) {
@@ -799,12 +825,12 @@ export function ReportGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={30} y={40} className="svg-sub">INTERVIEW TRANSCRIPT · moments</text>
+      <text x={30} y={40} className="svg-sub">SOURCE MOMENTS · TIMESTAMPS</text>
       {MOMENTS.map((m, i) => (
         <g key={m.at} className="lv-chip" style={rise(eph(t, 400 + i * 420, 800 + i * 420))}>
           <rect x={26} y={56 + i * 74} width={182} height={56} rx={10} />
           <text x={40} y={78 + i * 74} className="svg-mono tinytext">t = {m.at}</text>
-          <text x={40} y={96 + i * 74} className="svg-sub tiny">{m.quote}</text>
+          <text x={40} y={96 + i * 74} className="svg-sub">{m.quote}</text>
         </g>
       ))}
 
@@ -812,20 +838,21 @@ export function ReportGraphic({ a }: { a: boolean }) {
       <g className="lv-box">
         <rect x={252} y={32} width={368} height={356} rx={14} />
         <text x={276} y={64} className="svg-label big">CANDIDATE EVIDENCE REPORT</text>
-        <text x={276} y={84} className="svg-sub">interview #{count} · not a vibe score — a ledger</text>
-        {/* live meters — filling as the evidence assembles */}
+        <text x={276} y={84} className="svg-sub">interview #{count} · timestamp-linked evidence</text>
+        {/* completion checks — process state rather than invented scoring */}
         {[
-          ["EVIDENCE", 82],
-          ["COVERAGE", 72],
-          ["QUALITY", 86],
-        ].map(([k2, v], i) => {
+          ["TRACE LINKS", "mapped"],
+          ["SKILL COVERAGE", "mapped"],
+          ["CLAIM STATUS", "checked"],
+        ].map(([k2, status], i) => {
           const p = eph(t, 1600 + i * 300, 3400 + i * 300);
+          const x = 276 + i * 106;
           return (
             <g key={String(k2)}>
-              <text x={276 + i * 118} y={104} className="svg-sub tiny">{k2}</text>
-              <text x={352 + i * 118} y={104} textAnchor="end" className="svg-mono tinytext">{Math.round(Number(v) * p)}%</text>
-              <rect x={276 + i * 118} y={109} width={76} height={5} rx={2.5} className="lv-track thin" />
-              <rect x={276 + i * 118} y={109} width={q(76 * (Number(v) / 100) * p)} height={5} rx={2.5} className="lv-bar" />
+              <text x={x} y={103} className="svg-sub">{k2}</text>
+              <text x={x + 96} y={118} textAnchor="end" className="svg-mono tinytext">{p === 1 ? status : "linking"}</text>
+              <rect x={x} y={123} width={96} height={5} rx={2.5} className="lv-track thin" />
+              <rect x={x} y={123} width={q(96 * p)} height={5} rx={2.5} className="lv-bar" />
             </g>
           );
         })}
@@ -837,7 +864,7 @@ export function ReportGraphic({ a }: { a: boolean }) {
             <g key={r[0]}>
               {link > 0 && (
                 <path
-                  d={`M 208 ${84 + i * 74} C 232 ${84 + i * 74} 236 ${128 + i * 54} 252 ${130 + i * 54}`}
+                  d={`M 208 ${84 + i * 74} C 232 ${84 + i * 74} 236 ${142 + i * 54} 252 ${144 + i * 54}`}
                   className="lv-edge win"
                   pathLength={100}
                   strokeDasharray="100 100"
@@ -846,9 +873,9 @@ export function ReportGraphic({ a }: { a: boolean }) {
                 />
               )}
               <g style={rise(p, 8)}>
-                <text x={276} y={134 + i * 54} className="svg-mono small">{r[0]}</text>
-                <text x={276} y={151 + i * 54} className="svg-sub tiny">{r[1]}</text>
-                <text x={596} y={140 + i * 54} textAnchor="end" className="tick ok">✓</text>
+                <text x={276} y={148 + i * 54} className="svg-mono small">{r[0]}</text>
+                <text x={276} y={165 + i * 54} className="svg-sub">{r[1]}</text>
+                <text x={596} y={154 + i * 54} textAnchor="end" className="tick ok">✓</text>
               </g>
             </g>
           );
@@ -862,9 +889,109 @@ export function ReportGraphic({ a }: { a: boolean }) {
           }}
         >
           <rect x={356} y={336} width={208} height={40} rx={9} />
-          <text x={460} y={361} textAnchor="middle" className="svg-label">250+ INTERVIEWS</text>
+          <text x={460} y={361} textAnchor="middle" className="svg-label">RECRUITER READY</text>
         </g>
       </g>
+    </svg>
+  );
+}
+
+/* ---------- 9 · OFFLINE EVALUATION — traces become guarded revisions ---------- */
+
+const INTERVIEW_EVALS = [
+  ["QUESTION VALUE", "CHECKED"],
+  ["EVIDENCE COVERAGE", "CHECKED"],
+  ["ROUTE QUALITY", "CHECKED"],
+  ["TONE + SAFETY", "PASS"],
+] as const;
+
+export function EvaluationLoopGraphic({ a }: { a: boolean }) {
+  const el = useSim(a);
+  const L = 10400;
+  const t = el % L;
+  const traceP = eph(t, 500, 2200);
+  const evalP = eph(t, 1900, 4800);
+  const candidateP = eph(t, 4600, 6500);
+  const regressionP = eph(t, 6400, 8200);
+  const releaseP = eph(t, 8100, 9000);
+
+  return (
+    <svg viewBox="0 0 640 420" className="op-svg">
+      <text x={24} y={28} className="lv-phase small">OFFLINE RL OBSERVABILITY + REFINEMENT</text>
+      <text x={616} y={28} textAnchor="end" className="svg-sub">human-gated · never live self-training</text>
+
+      <g className={`lv-node ${traceP < 1 ? "is-live" : ""}`}>
+        <rect x={24} y={58} width={138} height={116} rx={11} />
+        <text x={93} y={82} textAnchor="middle" className="svg-label small">COMPLETED RUN</text>
+        {["turn traces", "route decisions", "token + latency", "report evidence"].map((label, index) => (
+          <g key={label}>
+            <circle cx={40} cy={105 + index * 18} r={2.7} className="lv-pulse" style={{ opacity: traceP }} />
+            <text x={50} y={109 + index * 18} className="svg-mono tinytext">{label}</text>
+          </g>
+        ))}
+      </g>
+
+      <path d="M 162 116 C 184 116 190 116 210 116" className="lv-edge win" style={{ opacity: traceP }} />
+      {traceP > 0 && traceP < 1 && <circle cx={q(162 + traceP * 48)} cy={116} r={4.2} className="lv-pulse" />}
+
+      <g className="lv-box hot">
+        <rect x={210} y={58} width={194} height={202} rx={12} />
+        <text x={228} y={82} className="svg-label small">AGENT EVALUATION HARNESS</text>
+        {INTERVIEW_EVALS.map(([label, value], index) => {
+          const rowP = eph(t, 2100 + index * 480, 2900 + index * 480);
+          return (
+            <g key={label} style={{ opacity: 0.28 + rowP * 0.72 }}>
+              <text x={228} y={111 + index * 34} className="svg-sub">{label}</text>
+              <rect x={228} y={119 + index * 34} width={116} height={5} rx={2.5} className="lv-track thin" />
+              <rect x={228} y={119 + index * 34} width={116 * rowP} height={5} rx={2.5} className="lv-bar" />
+              <text x={392} y={123 + index * 34} textAnchor="end" className="tick ok">{value}</text>
+            </g>
+          );
+        })}
+        <text x={228} y={242} className="svg-sub" style={{ opacity: evalP }}>QUALITY FLAGS</text>
+        <text x={228} y={255} className="svg-mono tinytext" style={{ opacity: evalP }}>difficulty · clarity · bias · tone</text>
+      </g>
+
+      <g className={`lv-node ${candidateP > 0 && regressionP === 0 ? "is-live" : ""}`}>
+        <rect x={438} y={58} width={178} height={202} rx={12} />
+        <text x={527} y={82} textAnchor="middle" className="svg-label small">REVISION CANDIDATES</text>
+        {[
+          ["PROMPT", "probe wording v18"],
+          ["ROUTER", "fast/deep threshold"],
+          ["POLICY", "tone + guard rules"],
+          ["CONFIG", "token envelope"],
+        ].map(([label, value], index) => (
+          <g key={label} className={`lv-chip ${candidateP > (index + 1) / 5 ? "win" : ""}`}>
+            <rect x={452} y={96 + index * 36} width={150} height={28} rx={7} />
+            <text x={462} y={107 + index * 36} className="svg-sub">{label}</text>
+            <text x={594} y={120 + index * 36} textAnchor="end" className="svg-mono tinytext">{value}</text>
+          </g>
+        ))}
+      </g>
+      <path d="M 404 158 L 438 158" className="lv-edge win" style={{ opacity: candidateP }} />
+
+      <g className="lv-box">
+        <rect x={24} y={292} width={476} height={92} rx={11} />
+        <text x={42} y={316} className="svg-label small">REGRESSION RELEASE GATE</text>
+        {["contract tests", "candidate-safe replay", "latency + token budget", "question-policy checks"].map((label, index) => (
+          <g key={label} className={`lv-chip ${regressionP > (index + 1) / 5 ? "win" : ""}`}>
+            <rect x={42 + (index % 2) * 216} y={328 + Math.floor(index / 2) * 28} width={202} height={22} rx={6} />
+            <text x={52 + (index % 2) * 216} y={343 + Math.floor(index / 2) * 28} className="svg-mono tinytext">
+              {regressionP > (index + 1) / 5 ? "✓ " : "… "}{label}
+            </text>
+          </g>
+        ))}
+      </g>
+
+      <g className={`lv-stamp ${releaseP > 0 ? "big" : ""}`} style={rise(releaseP, 7)}>
+        <rect x={520} y={292} width={96} height={92} rx={11} />
+        <text x={568} y={321} textAnchor="middle" className="svg-sub">HUMAN-GATED</text>
+        <text x={568} y={344} textAnchor="middle" className="svg-label small">VERSION</text>
+        <text x={568} y={363} textAnchor="middle" className="tick ok">v-next ✓</text>
+      </g>
+
+      <path d="M 568 292 C 568 270 527 270 527 260" className="lv-edge" style={{ opacity: releaseP * 0.55 }} />
+      <text x={24} y={408} className="svg-note">Trace → evaluate → refine → replay → approve. Behavior remains inspectable across versions.</text>
     </svg>
   );
 }
@@ -875,9 +1002,9 @@ const STEPS: StepDef[] = [
   {
     label: "The loop",
     sub: "high-level architecture",
-    pilotTitle: "A voice-to-voice interview loop that closes in under a second",
+    pilotTitle: "A live answer becomes the next question in one continuous loop",
     pilotBody:
-      "You're watching a real turn replay: the candidate speaks, their words become streaming text, an orchestrator decides the next move, and a synthesized voice answers back — a complete loop, every turn, fast enough to feel like a person. Everything that follows lives inside this loop.",
+      "Speech is transcribed as it arrives. The multi-agent decision engine evaluates the turn, selects the next question, and returns it over the real-time voice channel — the complete runtime behind each interview turn.",
     metrics: [
       { k: "turn loop", v: "< 1 s" },
       { k: "interviews run", v: "250+" },
@@ -888,35 +1015,35 @@ const STEPS: StepDef[] = [
   {
     label: "Streaming STT",
     sub: "hearing, live",
-    pilotTitle: "Words land as they're spoken, not after",
+    pilotTitle: "Reasoning starts while the candidate is still speaking",
     pilotBody:
-      "Deepgram streaming transcription with tuned endpointing feeds the system partial text every ~180 ms — watch the hypothesis revise itself mid-word before finals commit with per-word confidence. The interview never waits for silence to start thinking.",
+      "Deepgram streams a live transcript while the answer is in progress, then commits a stable final with word-level confidence. Downstream analysis starts early, but only committed text enters interview state and recruiter evidence.",
     metrics: [
       { k: "partial latency", v: "~180 ms" },
       { k: "transcription accuracy", v: "95%+" },
-      { k: "endpointing", v: "room-tuned" },
+      { k: "state write", v: "stable finals" },
     ],
     graphic: (a) => <SttGraphic a={a} />,
   },
   {
     label: "Trajectory map",
     sub: "the interview plan",
-    pilotTitle: "The résumé is compiled into a map of probes before the first question",
+    pilotTitle: "Every answer updates a structured interview path",
     pilotBody:
-      "Claims are parsed out of the résumé, validated, and expanded into a branching question tree — then you watch a live answer get scored against every branch by semantic similarity. The strongest edge wins, and the map grows a new frontier.",
+      "Résumé claims seed an interview map before the session begins. Each live answer is matched to valid probe branches; the best route becomes the next question while deeper findings expand the future path.",
     metrics: [
       { k: "built from", v: "résumé claims" },
       { k: "routing signal", v: "semantic similarity" },
-      { k: "hydration", v: "async, non-blocking" },
+      { k: "map build", v: "async, non-blocking" },
     ],
     graphic: (a) => <TrajectoryGraphic a={a} />,
   },
   {
     label: "Dual-lane engine",
     sub: "why it feels instant",
-    pilotTitle: "Reply now; think in parallel",
+    pilotTitle: "The next question ships while deeper analysis continues",
     pilotBody:
-      "Watch the race: the fast lane completes its reply at 900 ms while the background lane is still analyzing. The heavy lane finishes seconds later and drops a ready-made next-question package into the queue — consumed the instant the next turn starts.",
+      "The foreground path routes a safe next question in about 900 ms. In parallel, concept, weakness, discrepancy, and reasoning agents build a validated question packet and promote it into a later branch of the interview map.",
     metrics: [
       { k: "fast-lane reply", v: "< 900 ms" },
       { k: "state", v: "Redis + in-memory fallback" },
@@ -927,22 +1054,22 @@ const STEPS: StepDef[] = [
   {
     label: "Agent panel",
     sub: "background lane",
-    pilotTitle: "Four analysts listen to every answer",
+    pilotTitle: "Four specialist agents inspect the same answer in parallel",
     pilotBody:
-      "Concept, weakness, and reasoning agents score the turn concurrently — you can watch their findings being written. The discrepancy agent holds the résumé the whole time, probing claim after claim until every one is verified or flagged.",
+      "Concept depth, weaknesses, reasoning quality, and résumé consistency are evaluated concurrently. Their findings remain linked to the turn that produced them and feed the next-question decision.",
     metrics: [
       { k: "agents per turn", v: "4 + evaluator" },
       { k: "claim checks", v: "per-claim ✓/✗" },
-      { k: "telemetry", v: "JSONL, per turn" },
+      { k: "observability", v: "per-turn traces" },
     ],
     graphic: (a) => <AgentsGraphic a={a} />,
   },
   {
     label: "Orchestrator",
     sub: "signals converge",
-    pilotTitle: "A network of judgments, resolved into one next move",
+    pilotTitle: "Specialist findings resolve into one governed next move",
     pilotBody:
-      "Five signals land on the fusion core one by one, its reasoning writes itself out in real time, and the decision fires — ask now, or escalate. Watch two replays and you'll see both branches taken, because the decision depends on the evidence.",
+      "The decision graph fuses the live answer with specialist findings, applies question-policy and state guardrails, and routes the turn to ask next, probe deeper, or pivot. Its decision trace stays reviewable after the interview.",
     metrics: [
       { k: "inputs fused", v: "5 signals" },
       { k: "decision", v: "ask / escalate / pivot" },
@@ -953,9 +1080,9 @@ const STEPS: StepDef[] = [
   {
     label: "Voice out",
     sub: "closing the loop",
-    pilotTitle: "The whole turn fits inside a one-second budget",
+    pilotTitle: "Voice delivery stays recoverable when a provider slows or fails",
     pilotBody:
-      "A real turn's latency budget, replayed at quarter speed: streaming partials, orchestration, first byte of speech — with the running total on screen. On alternating replays Cartesia hits its cap and you watch the ElevenLabs fallback fire automatically. The budget still holds.",
+      "The runtime checks prepared audio first, routes uncached speech to the primary TTS provider, and automatically switches to the fallback when the primary crosses its timeout. Both paths rejoin the same guarded voice response.",
     metrics: [
       { k: "TTS route", v: "Cartesia → ElevenLabs" },
       { k: "first byte", v: "~320 ms" },
@@ -966,15 +1093,28 @@ const STEPS: StepDef[] = [
   {
     label: "Evidence report",
     sub: "the output",
-    pilotTitle: "An interview that ends in evidence, not impressions",
+    pilotTitle: "The recruiter receives conclusions that can be traced back",
     pilotBody:
-      "The report assembles itself from the transcript in front of you — each conclusion draws a visible line back to the moment that earned it. Which claims held, where depth was reached, how reasoning behaved under pressure. Run across 250+ interviews, backed by contract tests and Playwright end-to-end suites.",
+      "Every hiring signal links to a transcript timestamp: where technical depth was demonstrated, how failure modes were handled, and which résumé claims held under probing. The report supports inspection instead of relying on an aggregate impression.",
     metrics: [
       { k: "interviews", v: "250+" },
       { k: "report", v: "evidence-linked" },
       { k: "tests", v: "contract + e2e" },
     ],
     graphic: (a) => <ReportGraphic a={a} />,
+  },
+  {
+    label: "RL observability",
+    sub: "governed improvement",
+    pilotTitle: "Interview behavior improves through an offline, human-gated loop",
+    pilotBody:
+      "Completed-run traces are evaluated for question value, evidence coverage, route quality, tone, and safety. Prompt, router, policy, or token-envelope revisions must pass replay and regression gates before a human approves the next version — never through live self-training.",
+    metrics: [
+      { k: "evaluation", v: "trace-level" },
+      { k: "release", v: "human-gated" },
+      { k: "training", v: "offline only" },
+    ],
+    graphic: (a) => <EvaluationLoopGraphic a={a} />,
   },
 ];
 
@@ -985,12 +1125,12 @@ export function AntigravityChapter() {
       accent="#7ee0ff"
       kicker="PROJECT 01 · FLAGSHIP"
       title="Antigravity"
-      subtitle="An AI-native technical interviewer — a real-time voice system that turns a candidate's answers into evidence."
+      subtitle="Production-grade interview software built on a multi-agent decision engine: it automates technical interviews, adapts the question path in real time, and produces evidence-linked recruiter intelligence."
       steps={STEPS}
-      stepMs={9800}
+      stepMs={11600}
       footer={
         <div className="chapter-cta" id="antigravity-demo">
-          <p className="cta-lead">This system is real and running. Don't take the replay's word for it —</p>
+          <p className="cta-lead">This system is real and running. Don&apos;t take the replay&apos;s word for it —</p>
           <div className="cta-row">
             <a className="btn btn-primary" href="https://antigravity-gz2r.vercel.app" target="_blank" rel="noreferrer">
               ▶ Watch a real interview replay

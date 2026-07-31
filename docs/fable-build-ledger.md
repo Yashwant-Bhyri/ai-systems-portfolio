@@ -686,3 +686,41 @@ Operator Profile built per the session-7 plan above. Confirmed in browser:
 domain rows w/ animated glyphs, 11 core-weight dots, 7 evidence anchors, 8
 keyword-tray chips w/ 2 flaring, role spotlight cycling, Spark narrating the
 new section. Screenshot proof captured. tsc clean, zero fresh console errors.
+
+---
+
+## 2026-07-20 — Session 8 (Fable): PROFILE v2 — the SKILL-SPACE PROJECTION
+
+### User correction of v7
+Structure wrong, ingredients right. Requirements:
+1. Five EXPLORATIVE expertise domains, each with 3-4 top-notch keywords:
+   D1 Agentic Systems & Orchestration (LLM application engineering, enterprise
+      agent networks, orchestration decision engines, tool-calling/structured IO)
+   D2 Memory, Retrieval & Data Engineering (GraphRAG & graph agents, hybrid
+      retrieval pipelines, vectorized DBs HNSW/Faiss, data pipelines)
+   D3 Multimodal & Realtime AI (realtime voice AI, vision AI, streaming
+      perception WebRTC/WebSocket, full realtime agent loops)
+   D4 Application, Product & Enterprise Integration
+   D5 Evaluation, Observability, Optimization & Human-in-the-loop harnesses
+      (eval harnesses/LLM-judge, RL fine-tuning TRL + RL-style feedback loops,
+      tracing/cost/latency optimization, prompt & context engineering)
+2. CENTERPIECE: a scientific quant graphic — a point-cloud "projection of the
+   end-to-end AI/ML engineering skill spectrum" (~1,000 dots), five territories
+   claimed as cluster CONFIDENCE ELLIPSES (1σ fill + 2σ dashed — the visual
+   language of real embedding plots), overlapping near center; the OVERLAP =
+   him ("operating position" reticle). UNCLAIMED far-field regions labeled and
+   dim (chip & silicon, kernel engineering, pure theory, robotics control,
+   classical BI) — deliberately shows what he does NOT claim → credibility.
+3. Recruiter test: one page answers "is he the fit?" Roles stay (compact strip);
+   pinning a role emphasizes the territories it draws from (weights).
+4. Advanced terms deployed deliberately (RL via TRL distillation = real),
+   gorgeous/stunning/breathtaking bar. Tag: v8-skillmap.
+
+### Beat plan
+Cycle: D1→D5 each ~3.4 s (ellipse glows, its points brighten, keyword callout
+with evidence appears) → 6th beat: ALL territories glow, center reticle pulses
+"the overlap is me". Deterministic integer-math PRNG for points (SSR-safe).
+Colors = the five vx accents (lime/cyan/violet/amber/blue). Quant annotations:
+"SKILL-SPACE PROJECTION · n = 1,024 mapped skills · 5 territories claimed",
+axis labels "systems depth →" / "↑ product proximity". Keyword tray dropped
+(domains carry the keywords now).

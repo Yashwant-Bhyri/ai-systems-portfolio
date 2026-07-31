@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useTour, useStepper, useOnScreen } from "./director";
-import { useSim, ph, eph, pulse, noise, bez, typed, caret, rise, Wave, q } from "./live";
+import { useSim, eph, pulse, noise, bez, typed, caret, rise, Wave, q } from "./live";
 
 /* ---------- live research minis (V2's mini-pipeline language, made live) ---------- */
 
@@ -12,58 +12,58 @@ export function BenchMini({ idx, t }: { idx: number; t: number }) {
     const sweep = Math.floor(t / 140) % 18;
     return (
       <g>
-        <text x={10} y={18} className="svg-sub tiny">EDGE AUDIO PIPELINE · running</text>
-        <Wave x={10} y={30} w={58} h={30} bars={10} t={t} on={1} />
-        <text x={74} y={50} className="svg-sub tiny">→</text>
+        <text x={10} y={18} className="svg-sub tiny">EMBEDDED AUDIO INTELLIGENCE · LIVE</text>
+        <Wave x={10} y={30} w={50} h={30} bars={10} t={t} on={1} />
+        <text x={66} y={50} className="svg-sub tiny">→</text>
         {Array.from({ length: 18 }).map((_, c) => {
-          const cx = 88 + (c % 6) * 11;
+          const cx = 78 + (c % 6) * 10;
           const cy = 30 + Math.floor(c / 6) * 11;
           const lit = c === sweep;
           return <rect key={c} x={cx} y={cy} width={9} height={9} rx={2} className="lv-bar" style={{ opacity: lit ? 1 : 0.2 + 0.5 * noise(c * 3 + 1, t / 2) }} />;
         })}
-        <text x={88} y={78} className="svg-sub tiny">log-Mel · MFCC</text>
-        <text x={160} y={50} className="svg-sub tiny">→</text>
+        <text x={78} y={78} className="svg-sub tiny">log-Mel features</text>
+        <text x={146} y={50} className="svg-sub tiny">→</text>
         {[0, 1, 2, 3, 4, 5].map((n) => {
-          const nx = 176 + (n % 2) * 22;
+          const nx = 164 + (n % 2) * 20;
           const ny = 30 + Math.floor(n / 2) * 14;
           return <circle key={n} cx={nx} cy={ny} r={3.4} className="lv-hidnode" style={{ opacity: 0.35 + 0.65 * noise(n * 5 + 2, t / 1.5) }} />;
         })}
-        <text x={172} y={78} className="svg-sub tiny">YAMNet-derived</text>
-        <text x={226} y={50} className="svg-sub tiny">→</text>
+        <text x={158} y={78} className="svg-sub tiny">pruned model</text>
+        <text x={207} y={50} className="svg-sub tiny">→</text>
         <g className={`lv-chip ${Math.floor(t / 1600) % 2 ? "win" : ""}`}>
-          <rect x={240} y={32} width={68} height={30} rx={7} />
-          <text x={274} y={45} textAnchor="middle" className="svg-mono tinytext">INT8</text>
-          <text x={274} y={57} textAnchor="middle" className="svg-sub tiny">SoC NPU</text>
+          <rect x={220} y={32} width={88} height={30} rx={7} />
+          <text x={264} y={45} textAnchor="middle" className="svg-mono tinytext">TFLM INT8</text>
+          <text x={264} y={57} textAnchor="middle" className="svg-sub tiny">edge SoC</text>
         </g>
-        {[["93%+", 10], ["<10 ms", 88], ["14× smaller", 170]].map(([v, x]) => (
+        {[["95%+ accuracy", 10], ["sub-10 ms", 112], ["4× compression", 208]].map(([v, x]) => (
           <text key={String(v)} x={Number(x)} y={112} className="svg-mono tinytext">{v}</text>
         ))}
-        <text x={10} y={134} className="svg-sub tiny">inference {fmtTick(t)} — keyword {Math.floor(t / 800) % 2 ? "detected ✓" : "listening…"}</text>
+        <text x={10} y={136} className="svg-sub tiny">inference {fmtTick(t)} · {Math.floor(t / 800) % 2 ? "keyword detected ✓" : "listening…"}</text>
       </g>
     );
   }
   if (idx === 1) {
-    // webGLR: frame → segmentation + depth → shader, dual live/HQ lanes
+    // webGLR: SAM mask + INT8 monocular depth → five-texture shader
     const live = (t % 1000) / 1000;
     const hq = (t % 3200) / 3200;
     return (
       <g>
-        <text x={10} y={18} className="svg-sub tiny">BROWSER PERCEPTION → SHADER · live</text>
+        <text x={10} y={18} className="svg-sub tiny">SAM + INT8 DEPTH → WEBGL TEXTURE CONTRACT</text>
         <rect x={10} y={28} width={64} height={48} rx={6} className="lv-track" />
         <circle cx={q(24 + 36 * (0.5 + 0.5 * Math.sin(t / 800)))} cy={q(46 + 10 * Math.cos(t / 1100))} r={5} className="lv-pulse" />
-        <text x={10} y={90} className="svg-sub tiny">camera frame</text>
+        <text x={10} y={90} className="svg-sub tiny">camera</text>
         {[0, 1, 2].map((b2) => (
           <rect key={b2} x={90 + b2 * 15} y={30} width={12} height={44} rx={3} className="lv-bar" style={{ opacity: 0.3 + 0.6 * noise(b2 * 7 + 3, t / 2) }} />
         ))}
-        <text x={90} y={90} className="svg-sub tiny">seg mask</text>
+        <text x={84} y={90} className="svg-sub tiny">SAM mask</text>
         {[0, 1, 2, 3].map((d2) => (
           <rect key={d2} x={148} y={30 + d2 * 12} width={40} height={9} rx={3} className="lv-bar bg" style={{ opacity: 0.9 - d2 * 0.2 }} />
         ))}
-        <text x={148} y={90} className="svg-sub tiny">depth</text>
+        <text x={142} y={90} className="svg-sub tiny">Depth V2 · INT8</text>
         <g className="lv-chip win">
           <rect x={208} y={34} width={100} height={36} rx={8} />
-          <text x={258} y={49} textAnchor="middle" className="svg-mono tinytext">fused shader</text>
-          <text x={258} y={63} textAnchor="middle" className="svg-sub tiny">on-canvas</text>
+          <text x={258} y={49} textAnchor="middle" className="svg-mono tinytext">5-texture GPU bus</text>
+          <text x={258} y={63} textAnchor="middle" className="svg-sub tiny">mask · depth · control</text>
         </g>
         <text x={10} y={112} className="svg-mono tinytext">LIVE lane</text>
         <rect x={80} y={104} width={150} height={7} rx={3.5} className="lv-track thin" />
@@ -71,17 +71,17 @@ export function BenchMini({ idx, t }: { idx: number; t: number }) {
         <text x={10} y={130} className="svg-mono tinytext">HQ lane</text>
         <rect x={80} y={122} width={150} height={7} rx={3.5} className="lv-track thin" />
         <rect x={80} y={122} width={q(150 * hq)} height={7} rx={3.5} className="lv-bar warm" />
-        <text x={240} y={130} className="svg-sub tiny">zero build step</text>
+        <text x={238} y={130} className="svg-sub tiny">cut guard · cache</text>
       </g>
     );
   }
   if (idx === 2) {
-    // COL-VEO: storyboard state machine stepping, seed-locked regeneration
+    // COL-VEO: deterministic prompt compilation and provider-best-effort output
     const frame = Math.floor(t / 900) % 4;
     const regen = Math.floor(t / 3600) % 2 === 1;
     return (
       <g>
-        <text x={10} y={18} className="svg-sub tiny">STORYBOARD STATE MACHINE · {regen ? "regenerating, seed locked" : "generating"}</text>
+        <text x={10} y={18} className="svg-sub tiny">CONTROLLED VIDEO R&D · {regen ? "REGEN BRANCH" : "PROMPT STEERING"}</text>
         {[0, 1, 2, 3].map((f2) => (
           <g key={f2} className={`lv-node ${frame === f2 ? "is-live" : ""}`}>
             <rect x={10 + f2 * 70} y={30} width={60} height={44} rx={7} />
@@ -90,14 +90,51 @@ export function BenchMini({ idx, t }: { idx: number; t: number }) {
           </g>
         ))}
         <circle cx={q(40 + frame * 70 + 70 * ((t % 900) / 900) * (frame < 3 ? 1 : 0))} cy={84} r={3.4} className="lv-pulse" />
-        <g className="lv-chip win">
-          <rect x={10} y={98} width={104} height={24} rx={8} />
-          <text x={62} y={114} textAnchor="middle" className="svg-mono tinytext">seed 4271 🔒</text>
+        <g className={`lv-chip ${regen ? "win" : ""}`}>
+          <rect x={10} y={96} width={140} height={25} rx={8} />
+          <text x={80} y={112} textAnchor="middle" className="svg-mono tinytext">SOFT · reuse seed 4271</text>
         </g>
-        <text x={126} y={114} className="svg-sub tiny">15-axis prompt control</text>
-        <text x={10} y={140} className="svg-mono tinytext" style={{ opacity: regen ? 1 : 0.4 }}>
-          {regen ? "same seed → identical frames ✓" : "deterministic by construction"}
-        </text>
+        <g className={`lv-chip ${regen ? "" : "win"}`}>
+          <rect x={160} y={96} width={148} height={25} rx={8} />
+          <text x={234} y={112} textAnchor="middle" className="svg-mono tinytext">HARD · assign new seed</text>
+        </g>
+        <text x={10} y={136} className="svg-sub tiny">typed control layer · provider output remains best-effort</text>
+        <text x={10} y={148} className="svg-mono tinytext">PROJECT + SHOT STYLE + GLOBAL CONSISTENCY</text>
+      </g>
+    );
+  }
+  if (idx === 3) {
+    const role = Math.floor(t / 1300) % 3;
+    const blocked = Math.floor(t / 3600) % 2 === 1;
+    const risk = 42 + Math.round(38 * (0.5 + 0.5 * Math.sin(t / 1100)));
+    return (
+      <g>
+        <text x={10} y={18} className="svg-sub tiny">LALAMOVE R&D · BOUNDED AI OPERATIONS</text>
+        {['ADMIN', 'DRIVER', 'CUSTOMER'].map((label, index) => (
+          <g key={label} className={`lv-node ${role === index ? 'is-live' : ''}`}>
+            <rect x={10} y={30 + index * 31} width={66} height={24} rx={6} />
+            <text x={43} y={45 + index * 31} textAnchor="middle" className="svg-mono tinytext">{label}</text>
+            <path d={`M 76 ${42 + index * 31} L 98 70`} className="lv-edge" />
+          </g>
+        ))}
+        <g className="lv-node is-live">
+          <rect x={98} y={49} width={76} height={44} rx={8} />
+          <text x={136} y={67} textAnchor="middle" className="svg-label small">FLASK API</text>
+          <text x={136} y={82} textAnchor="middle" className="svg-sub tiny">role-gated</text>
+        </g>
+        <path d="M 174 62 L 197 49" className="lv-edge" />
+        <path d="M 174 80 L 197 106" className="lv-edge" />
+        <g className="lv-chip win">
+          <rect x={198} y={29} width={110} height={41} rx={8} />
+          <text x={253} y={45} textAnchor="middle" className="svg-mono tinytext">ROUTE RISK · {risk}</text>
+          <text x={253} y={60} textAnchor="middle" className="svg-sub tiny">weather + geospatial</text>
+        </g>
+        <g className={`lv-chip ${blocked ? 'win' : ''}`}>
+          <rect x={198} y={82} width={110} height={48} rx={8} />
+          <text x={253} y={99} textAnchor="middle" className="svg-mono tinytext">OPS COPILOT</text>
+          <text x={253} y={114} textAnchor="middle" className={blocked ? 'tick bad' : 'svg-sub tiny'}>{blocked ? 'unapproved intent · refused' : 'approved handler · running'}</text>
+        </g>
+        <text x={10} y={145} className="svg-sub tiny">Parameterized queries · observable actions · human-owned release</text>
       </g>
     );
   }
@@ -219,7 +256,7 @@ export function LogisticsGraphic({ a }: { a: boolean }) {
       </g>
 
       <text x={24} y={306} className="svg-note">
-        Live ops: role-gated requests, weather-reactive risk scoring — and a copilot that visibly refuses what it wasn't approved to do.
+        Role-gated APIs · weather-aware route risk · bounded copilot with visible refusals
       </text>
     </svg>
   );
@@ -229,17 +266,17 @@ const BENCH = [
   {
     name: "Optek TinyML Audio",
     what: "Keyword inference on custom silicon",
-    stats: "93%+ accuracy · <10 ms latency · 14× model compression · 700 MHz DSP + 16 MB SoC NPU",
+    stats: "95%+ accuracy · <10 ms latency · 4× compression · 200 KB runtime",
   },
   {
     name: "webGLR",
-    what: "Browser perception-to-shader pipeline",
+    what: "Browser-native perception-to-shader R&D",
     stats: "Segmentation + depth fused live · dual live/HQ lanes · zero build step",
   },
   {
     name: "COL-VEO",
-    what: "Deterministic AI video orchestration",
-    stats: "Storyboard state machine · 15-axis prompt control · seed-safe regeneration",
+    what: "Controlled generative video R&D",
+    stats: "15-axis prompt steering · same-seed soft regen · new-seed structural regen",
   },
   {
     name: "GraphRAG · BIRD-SQL · SLM distillation",

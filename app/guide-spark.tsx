@@ -16,38 +16,30 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const CHAPTER_LINES: Record<string, string> = {
-  top: "Hi — I'm Spark. Scroll, and I'll explain every system as it runs.",
-  profile: "This is what I'm built for — four target roles, five domains, and the proof lives one scroll down.",
-  projects: "Five systems, ordered for AI application & agent roles. The cards are touring themselves — or pick one.",
+  top: "Hi, I'm Spark. Scroll and I'll explain every system as it runs.",
+  profile: "Three target roles now map directly to checked capabilities and project evidence.",
+  projects: "Five systems, introduced in human terms first. The cards tour themselves, or you can choose one.",
   antigravity: "A real interview turn is replaying. Watch the loop close in under a second.",
   filmora: "One creative brief becomes a finished edit. Every stage here is the runtime actually working.",
   mindscape: "A clinical session flows through seven inspectable layers. Nothing reaches the clinician unvalidated.",
-  research: "Five research specimens plus the bounded ops copilot — each one is a live mini-pipeline.",
+  research: "Six separate engineering records share one spotlight. Each one is a live mini-pipeline.",
+  contact: "Every verified contact route is here. The remaining public handles can be activated when supplied.",
 };
-
-const SECTION_IDS = ["top", "profile", "projects", "antigravity", "filmora", "mindscape", "research"];
 
 type Watch = { section: string; step: string; title: string };
 
 function readDom(): Watch {
-  // active section = the one owning the viewport centre
   const mid = window.innerHeight / 2;
-  let section = "top";
-  for (const id of SECTION_IDS) {
-    const el = document.getElementById(id);
-    if (!el) continue;
-    const r = el.getBoundingClientRect();
-    if (r.top <= mid && r.bottom >= mid) {
-      section = id;
-      break;
-    }
-  }
+  const page = Array.from(document.querySelectorAll<HTMLElement>("[data-vx-page]")).find((node) => {
+    const rect = node.getBoundingClientRect();
+    return rect.top <= mid && rect.bottom >= mid;
+  });
+  const section = page?.dataset.chapter ?? page?.id ?? "top";
   let step = "";
   let title = "";
   if (["antigravity", "filmora", "mindscape"].includes(section)) {
-    const sec = document.getElementById(section);
-    const lit = sec?.querySelector<HTMLElement>('.vx-stage-rail button[data-active="true"] span');
-    const h3 = sec?.querySelector<HTMLElement>(".vx-story-copy h3");
+    const lit = page?.querySelector<HTMLElement>('.vx-stage-rail button[data-active="true"] span');
+    const h3 = page?.querySelector<HTMLElement>(".vx-story-copy h3");
     step = lit?.textContent ?? "";
     title = h3?.textContent ?? "";
   }
@@ -65,9 +57,13 @@ export function GuideSpark() {
   const lastStep = useRef("");
 
   useEffect(() => {
+    let restoreTimer = 0;
     try {
-      if (window.sessionStorage.getItem("spark-dismissed") === "1") setDismissed(true);
+      if (window.sessionStorage.getItem("spark-dismissed") === "1") {
+        restoreTimer = window.setTimeout(() => setDismissed(true), 0);
+      }
     } catch { /* no-op */ }
+    return () => window.clearTimeout(restoreTimer);
   }, []);
 
   // watch the page: active section, lit step, and where to look
@@ -79,7 +75,7 @@ export function GuideSpark() {
       setWatch(w);
       // gaze toward the active operational stage (or the hero deck)
       const target =
-        document.getElementById(w.section)?.querySelector(".vx-visual-window, .vx-deck-stage, .vx-research-grid") ?? null;
+        document.getElementById(w.section)?.querySelector(".vx-visual-window, .vx-deck-stage, .vx-research-feature-visual") ?? null;
       if (target) {
         const r = (target as HTMLElement).getBoundingClientRect();
         const dx = r.left + r.width / 2 - 90;
@@ -107,7 +103,7 @@ export function GuideSpark() {
     if (watch.step && watch.step !== lastStep.current) {
       lastStep.current = watch.step;
       const t = watch.title.length > 92 ? `${watch.title.slice(0, 89)}…` : watch.title;
-      setLine(`Under the microscope now — ${watch.step}. ${t}`);
+      setLine(`Under the microscope now: ${watch.step}. ${t}`);
       setTypedN(0);
     }
   }, [watch]);
@@ -138,7 +134,7 @@ export function GuideSpark() {
   }
 
   return (
-    <div className={`vx-spark-dock vx-accent-${accentFor(watch.section)} ${hopping ? "is-hopping" : ""}`} role="status" aria-live="polite">
+    <div className={`vx-spark-dock vx-accent-${accentFor(watch.section)} ${hopping ? "is-hopping" : ""}`} data-section={watch.section} role="status" aria-live="polite">
       <div className="vx-spark-bubble">
         {line.slice(0, typedN)}
         {typedN < line.length ? <i className="vx-type-caret" /> : null}

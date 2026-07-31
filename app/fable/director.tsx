@@ -54,15 +54,16 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const touringRef = useRef(touring);
   const activeRef = useRef(activeChapter);
   const driveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  touringRef.current = touring;
-  activeRef.current = activeChapter;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mq.matches);
     const onChange = () => setReducedMotion(mq.matches);
+    const initialSync = window.requestAnimationFrame(onChange);
     mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
+    return () => {
+      window.cancelAnimationFrame(initialSync);
+      mq.removeEventListener("change", onChange);
+    };
   }, []);
 
   const registerSection = useCallback((id: ChapterId, el: HTMLElement | null) => {
@@ -77,7 +78,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
         for (const e of entries) {
           if (e.isIntersecting) {
             const id = (e.target as HTMLElement).dataset.chapter as ChapterId;
-            if (id) setActiveChapter(id);
+            if (id) {
+              activeRef.current = id;
+              setActiveChapter(id);
+            }
           }
         }
       },
@@ -100,6 +104,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       const idx = CHAPTER_ORDER.indexOf(id);
       const next = CHAPTER_ORDER[idx + 1];
       if (!next) {
+        touringRef.current = false;
         setTouring(false);
         return;
       }
@@ -120,20 +125,22 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   const beginTour = useCallback(() => {
     setStarted(true);
+    touringRef.current = true;
     setTouring(true);
   }, []);
 
   const pauseTour = useCallback(() => {
     if (driveTimer.current) clearTimeout(driveTimer.current);
+    touringRef.current = false;
     setTouring(false);
   }, []);
 
   const resumeTour = useCallback(() => {
     setStarted(true);
+    touringRef.current = true;
     setTouring(true);
     // If the chapter on screen already played through, roll straight to the next.
     if (completed.current.has(activeRef.current)) {
-      touringRef.current = true;
       advanceFrom(activeRef.current, 700);
     }
   }, [advanceFrom]);
@@ -141,6 +148,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const restartTour = useCallback(() => {
     completed.current.clear();
     setStarted(true);
+    touringRef.current = true;
     setTouring(true);
     driveTo("hero");
   }, [driveTo]);
@@ -195,11 +203,14 @@ export function useStepper(
   const [step, setStep] = useState(0);
   const cycled = useRef(false);
   const firstCycleRef = useRef(onFirstCycle);
-  firstCycleRef.current = onFirstCycle;
+
+  useEffect(() => {
+    firstCycleRef.current = onFirstCycle;
+  }, [onFirstCycle]);
 
   useEffect(() => {
     if (!active) return;
-    setStep(0);
+    const reset = setTimeout(() => setStep(0), 0);
     let interval: ReturnType<typeof setInterval> | null = null;
     const kickoff = setTimeout(() => {
       interval = setInterval(() => {
@@ -214,6 +225,7 @@ export function useStepper(
       }, stepMs);
     }, startDelayMs);
     return () => {
+      clearTimeout(reset);
       clearTimeout(kickoff);
       if (interval) clearInterval(interval);
     };

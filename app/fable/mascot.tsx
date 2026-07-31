@@ -74,11 +74,10 @@ const GUIDES: Record<ChapterId, { name: string; accent: string; accessory: "none
 };
 
 function useTypedLines(lines: string[], key: string) {
-  const [text, setText] = useState("");
-  const [lineIdx, setLineIdx] = useState(0);
+  const [typed, setTyped] = useState(() => ({ key, text: "", lineIdx: 0 }));
+  const current = typed.key === key ? typed : { key, text: "", lineIdx: 0 };
+
   useEffect(() => {
-    setText("");
-    setLineIdx(0);
     let li = 0;
     let ci = 0;
     let alive = true;
@@ -89,13 +88,12 @@ function useTypedLines(lines: string[], key: string) {
       if (!line) return;
       if (ci < line.length) {
         ci += 1;
-        setText(line.slice(0, ci));
+        setTyped({ key, text: line.slice(0, ci), lineIdx: li });
         timer = setTimeout(step, 24);
       } else if (li < lines.length - 1) {
         timer = setTimeout(() => {
           li += 1;
           ci = 0;
-          setLineIdx(li);
           step();
         }, 1700);
       }
@@ -106,7 +104,7 @@ function useTypedLines(lines: string[], key: string) {
       clearTimeout(timer);
     };
   }, [key, lines]);
-  return { text, lineIdx };
+  return { text: current.text, lineIdx: current.lineIdx };
 }
 
 function GuideFace({ accent, accessory }: { accent: string; accessory: string }) {

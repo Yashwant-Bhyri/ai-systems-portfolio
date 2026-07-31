@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   useCallback,
   useEffect,
@@ -14,7 +15,6 @@ import {
   FilmoraOverview,
   MindScapeOverview,
 } from "./portfolio-visuals";
-import { GuideSpark } from "./guide-spark";
 import { ProfileSection } from "./profile-section";
 import {
   LiveAntigravityVisual,
@@ -39,11 +39,19 @@ type StoryStep = {
   label: string;
   title: string;
   explanation: string;
+  annotation?: string;
+  maturity?: string;
   input: string;
   operation: string;
   output: string;
   stack: readonly string[];
   proof?: string;
+};
+
+type ConclusionMetric = {
+  label: string;
+  value: string;
+  detail: string;
 };
 
 type OverviewComponent = ComponentType<{ active: number; onSelect: (index: number) => void }>;
@@ -54,45 +62,44 @@ const PROJECTS = [
     id: "antigravity",
     number: "01",
     brand: "ANTIGRAVITY",
-    category: "AI-native technical interviewing platform",
-    summary: "Live candidate answers become evidence-seeking follow-ups and an inspectable recruiter report.",
-    proof: ["250+ completed interviews", "voice-to-voice runtime", "real product replay"],
+    category: "Real-time AI-Native Interviewing Platform",
+    badge: "PRODUCTION-GRADE SOFTWARE PRODUCT",
+    summary: "Production-grade AI interview software built with a multi-agent orchestration and decision engine. It automates technical interviews at scale, adapts the live question path, and turns each turn into evidence-linked recruiter intelligence.",
+    proof: ["250+ completed interviews", "dual-lane agent runtime", "evidence-linked reports"],
+    architecture: ["Live voice turn", "Adaptive interview graph", "Agent convergence", "Recruiter evidence"],
     accent: "lime",
   },
   {
     id: "filmora",
     number: "02",
     brand: "WONDERSHARE FILMORA",
-    category: "Multimodal AI video-production runtime",
-    summary: "One creative brief becomes coordinated video, music, dialogue, captions, effects, and an editor-ready timeline.",
-    proof: ["700+ creative signals", "28% API-cost reduction", "multi-agent production DAG"],
+    category: "End-to-End Multimodal AI Production System",
+    badge: "AI APPLICATION ENGINEERING INTERNSHIP",
+    summary: "An end-to-end multimodal AI production runtime integrated into Filmora Enterprise. It combines real-time market research and product intelligence with memory, retrieval, function calling, and multimodal agent-planning graphs to produce editable media assets under guardrails and human approval.",
+    proof: ["research + product intelligence", "multimodal agent planning graph", "editable Filmora workflow"],
+    architecture: ["Research intelligence", "Memory + retrieval", "Multimodal agent graph", "Editable Filmora timeline"],
     accent: "violet",
   },
   {
     id: "mindscape",
     number: "03",
     brand: "MINDSCAPE",
-    category: "Multimodal clinical decision-support architecture",
-    summary: "Voice, paralinguistic events, affect, and clinical retrieval converge into evidence-grounded clinician support.",
-    proof: ["7-layer architecture", "hybrid clinical RAG", "NLI + rule validation"],
+    category: "Medical AI Clinician-Support Product",
+    badge: "MEDICAL AI R&D PROJECT",
+    summary: "A medical AI assistant for evidence-grounded, clinician-controlled mental-health screening and diagnostic review. It combines multimodal perception, longitudinal memory, clinical retrieval, validated reasoning, and traceable human review while the clinician retains final judgment.",
+    proof: ["traceable session evidence", "hybrid clinical retrieval", "clinician-controlled decisions"],
+    architecture: ["Session evidence", "Clinical retrieval", "Validated reasoning", "Clinician review"],
     accent: "cyan",
   },
   {
-    id: "logistics",
-    number: "04",
-    brand: "LOGISTICS AI OPS",
-    category: "Bounded AI operations copilot",
-    summary: "An AI copilot with explicit authority: approved intents, parameterized queries, and visible refusals for everything else.",
-    proof: ["role-based workflows", "bounded query contracts", "human-owned actions"],
-    accent: "amber",
-  },
-  {
     id: "research",
-    number: "05",
-    brand: "RESEARCH & SYSTEMS",
-    category: "Applied AI research and edge inference",
-    summary: "TinyML audio, multimodal Text-to-SQL, SLM distillation, and evaluation systems built around measurable behavior.",
-    proof: ["93%+ TinyML accuracy", "12,751+ SQL pairs", "31% fewer factual errors"],
+    number: "04",
+    brand: "RESEARCH ENGINEERING",
+    category: "Open-Source, Research & R&D Experience",
+    badge: "OPEN SOURCE · RESEARCH · R&D",
+    summary: "Six focused builds across open-source benchmark engineering, research internships, corporate R&D, browser-native perception, controlled generative video, and embedded intelligence—each presented through its mechanism, constraints, and evaluation evidence.",
+    proof: ["open-source benchmark contribution", "2 research experiences", "3 engineering internships"],
+    architecture: ["Problem + constraints", "Model or runtime", "Evaluation harness", "Engineering evidence"],
     accent: "blue",
   },
 ] as const;
@@ -107,11 +114,22 @@ const GALAXY_CLUSTERS: { cx: number; cy: number; terms: [string, number, number]
   { cx: 48, cy: 44, terms: [["Evaluation", -7, -6], ["Observability", 7, 2], ["Agent Evaluation", -4, 10], ["Guardrails", 8, -3]] },
 ];
 
+const GALAXY_ANCHORS = [
+  ["AI Systems Engineer", 64, 34],
+  ["Production Observability", 78, 28],
+  ["Reinforcement Learning", 88, 39],
+  ["Agent Memory", 72, 49],
+  ["Multimodal Reasoning", 88, 53],
+  ["Model Routing", 61, 57],
+] as const;
+
 const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
   {
     label: "Live interview",
     title: "The candidate speaks inside a controlled technical interview—not a chat form.",
     explanation: "The actual room owns turn-taking, microphone state, interruption recovery, and the visible exchange between candidate and AI interviewer.",
+    annotation: "Turn state coordinates the microphone, interruptions, and interviewer response so the live conversation remains recoverable.",
+    maturity: "PRODUCTION RUNTIME",
     input: "Active question + live candidate voice",
     operation: "Voice turn captured with session state",
     output: "Audio stream + committed turn metadata",
@@ -121,7 +139,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
   {
     label: "Streaming STT",
     title: "Partial transcripts arrive while the candidate is still speaking.",
-    explanation: "Deepgram emits provisional and final transcript events. Rolling text can start preparing the next turn before the answer is formally committed.",
+    explanation: "Deepgram streams partial hypotheses while the candidate speaks, then commits a stable transcript. Early text can warm the next-turn pipeline without entering the evidence record.",
+    annotation: "Partial text warms the next-turn pipeline; only the final transcript commits evidence or changes the interview graph.",
+    maturity: "PRODUCTION RUNTIME",
     input: "16 kHz voice frames",
     operation: "Partial recognition → revision → final commit",
     output: "Stable transcript + entities + turn ID",
@@ -130,28 +150,34 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
   },
   {
     label: "Question path",
-    title: "A trajectory map keeps the foreground response fast and legally bounded.",
-    explanation: "Prepared probes are evaluated against current interview state. One valid question is selected while deeper evidence analysis continues in parallel.",
+    title: "The interview map keeps the current question, evidence gaps, and prepared probes in one live graph.",
+    explanation: "The foreground path selects the next legal question while a deeper reasoning path continues updating the future interview route.",
+    annotation: "The fast path owns the current question; deeper agents prepare a policy-checked packet for a future branch.",
+    maturity: "PRODUCTION RUNTIME",
     input: "Transcript + trajectory state",
-    operation: "Evaluate staged probes and route guards",
-    output: "Prepared next-question packet",
-    stack: ["trajectory map", "semantic routing", "state guards"],
-    proof: "553–668 ms measured turn latency, local",
+    operation: "Score graph branches and route guards",
+    output: "Current question + prepared future path",
+    stack: ["interview graph", "semantic routing", "state guards"],
+    proof: "One map, two questioning paths",
   },
   {
     label: "Dual-lane runtime",
-    title: "The ⟪fast lane replies in 900 ms⟫ while the ⟪heavy analysis keeps running⟫.",
-    explanation: "Turn handling races on two lanes: the foreground lane speaks now, the background lane finishes seconds later and drops a ready-made next-question package into the queue—consumed the instant the next turn starts.",
+    title: "The ⟪foreground lane returns the next question in about 900 ms⟫ while deeper interview reasoning continues.",
+    explanation: "The low-latency route asks the immediate question. In parallel, specialist agents prepare a richer packet; only policy-validated packets enter the future interview map.",
+    annotation: "A fast model route returns the live question while the agent graph prepares a guardrail-validated question for a later turn.",
+    maturity: "PRODUCTION RUNTIME",
     input: "Committed turn + prepared packet",
-    operation: "Fast reply now · deep analysis in parallel",
-    output: "Reply < 900 ms + next-question package",
-    stack: ["fast lane", "background lane", "Redis + fallback", "OpenRouter tiers"],
-    proof: "Depth never costs latency",
+    operation: "Route by latency budget + question policy",
+    output: "About 900 ms reply + prepared question packet",
+    stack: ["LLM gateway", "model routing", "question guardrails", "Redis + fallback"],
+    proof: "Deeper analysis stays off the critical response path",
   },
   {
     label: "Evidence agents",
     title: "Four specialist agents inspect the same answer from different angles.",
     explanation: "Concept coverage, weakness detection, résumé-claim discrepancy, and observable reasoning behavior run concurrently and emit typed findings.",
+    annotation: "Concept, weakness, discrepancy, and reasoning agents fire in parallel, then return typed evidence to one shared interview state.",
+    maturity: "PRODUCTION RUNTIME",
     input: "Committed candidate answer",
     operation: "Parallel evidence extraction",
     output: "Four structured evidence packets",
@@ -162,6 +188,8 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     label: "Orchestrator",
     title: "The system converges on the single next probe with the highest evidence value.",
     explanation: "Answer state, trajectory position, agent findings, coverage, and agenda converge into a bounded route decision and updated interview state.",
+    annotation: "The orchestrator ranks evidence gain, applies route policy, and emits one legal follow-up through a typed contract.",
+    maturity: "PRODUCTION RUNTIME",
     input: "Interview state + parallel findings",
     operation: "Evidence convergence and route selection",
     output: "One legal adaptive follow-up",
@@ -171,50 +199,72 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
   {
     label: "Voice response",
     title: "Prepared response audio starts the next turn without waiting for fresh synthesis.",
-    explanation: "The selected question activates its pre-generated or cached audio asset; an acknowledgement can bridge the hand-off into playback.",
+    explanation: "The selected question first checks prepared audio, then routes synthesis through a timed provider gateway. Cache, provider fallback, and an acknowledgement bridge keep the voice turn recoverable.",
+    annotation: "Prepared audio plays first; a timed TTS gateway handles misses; provider fallback and a recovery bridge preserve the turn.",
+    maturity: "PRODUCTION RUNTIME",
     input: "Selected next question",
     operation: "Prepared-audio lookup and playback",
     output: "Adaptive interviewer voice response",
-    stack: ["TTS", "audio cache", "prepared questions"],
+    stack: ["TTS gateway", "prepared audio cache", "provider fallback", "latency budget"],
     proof: "Pre-generated / cached response audio",
   },
   {
     label: "Recruiter report",
     title: "The interview ends as an evidence record—not an unexplained score.",
     explanation: "Turn evidence assembles into demonstrated depth, claim credibility, coverage, strengths, risks, uncertainty, and explicitly untested dimensions.",
+    annotation: "Each hiring signal links to its source turn, confidence, and coverage state—including dimensions the interview never tested.",
+    maturity: "PRODUCTION OUTPUT",
     input: "Turn-level evidence ledger",
     operation: "Aggregate evidence by assessment dimension",
     output: "Inspectable recruiter intelligence report",
     stack: ["evidence ledger", "report V2", "coverage", "uncertainty"],
     proof: "250+ completed interviews",
   },
+  {
+    label: "Evaluation loop",
+    title: "Post-interview traces expose where the agent was too hard, vague, leading, or punitive.",
+    explanation: "Telemetry, agent evaluations, route-policy checks, token and latency traces, and recruiter feedback drive an offline refinement loop. Regression suites gate every prompt, route, and policy update.",
+    annotation: "Trace → agent evaluation → reinforcement-learning refinement → regression replay → versioned prompt, policy, and model route.",
+    maturity: "OFFLINE REFINEMENT",
+    input: "Interview traces + evaluator signals",
+    operation: "Score agent behavior and replay regressions",
+    output: "Safer, faster interview policy versions",
+    stack: ["agent evaluations", "observability", "token optimization", "reinforcement-learning refinement"],
+    proof: "Question quality and runtime behavior remain inspectable",
+  },
 ];
 
 const FILMORA_STEPS: readonly StoryStep[] = [
   {
     label: "Creative brief",
-    title: "One natural-language request becomes a structured production brief.",
-    explanation: "Format, audience, duration, mood, platform, and constraints are extracted before any generation tool is called.",
+    title: "A product brief is grounded in audience, market, and creative context before generation begins.",
+    explanation: "Format, audience, product truth, duration, mood, platform, and approval constraints become one structured production contract.",
+    annotation: "Audience, product truth, format, and approval constraints become a typed production contract before any tool runs.",
+    maturity: "INTERNSHIP SYSTEM",
     input: "Underspecified creative prompt",
     operation: "Normalize intent and constraints",
     output: "Typed production requirements",
     stack: ["Python", "TypeScript", "schema contracts"],
   },
   {
-    label: "Trend intelligence",
-    title: "A research agent turns cross-platform creative behavior into reusable signals.",
-    explanation: "TikTok, Douyin, Xiaohongshu, Instagram, WeChat, and Facebook streams are scanned for hooks, audio, themes, palettes, tempo, captions, and effects.",
+    label: "Market + product intelligence",
+    title: "Real-time market research and product intelligence become retrievable production context.",
+    explanation: "Cross-platform research, product facts, and creative analytics are distilled into hooks, audio, themes, palettes, tempo, caption behavior, and effects that can guide the current brief.",
+    annotation: "Live market evidence and product facts become ranked, reusable creative context—700+ signals across the research library.",
+    maturity: "INTERNSHIP SYSTEM",
     input: "Cross-platform creative trends",
     operation: "Extract, cluster, and package patterns",
-    output: "Trend context + reusable artifacts",
-    stack: ["research agent", "memory retrieval", "creative feature extraction"],
+    output: "Ranked research context + reusable artifacts",
+    stack: ["research agent", "product intelligence", "memory retrieval", "feature extraction"],
     proof: "700+ creative signals operationalized",
   },
   {
     label: "Skill compilation",
     title: "Raw signals compile into durable, versioned skill files.",
-    explanation: "Trend evidence becomes trend playbooks, design rules, and Filmora-native parameter presets—knowledge the agents execute against instead of re-learning the platform on every run.",
-    input: "700+ deduplicated signals",
+    explanation: "Trend evidence becomes reusable playbooks, design rules, and editor parameters that the production agents can execute consistently.",
+    annotation: "Reusable signal clusters compile into versioned production skills, design rules, and Filmora editor parameters.",
+    maturity: "INTERNSHIP SYSTEM",
+    input: "Market, product, and creative signals",
     operation: "Compile evidence into skill artifacts",
     output: "trend-skill.md · design.md · params",
     stack: ["skill files", "design rules", "Filmora params", "versioning"],
@@ -224,55 +274,67 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     label: "Memory + recommendation",
     title: "The current brief retrieves relevant memory, then a recommendation layer ranks creative choices.",
     explanation: "The query activates skill files, context packets, design knowledge, and Filmora parameters before producing a context-aware creative recipe.",
+    annotation: "Vector retrieval, reranking, and recommendation select the creative memory that best fits the current brief.",
+    maturity: "INTERNSHIP SYSTEM",
     input: "Brief + live trend context",
     operation: "Vectorize, retrieve, rank, recommend",
     output: "Hook + audio + edit recipe",
-    stack: ["RAG / memory", "ML recommendation layer", "ranked artifacts"],
+    stack: ["vector retrieval", "embeddings", "reranking", "recommendation layer"],
   },
   {
     label: "Context compiler",
     title: "Intent and context compile into executable, schema-bound instructions.",
     explanation: "User intent, recommendations, agent output, and production state are normalized into versioned tool contracts and dependencies.",
+    annotation: "Each function call receives typed arguments, explicit dependencies, and a versioned prompt contract.",
+    maturity: "INTERNSHIP SYSTEM",
     input: "Intent + context + production state",
     operation: "Resolve constraints and bind schemas",
     output: "Executable agent/tool contracts",
-    stack: ["semantic prompt compiler", "Pydantic-style schemas", "prompt versioning"],
+    stack: ["function calling", "schema validation", "prompt tuning", "versioned contracts"],
   },
   {
     label: "Production graph",
     title: "Specialist agents generate independent media assets in a coordinated DAG.",
     explanation: "Video, music, dialogue/TTS, captions, transitions, effects, and editor assembly execute with handoffs, checkpoints, retries, and approval gates.",
+    annotation: "A model-routing gateway dispatches specialist media tools; checkpoints, retries, guardrails, and approval gates govern every handoff.",
+    maturity: "REPRESENTATIVE ABSTRACTION",
     input: "Compiled production graph",
     operation: "Parallel tool calls and governed handoffs",
     output: "Editable media assets",
-    stack: ["multi-agent orchestration", "AIGC APIs", "human approval", "state checkpoints"],
+    stack: ["multi-agent orchestration", "LLM gateway", "tool calling", "state checkpoints"],
   },
   {
     label: "Editor timeline",
     title: "Generated assets arrive as an editor-ready timeline—not one opaque video blob.",
     explanation: "Video, dialogue, music, captions, transitions, effects, and metadata remain individually editable inside the production timeline.",
+    annotation: "Video, audio, dialogue, captions, effects, and metadata remain separable and editable in the Filmora timeline.",
+    maturity: "INTERNSHIP OUTPUT",
     input: "Completed media artifacts",
     operation: "Align dependencies and editor parameters",
     output: "Filmora-ready timeline tracks",
     stack: ["Filmora parameters", "timeline assembly", "editable assets"],
   },
   {
-    label: "Observability",
-    title: "Every handoff becomes a traceable optimization surface.",
-    explanation: "Agent spans, tool calls, retries, regressions, guardrails, latency, creative evals, and cost attribution feed an RL-style evaluation feedback loop.",
+    label: "Evaluation + RL refinement",
+    title: "Every handoff exposes model choice, tokens, latency, retries, guardrails, and creative quality.",
+    explanation: "Runtime traces and agent evaluations feed a reinforcement-learning refinement loop across prompts, model routes, tool policies, token budgets, and regression suites before human approval.",
+    annotation: "Trace → agent evaluation → reinforcement-learning refinement → regression → versioned prompt, gateway, and tool policy.",
+    maturity: "INTERNSHIP RESULT",
     input: "Runtime traces + agent evaluations",
     operation: "Attribute, compare, regress, optimize",
     output: "Lower-cost, observable workflow versions",
-    stack: ["OpenTelemetry-style traces", "agent evals", "regression tests", "cost attribution"],
-    proof: "28% API-cost reduction · orchestration = 2% of E2E latency",
+    stack: ["observability", "agent evaluations", "token optimization", "model routing intelligence"],
+    proof: "Reduced API cost and token overhead",
   },
 ];
 
 const MINDSCAPE_STEPS: readonly StoryStep[] = [
   {
     label: "Capture",
-    title: "A synthetic voice session enters a rolling temporal buffer.",
-    explanation: "WebRTC audio is segmented into synchronized analysis frames so downstream linguistic, event, and affect models inspect the same moment.",
+    title: "Patient-language fragments become traceable, time-aligned analysis packets.",
+    explanation: "A synthetic voice session enters a rolling buffer so language, event, and affect models inspect the same moment and retain the words that produced each packet.",
+    annotation: "Every signal packet retains its timestamp, source words, and confidence so the clinician can inspect where it came from.",
+    maturity: "IMPLEMENTED LOCAL ENGINE",
     input: "Synthetic 16 kHz mono audio",
     operation: "Rolling temporal buffering",
     output: "Timestamped analysis frames",
@@ -282,6 +344,8 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "Perception",
     title: "One audio stream becomes language, event, and affect representations.",
     explanation: "Transcript content, SenseVoice paralinguistic tokens, and Emotion2Vec+ affect features remain synchronized but independently inspectable.",
+    annotation: "Transcript, speech-event, and acoustic-affect scores stay time-aligned while remaining independently inspectable.",
+    maturity: "R&D PROTOTYPE",
     input: "Buffered speech frames",
     operation: "Multimodal perception across three branches",
     output: "Text + event + affect vectors",
@@ -291,6 +355,8 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "State fusion",
     title: "Gated multimodal fusion creates a reusable Behavioral State Vector.",
     explanation: "Linguistic, paralinguistic, acoustic-affect, and longitudinal signals propagate through a fusion network into one patient-state representation.",
+    annotation: "A gated state vector preserves multimodal and longitudinal context for retrieval, reasoning, and review.",
+    maturity: "FULL ARCHITECTURE",
     input: "Aligned modality vectors",
     operation: "Cross-modal gating and representation fusion",
     output: "Behavioral State Vector",
@@ -298,8 +364,10 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
   },
   {
     label: "Clinical retrieval",
-    title: "Dense and lexical retrieval compete, merge, and rerank clinical evidence.",
-    explanation: "MedCPT semantic neighbors and BM25 lexical hits converge through reciprocal-rank fusion, then BioLinkBERT reranks the strongest evidence.",
+    title: "A retrieval agent traverses clinical references, finds supporting passages, and reranks the strongest evidence.",
+    explanation: "Dense and lexical retrieval run together, merge their candidates, and return a grounded source set for validation and clinician review.",
+    annotation: "Dense and lexical retrieval scan trusted clinical references, merge candidates, rerank them, and attach sources to each claim.",
+    maturity: "FULL RETRIEVAL ARCHITECTURE",
     input: "State-aware clinical query",
     operation: "HNSW + BM25 → RRF → cross-encoder rerank",
     output: "Top-five grounded evidence set",
@@ -309,6 +377,8 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "Grounded reasoning",
     title: "Ranked evidence becomes a structured hypothesis with visible uncertainty.",
     explanation: "The reasoning layer attaches evidence to a bounded hypothesis, preserves conflicting or missing context, and emits targeted follow-up questions.",
+    annotation: "The reasoning layer may propose a bounded hypothesis only when supporting evidence, conflicts, and uncertainty remain visible.",
+    maturity: "R&D PROTOTYPE",
     input: "Ranked clinical evidence + session context",
     operation: "Evidence-grounded structured reasoning",
     output: "Hypothesis + uncertainty + follow-ups",
@@ -318,6 +388,8 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "Validation",
     title: "Independent model and deterministic rule gates challenge unsupported output.",
     explanation: "DeBERTa-v3 NLI checks claim support while DSM-aligned deterministic rules block unsupported diagnostic language before review.",
+    annotation: "Independent support checks and deterministic rules flag unsupported language before anything reaches clinician review.",
+    maturity: "VALIDATION DESIGN TARGET",
     input: "Structured claims + cited evidence",
     operation: "NLI entailment + explicit rule validation",
     output: "Supported review packet with warnings",
@@ -325,53 +397,92 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
   },
   {
     label: "Clinician review",
-    title: "Evidence, uncertainty, state, and follow-up remain visible in one human-owned surface.",
-    explanation: "The final interface makes the complete evidence trail inspectable and keeps clinical judgment outside the model boundary.",
+    title: "The clinician receives the source, supported claim, uncertainty, warning state, and suggested follow-up together.",
+    explanation: "Every recommendation remains editable and reviewable, and clinical judgment stays outside the model boundary.",
+    annotation: "Source evidence, support, uncertainty, warnings, and follow-up actions arrive together; the clinician retains final judgment.",
+    maturity: "HUMAN-OWNED PROTOTYPE",
     input: "Validated review packet",
     operation: "Human review, edit, and governed action",
     output: "Clinician-owned decision-support workflow",
-    stack: ["clinician UI", "longitudinal state", "feedback loop", "fairness monitor"],
+    stack: ["clinician UI", "longitudinal state", "governed feedback", "monitoring hook"],
     proof: "Decision support—not autonomous diagnosis",
+  },
+  {
+    label: "Governed RL refinement",
+    title: "Clinician feedback enters an offline evaluation queue, never a live self-training loop.",
+    explanation: "Approved review outcomes, retrieval quality, safety-gate behavior, latency, and subgroup monitoring feed offline reinforcement-learning refinement. Regression and human review gate every future release.",
+    annotation: "Governed feedback → offline RL refinement → safety regression → human-reviewed, versioned release candidate.",
+    maturity: "R&D DESIGN TARGET",
+    input: "Approved review feedback + runtime traces",
+    operation: "Evaluate, refine, and replay safety regressions",
+    output: "Versioned future workflow candidates",
+    stack: ["offline RL refinement", "observability", "safety regression", "human release gate"],
+    proof: "No online learning from clinician actions",
   },
 ];
 
 
 const RESEARCH = [
   {
-    title: "Embedded Audio Intelligence",
+    badge: "EMBEDDED AI INTERNSHIP",
+    title: "Embedded Audio Intelligence Model",
     meta: "OPTEK MICROELECTRONICS · 2025",
-    copy: "Built an end-to-end TinyML audio-classification pipeline for a 700 MHz DSP / 16 MB SoC: DSP features, a YAMNet-derived network, INT8 quantization, pruning, and C++ operator tuning.",
-    proof: "93%+ accuracy · <10 ms · 14× compression",
+    copy: "Optimized an embedded audio-intelligence pipeline for constrained hardware, connecting MediaPipe Audio features, TFLM INT8 inference, structured pruning, and an edge deployment toolchain in one measurable path.",
+    proof: "95%+ accuracy · sub-10-ms inference · 4× compression · 200 KB runtime",
+    stack: ["MediaPipe Audio", "TFLM INT8", "structured pruning", "Edge Impulse", "edge SoC"],
+    tone: "blue",
+    visual: 0,
   },
   {
-    title: "Multimodal Text-to-SQL",
-    meta: "HKU × GOOGLE CLOUD · BIRD-SQL",
-    copy: "Reconstructed an OCR-grounded VQA and Text-to-SQL evaluation framework with schema-aware prompting, hybrid SQL, FAISS context, and execution-accuracy failure diagnosis.",
-    proof: "12,751+ question-SQL pairs · 95+ databases",
+    badge: "OPEN-SOURCE CONTRIBUTION",
+    title: "BIRD-SQL Research Workflow",
+    meta: "HKU × GOOGLE CLOUD · OFFICIAL BIRD-SQL BENCHMARK",
+    copy: "Contributed to an execution-grounded text-to-SQL research workflow associated with BIRD-SQL, emphasizing schema-aware generation, database execution, and failure diagnosis rather than surface-form matching.",
+    proof: "Official benchmark context · 12,751 question-SQL pairs · 95 databases",
+    stack: ["BIRD-SQL", "Text-to-SQL", "execution accuracy", "schema grounding", "failure analysis"],
+    tone: "open",
+    visual: 1,
   },
   {
+    badge: "RESEARCH INTERNSHIP",
     title: "SLM Distillation & Evaluation",
     meta: "CUHK-SZ NLP GROUP · 2024",
-    copy: "Automated TRL distillation pipelines, filtered synthetic data with an LLM-as-judge framework, and exposed factuality, BERTScore, and ROUGE behavior through interactive evaluation views.",
+    copy: "Built a distillation and evaluation workflow that filters synthetic data with an LLM judge, trains on accepted samples, and exposes factuality and response-quality behavior through paired evaluation.",
     proof: "31% fewer factual errors · 200+ response pairs",
+    stack: ["TRL", "LLM-as-judge", "distillation", "factuality", "paired evaluation"],
+    tone: "blue",
+    visual: 2,
   },
   {
-    title: "webGLR Perception Pipeline",
-    meta: "BROWSER PERCEPTION → SHADER",
-    copy: "A zero-build browser pipeline that fuses live segmentation and depth into on-canvas shaders, with a fast live lane and a slower high-quality lane running side by side.",
-    proof: "Segmentation + depth fused live · dual live/HQ lanes",
+    badge: "CORPORATE R&D COLLABORATION",
+    title: "Logistics AI Ops Platform / Lalamove R&D Project",
+    meta: "LALAMOVE · FLASK + MYSQL · BOUNDED AI OPERATIONS",
+    copy: "Built role-based customer, driver, and administrator workflows with weather and geospatial route-risk scoring, plus a bounded AI operations copilot restricted to approved intents, parameterized queries, and human-owned actions.",
+    proof: "Lalamove collaboration · bounded query contracts · human-owned actions",
+    stack: ["Flask", "MySQL", "JWT", "geospatial risk", "bounded AI copilot"],
+    tone: "lalamove",
+    visual: 5,
+    logo: "https://www.lalamove.com/hubfs/Lalamove%20Website%202020/Newsroom/Lalamove%20Logo.png",
   },
   {
-    title: "COL-VEO Video Orchestration",
-    meta: "DETERMINISTIC AI VIDEO",
-    copy: "A storyboard state machine drives AI video generation with 15-axis prompt control and seed-locked regeneration—the same seed reproduces identical frames by construction.",
-    proof: "Storyboard state machine · seed-safe regeneration",
+    badge: "BROWSER-NATIVE PERCEPTION R&D",
+    title: "webGLR Browser Perception Engine",
+    meta: "PERCEPTION → TEMPORAL CONTROL → WEBGL SHADER",
+    copy: "Built a browser-native perception-to-shader engine that fuses SAM segmentation masks with INT8-quantized Depth Anything V2 Small maps and compiles them into five GPU texture controls. A low-latency live lane drives subject lift and background falloff while an HQ lane performs scene-aware sampling, cut guards, cache blending, and memory-budgeted analysis.",
+    proof: "SAM segmentation · INT8 monocular depth · five-texture shader contract · live + HQ lanes",
+    stack: ["SAM", "Depth Anything V2 Small", "INT8 quantization", "five GPU textures", "WebGL"],
+    tone: "webglr",
+    visual: 3,
   },
   {
-    title: "Logistics AI Ops",
-    meta: "FLASK + MYSQL · BOUNDED AI OPERATIONS",
-    copy: "Role-gated logistics workflows over Flask + MySQL with weather- and geo-aware route risk—and a bounded AI copilot that answers only through approved intents and parameterized queries.",
-    proof: "Bounded query contracts · visible refusals · human-owned actions",
+    badge: "CONTROLLED GENERATIVE VIDEO R&D",
+    title: "COL-VEO Controlled Video Orchestration",
+    meta: "PROMPT STEERING · SEED-AWARE REGENERATION · CONTROL LAYER",
+    copy: "Built a FastAPI creative-control prototype that compiles a 15-control style surface into structured per-shot Veo prompts. Soft regeneration reuses the seed for style-safe changes; hard regeneration assigns a new seed for structural changes. Exact prompt preview, lifecycle gates, sequential shot extension, and browser WebGL Post-FX keep the loop inspectable.",
+    proof: "Deterministic prompt compiler · same-seed soft regen · new-seed hard regen · provider-best-effort output",
+    stack: ["FastAPI", "prompt compiler", "style-axis ranking", "seed control", "WebGL post-FX"],
+    tone: "colveo",
+    visual: 4,
   },
 ] as const;
 
@@ -401,7 +512,7 @@ function useAutoplaySequence(
   // intro resolves instead of being permanently initialized as paused.
   const [visible, setVisible] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
-  const [interactionPaused, setInteractionPaused] = useState(false);
+  const [pointerActive, setPointerActive] = useState(false);
 
   useEffect(() => {
     const node = rootRef.current;
@@ -421,28 +532,20 @@ function useAutoplaySequence(
   }, [observeSelector, rootRef]);
 
   useEffect(() => {
-    const node = rootRef.current;
+    if (!pointerSelector) return;
+    const node = rootRef.current?.querySelector<HTMLElement>(pointerSelector);
     if (!node) return;
-    const pointerSurface = pointerSelector
-      ? node.querySelector<HTMLElement>(pointerSelector) ?? node
-      : node.querySelector<HTMLElement>(".vx-story-panel") ?? node;
-    const pause = () => setInteractionPaused(true);
-    const resume = () => setInteractionPaused(false);
-    const handleFocusOut = (event: FocusEvent) => {
-      if (!node.contains(event.relatedTarget as Node | null)) resume();
-    };
-    // Hover-pausing belongs to the explanatory controls, not the entire tall
-    // chapter. The operational canvas can therefore keep telling its story
-    // while the visitor simply leaves the cursor over the page.
-    pointerSurface.addEventListener("pointerenter", pause);
-    pointerSurface.addEventListener("pointerleave", resume);
+    const pause = () => setPointerActive(true);
+    const resume = () => setPointerActive(false);
+    node.addEventListener("pointerenter", pause);
+    node.addEventListener("pointerleave", resume);
     node.addEventListener("focusin", pause);
-    node.addEventListener("focusout", handleFocusOut);
+    node.addEventListener("focusout", resume);
     return () => {
-      pointerSurface.removeEventListener("pointerenter", pause);
-      pointerSurface.removeEventListener("pointerleave", resume);
+      node.removeEventListener("pointerenter", pause);
+      node.removeEventListener("pointerleave", resume);
       node.removeEventListener("focusin", pause);
-      node.removeEventListener("focusout", handleFocusOut);
+      node.removeEventListener("focusout", resume);
     };
   }, [pointerSelector, rootRef]);
 
@@ -454,7 +557,7 @@ function useAutoplaySequence(
   }, []);
 
   useEffect(() => {
-    if (!sequence.requestedPlay || !visible || !pageVisible || reducedMotion || interactionPaused) return;
+    if (!sequence.requestedPlay || !visible || !pageVisible || reducedMotion || pointerActive) return;
     const timer = window.setTimeout(() => {
       setSequence((current) => {
         const nextIndex = loop ? (current.index + 1) % count : Math.min(current.index + 1, count - 1);
@@ -467,31 +570,30 @@ function useAutoplaySequence(
       });
     }, interval);
     return () => window.clearTimeout(timer);
-  }, [count, interactionPaused, interval, loop, pageVisible, reducedMotion, sequence.index, sequence.requestedPlay, visible]);
+  }, [count, interval, loop, pageVisible, pointerActive, reducedMotion, sequence.index, sequence.requestedPlay, visible]);
 
   const choose = useCallback((nextIndex: number) => {
     const boundedIndex = Math.max(0, Math.min(count - 1, nextIndex));
     setSequence((current) => ({
       index: boundedIndex,
-      requestedPlay: false,
+      requestedPlay: current.requestedPlay,
       visitedMask: current.visitedMask | (1 << boundedIndex),
     }));
   }, [count]);
   const next = useCallback(() => {
     setSequence((current) => {
       const nextIndex = loop ? (current.index + 1) % count : Math.min(current.index + 1, count - 1);
-      return { index: nextIndex, requestedPlay: false, visitedMask: current.visitedMask | (1 << nextIndex) };
+      return { index: nextIndex, requestedPlay: current.requestedPlay, visitedMask: current.visitedMask | (1 << nextIndex) };
     });
   }, [count, loop]);
   const previous = useCallback(() => {
     setSequence((current) => {
       const nextIndex = loop ? (current.index - 1 + count) % count : Math.max(current.index - 1, 0);
-      return { index: nextIndex, requestedPlay: false, visitedMask: current.visitedMask | (1 << nextIndex) };
+      return { index: nextIndex, requestedPlay: current.requestedPlay, visitedMask: current.visitedMask | (1 << nextIndex) };
     });
   }, [count, loop]);
   const toggle = useCallback(() => {
     if (reducedMotion) return;
-    setInteractionPaused(false);
     setSequence((current) => {
       const enabling = !current.requestedPlay;
       const restart = enabling && !loop && current.index === count - 1;
@@ -505,7 +607,7 @@ function useAutoplaySequence(
 
   return {
     index: sequence.index,
-    playing: sequence.requestedPlay && visible && pageVisible && !reducedMotion && !interactionPaused,
+    playing: sequence.requestedPlay && visible && pageVisible && !pointerActive && !reducedMotion,
     autoplayEnabled: sequence.requestedPlay,
     complete: sequence.visitedMask === (1 << count) - 1,
     motionDisabled: reducedMotion,
@@ -516,102 +618,207 @@ function useAutoplaySequence(
   };
 }
 
+type HeroHighlight = {
+  phrase: string;
+  kind: "signal" | "university" | "proof" | "metric";
+  crest?: boolean;
+};
+
+type HeroStatement = {
+  full: string;
+  compact: string;
+  highlights: readonly HeroHighlight[];
+  compactHighlights: readonly HeroHighlight[];
+};
+
+const HERO_STATEMENTS: readonly HeroStatement[] = [
+  {
+    full: "Hi, welcome to my portfolio. I am Yashwant Bhyri, a Year 4 Computer Science and AI student at CUHK-Shenzhen (CUHK · QS World #18).",
+    compact: "Year 4 Computer Science and AI student at CUHK-Shenzhen (CUHK · QS World #18).",
+    highlights: [
+      { phrase: "Computer Science and AI", kind: "signal" },
+      { phrase: "CUHK-Shenzhen", kind: "university", crest: true },
+      { phrase: "(CUHK · QS World #18)", kind: "proof" },
+    ],
+    compactHighlights: [
+      { phrase: "Computer Science and AI", kind: "signal" },
+      { phrase: "CUHK-Shenzhen", kind: "university", crest: true },
+      { phrase: "(CUHK · QS World #18)", kind: "proof" },
+    ],
+  },
+  {
+    full: "I have 1+ years of experience building advanced AI applications spanning agent and multi-agent orchestration, deep reasoning, multimodal I/O, advanced memory and retrieval, production observability, and reinforcement-learning observability and refinement systems.",
+    compact: "1+ years spanning agent and multi-agent orchestration, deep reasoning, multimodal I/O, advanced memory + retrieval, production observability, and RL observability + refinement systems.",
+    highlights: [
+      { phrase: "1+ years", kind: "metric" },
+      { phrase: "agent and multi-agent orchestration", kind: "signal" },
+      { phrase: "deep reasoning", kind: "signal" },
+      { phrase: "multimodal I/O", kind: "signal" },
+      { phrase: "advanced memory and retrieval", kind: "proof" },
+      { phrase: "production observability", kind: "proof" },
+      { phrase: "reinforcement-learning observability and refinement systems", kind: "signal" },
+    ],
+    compactHighlights: [
+      { phrase: "1+ years", kind: "metric" },
+      { phrase: "agent and multi-agent orchestration", kind: "signal" },
+      { phrase: "deep reasoning", kind: "signal" },
+      { phrase: "multimodal I/O", kind: "signal" },
+      { phrase: "advanced memory + retrieval", kind: "proof" },
+      { phrase: "production observability", kind: "proof" },
+      { phrase: "RL observability + refinement systems", kind: "signal" },
+    ],
+  },
+  {
+    full: "My engineering record spans 3 internships and 2 research experiences across applied AI systems.",
+    compact: "3 engineering internships and 2 research experiences across applied AI systems.",
+    highlights: [
+      { phrase: "3 internships", kind: "metric" },
+      { phrase: "2 research experiences", kind: "metric" },
+    ],
+    compactHighlights: [
+      { phrase: "3 engineering internships", kind: "metric" },
+      { phrase: "2 research experiences", kind: "metric" },
+    ],
+  },
+] as const;
+
+function HeroHighlightedText({
+  text,
+  cursor,
+  highlights,
+}: {
+  text: string;
+  cursor: number;
+  highlights: readonly HeroHighlight[];
+}) {
+  const visibleEnd = Math.min(cursor, text.length);
+  const ranges = highlights
+    .map((highlight) => {
+      const start = text.indexOf(highlight.phrase);
+      return start < 0 ? null : { ...highlight, start, end: start + highlight.phrase.length };
+    })
+    .filter((range): range is HeroHighlight & { start: number; end: number } => Boolean(range))
+    .sort((a, b) => a.start - b.start);
+
+  const segments: React.ReactNode[] = [];
+  let position = 0;
+  ranges.forEach((range, index) => {
+    if (position < range.start && position < visibleEnd) {
+      segments.push(<span key={`plain-${index}`}>{text.slice(position, Math.min(range.start, visibleEnd))}</span>);
+    }
+    if (visibleEnd > range.start) {
+      segments.push(
+        <em
+          key={`${range.phrase}-${index}`}
+          className="vx-hero-highlight"
+          data-kind={range.kind}
+          data-complete={visibleEnd >= range.end}
+        >
+          {range.crest ? (
+            <Image
+              className="vx-cuhk-inline-logo"
+              src="/brands/cuhk.png"
+              alt=""
+              aria-hidden="true"
+              width={32}
+              height={22}
+              unoptimized
+            />
+          ) : null}
+          {text.slice(range.start, Math.min(range.end, visibleEnd))}
+        </em>,
+      );
+    }
+    position = range.end;
+  });
+  if (position < visibleEnd) segments.push(<span key="plain-tail">{text.slice(position, visibleEnd)}</span>);
+  return <>{segments}</>;
+}
+
 function useHeroChoreography(reducedMotion: boolean) {
-  const text = "Hi—welcome to my portfolio. I am Yashwant Bhyri, a Year-4 Computer Science & AI student at CUHK-Shenzhen (top 20 university in the world), with 1+ years of experience building advanced AI applications, agentic & orchestration systems, and production-grade multimodal systems with advanced memory and retrieval — through internships and research.";
+  const [statement, setStatement] = useState(0);
   const [cursor, setCursor] = useState(0);
-  const [phase, setPhase] = useState<"boot" | "typing" | "resolve" | "split" | "ready">("boot");
+  const [resolved, setResolved] = useState(0);
+  const [phase, setPhase] = useState<"boot" | "typing" | "holding" | "deleting" | "split" | "deck" | "ready">("boot");
+  const text = HERO_STATEMENTS[statement].full;
 
   const skip = useCallback(() => {
-    setCursor(text.length);
+    setStatement(HERO_STATEMENTS.length - 1);
+    setCursor(0);
+    setResolved(HERO_STATEMENTS.length);
     setPhase("ready");
-    try { window.sessionStorage.setItem("yb-portfolio-intro", "seen"); } catch { /* no-op */ }
-  }, [text.length]);
+  }, []);
 
   useEffect(() => {
     if (reducedMotion) {
       const timer = window.setTimeout(skip, 0);
       return () => window.clearTimeout(timer);
     }
-    try {
-      if (window.sessionStorage.getItem("yb-portfolio-intro") === "seen") {
-        const timer = window.setTimeout(skip, 0);
-        return () => window.clearTimeout(timer);
-      }
-    } catch { /* no-op */ }
     const timer = window.setTimeout(() => setPhase("typing"), 180);
     return () => window.clearTimeout(timer);
   }, [reducedMotion, skip]);
 
   useEffect(() => {
     if (phase !== "typing") return;
-    // Deliberately slower cadence — the intro should read as writing, not loading.
     const timer = window.setTimeout(() => {
-      if (cursor >= text.length) setPhase("resolve");
+      if (cursor >= text.length) setPhase("holding");
       else setCursor((value) => Math.min(text.length, value + 1));
-    }, cursor >= text.length ? 0 : 26 + (cursor % 5) * 3);
+    }, cursor >= text.length ? 0 : 18 + (cursor % 5) * 3);
     return () => window.clearTimeout(timer);
   }, [cursor, phase, text.length]);
 
   useEffect(() => {
-    if (phase !== "resolve") return;
-    const timer = window.setTimeout(() => setPhase("split"), 420);
+    if (phase !== "holding") return;
+    const timer = window.setTimeout(() => setPhase("deleting"), 1180);
     return () => window.clearTimeout(timer);
   }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "deleting") return;
+    const timer = window.setTimeout(() => {
+      if (cursor > 0) {
+        setCursor((value) => Math.max(0, value - 2));
+        return;
+      }
+      setResolved((value) => Math.max(value, statement + 1));
+      if (statement === HERO_STATEMENTS.length - 1) {
+        setPhase("split");
+      } else {
+        setStatement((value) => value + 1);
+        setPhase("typing");
+      }
+    }, cursor > 0 ? 11 : 90);
+    return () => window.clearTimeout(timer);
+  }, [cursor, phase, statement]);
 
   useEffect(() => {
     if (phase !== "split") return;
-    const timer = window.setTimeout(() => {
-      setPhase("ready");
-      try { window.sessionStorage.setItem("yb-portfolio-intro", "seen"); } catch { /* no-op */ }
-    }, 820);
+    const timer = window.setTimeout(() => setPhase("deck"), 620);
     return () => window.clearTimeout(timer);
   }, [phase]);
 
   useEffect(() => {
-    if (phase === "ready") return;
-    const handleIntent = (event: Event) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest("[data-hero-skip-ignore]")) return;
-      skip();
-    };
-    window.addEventListener("wheel", handleIntent, { passive: true });
-    window.addEventListener("touchstart", handleIntent, { passive: true });
-    window.addEventListener("keydown", handleIntent);
-    return () => {
-      window.removeEventListener("wheel", handleIntent);
-      window.removeEventListener("touchstart", handleIntent);
-      window.removeEventListener("keydown", handleIntent);
-    };
-  }, [phase, skip]);
+    if (phase !== "deck") return;
+    const timer = window.setTimeout(() => setPhase("ready"), 520);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
 
-  return { text, cursor, phase, ready: phase === "ready", skip };
-}
+  const collapsed = phase === "split" || phase === "deck" || phase === "ready";
 
-/** phrases that get the painted-over highlight once typing completes */
-const PAINT_PHRASES = ["CUHK-Shenzhen", "1+ years of experience"];
-
-function CuhkCrest() {
-  // The actual CUHK coat of arms (Wikimedia Commons, fetched 2026-07-20)
-  // at /public/brands/cuhk.png; drawn fallback only if the file is missing.
-  const [official, setOfficial] = useState(true);
-  if (official) {
-    return (
-      <img
-        className="vx-cuhk-crest vx-cuhk-img"
-        src="/brands/cuhk.png"
-        alt="CUHK"
-        onError={() => setOfficial(false)}
-      />
-    );
-  }
-  return (
-    <svg className="vx-cuhk-crest" viewBox="0 0 20 24" aria-label="CUHK" role="img">
-      <path d="M2 1.5 h16 v13.5 c0 4.4 -4.2 6.6 -8 7.8 c-3.8 -1.2 -8 -3.4 -8 -7.8 Z" fill="#4B2E83" stroke="#D3A94C" strokeWidth="1.3" />
-      <path d="M10 5 c-2.4 1.5 -3.4 3.4 -3.2 5.4 c1 -1 2 -1.5 3.2 -1.6 c1.2 0.1 2.2 0.6 3.2 1.6 c0.2 -2 -0.8 -3.9 -3.2 -5.4 Z" fill="#D3A94C" />
-      <path d="M6.6 12.6 c1 1.4 2.2 2.1 3.4 2.1 c1.2 0 2.4 -0.7 3.4 -2.1" fill="none" stroke="#D3A94C" strokeWidth="1.1" strokeLinecap="round" />
-      <circle cx="10" cy="17.2" r="1" fill="#D3A94C" />
-    </svg>
-  );
+  return {
+    text,
+    visible: text.slice(0, cursor),
+    cursor,
+    statement,
+    phase,
+    resolved,
+    ready: phase === "ready",
+    collapsed,
+    deckVisible: phase === "deck" || phase === "ready",
+    contactVisible: phase === "ready",
+    deleting: phase === "deleting",
+    skip,
+  };
 }
 
 /** Renders copy with ⟪accent⟫ markers as striking emphasised spans. */
@@ -620,46 +827,6 @@ function Emph({ text }: { text: string }) {
   return (
     <>
       {parts.map((part, i) => (i % 2 === 1 ? <em key={i} className="vx-emph">{part}</em> : <span key={i}>{part}</span>))}
-    </>
-  );
-}
-
-function TypedWords({ text, cursor }: { text: string; cursor: number }) {
-  const segments = useMemo(() => {
-    const paintRanges = PAINT_PHRASES.map((p) => {
-      const at = text.indexOf(p);
-      return at < 0 ? null : ([at, at + p.length] as const);
-    }).filter(Boolean) as (readonly [number, number])[];
-    const parts = text.split(/(\s+)/);
-    let paintIdx = -1;
-    return parts.map((segment, index) => {
-      const start = parts.slice(0, index).join("").length;
-      const end = start + segment.length;
-      const painted = !/^\s+$/.test(segment) && paintRanges.some(([a, b]) => start >= a && end <= b + 1);
-      if (painted) paintIdx += 1;
-      return { segment, start, end, painted, paintIdx: painted ? paintIdx : -1 };
-    });
-  }, [text]);
-  return (
-    <>
-      {segments.map(({ segment, start, end, painted, paintIdx }, index) => {
-        const visible = cursor <= start ? "" : segment.slice(0, Math.min(segment.length, cursor - start));
-        const active = !/^\s+$/.test(segment) && cursor > start && cursor < end;
-        const greetLen = text.indexOf(".") + 1;
-        const isGreet = end <= greetLen && !/^\s+$/.test(segment);
-        const cls = [
-          active ? "is-typing" : cursor >= end && !/^\s+$/.test(segment) ? "is-complete" : "",
-          painted ? "is-paint" : "",
-          isGreet ? "vx-greet" : "",
-          isGreet && end === greetLen ? "vx-greet-end" : "",
-        ].join(" ").trim();
-        return (
-          <span key={`${segment}-${index}`} className={cls} style={painted ? ({ "--paint-delay": `${0.25 + paintIdx * 0.16}s` } as CSSProperties) : undefined}>
-            {segment === "CUHK-Shenzhen" && cursor >= end ? <CuhkCrest /> : null}
-            {visible}
-          </span>
-        );
-      })}
     </>
   );
 }
@@ -705,7 +872,7 @@ function GalaxyField({ reducedMotion }: { reducedMotion: boolean }) {
             const inPrimary = ci === primary;
             const inSecondary = ci === secondary;
             const inTertiary = ci === tertiary;
-            const bright = (inPrimary && ti !== (cycle % 2 === 0 ? 3 : 1)) || (inSecondary && ti === cycle % 4);
+            const bright = inPrimary && ti === cycle % cluster.terms.length;
             const visible = inPrimary || inSecondary || inTertiary;
             return (
               <span
@@ -718,6 +885,23 @@ function GalaxyField({ reducedMotion }: { reducedMotion: boolean }) {
             );
           }),
         )}
+        {GALAXY_ANCHORS.map(([term, x, y], index) => (
+          <span
+            key={term}
+            className="vx-galaxy-anchor"
+            data-visible="true"
+            data-bright={index === cycle % GALAXY_ANCHORS.length}
+            style={{
+              "--x": `${x}%`,
+              "--y": `${y}%`,
+              "--dx": `${index % 2 === 0 ? 3 : -4}px`,
+              "--dy": `${index % 2 === 0 ? -2 : 4}px`,
+              "--term-delay": `${index * -2.1}s`,
+            } as CSSProperties}
+          >
+            <i />{term}
+          </span>
+        ))}
       </div>
       <div className="vx-galaxy-mask" />
     </div>
@@ -728,13 +912,13 @@ function HeroProjectDeck({ reducedMotion, ready }: { reducedMotion: boolean; rea
   const ref = useRef<HTMLDivElement>(null);
   // The deck flips on its own, always — only hovering the controls pauses it,
   // never merely resting the cursor on the cards.
-  const deck = useAutoplaySequence(PROJECTS.length, 4200, ref, reducedMotion || !ready, {
+  const deck = useAutoplaySequence(PROJECTS.length, 2800, ref, reducedMotion || !ready, {
     loop: true,
     pointerSelector: ".vx-deck-controls",
   });
   return (
     <div ref={ref} className="vx-hero-deck" data-ready={ready} data-motion-paused={!deck.playing} aria-hidden={!ready}>
-      <div className="vx-deck-status"><i className={deck.playing ? "is-live" : ""} /> SELECTED SYSTEMS <span>{String(deck.index + 1).padStart(2, "0")} / 05</span></div>
+      <div className="vx-deck-status"><i className={deck.playing ? "is-live" : ""} /> SELECTED SYSTEMS <span>{String(deck.index + 1).padStart(2, "0")} / {String(PROJECTS.length).padStart(2, "0")}</span></div>
       <div className="vx-deck-stage">
         {PROJECTS.map((project, index) => {
           const offset = (index - deck.index + PROJECTS.length) % PROJECTS.length;
@@ -742,13 +926,14 @@ function HeroProjectDeck({ reducedMotion, ready }: { reducedMotion: boolean; rea
           return (
             <a
               key={project.id}
-              href={project.id === "logistics" ? "#research" : `#${project.id}`}
+              href={`#${project.id}`}
               className={`vx-deck-card vx-accent-${project.accent}`}
               data-position={offset}
               tabIndex={ready && active ? 0 : -1}
               aria-hidden={!active}
             >
               <span>{project.number} · {project.brand}</span>
+              <i className="vx-deck-badge">{project.badge}</i>
               <strong>{project.category}</strong>
               <p>{project.summary}</p>
               <div>{project.proof.slice(0, 2).map((item) => <i key={item}>{item}</i>)}</div>
@@ -766,27 +951,125 @@ function HeroProjectDeck({ reducedMotion, ready }: { reducedMotion: boolean; rea
   );
 }
 
+const CONTACT_CHANNELS = [
+  {
+    label: "University email",
+    value: "123040005@link.cuhk.edu.cn",
+    href: "mailto:123040005@link.cuhk.edu.cn",
+  },
+  {
+    label: "Phone",
+    value: "+86 159 1412 2353",
+    href: "tel:+8615914122353",
+  },
+  {
+    label: "Personal email",
+    value: "bvyashwantkumar900@gmail.com",
+    href: "mailto:bvyashwantkumar900@gmail.com",
+  },
+  {
+    label: "LinkedIn",
+    value: "Venkata Yashwant Kumar Bhyri",
+    href: "https://hk.linkedin.com/in/venkata-yashwant-kumar-bhyri-31a50636a",
+  },
+  {
+    label: "WeChat",
+    value: "Yashwant_Bhyri",
+    href: "weixin://dl/chat?Yashwant_Bhyri",
+  },
+] as const;
+
+const SHORT_CALL_HREF =
+  "mailto:123040005@link.cuhk.edu.cn?subject=Portfolio%20opportunity%20or%2015-minute%20call";
+
+function ContactChannels({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className="vx-contact-channels" data-compact={compact}>
+      {CONTACT_CHANNELS.map((channel) => (
+        <a key={channel.label} href={channel.href}>
+          <span>{channel.label}</span>
+          <strong>{channel.value}</strong>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 function Hero({ reducedMotion }: { reducedMotion: boolean }) {
   const hero = useHeroChoreography(reducedMotion);
   return (
-    <section id="top" className="vx-hero" data-phase={hero.phase}>
+    <section id="top" className="vx-hero vx-page" data-vx-page data-phase={hero.phase}>
       <GalaxyField reducedMotion={reducedMotion} />
       <div className="vx-hero-shell">
-        <div className="vx-hero-copy">
-          <div className="vx-terminal-label"><i /><span>YASHWANT / PERSONAL PORTFOLIO</span><small>{hero.ready ? "READY" : hero.phase === "resolve" ? "RESOLVING" : "INTRO"}</small></div>
-          <h1 aria-label={hero.text}>
-            <span className="vx-hero-measure" aria-hidden="true">{hero.text}</span>
-            <span className="vx-hero-typed" aria-hidden="true"><TypedWords text={hero.text} cursor={hero.cursor} /><i /></span>
-          </h1>
-          <p className="vx-hero-thesis"><Emph text="I am the layer that turns a simple prototype into ⟪a reliable, production-grade AI product⟫ — ⟪advanced orchestration⟫, ⟪deep retrieval⟫, ⟪multimodal perception⟫, ⟪evaluation⟫, ⟪observability⟫, and ⟪production-grade deployment⟫." /></p>
-          <div className="vx-hero-actions">
-            <a className="vx-primary-action" href="#projects">Explore my projects <i>↓</i></a>
-            <a href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">View my résumé ↗</a>
-            <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">Open GitHub ↗</a>
+        <div className="vx-hero-credentials">
+          <div className="vx-terminal-label">
+            <i />
+            <span>YASHWANT / AI SYSTEMS PORTFOLIO</span>
+            <small>{hero.ready ? "READY" : hero.deleting ? "BACKSPACING" : "WRITING"}</small>
           </div>
-          <div className="vx-hero-meta"><span>CUHK-Shenzhen · B.Eng. CSE</span><span>Year-4 · Class of 2027</span><span>Wondershare Filmora · AIGC R&amp;D</span></div>
+          {!hero.collapsed ? (
+            <div className="vx-hero-central-intro">
+              <h1 className="vx-hero-script" aria-label={hero.text} data-statement={hero.statement}>
+                <span className="vx-hero-script-measures" aria-hidden="true">
+                  {HERO_STATEMENTS.map((item, index) => (
+                    <span key={item.full} data-statement={index}>
+                      <HeroHighlightedText
+                        text={item.full}
+                        cursor={item.full.length}
+                        highlights={item.highlights}
+                      />
+                    </span>
+                  ))}
+                </span>
+                <span className="vx-hero-script-live" data-statement={hero.statement} aria-hidden="true">
+                  <HeroHighlightedText
+                    text={hero.text}
+                    cursor={hero.cursor}
+                    highlights={HERO_STATEMENTS[hero.statement].highlights}
+                  />
+                  <i data-deleting={hero.deleting} />
+                </span>
+              </h1>
+            </div>
+          ) : (
+            <div className="vx-hero-capsule-content">
+              <p className="vx-hero-intro">Hi, I&apos;m</p>
+              <h1>Yashwant Bhyri.</h1>
+              <ul className="vx-credential-list" aria-label="Profile summary">
+                {HERO_STATEMENTS.map((item, index) => (
+                  <li key={item.compact} style={{ "--credential-delay": `${index * 90}ms` } as CSSProperties}>
+                    <i aria-hidden="true">✦</i>
+                    <span>
+                      <HeroHighlightedText
+                        text={item.compact}
+                        cursor={item.compact.length}
+                        highlights={item.compactHighlights}
+                      />
+                    </span>
+                    <small>{String(index + 1).padStart(2, "0")}</small>
+                  </li>
+                ))}
+              </ul>
+              <div className="vx-hero-actions">
+                <a className="vx-primary-action" href="#projects">Explore my projects <i>↓</i></a>
+                <a href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">View my résumé ↗</a>
+                <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">Open GitHub ↗</a>
+                <a href="#hero-contact">Contact me ↘</a>
+              </div>
+            </div>
+          )}
         </div>
-        <HeroProjectDeck reducedMotion={reducedMotion} ready={hero.ready} />
+        {hero.contactVisible ? (
+          <aside id="hero-contact" className="vx-hero-contact" aria-label="Contact Yashwant">
+            <div>
+              <span>OPEN TO RELEVANT AI ROLES</span>
+              <strong>Have a position or a system worth building?</strong>
+            </div>
+            <ContactChannels compact />
+            <a className="vx-short-call" href={SHORT_CALL_HREF}>Request a 15-minute call <i>↗</i></a>
+          </aside>
+        ) : null}
+        <HeroProjectDeck reducedMotion={reducedMotion} ready={hero.deckVisible} />
       </div>
       {!hero.ready ? <button type="button" className="vx-skip-intro" onClick={hero.skip} data-hero-skip-ignore>Skip introduction →</button> : <a className="vx-scroll-cue" href="#projects"><i /> Scroll into the systems</a>}
     </section>
@@ -794,11 +1077,16 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
 }
 
 /** Types text once the element scrolls into view. Returns visible slice + done. */
-function useTypeOnView(text: string, cps = 34) {
-  const ref = useRef<HTMLElement>(null);
+function useTypeOnView(
+  ref: React.RefObject<HTMLElement | null>,
+  text: string,
+  cps = 34,
+) {
+  const reducedMotion = useReducedMotion();
   const [started, setStarted] = useState(false);
   const [n, setN] = useState(0);
   useEffect(() => {
+    if (reducedMotion) return;
     const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(([e]) => {
@@ -806,32 +1094,42 @@ function useTypeOnView(text: string, cps = 34) {
     }, { threshold: 0.4 });
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [reducedMotion, ref]);
   useEffect(() => {
-    if (!started || n >= text.length) return;
+    if (reducedMotion || !started || n >= text.length) return;
     const timer = window.setTimeout(() => setN((v) => v + 1), 1000 / cps);
     return () => window.clearTimeout(timer);
-  }, [started, n, text.length, cps]);
-  return { ref, visible: text.slice(0, n), done: n >= text.length, started };
+  }, [started, n, text.length, cps, reducedMotion]);
+  return {
+    visible: reducedMotion ? text : text.slice(0, n),
+    done: reducedMotion || n >= text.length,
+    started: reducedMotion || started,
+  };
 }
 
 /** Spotlight cycle for the project cards: one quick lap, then a slow lap, looping. */
-const SPOT_DURATIONS = [1000, 1000, 1000, 1000, 1000, 2500, 2500, 2500, 2500, 2500];
+const SPOT_DURATIONS = [3600, 3600, 3600, 3600];
 
-const INDEX_SUB = "Five AI systems that I built, explained from user input to engineering outcome.";
+const INDEX_SUB = "Four systems, each introduced in human terms before the architecture goes deep.";
 
 function ProjectIndex() {
-  const hook = useTypeOnView("So — what did I build?", 22);
+  const reducedMotion = useReducedMotion();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const hook = useTypeOnView(headingRef, "So, what did I build?", 22);
   const [subN, setSubN] = useState(0);
   useEffect(() => {
+    if (reducedMotion) return;
     if (!hook.done || subN >= INDEX_SUB.length) return;
     const timer = window.setTimeout(() => setSubN((v) => v + 1), 24);
     return () => window.clearTimeout(timer);
-  }, [hook.done, subN]);
-  const sub = { visible: INDEX_SUB.slice(0, subN), done: subN >= INDEX_SUB.length };
+  }, [hook.done, reducedMotion, subN]);
+  const visibleSubN = reducedMotion ? INDEX_SUB.length : subN;
+  const sub = { visible: INDEX_SUB.slice(0, visibleSubN), done: visibleSubN >= INDEX_SUB.length };
   const [spot, setSpot] = useState(-1);
+  const [manualSpot, setManualSpot] = useState<number | null>(null);
   useEffect(() => {
     if (!sub.done) return;
+    if (reducedMotion) return;
     let step = 0;
     let timer = 0;
     const tick = () => {
@@ -843,17 +1141,18 @@ function ProjectIndex() {
     };
     tick();
     return () => window.clearTimeout(timer);
-  }, [sub.done]);
+  }, [reducedMotion, sub.done]);
+  const currentSpot = manualSpot ?? (reducedMotion ? 0 : spot < 0 ? 0 : spot);
   return (
-    <section id="projects" className="vx-project-index vx-section-shell">
+    <section id="projects" className="vx-project-index vx-section-shell vx-page" data-vx-page>
       <div className="vx-section-heading">
-        <span>SELECTED WORK / FIVE SYSTEMS</span>
-        <h2 ref={hook.ref as React.RefObject<HTMLHeadingElement>} className={`vx-typed-h ${hook.done ? "is-done" : ""}`} aria-label="So — what did I build?">
+        <span>SELECTED WORK / FOUR SYSTEMS</span>
+        <h2 ref={headingRef} className={`vx-typed-h ${hook.done ? "is-done" : ""}`} aria-label="So, what did I build?">
           <span className="vx-typed-live" aria-hidden="true">
             <em className="vx-paint-target">{hook.visible}</em>
             {hook.started && !hook.done ? <i className="vx-type-caret" /> : null}
           </span>
-          <b className="vx-typed-ghost" aria-hidden="true">So — what did I build?</b>
+          <b className="vx-typed-ghost" aria-hidden="true">So, what did I build?</b>
         </h2>
         <p className="vx-typed-sub">
           <span className="vx-typed-live" aria-hidden="true">
@@ -862,23 +1161,44 @@ function ProjectIndex() {
           </span>
           <b className="vx-typed-ghost" aria-hidden="true">{INDEX_SUB}</b>
         </p>
-        <p>Choose a project, or keep scrolling for a guided architecture walkthrough.</p>
+        <p>The walkthrough starts automatically when a project reaches the viewport. Pause only when you want to inspect a state.</p>
       </div>
       <div className="vx-project-grid">
-        {PROJECTS.map((project, cardIdx) => (
-          <a
-            href={project.id === "logistics" ? "#research" : `#${project.id}`}
-            key={project.id}
-            className={`vx-project-card vx-accent-${project.accent} ${spot === cardIdx ? "is-spotlit" : ""}`}
-          >
-            <div className="vx-project-meta"><span>{project.number}</span><i>{project.brand}</i></div>
-            <h3>{project.category}</h3>
-            <p>{project.summary}</p>
-            <div className="vx-project-proof">{project.proof.map((item) => <span key={item}>{item}</span>)}</div>
-            <div className="vx-project-topology" aria-hidden="true"><i /><i /><i /><i /><b /></div>
-            <strong>Explore architecture <i>↘</i></strong>
-          </a>
-        ))}
+        {PROJECTS.map((project, cardIdx) => {
+          const active = currentSpot === cardIdx;
+          return (
+            <a
+              href={`#${project.id}`}
+              key={project.id}
+              className={`vx-project-card vx-accent-${project.accent} ${active ? "is-spotlit" : ""}`}
+              data-active={active}
+              onPointerEnter={() => setManualSpot(cardIdx)}
+              onPointerLeave={() => setManualSpot(null)}
+              onFocus={() => setManualSpot(cardIdx)}
+              onBlur={() => setManualSpot(null)}
+            >
+              <div className="vx-project-meta"><span>{project.number}</span><i>{project.brand}</i></div>
+              <small className="vx-project-badge">{project.badge}</small>
+              <h3>{project.category}</h3>
+              <div className="vx-project-card-switch" data-face={active ? "summary" : "architecture"}>
+                <div className="vx-project-card-summary" aria-hidden={!active}>
+                  <p>{project.summary}</p>
+                  <div className="vx-project-proof">{project.proof.map((item) => <span key={item}>{item}</span>)}</div>
+                </div>
+                <div className="vx-project-mini-architecture" aria-hidden={active}>
+                  <span>COMPRESSED SYSTEM FLOW</span>
+                  <ol>
+                    {project.architecture.map((node, index) => (
+                      <li key={node}><i>{String(index + 1).padStart(2, "0")}</i><strong>{node}</strong><b /></li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+              <div className="vx-project-topology" aria-hidden="true"><i /><i /><i /><i /><b /></div>
+              <strong>Explore architecture <i>↘</i></strong>
+            </a>
+          );
+        })}
       </div>
     </section>
   );
@@ -897,26 +1217,153 @@ function StageControls({ controller, total }: { controller: SequenceController; 
   );
 }
 
+function TypedStageAnnotation({ text }: { text: string }) {
+  const reducedMotion = useReducedMotion();
+  const [cursor, setCursor] = useState(reducedMotion ? text.length : 0);
+
+  useEffect(() => {
+    if (reducedMotion || cursor >= text.length) return;
+    const timer = window.setTimeout(() => setCursor((value) => Math.min(text.length, value + 1)), 17);
+    return () => window.clearTimeout(timer);
+  }, [cursor, reducedMotion, text.length]);
+
+  return (
+    <div className="vx-stage-annotation" aria-label={text}>
+      <span className="vx-stage-annotation-live" aria-hidden="true">
+        {text.slice(0, cursor)}
+        {cursor < text.length ? <i /> : null}
+      </span>
+      <b className="vx-stage-annotation-ghost" aria-hidden="true">{text}</b>
+    </div>
+  );
+}
+
+function ProjectConclusion({
+  name,
+  metrics,
+  extra,
+}: {
+  name: string;
+  metrics: readonly ConclusionMetric[];
+  extra?: React.ReactNode;
+}) {
+  const reducedMotion = useReducedMotion();
+  const [active, setActive] = useState(0);
+  const [completedCycle, setCompletedCycle] = useState(false);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    const timer = window.setTimeout(() => {
+      setActive((current) => {
+        const next = (current + 1) % metrics.length;
+        if (current === metrics.length - 1) setCompletedCycle(true);
+        return next;
+      });
+    }, 2200);
+    return () => window.clearTimeout(timer);
+  }, [active, metrics.length, reducedMotion]);
+
+  const metric = metrics[active];
+
+  return (
+    <div className="vx-project-conclusion" data-complete={completedCycle || reducedMotion}>
+      <div className="vx-conclusion-heading">
+        <span>SYSTEM CONCLUSION</span>
+        <strong>{name}, resolved into the signals that matter.</strong>
+      </div>
+      <div className="vx-conclusion-focus" key={`${metric.label}-${active}`}>
+        <span>{String(active + 1).padStart(2, "0")} / {String(metrics.length).padStart(2, "0")} · {metric.label}</span>
+        <strong>{metric.value}</strong>
+        <p>{metric.detail}</p>
+      </div>
+      <div className="vx-conclusion-rail" role="group" aria-label={`${name} conclusion signals`}>
+        {metrics.map((item, index) => (
+          <button
+            key={item.label}
+            type="button"
+            aria-pressed={index === active}
+            data-active={index === active}
+            onClick={() => {
+              setActive(index);
+              if (index === metrics.length - 1) setCompletedCycle(true);
+            }}
+          >
+            <i>{String(index + 1).padStart(2, "0")}</i>
+            <span>{item.label}</span>
+            <b />
+          </button>
+        ))}
+      </div>
+      {extra ? <div className="vx-conclusion-extra">{extra}</div> : null}
+    </div>
+  );
+}
+
 function SystemWalkthrough({
   name,
   steps,
   controller,
   Visual,
   accent,
+  proof,
+  conclusionExtra,
 }: {
   name: string;
   steps: readonly StoryStep[];
   controller: SequenceController;
   Visual: VisualComponent;
   accent: "lime" | "violet" | "cyan";
+  proof: readonly ConclusionMetric[];
+  conclusionExtra?: React.ReactNode;
 }) {
-  const step = steps[controller.index];
+  const isConclusion = controller.index === steps.length;
+  const componentStep = steps[Math.min(controller.index, steps.length - 1)];
+  const step: StoryStep = isConclusion
+    ? {
+        label: "Conclusion",
+        title: "The complete system resolves into six recruiter-ready signals.",
+        explanation: "Product, contribution, runtime, output, impact, and reliability take the stage one at a time for a fast final revision.",
+        input: "Complete component walkthrough",
+        operation: "Consolidate the strongest engineering evidence",
+        output: "One legible project narrative",
+        stack: ["product", "contribution", "runtime", "output", "impact", "reliability"],
+        proof: "Final component-microscope stage",
+      }
+    : componentStep;
   return (
-    <div className={`vx-walkthrough vx-accent-${accent}`} data-motion-paused={!controller.playing}>
+    <div
+      className={`vx-walkthrough vx-accent-${accent}`}
+      data-motion-paused={!controller.playing}
+      data-stage-kind={isConclusion ? "conclusion" : "component"}
+    >
       <aside className="vx-story-panel">
         <div className="vx-story-kicker"><span>COMPONENT MICROSCOPE</span><i className={controller.playing ? "is-live" : ""} /></div>
         <div className="vx-stage-rail" role="group" aria-label={`${name} walkthrough stages`}>
-          {steps.map((item, index) => <button key={item.label} type="button" onClick={() => controller.choose(index)} aria-pressed={controller.index === index} data-active={controller.index === index}><i>{String(index + 1).padStart(2, "0")}</i><span>{item.label}</span><b /></button>)}
+          {steps.map((item, index) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => controller.choose(index)}
+              aria-pressed={controller.index === index}
+              data-active={controller.index === index}
+              data-stage-kind="component"
+            >
+              <i>{String(index + 1).padStart(2, "0")}</i>
+              <span>{item.label}</span>
+              <b />
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => controller.choose(steps.length)}
+            aria-pressed={isConclusion}
+            data-active={isConclusion}
+            data-stage-kind="conclusion"
+          >
+            <i>{String(steps.length + 1).padStart(2, "0")}</i>
+            <span>Conclusion</span>
+            <b />
+          </button>
         </div>
         <div className="vx-story-copy">
           <span>{step.label}</span>
@@ -925,11 +1372,28 @@ function SystemWalkthrough({
           <div className="vx-tech-stack">{step.stack.map((item) => <i key={item}>{item}</i>)}</div>
           {step.proof ? <strong className="vx-proof-chip"><i />{step.proof}</strong> : null}
         </div>
-        <StageControls controller={controller} total={steps.length} />
+        <StageControls controller={controller} total={steps.length + 1} />
       </aside>
       <div className="vx-operational-stage" aria-label={`${name}: ${step.title}`}>
-        <div className="vx-stage-top"><span>OPERATIONAL GRAPHIC</span><strong>{step.label}</strong><i>{controller.playing ? "AUTOPLAY" : "MANUAL"}</i></div>
-        <div className="vx-visual-window"><Visual active={controller.index} /></div>
+        <div className="vx-stage-top">
+          <span>{isConclusion ? "SYSTEM REVISION" : "OPERATIONAL GRAPHIC"}</span>
+          <strong>{step.label}</strong>
+          {step.maturity ? <em>{step.maturity}</em> : null}
+          <i>{controller.playing ? "AUTOPLAY" : "MANUAL"}</i>
+        </div>
+        {!isConclusion ? (
+          <TypedStageAnnotation
+            key={`${name}-${step.label}`}
+            text={step.annotation ?? step.explanation}
+          />
+        ) : null}
+        <div className="vx-visual-window">
+          {isConclusion ? (
+            <ProjectConclusion name={name} metrics={proof} extra={conclusionExtra} />
+          ) : (
+            <Visual active={controller.index} />
+          )}
+        </div>
         <div className="vx-io-rail">
           <div><span>INPUT</span><strong>{step.input}</strong></div>
           <i aria-hidden="true" />
@@ -940,6 +1404,50 @@ function SystemWalkthrough({
       </div>
     </div>
   );
+}
+
+function useChapterHandoff({
+  overviewRef,
+  microscopeRef,
+  overviewComplete,
+  reducedMotion,
+}: {
+  overviewRef: React.RefObject<HTMLElement | null>;
+  microscopeRef: React.RefObject<HTMLElement | null>;
+  overviewComplete: boolean;
+  reducedMotion: boolean;
+}) {
+  const handedOff = useRef(false);
+
+  useEffect(() => {
+    const microscope = microscopeRef.current;
+    if (!microscope) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && entry.intersectionRatio > 0.28) handedOff.current = true;
+    }, { threshold: [0.28] });
+    observer.observe(microscope);
+    return () => observer.disconnect();
+  }, [microscopeRef]);
+
+  useEffect(() => {
+    if (!overviewComplete || reducedMotion || handedOff.current) return;
+    const timer = window.setTimeout(() => {
+      const overview = overviewRef.current;
+      const microscope = microscopeRef.current;
+      if (!overview || !microscope || handedOff.current) return;
+      const rect = overview.getBoundingClientRect();
+      const stillReadingOverview = rect.top < window.innerHeight * 0.45 && rect.bottom > window.innerHeight * 0.55;
+      if (!stillReadingOverview) return;
+      handedOff.current = true;
+      microscope.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 2300);
+    return () => window.clearTimeout(timer);
+  }, [microscopeRef, overviewComplete, overviewRef, reducedMotion]);
+
+  return useCallback(() => {
+    handedOff.current = true;
+    microscopeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [microscopeRef]);
 }
 
 function CaseHeading({
@@ -957,12 +1465,13 @@ function CaseHeading({
   copy: string;
   accent: "lime" | "violet" | "cyan";
 }) {
-  const typedTitle = useTypeOnView(title, 46);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const typedTitle = useTypeOnView(titleRef, title, 46);
   return (
     <div className={`vx-case-heading vx-accent-${accent}`}>
       <span>{number} / {brand}</span>
       <small>{category}</small>
-      <h2 ref={typedTitle.ref as React.RefObject<HTMLHeadingElement>} className="vx-typed-h" aria-label={title}>
+      <h2 ref={titleRef} className="vx-typed-h" aria-label={title}>
         <span className="vx-typed-live" aria-hidden="true">
           {typedTitle.visible}
           {typedTitle.started && !typedTitle.done ? <i className="vx-type-caret" /> : null}
@@ -970,7 +1479,11 @@ function CaseHeading({
         {/* reserves final height so the layout never jumps while typing */}
         <b className="vx-typed-ghost" aria-hidden="true">{title}</b>
       </h2>
-      <p><Emph text={copy} /></p>
+      <aside className="vx-contribution-tile">
+        <span>MY CONTRIBUTION</span>
+        <p><Emph text={copy} /></p>
+        <i aria-hidden="true" />
+      </aside>
     </div>
   );
 }
@@ -987,6 +1500,7 @@ function FlagshipChapter({
   Overview,
   Visual,
   proof,
+  architecturePath,
   children,
 }: {
   id: string;
@@ -1000,36 +1514,84 @@ function FlagshipChapter({
   Overview: OverviewComponent;
   Visual: VisualComponent;
   proof: readonly { label: string; value: string; detail: string }[];
+  architecturePath: readonly number[];
   children?: React.ReactNode;
 }) {
   const reducedMotion = useReducedMotion();
-  const ref = useRef<HTMLElement>(null);
-  const controller = useAutoplaySequence(steps.length, 9400, ref, reducedMotion, {
-    observeSelector: ".vx-walkthrough",
-    pointerSelector: ".vx-story-panel",
+  const overviewRef = useRef<HTMLElement>(null);
+  const microscopeRef = useRef<HTMLElement>(null);
+  const overviewController = useAutoplaySequence(architecturePath.length, 2200, overviewRef, reducedMotion, {
+    observeSelector: ".vx-overview-shell",
   });
-  const handoffs: Record<string, { copy: string; href: string; action: string }> = {
-    antigravity: { copy: "You have followed a live answer all the way to recruiter evidence. The actual three-turn room and report are ready below.", href: "#antigravity-demo", action: "Launch the real replay ↓" },
-    filmora: { copy: "You have followed one brief through research, compilation, agent production, assembly, and evaluation.", href: "#mindscape", action: "Continue to clinical intelligence ↓" },
-    mindscape: { copy: "You have followed one synthetic voice state through perception, retrieval, validation, and human review.", href: "#logistics", action: "Continue to bounded AI operations ↓" },
-  };
-  const handoff = handoffs[id];
+  const controller = useAutoplaySequence(steps.length + 1, 11800, microscopeRef, reducedMotion, {
+    observeSelector: ".vx-walkthrough",
+  });
+  const moveToMicroscope = useChapterHandoff({
+    overviewRef,
+    microscopeRef,
+    overviewComplete: overviewController.complete,
+    reducedMotion,
+  });
+
+  const selectArchitectureNode = useCallback((index: number) => {
+    controller.choose(index);
+    moveToMicroscope();
+  }, [controller, moveToMicroscope]);
+
   return (
-    <section ref={ref} id={id} className={`vx-case vx-case-${id} vx-accent-${accent}`}>
-      <div className="vx-section-shell">
-        <CaseHeading number={number} brand={brand} category={category} title={title} copy={copy} accent={accent} />
-        <div className="vx-overview-shell">
-          <div className="vx-overview-head"><div><span>HIGH-LEVEL ARCHITECTURE</span><strong>Follow one signal through the complete system.</strong></div><small>Choose any node to inspect it</small></div>
-          <Overview active={controller.index} onSelect={controller.choose} />
+    <>
+      <section
+        ref={overviewRef}
+        id={id}
+        className={`vx-case-overview-page vx-case-${id} vx-accent-${accent} vx-page`}
+        data-vx-page
+        data-chapter={id}
+      >
+        <div className="vx-section-shell">
+          <CaseHeading number={number} brand={brand} category={category} title={title} copy={copy} accent={accent} />
+          <div className="vx-overview-shell">
+            <div className="vx-overview-top">
+              <span>HIGH-LEVEL ARCHITECTURE</span>
+              <strong>Follow the signal from input to outcome.</strong>
+              <i>{overviewController.playing ? "AUTOPLAY" : "READY"}</i>
+            </div>
+            <Overview
+              active={architecturePath[overviewController.index] ?? 0}
+              onSelect={selectArchitectureNode}
+            />
+          </div>
+          <button type="button" className="vx-architecture-handoff" onClick={moveToMicroscope}>
+            <span>Architecture complete</span>
+            <strong>Continue into the component microscope</strong>
+            <i>↓</i>
+          </button>
         </div>
-        <SystemWalkthrough name={brand} steps={steps} controller={controller} Visual={Visual} accent={accent} />
-        {handoff && controller.complete ? <div className="vx-project-handoff" role="status"><i className="vx-handoff-orbit" aria-hidden="true"><b /><b /><b /></i><div><span>ORBIT / PROJECT COMPLETE</span><strong>{handoff.copy}</strong></div><a href={handoff.href}>{handoff.action}</a></div> : null}
-        <div className="vx-outcome-strip">
-          {proof.map((item) => <div key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.detail}</small></div>)}
-          {children}
+      </section>
+      <section
+        ref={microscopeRef}
+        id={`${id}-microscope`}
+        className={`vx-case-microscope-page vx-case-${id} vx-accent-${accent} vx-page`}
+        data-vx-page
+        data-chapter={`${id}-microscope`}
+      >
+        <div className="vx-section-shell">
+          <div className="vx-microscope-identity">
+            <span>{number} / {brand}</span>
+            <strong>{title}</strong>
+            <small>{category}</small>
+          </div>
+          <SystemWalkthrough
+            name={brand}
+            steps={steps}
+            controller={controller}
+            Visual={Visual}
+            accent={accent}
+            proof={proof}
+            conclusionExtra={children}
+          />
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
 
@@ -1056,17 +1618,21 @@ function AntigravityChapter() {
       id="antigravity"
       number="01"
       brand="ANTIGRAVITY"
-      category="AI-NATIVE TECHNICAL INTERVIEWING PLATFORM"
-      title="Real-time AI interview software that conducts automated technical interviews at scale."
-      copy="I built the ⟪real-time voice layer⟫ and the robust ⟪multi-agent orchestration decision engine⟫ behind it: streaming speech, evidence-seeking route logic, and the recruiter intelligence layer that turns a live technical conversation into a ⟪defensible hiring artifact⟫."
+      category="PRODUCTION-GRADE SOFTWARE PRODUCT · REAL-TIME AI-NATIVE INTERVIEWING PLATFORM"
+      title="Production-grade AI interview software for automating technical interviews at scale."
+      copy="I built the ⟪multi-agent orchestration and decision engine⟫ behind Antigravity. It conducts live technical interviews, reasons over candidate responses, adapts the question graph, interacts through a real-time voice layer, and assembles ⟪evidence-backed recruiter reports⟫ for hiring decisions."
       accent="lime"
       steps={ANTIGRAVITY_STEPS}
       Overview={AntigravityOverview}
       Visual={LiveAntigravityVisual}
+      architecturePath={[0, 1, 5, 6]}
       proof={[
-        { label: "PRODUCT IMPACT", value: "250+ completed interviews", detail: "Automated technical screening after the ATS layer" },
-        { label: "RUNTIME", value: "Two-track agent architecture", detail: "Fast foreground response · deep next-turn analysis" },
-        { label: "OUTPUT", value: "Evidence-backed recruiter report", detail: "Demonstrated ability, uncertainty, and coverage" },
+        { label: "PRODUCT", value: "Voice-native technical interviewing", detail: "Adaptive interviews designed to operate at screening scale" },
+        { label: "MY CONTRIBUTION", value: "Multi-agent orchestration + decision engine", detail: "Question routing, agent convergence, guarded prepared-question promotion, and report logic" },
+        { label: "RUNTIME", value: "Guarded dual-lane interview graph", detail: "Latency-aware foreground routing while deeper next-turn analysis continues" },
+        { label: "OUTPUT", value: "Evidence-linked recruiter report", detail: "Ability, credibility, coverage, uncertainty, and untested dimensions" },
+        { label: "IMPACT", value: "250+ completed interviews", detail: "A deployed workflow with a real three-turn portfolio replay" },
+        { label: "RELIABILITY", value: "Fallbacks + offline agent evaluation", detail: "Prepared audio, state recovery, telemetry, regression replay, and versioned route policies" },
       ]}
     >
       <button id="antigravity-demo" className="vx-demo-action" type="button" onClick={launchReplay} disabled={launchState === "starting"}>
@@ -1082,18 +1648,22 @@ function FilmoraChapter() {
     <FlagshipChapter
       id="filmora"
       number="02"
-      brand="WONDERSHARE FILMORA · AIGC R&D"
-      category="MULTIMODAL AI VIDEO-PRODUCTION RUNTIME"
-      title="An end-to-end multimodal production workflow, built into the Filmora enterprise editor."
-      copy="As an AI application engineering intern at Wondershare, I built ⟪agents into the Filmora enterprise software⟫: ⟪multi-agent planning⟫ over a ⟪multimodal production graph⟫ — video, audio, dialogue, captions, effects — with live trend intelligence, ⟪memory⟫, schema-bound prompting, and ⟪workflow observability⟫."
+      brand="WONDERSHARE FILMORA"
+      category="AI APPLICATION ENGINEERING INTERNSHIP · MULTIMODAL AI PRODUCTION SYSTEM"
+      title="An end-to-end multimodal AI production runtime integrated into Filmora Enterprise."
+      copy="During my Wondershare Filmora internship, I built an ⟪end-to-end multimodal AI production runtime integrated into Filmora Enterprise⟫. It combines real-time market research and product intelligence with memory, retrieval, function calling, and multimodal agent-planning graphs across video, audio, dialogue, captions, effects, and editable timeline assembly. ⟪Guardrails, observability, reinforcement-learning refinement, cost controls, and human approval⟫ govern the workflow."
       accent="violet"
       steps={FILMORA_STEPS}
       Overview={FilmoraOverview}
       Visual={LiveFilmoraVisual}
+      architecturePath={[0, 1, 4, 5, 6]}
       proof={[
-        { label: "TREND INTELLIGENCE", value: "700+ creative signals", detail: "Hooks, audio, themes, palettes, tempo, captions, and effects" },
-        { label: "COST", value: "28% API-cost reduction", detail: "Trace-led workflow optimization and attribution" },
-        { label: "LATENCY", value: "2% orchestration share", detail: "Of end-to-end generation latency" },
+        { label: "PRODUCT", value: "End-to-end multimodal AI production runtime", detail: "Research, planning, generation, editable assembly, and human review integrated into Filmora Enterprise" },
+        { label: "MY CONTRIBUTION", value: "Research-to-production orchestration layer", detail: "Memory, retrieval, function contracts, agent handoffs, guardrails, tracing, and evaluation" },
+        { label: "INPUT", value: "Research + product intelligence", detail: "700+ reusable signals become ranked production context and executable skills" },
+        { label: "OUTPUT", value: "Editable multimodal timeline", detail: "Video, music, dialogue, captions, effects, and metadata stay separable" },
+        { label: "IMPACT", value: "Trace-led cost + latency optimization", detail: "Token, route, retry, and generation traces expose cost and latency at every handoff" },
+        { label: "RELIABILITY", value: "Guarded human-in-the-loop runtime", detail: "Fallbacks, checkpoints, model routing, agent evaluations, regression, and final approval" },
       ]}
     >
       <div className="vx-confidentiality"><span>REPRESENTATIVE SYSTEM VISUALIZATION</span><small>Confidential Filmora internals and source media are abstracted.</small></div>
@@ -1107,92 +1677,276 @@ function MindScapeChapter() {
       id="mindscape"
       number="03"
       brand="MINDSCAPE"
-      category="MULTIMODAL CLINICAL DECISION-SUPPORT ARCHITECTURE · PROTOTYPE"
-      title="A clinical diagnosis-prediction tool that keeps every step of its reasoning inspectable."
-      copy="MindScape ⟪predicts and supports clinical assessment⟫ from a patient session: ⟪seven inspectable layers⟫ — perception, state fusion, retrieval, reasoning, validation, clinician review — connected as one decision-support workflow. ⟪The clinician always owns the decision.⟫"
+      category="MEDICAL AI R&D PROJECT · CLINICIAN-SUPPORT PRODUCT"
+      title="A medical AI assistant for evidence-grounded, clinician-controlled mental-health screening and diagnostic review."
+      copy="I built a medical AI R&D product that turns live session signals into a ⟪traceable mental-health screening and diagnostic-review workflow⟫. Multimodal perception, longitudinal memory, hybrid clinical retrieval, grounded reasoning, independent validation, and human review remain inspectable from source evidence to final action. ⟪The clinician retains final judgment⟫."
       accent="cyan"
       steps={MINDSCAPE_STEPS}
       Overview={MindScapeOverview}
       Visual={LiveMindScapeVisual}
+      architecturePath={[0, 1, 2, 3, 4, 5, 6]}
       proof={[
-        { label: "STATE MODEL", value: "7-layer behavioral pipeline", detail: "Speech, events, affect, fusion, retrieval, reasoning, review" },
-        { label: "GROUNDING", value: "Dense + lexical + rerank", detail: "MedCPT · HNSW · BM25 · RRF · BioLinkBERT" },
-        { label: "SAFETY", value: "NLI + deterministic gates", detail: "Evidence support and DSM-aligned rule validation" },
+        { label: "PRODUCT", value: "Medical AI clinician-support R&D product", detail: "A synthetic-data prototype for traceable review, not production clinical software" },
+        { label: "MY CONTRIBUTION", value: "Inspectable session-to-review workflow", detail: "Capture, perception, fusion, retrieval, reasoning, validation, review, and governed RL refinement" },
+        { label: "RUNTIME", value: "Streaming session-to-review path", detail: "Time-aligned packets preserve the words and signals behind each state" },
+        { label: "GROUNDING", value: "Dense + lexical + rerank", detail: "Clinical evidence is retrieved, merged, reranked, and attached to claims" },
+        { label: "SAFETY", value: "Model + deterministic validation", detail: "Unsupported language is challenged before the review surface" },
+        { label: "OUTPUT", value: "Clinician-owned review packet", detail: "Source, claim, uncertainty, warnings, follow-up, and governed feedback stay together" },
       ]}
     >
-      <div className="vx-safety-note"><span>SYNTHETIC CLINICAL WORKFLOW</span><small>Decision support for clinician review—not autonomous diagnosis or medical advice.</small></div>
+      <div className="vx-safety-note"><span>SYNTHETIC CLINICAL WORKFLOW</span><small>Research and decision support only: not autonomous diagnosis, medical advice, emergency dispatch, or production clinical software.</small></div>
     </FlagshipChapter>
   );
 }
 
-function ResearchSection() {
+type ResearchItem = (typeof RESEARCH)[number];
+
+function ResearchCard({
+  item,
+  index,
+  active,
+  seen,
+  setRef,
+  onSelect,
+}: {
+  item: ResearchItem;
+  index: number;
+  active: boolean;
+  seen: boolean;
+  setRef: (node: HTMLElement | null) => void;
+  onSelect: () => void;
+}) {
   return (
-    <section id="research" className="vx-research vx-section-shell">
-      <div className="vx-section-heading"><span>05 / RESEARCH & ENGINEERING RECORD</span><h2>Research that ends in an operational measurement.</h2><p>Six compact specimens — each one shows the transformation, the deployment constraint, and the measured result. Never just a model name.</p></div>
-      <div className="vx-research-grid">
-        {RESEARCH.map((item, index) => <article key={item.title}><span>{String(index + 1).padStart(2, "0")} · {item.meta}</span><LiveResearchMini index={index} /><h3>{item.title}</h3><p>{item.copy}</p><strong>{item.proof}</strong></article>)}
+    <article
+      ref={setRef}
+      data-tone={item.tone}
+      data-active={active}
+      data-seen={seen}
+      aria-current={active ? "step" : undefined}
+      tabIndex={0}
+      role="button"
+      aria-label={`Show research record ${index + 1}: ${item.title}`}
+      onFocus={onSelect}
+      onClick={onSelect}
+      onPointerEnter={onSelect}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        onSelect();
+      }}
+    >
+      <div className="vx-research-card-top">
+        <span>{String(index + 1).padStart(2, "0")} · {item.badge}</span>
+        {"logo" in item ? (
+          <Image
+            className="vx-lalamove-logo"
+            src={item.logo}
+            alt="Lalamove"
+            width={164}
+            height={42}
+            unoptimized
+          />
+        ) : null}
+        <small>{item.meta}</small>
       </div>
-      <div className="vx-profile-strip">
-        <div><span>EDUCATION</span><strong>B.Eng. Computer Science &amp; Engineering</strong><p>The Chinese University of Hong Kong, Shenzhen · 2023–2027 · Full Admission Excellence Scholarship</p></div>
-        <div><span>PRIMARY DIRECTION</span><strong>AI Application Engineer · AI Agent Engineer</strong><p>Also targeting applied AI, multimodal systems, AI infrastructure, and AI architecture roles.</p></div>
-        <div className="vx-profile-actions"><a href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">Résumé ↗</a><a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">GitHub ↗</a></div>
+      <div className="vx-research-card-visual">
+        <LiveResearchMini index={item.visual} active={active} />
       </div>
-    </section>
+      <div className="vx-research-card-copy">
+        <h3>{item.title}</h3>
+        <p>{item.copy}</p>
+        <div>{item.stack.slice(0, 3).map((technology) => <i key={technology}>{technology}</i>)}</div>
+        <strong>{item.proof}</strong>
+      </div>
+      <i className="vx-research-progress" aria-hidden="true" />
+    </article>
   );
 }
 
-const GUIDE_MESSAGES: Record<string, string> = {
-  top: "Welcome. I can guide you through what each system does—and where the evidence lives.",
-  projects: "These five systems are ordered for AI application and agent-engineering roles. Choose one, or keep scrolling.",
-  antigravity: "Follow one candidate answer from live voice to the next probe, then into the recruiter report.",
-  filmora: "Watch one creative brief become trend context, coordinated agent work, and an editor-ready timeline.",
-  mindscape: "Here, multimodal perception, evidence retrieval, reasoning, and validation remain separately inspectable.",
-  research: "The final chapter compresses six research systems into mechanism, constraint, and measured result.",
-};
+function ResearchSection() {
+  const reducedMotion = useReducedMotion();
+  const sequenceRef = useRef<HTMLDivElement>(null);
+  const secondPageRef = useRef<HTMLElement>(null);
+  const cardRefs = useRef<Array<HTMLElement | null>>([]);
+  const [visible, setVisible] = useState(false);
+  const [active, setActive] = useState(0);
+  const [playing, setPlaying] = useState(true);
 
-function useActiveChapter() {
-  const [active, setActive] = useState("top");
   useEffect(() => {
-    const ids = Object.keys(GUIDE_MESSAGES);
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (visible?.target.id) setActive(visible.target.id);
-    }, { rootMargin: "-28% 0px -52%", threshold: [0, 0.15, 0.35, 0.6] });
-    ids.forEach((id) => { const node = document.getElementById(id); if (node) observer.observe(node); });
+    const node = sequenceRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), {
+      rootMargin: "-10% 0px -10%",
+      threshold: 0.05,
+    });
+    observer.observe(node);
     return () => observer.disconnect();
   }, []);
-  return active;
+
+  useEffect(() => {
+    if (!visible || !playing || reducedMotion) return;
+    const timer = window.setTimeout(() => {
+      if (active < RESEARCH.length - 1) {
+        const next = active + 1;
+        setActive(next);
+        if (next === 3) {
+          secondPageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        return;
+      }
+      setPlaying(false);
+      document.querySelector<HTMLElement>("#contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 7600);
+    return () => window.clearTimeout(timer);
+  }, [active, playing, reducedMotion, visible]);
+
+  const controls = (
+    <div className="vx-research-sequence-controls" aria-label="Research walkthrough playback">
+      <span>{String(active + 1).padStart(2, "0")} / {String(RESEARCH.length).padStart(2, "0")}</span>
+      <button type="button" disabled={reducedMotion} onClick={() => setPlaying((value) => !value)}>
+        <i data-playing={playing && !reducedMotion} />
+        {reducedMotion ? "Static view" : playing ? "Pause sequence" : "Resume sequence"}
+      </button>
+    </div>
+  );
+
+  const cards = (start: number, end: number) => (
+    <div className="vx-research-grid" data-page={start === 0 ? "one" : "two"}>
+      {RESEARCH.slice(start, end).map((item, localIndex) => {
+        const index = start + localIndex;
+        return (
+          <ResearchCard
+            key={item.title}
+            item={item}
+            index={index}
+            active={active === index}
+            seen={index <= active}
+            setRef={(node) => {
+              cardRefs.current[index] = node;
+            }}
+            onSelect={() => setActive(index)}
+          />
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div ref={sequenceRef} className="vx-research-sequence">
+      <section id="research" className="vx-research vx-research-page vx-section-shell vx-page" data-vx-page>
+        <div className="vx-research-heading">
+          <span>04 / OPEN SOURCE · RESEARCH · R&amp;D</span>
+          <h2>Open-source, research, internship, and R&amp;D work—six systems with the mechanism visible.</h2>
+          <div>
+            <p>Each record shows what ran, how it was evaluated, and what the work produced.</p>
+            {controls}
+          </div>
+        </div>
+        {cards(0, 3)}
+      </section>
+      <section
+        ref={secondPageRef}
+        id="research-cont"
+        className="vx-research vx-research-page vx-section-shell vx-page"
+        data-vx-page
+      >
+        <div className="vx-research-heading vx-research-heading-cont">
+          <span>04–06 / LOGISTICS · BROWSER PERCEPTION · CONTROLLED GENERATION</span>
+          <h2>Applied R&amp;D across operational AI, browser perception, and controlled generation.</h2>
+          <div>
+            <p>The sequence continues automatically through the final three records.</p>
+            {controls}
+          </div>
+        </div>
+        {cards(3, 6)}
+      </section>
+    </div>
+  );
 }
 
-function OrbitGuide() {
-  const active = useActiveChapter();
-  const [mode, setMode] = useState<"invite" | "guided" | "minimized" | "dismissed">("invite");
-  const [eligible, setEligible] = useState(false);
+function ContactDock() {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    let modeTimer = 0;
-    let revealTimer = 0;
-    try {
-      const saved = window.sessionStorage.getItem("yb-orbit-guide");
-      if (saved === "guided" || saved === "minimized" || saved === "dismissed") {
-        modeTimer = window.setTimeout(() => setMode(saved), 0);
-      }
-      const introSeen = window.sessionStorage.getItem("yb-portfolio-intro") === "seen";
-      revealTimer = window.setTimeout(() => setEligible(true), introSeen ? 700 : 4600);
-    } catch { /* no-op */ }
-    if (!revealTimer) revealTimer = window.setTimeout(() => setEligible(true), 4600);
-    return () => { window.clearTimeout(modeTimer); window.clearTimeout(revealTimer); };
-  }, []);
-  const updateMode = (next: typeof mode) => {
-    setMode(next);
-    try { window.sessionStorage.setItem("yb-orbit-guide", next); } catch { /* no-op */ }
-  };
-  if (!eligible || mode === "dismissed") return null;
-  const open = mode === "invite" || mode === "guided";
+    if (!open) return;
+    const trigger = triggerRef.current;
+    const frame = window.requestAnimationFrame(() => {
+      drawerRef.current?.querySelector<HTMLElement>("a, button")?.focus();
+    });
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", closeOnEscape);
+      trigger?.focus();
+    };
+  }, [open]);
+
   return (
-    <aside className={`vx-orbit-guide vx-orbit-${active}`} data-open={open} aria-label="Portfolio guide">
-      {open ? <div className="vx-orbit-dialogue" role={mode === "guided" ? "status" : undefined} aria-live={mode === "guided" ? "polite" : "off"}><button type="button" onClick={() => updateMode("dismissed")} aria-label="Dismiss guide">×</button><span>ORBIT / SYSTEM GUIDE</span><p>{GUIDE_MESSAGES[active] ?? GUIDE_MESSAGES.top}</p>{mode === "invite" ? <div><button type="button" onClick={() => updateMode("guided")}>Guide me</button><button type="button" onClick={() => updateMode("minimized")}>Explore freely</button></div> : <small>Chapter {Object.keys(GUIDE_MESSAGES).indexOf(active) + 1} / {Object.keys(GUIDE_MESSAGES).length}</small>}</div> : null}
-      <button className="vx-orbit-character" type="button" onClick={() => updateMode(open ? "minimized" : "guided")} aria-expanded={open} aria-label={open ? "Minimize portfolio guide" : "Open portfolio guide"}><i /><i /><i /><b /><span>ORBIT</span></button>
+    <aside className="vx-contact-dock" data-open={open} aria-label="Contact Yashwant">
+      {open ? (
+        <div
+          ref={drawerRef}
+          id="vx-contact-panel"
+          className="vx-contact-drawer"
+          role="dialog"
+          aria-labelledby="vx-contact-panel-title"
+        >
+          <div>
+            <span>CONTACT</span>
+            <strong id="vx-contact-panel-title">Let&apos;s discuss the role, the system, or the research.</strong>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close contact panel">×</button>
+          </div>
+          <ContactChannels />
+          <a className="vx-short-call" href={SHORT_CALL_HREF}>Request a 15-minute call <i aria-hidden="true">↗</i></a>
+        </div>
+      ) : null}
+      <button
+        ref={triggerRef}
+        type="button"
+        className="vx-contact-trigger"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-controls="vx-contact-panel"
+        aria-label={open ? "Close contact panel" : "Open contact panel"}
+      >
+        <i aria-hidden="true" />
+        <span>{open ? "Close contact" : "Contact me"}</span>
+        <b aria-hidden="true">{open ? "×" : "↗"}</b>
+      </button>
     </aside>
+  );
+}
+
+function ContactSection() {
+  return (
+    <section id="contact" className="vx-contact-page vx-page" data-vx-page>
+      <div className="vx-section-shell">
+        <div className="vx-contact-page-copy">
+          <span>OPEN TO AI SYSTEMS, AGENT, AND APPLICATION ENGINEERING ROLES</span>
+          <h2>If the work is technically ambitious, I&apos;d like to hear about it.</h2>
+          <p>Reach me directly for a relevant role, an applied AI system, a research collaboration, or a short technical conversation.</p>
+          <div className="vx-contact-page-actions">
+            <a className="vx-primary-action" href={SHORT_CALL_HREF}>Request a 15-minute call ↗</a>
+            <a href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">Open résumé ↗</a>
+            <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">Open GitHub ↗</a>
+          </div>
+        </div>
+        <div className="vx-contact-page-card">
+          <ContactChannels />
+          <small>WeChat: Yashwant_Bhyri · QR available on request.</small>
+        </div>
+        <footer className="vx-contact-footer">
+          <div><strong>Yashwant Bhyri</strong><span>AI Systems · AI Agents · Full-Stack AI / ML</span></div>
+          <p>Built to make the engineering visible.</p>
+          <a href="#top">Return to the introduction ↑</a>
+        </footer>
+      </div>
+    </section>
   );
 }
 
@@ -1231,23 +1985,26 @@ export function PortfolioV2() {
   const shellRef = useRef<HTMLElement>(null);
   useExperienceMotion(shellRef, reducedMotion);
   return (
-    <main ref={shellRef} className="vx-shell">
-      <div className="vx-progress" aria-hidden="true"><i /></div>
-      <div className="vx-cursor-light" aria-hidden="true" />
-      <header className="vx-header">
-        <a href="#top" className="vx-brand" aria-label="Yashwant Bhyri, portfolio home"><span>YB</span><div><strong>Yashwant Bhyri</strong><small>AI agent &amp; application engineer</small></div></a>
-        <nav aria-label="Portfolio navigation"><a href="#profile">Profile</a><a href="#projects">Projects</a><a href="#antigravity">Antigravity</a><a href="#filmora">Filmora</a><a href="#mindscape">MindScape</a><a href="#research">Research</a></nav>
-        <a className="vx-header-resume" href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">Résumé ↗</a>
-      </header>
-      <Hero reducedMotion={reducedMotion} />
-      <ProfileSection />
-      <ProjectIndex />
-      <AntigravityChapter />
-      <FilmoraChapter />
-      <MindScapeChapter />
-      <ResearchSection />
-      <GuideSpark />
-      <footer className="vx-footer"><div><strong>Yashwant Bhyri</strong><span>AI Agent · AI Application · Applied AI Engineering</span></div><p>Built to make the engineering visible.</p><a href="#top">Return to orbit ↑</a></footer>
-    </main>
+    <>
+      <a className="vx-skip-link" href="#profile">Skip to portfolio content</a>
+      <main ref={shellRef} className="vx-shell">
+        <div className="vx-progress" aria-hidden="true"><i /></div>
+        <div className="vx-cursor-light" aria-hidden="true" />
+        <header className="vx-header">
+          <a href="#top" className="vx-brand" aria-label="Yashwant Bhyri, portfolio home"><span>YB</span><div><strong>Yashwant Bhyri</strong><small>AI systems &amp; application engineer</small></div></a>
+          <nav aria-label="Portfolio navigation"><a href="#profile">Profile</a><a href="#projects">Projects</a><a href="#antigravity">Interview AI</a><a href="#filmora">Filmora</a><a href="#mindscape">Medical AI</a><a href="#research">Research</a><a href="#contact">Contact</a></nav>
+          <a className="vx-header-resume" href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">Résumé ↗</a>
+        </header>
+        <Hero reducedMotion={reducedMotion} />
+        <ProfileSection />
+        <ProjectIndex />
+        <AntigravityChapter />
+        <FilmoraChapter />
+        <MindScapeChapter />
+        <ResearchSection />
+        <ContactSection />
+        <ContactDock />
+      </main>
+    </>
   );
 }

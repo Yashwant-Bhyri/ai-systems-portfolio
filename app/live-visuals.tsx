@@ -3,7 +3,7 @@
 import { useRef, type ComponentType } from "react";
 import "./live-scenes.css";
 import { useOnScreen } from "./fable/director";
-import { useSim, typed, caret, noise, pulse, q } from "./fable/live";
+import { useSim, typed, caret, pulse, q } from "./fable/live";
 import {
   LoopGraphic,
   SttGraphic,
@@ -13,6 +13,7 @@ import {
   OrchestratorGraphic,
   VoiceOutGraphic,
   ReportGraphic,
+  EvaluationLoopGraphic,
 } from "./fable/antigravity";
 import {
   RuntimeGraphic,
@@ -32,8 +33,9 @@ import {
   ReasonGraphic,
   ValidateGraphic,
   ReviewGraphic,
+  ClinicalRefinementGraphic,
 } from "./fable/mindscape";
-import { LogisticsGraphic, BenchMini } from "./fable/systems";
+import { BenchMini } from "./fable/systems";
 
 type Scene = ComponentType<{ a: boolean }>;
 
@@ -53,8 +55,9 @@ function LiveStage({ scenes, active }: { scenes: Scene[]; active: number }) {
   );
 }
 
-/* V2 step order — with the two steps added to V2's arrays:
-   antigravity: room, stt, trajectory, DUAL-LANE, agents, orchestrator, voice, report */
+/* V2 step order:
+   antigravity: room, stt, trajectory, dual lane, agents, orchestrator,
+   voice, report, evaluation loop */
 const ANTIGRAVITY_SCENES: Scene[] = [
   LoopGraphic,
   SttGraphic,
@@ -64,6 +67,7 @@ const ANTIGRAVITY_SCENES: Scene[] = [
   OrchestratorGraphic,
   VoiceOutGraphic,
   ReportGraphic,
+  EvaluationLoopGraphic,
 ];
 
 /* filmora: brief/runtime, trend, SKILLS, memory, compiler, graph, editor, observe */
@@ -78,7 +82,8 @@ const FILMORA_SCENES: Scene[] = [
   OutputGraphic,
 ];
 
-/* mindscape: capture, perceive, fuse, retrieve, reason, validate, review (1:1) */
+/* mindscape: capture, perceive, fuse, retrieve, reason, validate, review,
+   governed refinement */
 const MINDSCAPE_SCENES: Scene[] = [
   CaptureGraphic,
   PerceiveGraphic,
@@ -87,6 +92,7 @@ const MINDSCAPE_SCENES: Scene[] = [
   ReasonGraphic,
   ValidateGraphic,
   ReviewGraphic,
+  ClinicalRefinementGraphic,
 ];
 
 export function LiveAntigravityVisual({ active }: { active: number }) {
@@ -175,19 +181,20 @@ function DistillMini({ a }: { a: boolean }) {
 
 /** index mapping for the research grid:
  *  0 TinyML · 1 Text-to-SQL · 2 distillation · 3 webGLR · 4 COL-VEO · 5 logistics */
-export function LiveResearchMini({ index }: { index: number }) {
+export function LiveResearchMini({ index, active = true }: { index: number; active?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const on = useOnScreen(ref, 0.2);
-  const el = useSim(on);
+  const running = on && active;
+  const el = useSim(running);
   return (
-    <div ref={ref} className="vx-live-stage vx-live-mini">
+    <div ref={ref} className="vx-live-stage vx-live-mini" data-active={active}>
       {index === 0 && (
         <svg viewBox="0 0 320 150" className="op-svg">
           <BenchMini idx={0} t={el} />
         </svg>
       )}
-      {index === 1 && <SqlMini a={on} />}
-      {index === 2 && <DistillMini a={on} />}
+      {index === 1 && <SqlMini a={running} />}
+      {index === 2 && <DistillMini a={running} />}
       {index === 3 && (
         <svg viewBox="0 0 320 150" className="op-svg">
           <BenchMini idx={1} t={el} />
@@ -198,7 +205,11 @@ export function LiveResearchMini({ index }: { index: number }) {
           <BenchMini idx={2} t={el} />
         </svg>
       )}
-      {index === 5 && <LogisticsGraphic a={on} />}
+      {index === 5 && (
+        <svg viewBox="0 0 320 150" className="op-svg">
+          <BenchMini idx={3} t={el} />
+        </svg>
+      )}
     </div>
   );
 }

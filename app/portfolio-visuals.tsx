@@ -252,10 +252,6 @@ export function AntigravityOverview({ active, onSelect }: OverviewProps) {
         <MapNode step={6} kicker="OUTPUT" title="Prepared response audio" detail="Cached TTS + playback" glyph="audio" active={active === 6} glow={glow === 3} onSelect={onSelect} />
       </div>
       <div className="vx-overview-return" aria-hidden="true"><i /><span>adaptive follow-up returns to the candidate</span></div>
-      <button className="vx-evidence-rail" type="button" onClick={() => onSelect(7)} aria-pressed={active === 7} data-active={active === 7}>
-        <span>EVIDENCE RAIL</span><strong>Every turn compounds into the recruiter report</strong>
-        <div><i>concepts</i><i>weaknesses</i><i>claim checks</i><i>reasoning</i><i>coverage</i></div>
-      </button>
       <div className="vx-map-packet vx-map-packet-antigravity" aria-hidden="true" />
     </div>
   );
@@ -367,7 +363,7 @@ export function FilmoraOverview({ active, onSelect }: OverviewProps) {
       <div className="vx-overview-track vx-overview-track-six">
         <MapNode step={0} kicker="INPUT" title="Creative brief" detail="Intent + format + constraints" glyph="brief" active={active === 0} glow={glow === 0} onSelect={onSelect} />
         <MapLink label="research" />
-        <MapNode step={1} kicker="CONTEXT" title="Trend intelligence" detail="700+ creative signals" glyph="sources" active={active >= 1 && active <= 3} glow={glow === 1} onSelect={onSelect} />
+        <MapNode step={1} kicker="CONTEXT" title="Market + product intelligence" detail="700+ research signals + product context" glyph="sources" active={active >= 1 && active <= 3} glow={glow === 1} onSelect={onSelect} />
         <MapLink label="compile" />
         <MapNode step={4} kicker="CONTRACT" title="Prompt compiler" detail="Schema-bound instructions" glyph="compiler" active={active === 4} glow={glow === 2} onSelect={onSelect} />
         <MapLink label="dispatch" />

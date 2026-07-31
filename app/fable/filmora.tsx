@@ -7,16 +7,23 @@ import { useSim, ph, eph, pulse, noise, bez, typed, caret, rise, q, LiveNet } fr
 /* Live scenes — every graphic is the runtime actually working. */
 
 const SPIN = ["◐", "◓", "◑", "◒"];
+const FILMORA_STEP_MS = 11600;
 
 /* ---------- 1 · THE RUNTIME — one full production run ---------- */
 
 const RUN_LOG = [
-  { at: 2400, name: "research.trends", ms: "1.2 s", kind: "feed" },
+  { at: 2400, name: "market.research", ms: "1.2 s", kind: "feed" },
   { at: 3400, name: "memory.retrieve", ms: "0.3 s", kind: "vector" },
-  { at: 4100, name: "compile.prompt", ms: "0.2 s", kind: "converge" },
-  { at: 4800, name: "agents.dispatch ×6", ms: "3.8 s", kind: "fanout" },
+  { at: 4100, name: "brief.compile", ms: "0.2 s", kind: "converge" },
+  { at: 4800, name: "tool.call · specialists ×6", ms: "3.8 s", kind: "fanout" },
 ];
 const CLIPS = [86, 118, 74, 132, 96];
+const CLIP_GAP = 6;
+const CLIP_LAYOUT = CLIPS.map((width, index) => ({
+  width,
+  x: CLIPS.slice(0, index).reduce((sum, clipWidth) => sum + clipWidth + CLIP_GAP, 0),
+}));
+const CLIP_TRACK_WIDTH = CLIPS.reduce((sum, width) => sum + width, 0) + CLIP_GAP * (CLIPS.length - 1);
 
 /** tiny live operation glyph for a runtime-log row — each stage has its own */
 function MicroGlyph({ kind, t, live }: { kind: string; t: number; live: boolean }) {
@@ -63,14 +70,13 @@ function MicroGlyph({ kind, t, live }: { kind: string; t: number; live: boolean 
 
 export function RuntimeGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 11000;
+  const L = FILMORA_STEP_MS;
   const t = el % L;
   const cyc = Math.floor(el / L) % 2;
   const prompt = cyc === 0 ? "cut a 30-second beach travel reel" : "make a 15-second product teaser";
   const ptyped = typed(prompt, t, 300, 2200);
   const ring = eph(t, 2400, 9200);
 
-  let acc = 0;
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
       {/* the prompt being typed by the user */}
@@ -110,20 +116,18 @@ export function RuntimeGraphic({ a }: { a: boolean }) {
       {/* timeline assembling inside the editor */}
       <text x={30} y={296} className="svg-sub">FILMORA TIMELINE · assembling</text>
       <g transform="translate(30,306)">
-        {CLIPS.map((w, i) => {
-          const x = acc;
-          acc += w + 6;
+        {CLIP_LAYOUT.map(({ width, x }, i) => {
           const p = eph(t, 6000 + i * 620, 6500 + i * 620);
-          return <rect key={i} x={q(x)} y={0} width={q(w * p)} height={42} rx={6} className="lv-bar" style={{ opacity: 0.35 + 0.65 * p }} />;
+          return <rect key={i} x={q(x)} y={0} width={q(width * p)} height={42} rx={6} className="lv-bar" style={{ opacity: 0.35 + 0.65 * p }} />;
         })}
-        <rect x={0} y={50} width={q(acc * eph(t, 8600, 9300))} height={13} rx={5} className="lv-bar warm" />
+        <rect x={0} y={50} width={q(CLIP_TRACK_WIDTH * eph(t, 8600, 9300))} height={13} rx={5} className="lv-bar warm" />
       </g>
       <g className="lv-stamp" style={rise(eph(t, 9500, 9900), 6)}>
-        <rect x={440} y={330} width={180} height={38} rx={9} />
-        <text x={530} y={354} textAnchor="middle" className="svg-label small">editable edit ✓</text>
+        <rect x={418} y={232} width={202} height={42} rx={9} />
+        <text x={519} y={258} textAnchor="middle" className="svg-label small">editable Filmora timeline ✓</text>
       </g>
       <text x={30} y={402} className="svg-note">
-        One sentence in — a runtime of cooperating agents researches, plans, and assembles the edit in front of you.
+        Market context, memory, and specialist tools resolve into an editable Filmora timeline.
       </text>
     </svg>
   );
@@ -160,13 +164,20 @@ const TREND_TAGS = ["#launch", "#新品", "#aesthetic", "#creator", "#tech", "#r
 
 export function TrendGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 11200;
+  const L = FILMORA_STEP_MS;
   const t = el % L;
-  const raw = Math.round(723 * eph(t, 600, 7600));
+  const raw = Math.round(723 * eph(t, 600, 7000));
   const activeIdx = Math.floor(t / 1200) % 6;
   const hp = (t % 1200) / 1200;
-  const blur = eph(t, 7400, 8100); // the spec's beat: scroll → blur → stamp
-  const scrolling = t < 7400;
+  // The evidence result takes the stage, then contracts so the research surface
+  // becomes inspectable again before the sequence loops.
+  const focusIn = eph(t, 7000, 7800);
+  const focusOut = eph(t, 9000, 9800);
+  const focus = focusIn * (1 - focusOut);
+  const expandedLabel = Math.max(0, Math.min(1, (focus - 0.82) / 0.18));
+  const boxWidth = 136 + 174 * focus;
+  const boxHeight = 46 + 38 * focus;
+  const scrolling = t < 7000 || t >= 9800;
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
@@ -175,7 +186,7 @@ export function TrendGraphic({ a }: { a: boolean }) {
           <rect x={0} y={0} width={150} height={84} rx={8} />
         </clipPath>
       </defs>
-      <g style={{ filter: blur > 0 ? `blur(${q(blur * 4)}px)` : undefined, opacity: 1 - blur * 0.35 }}>
+      <g style={{ filter: focus > 0 ? `blur(${q(focus * 4.5)}px)` : undefined, opacity: 1 - focus * 0.62 }}>
         {PLATFORMS.map((p, i) => {
           const col = i % 3;
           const row = Math.floor(i / 3);
@@ -221,23 +232,30 @@ export function TrendGraphic({ a }: { a: boolean }) {
         })}
       </g>
 
-      {/* live counter while scanning; the stamp lands on the blurred feeds */}
-      {scrolling ? (
-        <g className="lv-chip">
-          <rect x={252} y={178} width={136} height={46} rx={10} />
+      {/* The live counter expands into the 700+ evidence result, holds focus,
+          then returns to its compact state as the surrounding feeds recover. */}
+      <g className={focus > 0.45 ? "lv-stamp big" : "lv-chip"}>
+        <rect
+          x={q(320 - boxWidth / 2)}
+          y={q(201 - boxHeight / 2)}
+          width={q(boxWidth)}
+          height={q(boxHeight)}
+          rx={12 + focus * 3}
+        />
+        <g style={{ opacity: 1 - expandedLabel }}>
           <text x={320} y={198} textAnchor="middle" className="lv-counter mid">{raw}</text>
-          <text x={320} y={215} textAnchor="middle" className="svg-sub tiny">signals harvested</text>
+          <text x={320} y={215} textAnchor="middle" className="svg-sub">
+            {scrolling ? "scoring signals" : "ranked signals"}
+          </text>
         </g>
-      ) : (
-        <g className="lv-stamp big" style={rise(eph(t, 7800, 8300), 8)}>
-          <rect x={186} y={166} width={268} height={70} rx={12} />
-          <text x={320} y={196} textAnchor="middle" className="lv-counter mid">700+ creative signals</text>
-          <text x={320} y={218} textAnchor="middle" className="svg-sub tiny">collected · deduplicated · distilled per brief</text>
+        <g style={{ opacity: expandedLabel }}>
+          <text x={320} y={194} textAnchor="middle" className="lv-counter mid">700+ creative signals</text>
+          <text x={320} y={216} textAnchor="middle" className="svg-sub">deduplicated · scored · brief-linked</text>
         </g>
-      )}
-      {t > 8600 && (
-        <g style={rise(eph(t, 8600, 9000), 6)}>
-          {["trend-skill.md ✓", "design.md ✓", "filmora params ✓"].map((f, i) => (
+      </g>
+      {t > 8200 && (
+        <g style={rise(eph(t, 8200, 8600), 6)}>
+          {["market evidence ✓", "product context ✓", "creative rules ✓"].map((f, i) => (
             <g key={f} className="lv-chip win">
               <rect x={130 + i * 135} y={330} width={125} height={26} rx={8} />
               <text x={192 + i * 135} y={347} textAnchor="middle" className="svg-mono tinytext">{f}</text>
@@ -247,7 +265,7 @@ export function TrendGraphic({ a }: { a: boolean }) {
       )}
 
       <text x={34} y={396} className="svg-note">
-        Six feeds, actually moving — then the noise blurs away and what remains is the evidence.
+        Live market and product signals become ranked evidence for the production plan.
       </text>
     </svg>
   );
@@ -277,7 +295,7 @@ const SNIPPETS = ["♪ audio hook", "▶ clip motif", "# tag set"];
 
 export function SkillGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 10600;
+  const L = FILMORA_STEP_MS;
   const t = el % L;
   const scanIdx = Math.floor(t / 1400) % 6;
   const scanP = (t % 1400) / 1400;
@@ -285,7 +303,7 @@ export function SkillGraphic({ a }: { a: boolean }) {
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
       {/* the six platforms, scanned one by one */}
-      <text x={30} y={40} className="svg-sub">SCANNING PLATFORMS · extracting what performs</text>
+      <text x={30} y={40} className="svg-sub">MARKET + PRODUCT SIGNALS · compiling reusable execution rules</text>
       {PLATFORMS.map((p, i) => {
         const scanning = i === scanIdx;
         return (
@@ -318,11 +336,11 @@ export function SkillGraphic({ a }: { a: boolean }) {
 
       <g className="lv-node is-live">
         <rect x={236} y={72} width={116} height={64} rx={12} />
-        <text x={294} y={99} textAnchor="middle" className="svg-label small">SKILL</text>
+        <text x={294} y={99} textAnchor="middle" className="svg-label small">SIGNAL</text>
         <text x={294} y={116} textAnchor="middle" className="svg-label small">COMPILER</text>
       </g>
       <circle cx={294} cy={146} r={3.5} className="lv-pulse" style={{ opacity: 0.4 + 0.6 * pulse(t, 600) }} />
-      <text x={294} y={166} textAnchor="middle" className="svg-sub tiny">700+ signals in</text>
+      <text x={294} y={166} textAnchor="middle" className="svg-sub">research + product context</text>
 
       {/* files being written */}
       {SKILL_FILES.map((f, i) => {
@@ -349,7 +367,7 @@ export function SkillGraphic({ a }: { a: boolean }) {
             </g>
             <text x={424} y={y + 22} className="svg-mono small">{f.name}</text>
             {done && <text x={608} y={y + 22} textAnchor="end" className="tick ok">✓ v13</text>}
-            {writing && <text x={608} y={y + 22} textAnchor="end" className="svg-sub tiny">writing…</text>}
+            {writing && <text x={608} y={y + 22} textAnchor="end" className="svg-sub">writing…</text>}
             {f.lines.map((ln, j) => (
               <text key={ln} x={424} y={y + 44 + j * 18} className="svg-mono tinytext">
                 {typed(ln, t, f.start + 200 + j * 650, f.start + 750 + j * 650)}
@@ -361,7 +379,7 @@ export function SkillGraphic({ a }: { a: boolean }) {
       })}
 
       <text x={30} y={402} className="svg-note">
-        Raw signals are useless to an agent — watch them get compiled into durable, versioned skill files.
+        Ranked evidence compiles into versioned creative rules and Filmora tool parameters.
       </text>
     </svg>
   );
@@ -377,7 +395,7 @@ const MEM_HITS = [
 ];
 export function MemoryGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 10200;
+  const L = FILMORA_STEP_MS;
   const t = el % L;
   const qq = typed("beach reel, fast cuts, golden hour", t, 200, 1500);
   const probe = eph(t, 2600, 3200);
@@ -423,20 +441,20 @@ export function MemoryGraphic({ a }: { a: boolean }) {
       })}
 
       {/* recommendation: a live layered net — hits feed it, ranks come out */}
-      <text x={30} y={252} className="svg-sub">RECOMMENDATION NETWORK · edges firing</text>
+      <text x={30} y={252} className="svg-sub">RETRIEVAL + RECOMMENDATION · live similarity and ranking</text>
       <LiveNet
         x={30}
         y={262}
         w={580}
         h={116}
         inputs={[
-          { label: "trend ctx", value: "700+" },
+          { label: "market ctx", value: "700+" },
           { label: "brief", value: "0.91" },
           { label: "memory hits", value: "×3" },
         ]}
         hidden={5}
         core="RECO"
-        outputs={["surf transitions", "golden-hour LUT", "beat-sync cuts"]}
+        outputs={["surf transition", "golden-hour LUT", "beat-sync cuts"]}
         t={t}
         start={5200}
       />
@@ -445,13 +463,13 @@ export function MemoryGraphic({ a }: { a: boolean }) {
       )}
 
       <text x={30} y={404} className="svg-note">
-        Retrieval, not storage: only what matches the query lights up — and only that feeds the ranking.
+        Retrieval grounds the plan in relevant skills, product context, and editor presets.
       </text>
     </svg>
   );
 }
 
-/* ---------- 5 · SEMANTIC PROMPT COMPILER — three streams converge ---------- */
+/* ---------- 5 · SEMANTIC PROMPT COMPILER — four contexts converge ---------- */
 
 const BRIEF_LINES = [
   "scene: beach · golden hour",
@@ -469,15 +487,15 @@ const TOKENS = [
   { word: "transition[7]", from: 3, at: 5500 },
 ];
 const PANES = [
-  { label: "USER INTENT", sub: "“beach reel, fast cuts”", y: 34 },
-  { label: "TREND CONTEXT", sub: "700+ live signals", y: 124 },
-  { label: "RETRIEVED MEMORY", sub: "3 skills · 2 presets recalled", y: 214 },
-  { label: "PRODUCTION STATE", sub: "timeline: 2 clips placed", y: 304 },
+  { label: "PRODUCT BRIEF", sub: "beach reel · campaign goal", y: 34 },
+  { label: "MARKET EVIDENCE", sub: "700+ scored creative signals", y: 124 },
+  { label: "RETRIEVED MEMORY", sub: "3 skills · 2 presets", y: 214 },
+  { label: "TIMELINE STATE", sub: "2 clips · tools ready", y: 304 },
 ];
 
 export function CompilerGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 10000;
+  const L = FILMORA_STEP_MS;
   const t = el % L;
 
   return (
@@ -514,9 +532,10 @@ export function CompilerGraphic({ a }: { a: boolean }) {
         const src: [number, number] = [220, PANES[tk.from].y + 39];
         const dst: [number, number] = [358, 122 + Math.min(TOKENS.indexOf(tk), 4) * 26];
         const [x, y] = bez(p, src, [290, (src[1] + dst[1]) / 2 - 30], dst);
+        const tokenWidth = Math.max(80, tk.word.length * 6.2 + 18);
         return (
           <g key={tk.word} className="lv-chip" transform={`translate(${q(x)},${q(y)})`}>
-            <rect x={-40} y={-11} width={80} height={20} rx={7} />
+            <rect x={q(-tokenWidth / 2)} y={-11} width={q(tokenWidth)} height={20} rx={7} />
             <text x={0} y={3} textAnchor="middle" className="svg-mono tinytext">{tk.word}</text>
           </g>
         );
@@ -524,12 +543,12 @@ export function CompilerGraphic({ a }: { a: boolean }) {
 
       {/* determinism check */}
       <g style={rise(eph(t, 7400, 7900), 6)}>
-        <text x={358} y={320} className="svg-mono tinytext">recompile with same inputs…</text>
-        <text x={358} y={340} className="tick ok" style={{ opacity: eph(t, 8200, 8600) }}>✓ byte-identical brief — deterministic</text>
+        <text x={358} y={320} className="svg-mono tinytext">validate compile fingerprint…</text>
+        <text x={358} y={340} className="tick ok" style={{ opacity: eph(t, 8200, 8600) }}>✓ stable plan for identical inputs</text>
       </g>
 
       <text x={30} y={404} className="svg-note">
-        What they asked, what the platforms reward, what memory recalls, what's on the timeline — one executable brief.
+        Brief, market evidence, memory, and timeline state compile into one tool-ready plan.
       </text>
     </svg>
   );
@@ -556,14 +575,14 @@ const GX = (ms: number) => 150 + (ms - 600) * 0.05;
 
 export function OrchestrationGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 11000;
+  const L = FILMORA_STEP_MS;
   const t = el % L;
   const clock = Math.max(0, Math.min(9600, t) - 600) / 1000;
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={40} y={40} className="lv-phase small">ONE PRODUCTION RUN · LIVE</text>
-      <text x={600} y={40} textAnchor="end" className="lv-counter mid">{clock.toFixed(1)} s</text>
+      <text x={40} y={40} className="lv-phase small">MODEL-ROUTED AGENT RUN · REPRESENTATIVE REPLAY</text>
+      <text x={600} y={40} textAnchor="end" className="lv-counter mid">trace +{clock.toFixed(1)} s</text>
 
       {GANTT.map((g, i) => {
         const w = Math.max(0, Math.min(g.end, t) - g.start) * 0.05;
@@ -589,20 +608,20 @@ export function OrchestrationGraphic({ a }: { a: boolean }) {
         return (
           <g key={h.at} className="lv-chip win" transform={`translate(${q(x)},${q(y)})`}>
             <rect x={-30} y={-10} width={60} height={18} rx={6} />
-            <text x={0} y={3} textAnchor="middle" className="svg-mono tinytext">hand-off</text>
+            <text x={0} y={3} textAnchor="middle" className="svg-mono tinytext">tool result</text>
           </g>
         );
       })}
 
-      {/* orchestrator overhead row — the ≈2% */}
-      <text x={140} y={342} textAnchor="end" className="svg-mono small">orchestrator</text>
+      {/* governed checkpoints remain visible beneath the specialist lanes */}
+      <text x={140} y={342} textAnchor="end" className="svg-mono small">guardrail gates</text>
       {HANDOFFS.map((h) => (
         <rect key={h.at} x={GX(h.at)} y={330} width={9} height={14} rx={3} className="lv-bar warm" style={{ opacity: t > h.at ? 1 : 0.15 }} />
       ))}
-      <text x={GX(9600) + 10} y={342} className="svg-sub tiny" style={{ opacity: t > 8200 ? 1 : 0 }}>≈2% of total latency</text>
+      <text x={600} y={362} textAnchor="end" className="svg-sub" style={{ opacity: t > 8200 ? 1 : 0 }}>schema · safety · retry</text>
 
       <text x={40} y={396} className="svg-note">
-        Agents hand off, they don't queue — the orchestrator's own cost is the thin amber slivers, ≈2% of the run.
+        The router runs tools in parallel; traced guardrails validate each handoff.
       </text>
     </svg>
   );
@@ -617,7 +636,7 @@ type DagNode = {
 };
 const DAG: DagNode[] = [
   { id: "brief", label: "BRIEF", x: 48, y: 150, api: "intent parser", file: "brief.json", ms: "0.2 s", start: 300, dur: 500, deps: [] },
-  { id: "planner", label: "PLANNER", x: 134, y: 150, api: "orchestrator", file: "prod.graph", ms: "0.4 s", start: 900, dur: 600, deps: ["brief"] },
+  { id: "planner", label: "PLANNER", x: 134, y: 150, api: "model router + tools", file: "prod.graph", ms: "0.4 s", start: 900, dur: 600, deps: ["brief"] },
   { id: "script", label: "SCRIPT", x: 222, y: 60, api: "script agent", file: "script.md", ms: "1.1 s", start: 1600, dur: 900, deps: ["planner"] },
   { id: "music", label: "MUSIC", x: 222, y: 150, api: "AI Music", file: "music.wav", ms: "4.1 s", start: 1600, dur: 2600, deps: ["planner"], async: true },
   { id: "dialogue", label: "DIALOGUE", x: 222, y: 240, api: "TTS API", file: "dialogue.wav", ms: "1.8 s", start: 1600, dur: 1300, deps: ["planner"], async: true },
@@ -625,14 +644,14 @@ const DAG: DagNode[] = [
   { id: "captions", label: "CAPTIONS", x: 310, y: 240, api: "caption agent", file: "captions.srt", ms: "0.9 s", start: 3000, dur: 900, deps: ["dialogue"] },
   { id: "video", label: "VIDEO", x: 398, y: 60, api: "Video API", file: "video.mp4", ms: "6.2 s", start: 3600, dur: 2300, deps: ["storyboard"], async: true },
   { id: "fx", label: "FX / TRANS", x: 398, y: 150, api: "FX agent", file: "effects.json", ms: "0.6 s", start: 4300, dur: 900, deps: ["music", "video"] },
-  { id: "qa", label: "QA · EVAL", x: 486, y: 105, api: "eval agent", file: "qa.report", ms: "0.8 s", start: 6000, dur: 900, deps: ["video", "fx"] },
+  { id: "qa", label: "QA · EVAL", x: 486, y: 105, api: "guardrail + eval", file: "qa.report", ms: "0.8 s", start: 6000, dur: 900, deps: ["video", "fx"] },
   { id: "human", label: "HUMAN GATE", x: 486, y: 195, api: "approval gate", file: "approved ✓", ms: "—", start: 7000, dur: 800, deps: ["qa", "captions"] },
   { id: "assembly", label: "ASSEMBLY", x: 574, y: 150, api: "editor agent", file: "timeline.proj", ms: "1.2 s", start: 7900, dur: 1200, deps: ["human"] },
 ];
 
 export function EditorGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const L = 10600;
+  const L = FILMORA_STEP_MS;
   const t = el % L;
   const [focus, setFocus] = useState<string | null>(null);
   const node = (id: string) => DAG.find((n) => n.id === id)!;
@@ -641,7 +660,7 @@ export function EditorGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={30} y={32} className="svg-sub">PRODUCTION DAG · live run — click any node to inspect it</text>
+      <text x={30} y={32} className="svg-sub">MULTIMODAL TOOL GRAPH · MODEL-ROUTED RUN — select a node to inspect</text>
 
       {/* dependency edges, tokens travelling on the active ones */}
       {DAG.flatMap((n) =>
@@ -663,12 +682,25 @@ export function EditorGraphic({ a }: { a: boolean }) {
         const st = stateOf(n);
         const isFocus = focused.id === n.id;
         return (
-          <g key={n.id} onClick={() => setFocus(n.id)} style={{ cursor: "pointer" }}>
+          <g
+            key={n.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`Inspect ${n.label} node`}
+            onClick={() => setFocus(n.id)}
+            onFocus={() => setFocus(n.id)}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              setFocus(n.id);
+            }}
+            style={{ cursor: "pointer" }}
+          >
             <g className={`lv-node ${st === "run" || isFocus ? "is-live" : ""}`}>
               <rect x={n.x - 42} y={n.y - 20} width={84} height={40} rx={9} style={{ opacity: st === "wait" ? 0.5 : 1 }} />
             </g>
             <text x={n.x} y={n.y - 2} textAnchor="middle" className="svg-sub" style={{ fill: "var(--text-hi)" }}>{n.label}</text>
-            <text x={n.x} y={n.y + 13} textAnchor="middle" className={st === "done" ? "tick ok" : "svg-sub tiny"}>
+            <text x={n.x} y={n.y + 13} textAnchor="middle" className={st === "done" ? "tick ok" : "svg-sub"}>
               {st === "done" ? "✓ " + n.ms : st === "run" ? (n.async ? "async…" : "running…") : "queued"}
             </text>
             {st === "run" && <rect x={n.x - 36} y={n.y + 17} width={q(72 * ((t - n.start) / n.dur))} height={3} rx={1.5} className="lv-bar" />}
@@ -679,17 +711,17 @@ export function EditorGraphic({ a }: { a: boolean }) {
       {/* inspector card for the focused / running node */}
       <g className="lv-box hot">
         <rect x={30} y={300} width={580} height={72} rx={12} />
-        <text x={48} y={324} className="svg-sub tiny">NODE INSPECTOR · {focused.label}</text>
+        <text x={48} y={324} className="svg-sub">TOOL-CALL INSPECTOR · {focused.label}</text>
         <text x={48} y={346} className="svg-mono tinytext">api: {focused.api}</text>
-        <text x={220} y={346} className="svg-mono tinytext">out: {focused.file}</text>
-        <text x={420} y={346} className="svg-mono tinytext">latency: {focused.ms}</text>
-        <text x={48} y={362} className="svg-sub tiny">
+        <text x={250} y={346} className="svg-mono tinytext">out: {focused.file}</text>
+        <text x={470} y={346} className="svg-mono tinytext">latency: {focused.ms}</text>
+        <text x={48} y={362} className="svg-sub">
           deps: {focused.deps.length ? focused.deps.join(" + ") : "none"} · {focused.async ? "async lane" : "sync"} · retries: 0
         </text>
       </g>
 
       <text x={30} y={400} className="svg-note">
-        This is the actual shape of the run — parallel generation, governed hand-offs, one editable timeline out.
+        Video, audio, dialogue, captions, and effects converge behind a human approval gate.
       </text>
     </svg>
   );
@@ -699,33 +731,32 @@ export function EditorGraphic({ a }: { a: boolean }) {
 
 /** the optimization loop, as stations on an orbit */
 const LOOP_STATIONS = [
-  { name: "TELEMETRY TRACE", sub: "every span, attributed", work: "tracing spans…" },
-  { name: "AGENT EVAL", sub: "creative + factual scores", work: "scoring outputs…" },
-  { name: "RL-STYLE TUNING", sub: "reward from evals", work: "updating policy…" },
-  { name: "REGRESSION TESTS", sub: "no silent breakage", work: "replaying suites…" },
-  { name: "PROMPT / CONFIG", sub: "versioned changes", work: "shipping v-next…" },
+  { name: "ROUTE + COST TRACE", sub: "model, token, tool spans", work: "tracing route cost…" },
+  { name: "OUTPUT EVALUATION", sub: "creative + factual scores", work: "scoring outputs…" },
+  { name: "RL REFINEMENT", sub: "reinforcement-learning", work: "ranking policy updates…" },
+  { name: "GUARDRAIL TESTS", sub: "safety + regression suite", work: "replaying guardrails…" },
+  { name: "HUMAN APPROVAL", sub: "review before release", work: "reviewing candidate…" },
+  { name: "MODEL GATEWAY", sub: "versioned route config", work: "shipping v-next…" },
 ];
 
 export function OutputGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
-  const STATION_MS = 2200;
+  const STATION_MS = FILMORA_STEP_MS / LOOP_STATIONS.length;
   const lap = LOOP_STATIONS.length * STATION_MS; // one optimization cycle
   const t = el % lap;
   const cycle = Math.floor(el / lap);
-  const stIdx = Math.floor(t / STATION_MS) % 5;
+  const stIdx = Math.floor(t / STATION_MS) % LOOP_STATIONS.length;
   const stP = (t % STATION_MS) / STATION_MS;
   const cx = 320;
-  const cy = 176;
+  const cy = 188;
   const rx = 240;
-  const ry = 118;
-  const ang = (i: number) => (i / 5) * Math.PI * 2 - Math.PI / 2;
+  const ry = 96;
+  const ang = (i: number) => (i / LOOP_STATIONS.length) * Math.PI * 2 - Math.PI / 2;
   // the packet orbits continuously, station to station
   const pAng = ang(stIdx) + (ang(stIdx + 1) - ang(stIdx)) * stP;
-  const cost = Math.min(28, cycle * 7 + Math.round(7 * eph(t, lap * 0.8, lap)));
-
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={40} y={34} className="lv-phase small">THE OPTIMIZATION LOOP · RUNNING</text>
+      <text x={40} y={34} className="lv-phase small">OBSERVABILITY + GOVERNED RL REFINEMENT</text>
       <text x={600} y={34} textAnchor="end" className="svg-mono tinytext">cycle #{cycle + 1}</text>
 
       {/* orbit */}
@@ -740,39 +771,39 @@ export function OutputGraphic({ a }: { a: boolean }) {
         return (
           <g key={st.name}>
             <g className={`lv-node ${activeSt ? "is-live" : ""}`}>
-              <rect x={q(sx - 74)} y={q(sy - 24)} width={148} height={48} rx={10} />
+              <rect x={q(sx - 80)} y={q(sy - 24)} width={160} height={48} rx={10} />
             </g>
             <text x={q(sx)} y={q(sy - 6)} textAnchor="middle" className="svg-label small">{st.name}</text>
-            <text x={q(sx)} y={q(sy + 12)} textAnchor="middle" className="svg-sub tiny">
+            <text x={q(sx)} y={q(sy + 12)} textAnchor="middle" className="svg-sub">
               {activeSt ? st.work : st.sub}
             </text>
             {activeSt && (
-              <rect x={q(sx - 60)} y={q(sy + 17)} width={q(120 * stP)} height={3} rx={1.5} className="lv-bar" />
+              <rect x={q(sx - 68)} y={q(sy + 17)} width={q(136 * stP)} height={3} rx={1.5} className="lv-bar" />
             )}
           </g>
         );
       })}
 
-      {/* center: what one lap of this loop buys */}
-      <text x={cx} y={cy - 8} textAnchor="middle" className="svg-sub tiny">each lap ships a cheaper,</text>
-      <text x={cx} y={cy + 8} textAnchor="middle" className="svg-sub tiny">safer workflow version</text>
+      {/* center: what one governed lap produces */}
+      <text x={cx} y={cy - 8} textAnchor="middle" className="svg-sub">trace → evaluate → RL update</text>
+      <text x={cx} y={cy + 8} textAnchor="middle" className="svg-sub">guardrail → approve → version</text>
 
-      {/* downstream results — improve as cycles complete */}
+      {/* operational evidence remains visible without implying unsupported gains */}
       {[
-        { k: "API COST", v: `−${cost}%`, s: "baseline → optimized" },
-        { k: "ORCHESTRATION", v: "2%", s: "of end-to-end latency" },
-        { k: "SIGNAL CORPUS", v: "700+", s: "operationalized" },
+        { k: "ROUTE COST", v: "traced", s: "model · token · tool" },
+        { k: "LATENCY", v: "spans", s: "agent · route · API" },
+        { k: "RELEASE", v: "gated", s: "eval · guardrail · human" },
       ].map((m, i) => (
-        <g key={m.k} className={`lv-chip ${i === 0 && cost >= 28 ? "win" : ""}`}>
+        <g key={m.k} className="lv-chip win">
           <rect x={40 + i * 196} y={324} width={184} height={56} rx={10} />
-          <text x={56 + i * 196} y={344} className="svg-sub tiny">{m.k} ↓</text>
+          <text x={56 + i * 196} y={344} className="svg-sub">{m.k}</text>
           <text x={56 + i * 196} y={366} className="lv-counter mid">{m.v}</text>
-          <text x={218 + i * 196} y={372} textAnchor="end" className="svg-sub tiny">{m.s}</text>
+          <text x={218 + i * 196} y={376} textAnchor="end" className="svg-sub">{m.s}</text>
         </g>
       ))}
 
       <text x={40} y={404} className="svg-note">
-        Trace → eval → RL-style tuning → regression → config: watch the lap complete, and the cost fall.
+        Evaluation drives RL refinement; guardrails and human approval gate each release.
       </text>
     </svg>
   );
@@ -784,91 +815,91 @@ const STEPS: StepDef[] = [
   {
     label: "The runtime",
     sub: "high-level architecture",
-    pilotTitle: "One prompt in, one finished edit out",
+    pilotTitle: "One product brief becomes an editable Filmora timeline",
     pilotBody:
-      "You're watching a full production run: the prompt is typed, the runtime log streams as research, memory, and compilation fire, and the timeline assembles itself inside Filmora — clip by clip, still editable. Built during the Wondershare internship.",
+      "Built during the Wondershare internship, this end-to-end system integrates market research, product intelligence, retrieval, multimodal planning, and specialist tool calls into Filmora Enterprise. The output remains editable in the native timeline.",
     metrics: [
-      { k: "input", v: "one prompt" },
-      { k: "output", v: "editable edit" },
-      { k: "where", v: "Wondershare Filmora" },
+      { k: "input", v: "product brief" },
+      { k: "output", v: "editable timeline" },
+      { k: "integration", v: "Filmora Enterprise" },
     ],
     graphic: (a) => <RuntimeGraphic a={a} />,
   },
   {
-    label: "Trend research agent",
-    sub: "what works, right now",
-    pilotTitle: "Six platforms, streamed into evidence",
+    label: "Market + product intelligence",
+    sub: "live research → ranked evidence",
+    pilotTitle: "Live market research becomes product intelligence",
     pilotBody:
-      "The feeds you see scrolling are the agent's actual working surface — six platforms, real trend motifs. Each pulse is a signal harvested. Then the beat that matters: the noise blurs away, and what remains is 700+ deduplicated creative signals — already compiling into skill files.",
+      "Research spans six live content surfaces. Creative patterns are deduplicated, scored against the product brief, and consolidated into a 700+ signal evidence set that the planning system can use.",
     metrics: [
-      { k: "platforms", v: "6" },
-      { k: "signals per brief", v: "700+" },
-      { k: "refresh", v: "continuous" },
+      { k: "research surfaces", v: "6" },
+      { k: "ranked signals", v: "700+" },
+      { k: "output", v: "brief-linked evidence" },
     ],
     graphic: (a) => <TrendGraphic a={a} />,
   },
   {
     label: "Skill compilation",
-    sub: "signals → skills",
-    pilotTitle: "Evidence becomes executable knowledge",
+    sub: "evidence → execution rules",
+    pilotTitle: "Evidence compiles into reusable production skills",
     pilotBody:
-      "Watch the compiler write the files: trend playbooks, design rules, Filmora-native parameter presets — line by line, versioned on completion. The agents don't re-learn the platform every run; they execute against durable skills.",
+      "The compiler converts ranked evidence into versioned creative rules, reusable retrieval assets, and Filmora-native parameter files. Agents can execute against stable production knowledge instead of rebuilding context for every brief.",
     metrics: [
-      { k: "artifacts", v: "skill.md · design.md · params" },
-      { k: "reuse", v: "across briefs" },
-      { k: "format", v: "editor-native" },
+      { k: "artifacts", v: "skills · rules · parameters" },
+      { k: "lifecycle", v: "versioned + reusable" },
+      { k: "target", v: "Filmora tool calls" },
     ],
     graphic: (a) => <SkillGraphic a={a} />,
   },
   {
     label: "Memory + recommendation",
-    sub: "retrieval, not storage",
-    pilotTitle: "The query lights up only what's relevant",
+    sub: "grounded retrieval + ranking",
+    pilotTitle: "Retrieval grounds each production decision",
     pilotBody:
-      "The intent is embedded — you can see the vector compute — and probed against the store. Three memories light up with live similarity scores; the rainy-street pack stays dark at 0.22. Only the matches feed the network that ranks assets for this brief.",
+      "The product brief is embedded and matched against creative skills, product context, and editor presets. Only relevant memories feed the recommendation network, which ranks candidate assets and parameters for the current plan.",
     metrics: [
-      { k: "lookup", v: "embedding search" },
-      { k: "store", v: "skills + context + params" },
-      { k: "output", v: "ranked candidates" },
+      { k: "retrieval", v: "embedding similarity" },
+      { k: "memory", v: "skills · context · presets" },
+      { k: "decision", v: "ranked candidates" },
     ],
     graphic: (a) => <MemoryGraphic a={a} />,
   },
   {
     label: "Semantic prompt compiler",
-    sub: "three streams, one brief",
-    pilotTitle: "Intent, trend, and timeline state converge",
+    sub: "four contexts → one plan",
+    pilotTitle: "Four contexts compile into one tool-ready plan",
     pilotBody:
-      "Tokens fly out of three live sources — what the user asked, what the platforms reward, what's already on the timeline — and slot into one compiled instruction. Then the proof: recompile with the same inputs, get a byte-identical brief. Deterministic enough for software, expressive enough for taste.",
+      "Product intent, market evidence, retrieved memory, and live timeline state converge in a semantic compiler. It emits a structured production plan with stable instructions and parameters for downstream agent tools.",
     metrics: [
-      { k: "inputs", v: "intent · trends · state" },
-      { k: "output", v: "one executable brief" },
-      { k: "property", v: "deterministic" },
+      { k: "contexts", v: "brief · market · memory · state" },
+      { k: "output", v: "tool-ready plan" },
+      { k: "validation", v: "stable compile fingerprint" },
     ],
     graphic: (a) => <CompilerGraphic a={a} />,
   },
   {
     label: "Multi-agent orchestration",
-    sub: "hand-offs, not queues",
-    pilotTitle: "Six specialists, one conductor",
+    sub: "model routing + governed handoffs",
+    pilotTitle: "A routed agent graph executes the plan",
     pilotBody:
-      "A live Gantt of the run: research feeds script, script splits into visuals and music, captions follow, assembly receives everything editable. The chips jumping between rows are the hand-offs; the thin amber slivers are the orchestrator's entire overhead — ≈2% of the run.",
+      "A model router dispatches six specialist agents through typed function and tool calls for script, visuals, music, dialogue, captions, and assembly. Results pass traced schema, safety, and retry gates before the next dependency can run.",
     metrics: [
       { k: "agents", v: "6 specialists" },
-      { k: "pattern", v: "orchestrated hand-off" },
-      { k: "overhead", v: "≈2% of total latency" },
+      { k: "execution", v: "parallel + dependency-aware" },
+      { k: "governance", v: "guardrails + retries" },
     ],
     graphic: (a) => <OrchestrationGraphic a={a} />,
   },
   {
     label: "Output + observability",
-    sub: "the receipt",
-    pilotTitle: "A finished edit — and the trace that produced it",
+    sub: "trace → evaluate → govern",
+    pilotTitle: "Every release is traced, evaluated, and governed",
     pilotBody:
-      "The playhead is a traced run: every span appears at its true offset in the waterfall — including the two generations running in parallel — while the metric cards count what tracing bought: −28% API cost at ≈2% orchestration overhead. Below, the loop that did it (trace → eval → regression → config) cycles live.",
+      "Span-level telemetry attributes model routes, token and tool cost, and latency across the graph. Output evaluation drives reinforcement-learning refinement; regression tests, guardrails, and human approval gate each version before release.",
     metrics: [
-      { k: "API cost", v: "−28%" },
-      { k: "orchestration overhead", v: "≈2% of e2e" },
-      { k: "result", v: "editable, traced" },
+      { k: "observability", v: "route · cost · latency" },
+      { k: "refinement", v: "evaluation + RL" },
+      { k: "release", v: "guardrailed + human-gated" },
     ],
     graphic: (a) => <OutputGraphic a={a} />,
   },
@@ -880,10 +911,10 @@ export function FilmoraChapter() {
       id="filmora"
       accent="#ff8fb2"
       kicker="PROJECT 02 · WONDERSHARE INTERNSHIP"
-      title="Filmora Agent Runtime"
-      subtitle="A multi-agent media production system — one prompt becomes a finished, editable video edit."
+      title="Filmora Multimodal Agent Runtime"
+      subtitle="An end-to-end multimodal AI production system combining live market research, product intelligence, memory, and agent-planned tool execution — integrated into Filmora Enterprise."
       steps={STEPS}
-      stepMs={9800}
+      stepMs={FILMORA_STEP_MS}
     />
   );
 }
