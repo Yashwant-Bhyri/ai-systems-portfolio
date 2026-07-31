@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: yashwant-ai-systems-portfolio
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build:next
+    startCommand: npm run start:next
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 22.13.0
