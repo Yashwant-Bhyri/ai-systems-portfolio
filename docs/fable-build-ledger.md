@@ -1026,3 +1026,21 @@ than labelling it, and still naming no project.
 
 Verified: 25 capabilities, 0 collisions, 0 skills outside their panel, 0 area
 labels or attributions outside their box, tsc clean, 3/3 tests, build ok.
+
+### Session 9j — header overlap + capability stacking
+
+Two concrete defects, both geometry:
+1. **Header overlap.** The column headers were drawn at y=16 while the first
+   area box began at y=4, so "HOW I BUILD AI SYSTEMS" and "MY CORE CAPABILITIES
+   IN EACH AREA" sat on top of the first row. Headers now own a band
+   (HEADER_Y=20) and the area column starts at y=40.
+2. **Capabilities stacked too tightly.** Row pitch was 18 units against a 14.5
+   unit font — a 1.24 ratio, which reads as a jammed block. The viewBox height
+   was raised 620 → 646, which is the exact point where the graphic still
+   renders at full container width (1228 px) rather than letterboxing, and the
+   spare height was spent on pitch (18 → 22 units) plus taller area rows
+   (110 → 115). Rendered pitch is now 20 px and the SVG fills its container
+   exactly: 1228×592 in a 1240×592 box.
+
+Verified: 0 header/box overlaps, 0 capability collisions, 0 capabilities
+outside their panel, 0 area labels or attributions outside their box.

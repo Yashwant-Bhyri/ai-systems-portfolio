@@ -150,17 +150,23 @@ const AREAS: readonly Area[] = [
 
 const ROLE_ADVANCE_MS = 10400;
 
-/* --- map geometry (viewBox 1340 × 528) --- */
+/* --- map geometry (viewBox 1340 × 646).
+   The column headers own a band of their own: previously they sat at y=16
+   while the first area box began at y=4, so they overlapped it. --- */
+const HEADER_Y = 20;
 const ROLE_X = 8;
 const ROLE_W = 282;
-const ROLE_H = 104;
-const ROLE_Y = [112, 224, 336];
+const ROLE_H = 115;
+const ROLE_Y = [142, 283, 424];
 const AREA_X = 358;
 const AREA_W = 352;
-const AREA_H = 100;
-const AREA_Y = [4, 108, 212, 316, 420];
+const AREA_H = 115;
+const AREA_Y = [40, 161, 282, 403, 524];
 const SKILL_X = 748;
 const SKILL_W = 584;
+/* five capabilities per area, with real air between them */
+const SKILL_TOP = 22;
+const SKILL_PITCH = 22;
 
 
 /** One mark per engineering area: recognised before it is read. */
@@ -308,16 +314,16 @@ export function ProfileSection() {
 
       <div className="vx-role-map">
         <svg
-          viewBox="0 0 1340 528"
+          viewBox="0 0 1340 646"
           className="op-svg"
           role="tablist"
           aria-label="Target roles mapped to engineering areas and skills"
           tabIndex={0}
           onKeyDown={handleRoleKeys}
         >
-          <text x={ROLE_X} y={16} className="vx-map-col">TARGET ROLES</text>
-          <text x={AREA_X} y={16} className="vx-map-col">HOW I BUILD AI SYSTEMS</text>
-          <text x={SKILL_X} y={16} className="vx-map-col">MY CORE CAPABILITIES IN EACH AREA</text>
+          <text x={ROLE_X} y={HEADER_Y} className="vx-map-col">TARGET ROLES</text>
+          <text x={AREA_X} y={HEADER_Y} className="vx-map-col">HOW I BUILD AI SYSTEMS</text>
+          <text x={SKILL_X} y={HEADER_Y} className="vx-map-col">MY CORE CAPABILITIES IN EACH AREA</text>
 
           {/* Only the active role's edges are drawn: role → its engineering areas. */}
           {AREAS.map((area, areaIndex) => {
@@ -384,18 +390,18 @@ export function ProfileSection() {
               <g key={area.id} data-on={on} style={{ "--area": area.accent } as CSSProperties}>
                 {/* engineering area */}
                 <rect x={AREA_X} y={y} width={AREA_W} height={AREA_H} rx={9} className={on ? "vx-map-box is-on" : "vx-map-box"} />
-                <AreaGlyph id={area.id} x={AREA_X + 18} y={y + 20} />
+                <AreaGlyph id={area.id} x={AREA_X + 20} y={y + 24} />
                 {area.label.map((line, lineIndex) => (
                   <text
                     key={line}
-                    x={AREA_X + 52}
-                    y={y + 32 + lineIndex * 21}
+                    x={AREA_X + 54}
+                    y={y + 38 + lineIndex * 22}
                     className={on ? "vx-map-area is-on" : "vx-map-area"}
                   >
                     {line}
                   </text>
                 ))}
-                <text x={AREA_X + 52} y={y + 82} className="vx-map-src">{area.appliedIn}</text>
+                <text x={AREA_X + 54} y={y + 98} className="vx-map-src">{area.appliedIn}</text>
 
                 {/* area → skills connector */}
                 <path d={`M ${AREA_X + AREA_W} ${y + AREA_H / 2} L ${SKILL_X} ${y + AREA_H / 2}`} className={on ? "vx-map-wire is-on" : "vx-map-wire"} />
@@ -403,8 +409,8 @@ export function ProfileSection() {
                 {/* the skills themselves */}
                 <rect x={SKILL_X} y={y} width={SKILL_W} height={AREA_H} rx={9} className={on ? "vx-map-panel is-on" : "vx-map-panel"} />
                 {area.skills.map((skill, skillIndex) => {
-                  const sx = SKILL_X + 22;
-                  const sy = y + 24 + skillIndex * 18;
+                  const sx = SKILL_X + 24;
+                  const sy = y + SKILL_TOP + skillIndex * SKILL_PITCH;
                   return (
                     <g key={skill}>
                       <circle cx={sx + 3} cy={sy - 4} r={3} className={on ? "vx-map-dot is-on" : "vx-map-dot"} />
