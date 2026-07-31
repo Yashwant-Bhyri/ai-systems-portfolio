@@ -399,18 +399,29 @@ export function FastLaneGraphic({ a }: { a: boolean }) {
         <circle cx={q(118 + fastP * 472)} cy={101} r={4.5} className="lv-pulse" />
       )}
 
-      <text x={132} y={172} className="svg-sub">BACKGROUND · ANALYZE DEPTH AND PREPARE A FUTURE PROBE</text>
-      <path d="M 70 132 C 70 188 96 226 118 226" className="lv-edge" style={{ opacity: 0.25 + deepP * 0.45 }} />
+      <text x={132} y={172} className="svg-sub">BACKGROUND · AGENT GRAPH REASONS DEEPER AND PREPARES A FUTURE PROBE</text>
       {agentNodes.map((node, index) => {
         const live = t > node.at && t < 4300;
+        const firing = t >= node.at && t < node.at + 520;
+        const fp = eph(t, node.at, node.at + 520);
+        const from: [number, number] = [70, 132];
+        const mid: [number, number] = [(70 + node.x) / 2, (132 + node.y + 17) / 2 + 26];
+        const to: [number, number] = [node.x, node.y + 17];
+        const fuseFrom: [number, number] = [node.x + 86, node.y + 17];
+        const fuseMid: [number, number] = [(node.x + 86 + 317) / 2, (node.y + 17 + 233) / 2];
+        const fuseFiring = t >= node.at + 900 && t < node.at + 1420;
+        const fu = eph(t, node.at + 900, node.at + 1420);
         return (
           <g key={node.label}>
-            <path d={`M 118 226 Q 124 ${node.y + 17} ${node.x} ${node.y + 17}`} className="lv-edge" style={{ opacity: deepP * 0.4 }} />
+            <path d={`M ${from[0]} ${from[1]} Q ${mid[0]} ${mid[1]} ${to[0]} ${to[1]}`} className="lv-edge" style={{ opacity: live ? 0.55 : 0.2 + deepP * 0.2 }} />
+            {firing && <circle cx={bez(fp, from, mid, to)[0]} cy={bez(fp, from, mid, to)[1]} r={4} className="lv-pulse" />}
             <g className={`lv-node ${live ? "is-live" : ""}`}>
               <rect x={node.x} y={node.y} width={86} height={34} rx={9} />
               <text x={node.x + 43} y={node.y + 21} textAnchor="middle" className="svg-sub">{node.label}</text>
             </g>
             {live && <circle cx={node.x + 76} cy={node.y + 9} r={2.5 + pulse(t + index * 140, 600) * 2} className="lv-pulse" />}
+            <path d={`M ${fuseFrom[0]} ${fuseFrom[1]} Q ${fuseMid[0]} ${fuseMid[1]} 317 233`} className="lv-edge" style={{ opacity: live ? 0.5 : deepP * 0.28 }} />
+            {fuseFiring && <circle cx={bez(fu, fuseFrom, fuseMid, [317, 233])[0]} cy={bez(fu, fuseFrom, fuseMid, [317, 233])[1]} r={4} className="lv-pulse" />}
           </g>
         );
       })}
@@ -420,9 +431,6 @@ export function FastLaneGraphic({ a }: { a: boolean }) {
         <text x={354} y={229} textAnchor="middle" className="svg-label small">FUSE</text>
         <text x={354} y={247} textAnchor="middle" className="svg-sub">rank signals</text>
       </g>
-      {agentNodes.map((node) => (
-        <path key={`fusion-${node.label}`} d={`M ${node.x + 86} ${node.y + 17} Q 326 233 320 233`} className="lv-edge" style={{ opacity: deepP * 0.42 }} />
-      ))}
 
       <g className={`lv-node ${packetP > 0 && promoteP === 0 ? "is-live" : ""}`}>
         <rect x={398} y={194} width={94} height={78} rx={10} />
@@ -471,85 +479,93 @@ export function FastLaneGraphic({ a }: { a: boolean }) {
   );
 }
 
-/* ---------- 5 · AGENT PANEL — four analysts, working concurrently ---------- */
+/* ---------- 5 · AGENT GRAPH — four analysts as a live message-passing graph ---------- */
 
-const AGENTS = [
-  { name: "CONCEPT", find: "consistent hashing is explained", val: 0.82, done: 3400 },
-  { name: "WEAKNESS", find: "failover mechanism is missing", val: 0.61, done: 4300 },
-  { name: "REASONING", find: "reasoning follows system constraints", val: 0.78, done: 5200 },
-];
-const CLAIMS = [
-  { label: "Redis session sharding", ok: true },
-  { label: "Dual-lane orchestration", ok: true },
-  { label: "Team-of-eight ownership", ok: false },
-  { label: "Playwright e2e suite", ok: true },
-];
+const AGENT_GRAPH = [
+  { name: "CONCEPT", sub: "coverage", find: "consistent hashing explained", val: "0.82", fire: 1500, done: 3400 },
+  { name: "WEAKNESS", sub: "failure surface", find: "failover mechanism missing", val: "0.61", fire: 1850, done: 4300 },
+  { name: "DISCREPANCY", sub: "résumé claims", find: "3 ✓ verified · 1 ✗ flagged", val: "1 flag", fire: 2200, done: 5200 },
+  { name: "REASONING", sub: "trace quality", find: "constraint-driven reasoning", val: "0.78", fire: 2550, done: 6100 },
+] as const;
 
 export function AgentsGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 9800;
   const t = el % L;
   const answer = typed("“we hash sessions across shards, so a dead node only loses its own turns”", t, 200, 1400);
+  const hub = { x: 108, y: 232 };
+  const nodeX = 264;
+  const nodeW = 172;
+  const ys = [92, 172, 252, 332];
+  const sinkX = 500;
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
+      <text x={22} y={20} className="lv-phase small">AGENT GRAPH · FOUR SPECIALISTS FIRE CONCURRENTLY ON ONE ANSWER</text>
       <g className="lv-box hot">
-        <rect x={30} y={26} width={580} height={40} rx={9} />
-        <text x={44} y={51} className="svg-mono small">{answer}{t < 1500 ? caret(t) : ""}</text>
+        <rect x={22} y={28} width={596} height={32} rx={9} />
+        <text x={34} y={49} className="svg-mono tinytext">{answer}{t < 1500 ? caret(t) : ""}</text>
       </g>
 
-      {/* three scoring agents, live */}
-      {AGENTS.map((ag, i) => {
-        const start = 1500 + i * 220;
-        const p = eph(t, start, ag.done);
-        const finding = typed(ag.find, t, start + 300, ag.done - 200);
-        const complete = t > ag.done;
+      {/* committed answer flows into the hub */}
+      <path d={`M 108 60 C 108 96 ${hub.x} 140 ${hub.x} ${hub.y - 44}`} className="lv-edge" style={{ opacity: 0.3 + 0.5 * eph(t, 500, 1400) }} />
+      <g className="lv-core" style={{ opacity: t > 900 ? 1 : 0.55 }}>
+        <circle cx={hub.x} cy={hub.y} r={42} className="lv-corering" />
+        <text x={hub.x} y={hub.y - 6} textAnchor="middle" className="svg-label small">TURN HUB</text>
+        <text x={hub.x} y={hub.y + 12} textAnchor="middle" className="svg-sub">fan-out</text>
+      </g>
+
+      {/* hub → agent edges with travelling activation pulses */}
+      {AGENT_GRAPH.map((ag, i) => {
+        const y = ys[i] + 30;
+        const firing = t >= ag.fire && t < ag.fire + 620;
+        const fp = eph(t, ag.fire, ag.fire + 620);
+        const working = t >= ag.fire && t < ag.done;
+        const complete = t >= ag.done;
+        const finding = typed(ag.find, t, ag.fire + 500, ag.done - 200);
+        const outFiring = t >= ag.done - 120 && t < ag.done + 480;
+        const op = eph(t, ag.done - 120, ag.done + 480);
+        const p1: [number, number] = [hub.x + 40, hub.y];
+        const p2: [number, number] = [(hub.x + nodeX) / 2 + 14, y];
+        const p3: [number, number] = [nodeX, y];
+        const o1: [number, number] = [nodeX + nodeW, y];
+        const o2: [number, number] = [(nodeX + nodeW + sinkX) / 2, y];
+        const o3: [number, number] = [sinkX, 152 + i * 44];
         return (
           <g key={ag.name}>
-            <g className={`lv-node ${!complete && t > start ? "is-live" : ""}`}>
-              <rect x={30} y={86 + i * 86} width={280} height={74} rx={11} />
+            <path d={`M ${p1[0]} ${p1[1]} Q ${p2[0]} ${p2[1]} ${p3[0]} ${p3[1]}`} className="lv-edge" style={{ opacity: working || complete ? 0.55 : 0.22 }} />
+            {firing && <circle cx={bez(fp, p1, p2, p3)[0]} cy={bez(fp, p1, p2, p3)[1]} r={4.5} className="lv-pulse" />}
+            <g className={`lv-node ${working ? "is-live" : ""}`}>
+              <rect x={nodeX} y={ys[i]} width={nodeW} height={60} rx={10} />
+              <text x={nodeX + 12} y={ys[i] + 19} className="svg-label small">{ag.name}</text>
+              <text x={nodeX + nodeW - 12} y={ys[i] + 19} textAnchor="end" className={complete ? "tick ok" : "svg-sub"}>{complete ? ag.val : working ? "live…" : "queued"}</text>
+              <text x={nodeX + 12} y={ys[i] + 35} className="svg-sub">{ag.sub}</text>
+              <text x={nodeX + 12} y={ys[i] + 51} className="svg-mono tinytext">{finding}{working && t > ag.fire + 500 ? caret(t) : ""}</text>
             </g>
-            <circle cx={50} cy={106 + i * 86} r={4} className={complete ? "lv-dot ok" : "lv-dot"} style={{ opacity: complete ? 1 : 0.3 + 0.7 * pulse(t, 700) }} />
-            <text x={62} y={110 + i * 86} className="svg-label small">{ag.name} AGENT</text>
-            <text x={296} y={110 + i * 86} textAnchor="end" className="svg-mono small">{complete ? ag.val.toFixed(2) : (ag.val * p).toFixed(2)}</text>
-            <text x={46} y={130 + i * 86} className="svg-mono tinytext">{finding}{t > start + 300 && !complete ? caret(t) : ""}</text>
-            <rect x={46} y={140 + i * 86} width={248} height={5} rx={2.5} className="lv-track thin" />
-            <rect x={46} y={140 + i * 86} width={248 * ag.val * p} height={5} rx={2.5} className="lv-bar" />
+            {working && <circle cx={nodeX + nodeW - 10} cy={ys[i] + 8} r={2.5 + pulse(t + i * 140, 600) * 2} className="lv-pulse" />}
+            <path d={`M ${o1[0]} ${o1[1]} Q ${o2[0]} ${o2[1]} ${o3[0]} ${o3[1]}`} className="lv-edge win" style={{ opacity: complete ? 0.6 : 0.16 }} />
+            {outFiring && <circle cx={bez(op, o1, o2, o3)[0]} cy={bez(op, o1, o2, o3)[1]} r={4.5} className="lv-pulse" />}
           </g>
         );
       })}
 
-      {/* discrepancy agent: live claim-by-claim check */}
+      {/* shared interview state: typed findings land as evidence slots */}
       <g className="lv-box">
-        <rect x={330} y={86} width={280} height={244} rx={12} />
-        <text x={348} y={112} className="svg-label small">DISCREPANCY AGENT</text>
-        <text x={348} y={130} className="svg-sub">checks résumé claims against live answers</text>
-        {CLAIMS.map((c, i) => {
-          const s = 2200 + i * 1050;
-          const scanning = t >= s && t < s + 780;
-          const stamped = t >= s + 780;
+        <rect x={sinkX} y={112} width={120} height={228} rx={12} />
+        <text x={sinkX + 60} y={134} textAnchor="middle" className="svg-label small">SHARED STATE</text>
+        {AGENT_GRAPH.map((ag, i) => {
+          const landed = t >= ag.done + 380;
           return (
-            <g key={c.label}>
-              {scanning && <rect x={342} y={142 + i * 40} width={256} height={32} rx={7} className="scanline" style={{ opacity: 0.4 + 0.5 * pulse(t, 420) }} />}
-              <text x={352} y={163 + i * 40} className="svg-mono tinytext">{c.label}</text>
-              {scanning && <text x={594} y={163 + i * 40} textAnchor="end" className="svg-sub">probing…</text>}
-              {stamped && (
-                <text x={594} y={163 + i * 40} textAnchor="end" className={c.ok ? "tick ok" : "tick bad"} style={rise(eph(t, s + 780, s + 1000), 4)}>
-                  {c.ok ? "✓ verified" : "✗ unverified"}
-                </text>
-              )}
+            <g key={ag.name} className={`lv-chip ${landed ? "win" : ""}`}>
+              <rect x={sinkX + 10} y={140 + i * 44} width={100} height={30} rx={7} style={{ opacity: landed ? 1 : 0.28 }} />
+              <text x={sinkX + 18} y={153 + i * 44} className="svg-sub" style={{ opacity: landed ? 1 : 0.4 }}>{ag.name}</text>
+              <text x={sinkX + 18} y={166 + i * 44} className="svg-mono tinytext" style={{ opacity: landed ? 1 : 0.35 }}>{landed ? `typed · ${ag.val}` : "waiting"}</text>
             </g>
           );
         })}
-        <text x={348} y={318} className="svg-sub" style={{ opacity: t > 6600 ? 1 : 0 }}>Claim status links to transcript evidence.</text>
       </g>
 
-      {/* converging output */}
-      <line x1={40} y1={368} x2={600} y2={368} className="lv-edge" style={{ opacity: 0.35 }} />
-      {[0, 1, 2, 3].map((i) => (
-        <circle key={i} cx={40 + ((t / 4 + i * 140) % 560)} cy={368} r={3.2} className="lv-pulse" style={{ opacity: t > 3400 ? 0.8 : 0 }} />
-      ))}
-      <text x={320} y={392} textAnchor="middle" className="svg-sub">Concurrent findings converge into the next-question decision.</text>
+      <text x={320} y={400} textAnchor="middle" className="svg-sub">Typed, turn-linked findings merge in shared state and steer the next question.</text>
     </svg>
   );
 }
