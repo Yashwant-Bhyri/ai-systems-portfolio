@@ -121,11 +121,11 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   // Projects are referenced by number here: they are introduced later in the
   // page, so naming them in this section would mean nothing to a new reader.
   assert.doesNotMatch(skillSource, /Antigravity|MindScape|Filmora|Lalamove|Optek/);
-  assert.equal((skillSource.match(/^\s{6}"/gm) ?? []).length, 26);
+  assert.equal((skillSource.match(/^\s{6}"/gm) ?? []).length, 25);
   assert.match(profile, /vx-role-map/);
-  assert.match(profile, /TARGET ROLE/);
-  assert.match(profile, /ENGINEERING AREAS/);
-  assert.match(profile, /THE SKILLS EACH AREA COVERS/);
+  assert.match(profile, /TARGET ROLES/);
+  assert.match(profile, /HOW I BUILD AI SYSTEMS/);
+  assert.match(profile, /MY CORE CAPABILITIES IN EACH AREA/);
   assert.match(profile, /vx-reason-track/);
   // op-svg text inherits its fill tokens from .vx-live-stage; a graphic hosted
   // outside that class must declare its own or it renders black on black.

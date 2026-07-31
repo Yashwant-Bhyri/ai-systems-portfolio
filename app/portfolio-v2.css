@@ -7406,7 +7406,7 @@ g[data-on="true"] .vx-map-wire.is-on {
 /* Column headers */
 .vx-map-col {
   fill: #7c8894;
-  font: 640 11px/1 var(--font-geist-mono), monospace;
+  font: 640 13px/1 var(--font-geist-mono), monospace;
   letter-spacing: 0.16em;
 }
 
@@ -7439,12 +7439,12 @@ g[data-on="true"] .vx-map-wire.is-on {
 
 .vx-map-num {
   fill: #8a95a0;
-  font: 620 11px/1 var(--font-geist-mono), monospace;
+  font: 620 13px/1 var(--font-geist-mono), monospace;
 }
 
 .vx-map-role {
   fill: #b9c3cd;
-  font: 600 17px/1 var(--font-geist-sans), system-ui, sans-serif;
+  font: 600 20px/1 var(--font-geist-sans), system-ui, sans-serif;
   letter-spacing: -0.018em;
 }
 
@@ -7452,7 +7452,7 @@ g[data-on="true"] .vx-map-wire.is-on {
 
 .vx-map-area {
   fill: #c2ccd6;
-  font: 600 14px/1 var(--font-geist-sans), system-ui, sans-serif;
+  font: 600 17px/1 var(--font-geist-sans), system-ui, sans-serif;
   letter-spacing: -0.012em;
 }
 
@@ -7460,19 +7460,19 @@ g[data-on="true"] .vx-map-wire.is-on {
 
 .vx-map-sub {
   fill: #7f8b96;
-  font: 510 10.5px/1 var(--font-geist-mono), monospace;
+  font: 510 12.5px/1 var(--font-geist-mono), monospace;
 }
 
 .vx-map-src {
   fill: #67727d;
-  font: 510 10px/1 var(--font-geist-mono), monospace;
+  font: 510 12px/1 var(--font-geist-mono), monospace;
   letter-spacing: 0.04em;
 }
 
 /* The skills — always legible, brighter when the role calls on them. */
 .vx-map-skill {
   fill: #94a0ab;
-  font: 520 12.5px/1 var(--font-geist-mono), monospace;
+  font: 520 14.5px/1 var(--font-geist-mono), monospace;
 }
 
 .vx-map-skill.is-on { fill: #e3ebf2; }

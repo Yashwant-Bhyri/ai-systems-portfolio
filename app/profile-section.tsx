@@ -23,9 +23,10 @@ const ROLES: readonly TargetRole[] = [
       "the runtime around the model is where my depth is",
       "I have built and run a dual-lane multi-agent orchestration engine",
       "evaluation, tracing and guardrails designed in, not bolted on",
-      "latency and token budgets treated as engineering, not afterthoughts",
-      "model routing and failover under real production load",
-      "state, recovery and fallback paths owned end to end",
+      "latency, throughput and token budgets treated as engineering",
+      "model serving, gateways and intelligent routing under real load",
+      "caching, fallbacks and recovery paths owned end to end",
+      "regression testing so a prompt change cannot silently break behaviour",
       "the system stays inspectable after it ships, not just before",
     ],
   },
@@ -35,11 +36,12 @@ const ROLES: readonly TargetRole[] = [
     short: "agentic systems as products",
     reasoning: [
       "every agent system I built shipped with a real product surface on it",
-      "orchestration graphs, reasoning agents and tool calling in production",
+      "planning, reasoning and specialist agents coordinated in production",
+      "tool use and function calling with structured, validated actions",
+      "state machines, hand-offs and async execution that stay predictable",
       "grounded in retrieval and memory so the agent stays honest",
       "human-in-the-loop approval wherever the stakes justify it",
-      "real-time voice and streaming interaction, not a chat box",
-      "typed contracts between agents so behaviour stays predictable",
+      "real-time voice and streaming runtimes, not a chat box",
       "I own the interface as well as the engine behind it",
     ],
   },
@@ -49,11 +51,12 @@ const ROLES: readonly TargetRole[] = [
     short: "data to deployment pipeline",
     reasoning: [
       "I carry the path from data and models through to deployment",
-      "distillation, quantization and evaluation on the model side",
-      "backend services, APIs and workflow management on the product side",
-      "retrieval and recommendation systems built end to end",
-      "cloud deployment with CI/CD, monitoring and cost control",
-      "data pipelines that keep the model fed and measurable",
+      "ingestion and knowledge pipelines that keep models fed and measurable",
+      "embeddings, vector search and indexing built and tuned by hand",
+      "quantization, distillation and efficient inference on constrained targets",
+      "backend APIs and model integrations on the product side",
+      "cloud deployment with containers, CI/CD and cost control",
+      "evaluation harnesses and failure analysis before anything ships",
       "one owner from the dataset through to the running service",
     ],
   },
@@ -78,12 +81,11 @@ const AREAS: readonly Area[] = [
     accent: "var(--vx-violet)",
     label: ["AI application &", "product engineering"],
     skills: [
-      "API design & integrations",
-      "full-stack AI application delivery",
-      "real-time streaming interfaces",
-      "workflow & session state management",
-      "structured JSON & schema contracts",
-      "product & UX research",
+      "AI-native application architecture",
+      "backend APIs & model integrations",
+      "full-stack AI product delivery",
+      "structured outputs & schema contracts",
+      "human-in-the-loop product workflows",
     ],
     appliedIn: "applied in projects 02 · 04",
     roles: [false, true, true],
@@ -93,11 +95,11 @@ const AREAS: readonly Area[] = [
     accent: "var(--vx-lime)",
     label: ["Agent runtime &", "orchestration"],
     skills: [
-      "multi-agent orchestration graphs",
-      "reasoning agents",
-      "function calling & tool use",
-      "agent hand-offs & state machines",
-      "real-time voice agent runtime",
+      "agent & workflow orchestration",
+      "planning, reasoning & specialist agents",
+      "tool use, function calling & structured actions",
+      "state machines, hand-offs & async execution",
+      "real-time voice & streaming agent runtimes",
     ],
     appliedIn: "applied in projects 01 · 02",
     roles: [true, true, false],
@@ -107,11 +109,11 @@ const AREAS: readonly Area[] = [
     accent: "var(--vx-cyan)",
     label: ["Knowledge, memory", "& retrieval"],
     skills: [
-      "vector search & embeddings",
-      "hybrid retrieval & reranking",
-      "recommendation systems",
-      "long-term agent memory",
-      "data & knowledge pipelines",
+      "embeddings, vector search & indexing",
+      "hybrid retrieval, reranking & grounding",
+      "RAG & knowledge systems",
+      "working, long-term & longitudinal memory",
+      "data ingestion & knowledge pipelines",
     ],
     appliedIn: "applied in projects 02 · 03",
     roles: [true, true, true],
@@ -121,11 +123,11 @@ const AREAS: readonly Area[] = [
     accent: "var(--vx-amber)",
     label: ["Evaluation, safety", "& observability"],
     skills: [
-      "agent & LLM evaluation harnesses",
-      "guardrails & policy control",
-      "human-in-the-loop workflows",
+      "LLM & agent evaluation harnesses",
+      "regression testing & failure analysis",
+      "guardrails, validation & policy control",
       "RL-style observability & refinement",
-      "OpenTelemetry tracing",
+      "OpenTelemetry, distributed tracing & production traces",
     ],
     appliedIn: "applied in projects 01 · 04",
     roles: [true, true, true],
@@ -135,11 +137,11 @@ const AREAS: readonly Area[] = [
     accent: "var(--vx-blue)",
     label: ["Inference platform", "& production systems"],
     skills: [
-      "model routing intelligence",
-      "LLM gateways",
-      "latency & token optimization",
-      "quantization & distillation",
-      "cloud deployment & CI/CD",
+      "model serving, gateways & intelligent routing",
+      "latency, throughput, token & cost optimization",
+      "caching, fallbacks & runtime reliability",
+      "quantization, distillation & efficient inference",
+      "cloud deployment, containers & CI/CD",
     ],
     appliedIn: "applied in projects 01 · 04",
     roles: [true, false, true],
@@ -148,17 +150,17 @@ const AREAS: readonly Area[] = [
 
 const ROLE_ADVANCE_MS = 10400;
 
-/* --- map geometry (viewBox 1320 × 470) --- */
+/* --- map geometry (viewBox 1340 × 528) --- */
 const ROLE_X = 8;
-const ROLE_W = 220;
-const ROLE_H = 94;
-const ROLE_Y = [92, 198, 304];
-const AREA_X = 350;
-const AREA_W = 280;
-const AREA_H = 84;
-const AREA_Y = [26, 114, 202, 290, 378];
-const SKILL_X = 650;
-const SKILL_W = 662;
+const ROLE_W = 282;
+const ROLE_H = 104;
+const ROLE_Y = [112, 224, 336];
+const AREA_X = 358;
+const AREA_W = 352;
+const AREA_H = 100;
+const AREA_Y = [4, 108, 212, 316, 420];
+const SKILL_X = 748;
+const SKILL_W = 584;
 
 
 /** One mark per engineering area: recognised before it is read. */
@@ -306,16 +308,16 @@ export function ProfileSection() {
 
       <div className="vx-role-map">
         <svg
-          viewBox="0 0 1320 470"
+          viewBox="0 0 1340 528"
           className="op-svg"
           role="tablist"
           aria-label="Target roles mapped to engineering areas and skills"
           tabIndex={0}
           onKeyDown={handleRoleKeys}
         >
-          <text x={ROLE_X} y={16} className="vx-map-col">TARGET ROLE</text>
-          <text x={AREA_X} y={16} className="vx-map-col">ENGINEERING AREAS</text>
-          <text x={SKILL_X} y={16} className="vx-map-col">THE SKILLS EACH AREA COVERS</text>
+          <text x={ROLE_X} y={16} className="vx-map-col">TARGET ROLES</text>
+          <text x={AREA_X} y={16} className="vx-map-col">HOW I BUILD AI SYSTEMS</text>
+          <text x={SKILL_X} y={16} className="vx-map-col">MY CORE CAPABILITIES IN EACH AREA</text>
 
           {/* Only the active role's edges are drawn: role → its engineering areas. */}
           {AREAS.map((area, areaIndex) => {
@@ -382,18 +384,18 @@ export function ProfileSection() {
               <g key={area.id} data-on={on} style={{ "--area": area.accent } as CSSProperties}>
                 {/* engineering area */}
                 <rect x={AREA_X} y={y} width={AREA_W} height={AREA_H} rx={9} className={on ? "vx-map-box is-on" : "vx-map-box"} />
-                <AreaGlyph id={area.id} x={AREA_X + 16} y={y + 16} />
+                <AreaGlyph id={area.id} x={AREA_X + 18} y={y + 20} />
                 {area.label.map((line, lineIndex) => (
                   <text
                     key={line}
-                    x={AREA_X + 46}
-                    y={y + 28 + lineIndex * 18}
+                    x={AREA_X + 52}
+                    y={y + 32 + lineIndex * 21}
                     className={on ? "vx-map-area is-on" : "vx-map-area"}
                   >
                     {line}
                   </text>
                 ))}
-                <text x={AREA_X + 46} y={y + 70} className="vx-map-src">{area.appliedIn}</text>
+                <text x={AREA_X + 52} y={y + 82} className="vx-map-src">{area.appliedIn}</text>
 
                 {/* area → skills connector */}
                 <path d={`M ${AREA_X + AREA_W} ${y + AREA_H / 2} L ${SKILL_X} ${y + AREA_H / 2}`} className={on ? "vx-map-wire is-on" : "vx-map-wire"} />
@@ -401,12 +403,12 @@ export function ProfileSection() {
                 {/* the skills themselves */}
                 <rect x={SKILL_X} y={y} width={SKILL_W} height={AREA_H} rx={9} className={on ? "vx-map-panel is-on" : "vx-map-panel"} />
                 {area.skills.map((skill, skillIndex) => {
-                  const sx = SKILL_X + 20 + Math.floor(skillIndex / 3) * 330;
-                  const sy = y + 28 + (skillIndex % 3) * 22;
+                  const sx = SKILL_X + 22;
+                  const sy = y + 24 + skillIndex * 18;
                   return (
                     <g key={skill}>
-                      <circle cx={sx + 3} cy={sy - 4} r={2.6} className={on ? "vx-map-dot is-on" : "vx-map-dot"} />
-                      <text x={sx + 14} y={sy} className={on ? "vx-map-skill is-on" : "vx-map-skill"}>{skill}</text>
+                      <circle cx={sx + 3} cy={sy - 4} r={3} className={on ? "vx-map-dot is-on" : "vx-map-dot"} />
+                      <text x={sx + 16} y={sy} className={on ? "vx-map-skill is-on" : "vx-map-skill"}>{skill}</text>
                     </g>
                   );
                 })}

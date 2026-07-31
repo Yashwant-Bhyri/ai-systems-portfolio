@@ -1006,3 +1006,23 @@ role (was five) at a proportionally longer 68 s lap so reading speed is
 unchanged, with slightly more height and larger type.
 
 Verified: 26 skills, 0 collisions, 0 overflow, attribution inside every box.
+
+### Session 9i — the user's own capability taxonomy
+
+All 25 capabilities replaced with the user's supplied wording, five per area.
+Column headers set to their words: TARGET ROLES · HOW I BUILD AI SYSTEMS ·
+MY CORE CAPABILITIES IN EACH AREA.
+
+Because those labels are much longer (up to "OpenTelemetry, distributed
+tracing & production traces", 53 chars), the two-column skill grid could no
+longer hold them. Switched to ONE clean column of five per area and rescaled
+the canvas: viewBox 1320×470 → 1340×528, wider role/area/skill columns, and
+SVG type sized up (skills 12.5→14.5, area 14→17, role 17→20) because the
+viewBox is wider than it renders. Canvas width tuned 1460→1340 so the graphic
+fills its box instead of letterboxing (rendered 444 px → 484 px tall).
+
+Rolling reasoning deepened to EIGHT lines per role, arguing the case rather
+than labelling it, and still naming no project.
+
+Verified: 25 capabilities, 0 collisions, 0 skills outside their panel, 0 area
+labels or attributions outside their box, tsc clean, 3/3 tests, build ok.
