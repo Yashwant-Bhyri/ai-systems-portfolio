@@ -11,7 +11,7 @@ type RoleLens = {
   title: string;
   short: string;
   fit: string;
-  priorities: readonly [string, string, string];
+  priorities: readonly string[];
 };
 
 const ROLES: readonly RoleLens[] = [
@@ -19,22 +19,37 @@ const ROLES: readonly RoleLens[] = [
     id: "systems",
     title: "AI Systems Engineer",
     short: "Systems architecture",
-    fit: "I build the runtime around the model: orchestration, memory, evaluation, routing, latency, and release controls.",
-    priorities: ["Design the system", "Control the runtime", "Measure production behavior"],
+    fit: "I build the production runtime around the model — multi-agent orchestration, state and memory, retrieval infrastructure, evaluation harnesses, model routing, and latency budgets — and I keep it observable and controllable once it is live.",
+    priorities: [
+      "Architect multi-agent runtimes and decision engines",
+      "Own state, memory, and retrieval infrastructure",
+      "Instrument evaluation, tracing, and RL-style refinement",
+      "Engineer latency, token cost, and failover budgets",
+    ],
   },
   {
     id: "agents",
     title: "AI Agent & Application Developer",
     short: "Agents + applications",
-    fit: "I turn model capability into a usable product through agent graphs, function calls, voice interaction, memory, and validation.",
-    priorities: ["Plan agent behavior", "Connect tools and memory", "Ship the interaction"],
+    fit: "I turn model capability into a product people actually use — agent graphs, tool and function calling, real-time voice loops, grounded memory, and validation gates, wrapped in an interface that makes the system's reasoning legible.",
+    priorities: [
+      "Design agent graphs, tool contracts, and hand-offs",
+      "Ship real-time voice and streaming interaction loops",
+      "Ground behavior in retrieval, memory, and guardrails",
+      "Build the product surface around the agent",
+    ],
   },
   {
     id: "full-stack",
     title: "Full-Stack AI / ML Engineer",
-    short: "Product to deployment",
-    fit: "I connect interface, API, model runtime, evaluation, optimization, and deployment as one observable product system.",
-    priorities: ["Own the product path", "Integrate model services", "Deploy and optimize"],
+    short: "Data to deployment",
+    fit: "I carry a system end to end — data modeling and pipelines, ML, retrieval and recommendation prototypes, the backend services and APIs that serve them, then cloud deployment with CI/CD, monitoring, and cost control.",
+    priorities: [
+      "Model data, build pipelines, train and distill models",
+      "Prototype ML, retrieval, and recommendation systems",
+      "Engineer backend services, APIs, and data layers",
+      "Deploy to cloud with CI/CD, monitoring, and cost control",
+    ],
   },
 ] as const;
 
@@ -46,26 +61,30 @@ type Skill = {
 };
 
 const SKILLS: readonly Skill[] = [
-  { id: "agent-engineering", label: "Agent engineering + orchestration", domain: "agents", heat: [3, 3, 2] },
-  { id: "function-calling", label: "Function calling", domain: "agents", heat: [2, 3, 2] },
-  { id: "voice-agents", label: "Voice agents", domain: "agents", heat: [2, 3, 2] },
-  { id: "prompt-tuning", label: "Prompt tuning", domain: "agents", heat: [1, 3, 2] },
-  { id: "vector-retrieval", label: "Vector retrieval + embeddings", domain: "retrieval", heat: [2, 3, 3] },
-  { id: "reranking", label: "Reranking + retrieval", domain: "retrieval", heat: [2, 3, 2] },
-  { id: "memory", label: "Long-term + working memory", domain: "retrieval", heat: [3, 3, 2] },
-  { id: "loop-harness", label: "Loop / harness engineering", domain: "reliability", heat: [3, 2, 2] },
-  { id: "evaluations", label: "LLM + agent evaluations", domain: "reliability", heat: [3, 2, 3] },
-  { id: "guardrails", label: "Guardrails + security", domain: "reliability", heat: [3, 3, 2] },
-  { id: "validation", label: "Validation engines", domain: "reliability", heat: [2, 3, 2] },
-  { id: "observability", label: "Observability", domain: "reliability", heat: [3, 2, 3] },
-  { id: "token-optimization", label: "Token optimization", domain: "performance", heat: [2, 2, 3] },
-  { id: "latency", label: "Latency engineering", domain: "performance", heat: [3, 2, 3] },
-  { id: "runtime-optimization", label: "Runtime optimization", domain: "performance", heat: [3, 2, 3] },
+  { id: "agent-orchestration", label: "Multi-agent orchestration + decision engines", domain: "agents", heat: [3, 3, 2] },
+  { id: "function-calling", label: "Tool / function calling + structured outputs", domain: "agents", heat: [2, 3, 2] },
+  { id: "voice-agents", label: "Real-time voice agents (sub-second loops)", domain: "agents", heat: [2, 3, 2] },
+  { id: "context-engineering", label: "Prompt + context engineering", domain: "agents", heat: [2, 3, 2] },
+  { id: "agent-state", label: "Agent state machines + async hand-offs", domain: "agents", heat: [3, 3, 2] },
+  { id: "vector-infra", label: "Vector databases + embeddings (HNSW / FAISS)", domain: "retrieval", heat: [2, 3, 3] },
+  { id: "hybrid-retrieval", label: "Hybrid retrieval + cross-encoder reranking", domain: "retrieval", heat: [2, 3, 3] },
+  { id: "memory", label: "Long-term, working + longitudinal memory", domain: "retrieval", heat: [3, 3, 2] },
+  { id: "rag", label: "RAG pipelines + knowledge grounding", domain: "retrieval", heat: [2, 3, 3] },
+  { id: "data-engineering", label: "Data engineering + ETL pipelines", domain: "retrieval", heat: [2, 1, 3] },
+  { id: "evaluations", label: "LLM + agent evaluation harnesses", domain: "reliability", heat: [3, 2, 3] },
+  { id: "guardrails", label: "Guardrails, safety gates + policy control", domain: "reliability", heat: [3, 3, 2] },
+  { id: "validation", label: "Validation engines (NLI · schema · rules)", domain: "reliability", heat: [2, 3, 2] },
+  { id: "observability", label: "Distributed tracing + production observability", domain: "reliability", heat: [3, 2, 3] },
+  { id: "rl-refinement", label: "RL-style refinement + regression replay", domain: "reliability", heat: [3, 2, 3] },
+  { id: "latency", label: "Latency engineering + budget control", domain: "performance", heat: [3, 2, 3] },
+  { id: "token-optimization", label: "Token cost + context-window optimization", domain: "performance", heat: [2, 2, 3] },
   { id: "model-routing", label: "LLM gateways + model routing intelligence", domain: "performance", heat: [3, 3, 3] },
-  { id: "deployment", label: "Deployment + Kubernetes", domain: "delivery", heat: [3, 1, 3] },
-  { id: "apis", label: "APIs", domain: "delivery", heat: [2, 2, 3] },
-  { id: "ux-research", label: "UI / UX research", domain: "delivery", heat: [1, 2, 3] },
-  { id: "product-research", label: "Product research", domain: "delivery", heat: [1, 2, 3] },
+  { id: "inference-optimization", label: "Inference optimization (quantization · distillation)", domain: "performance", heat: [3, 1, 3] },
+  { id: "backend", label: "Backend services + API engineering", domain: "delivery", heat: [2, 2, 3] },
+  { id: "cloud-deployment", label: "Cloud deployment (Docker · Kubernetes · CI/CD)", domain: "delivery", heat: [3, 1, 3] },
+  { id: "ml-prototyping", label: "ML prototyping + recommendation systems", domain: "delivery", heat: [1, 2, 3] },
+  { id: "full-stack-product", label: "Full-stack product interfaces", domain: "delivery", heat: [1, 2, 3] },
+  { id: "product-research", label: "Product + UX research", domain: "delivery", heat: [1, 2, 3] },
 ] as const;
 
 type CapabilityDomain = {
@@ -76,11 +95,11 @@ type CapabilityDomain = {
 };
 
 const CAPABILITY_DOMAINS: readonly CapabilityDomain[] = [
-  { id: "agents", label: "Agent runtime", description: "Agents, tools, voice, prompts", heat: [3, 3, 2] },
-  { id: "retrieval", label: "Retrieval + memory", description: "Context that stays useful", heat: [3, 3, 2] },
-  { id: "reliability", label: "Evaluation + control", description: "Evaluation, safety, traces", heat: [3, 3, 3] },
-  { id: "performance", label: "Performance + routing", description: "Tokens, latency, gateways", heat: [3, 2, 3] },
-  { id: "delivery", label: "Delivery + product", description: "APIs, deployment, product", heat: [2, 2, 3] },
+  { id: "agents", label: "Agentic systems & orchestration", description: "Multi-agent runtimes, tools, realtime voice", heat: [3, 3, 2] },
+  { id: "retrieval", label: "Memory, retrieval & data engineering", description: "Vector infrastructure, hybrid search, pipelines", heat: [3, 3, 3] },
+  { id: "reliability", label: "Evaluation, guardrails & observability", description: "Evals, safety gates, tracing, RL refinement", heat: [3, 3, 3] },
+  { id: "performance", label: "Performance, routing & optimization", description: "Latency, tokens, gateways, inference", heat: [3, 2, 3] },
+  { id: "delivery", label: "Full-stack delivery, cloud & product", description: "Backend, APIs, cloud deployment, product", heat: [2, 2, 3] },
 ] as const;
 
 type Evidence = {
@@ -424,7 +443,7 @@ export function ProfileSection() {
           aria-labelledby={`vx-role-lens-${role.id}`}
         >
           <header>
-            <span>Capability system · 20 production skills</span>
+            <span>Capability system · {SKILLS.length} production skills</span>
             <strong>{role.title}</strong>
             <small>{strongSkillCount} high-relevance signals</small>
           </header>

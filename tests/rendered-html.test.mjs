@@ -115,11 +115,11 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /assetPath\("\/brands\/cuhk\.png"\)/);
   assert.match(portfolio, /CUHK · QS World #18/);
   assert.equal(countObjectIds(roleSource), 3);
-  assert.equal(countInlineObjectIds(skillSource), 20);
+  assert.equal(countInlineObjectIds(skillSource), 24);
   assert.equal(countObjectIds(evidenceSource), 9);
   assert.match(profile, /vx-role-lens-layout/);
   assert.match(profile, /vx-capability-domains/);
-  assert.match(profile, /Capability system · 20 production skills/);
+  assert.match(profile, /Capability system · \{SKILLS\.length\} production skills/);
   assert.match(profile, /vx-applied-evidence/);
   assert.match(profile, /What I have actually built/);
   assert.doesNotMatch(profile, /vx-role-to-skill-links/);

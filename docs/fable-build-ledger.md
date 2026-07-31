@@ -782,3 +782,45 @@ axis labels "systems depth →" / "↑ product proximity". Keyword tray dropped
   animations report "paused"; force-run with a temporary style tag to verify motion.
 - getComputedStyle(transform) returns "none" for display:none subtrees — query
   *visible* instances when probing animations.
+
+### Session 9b — the three rebuilds the user actually asked for
+
+Prior pass fixed mechanical defects but did NOT deliver the requested rebuilds.
+Corrected here:
+
+1. **Profile rebuilt with visual storytelling.** The active role now physically
+   WIRES into the five capability domains (measured bezier beams, stroke weight
+   = that domain's relevance to the role), and the lit domain fires an animated
+   beam onward into the evidence cards it powers. Domains restyled as bordered
+   plug-in nodes with wire ports. Content matured: 24 skills (was 20) with
+   extensive labels (cloud deployment Docker·K8s·CI/CD, data engineering + ETL,
+   ML prototyping + recommendation systems, backend services + API engineering,
+   inference optimization, RAG pipelines, vector infra HNSW/FAISS…), five
+   broader domain names, and robust per-role "why I fit" reasoning + four
+   concrete capability rows each. Left rail no longer bottoms-out with a dead
+   gap: the fit block claims the remaining column height. All three columns
+   clamped (min-height:0, overflow:hidden) so a taller board can never stretch
+   the page — verified 0 px clipping across all three roles.
+2. **Implementation signal redesigned + rails curated.** Console is an
+   instrument: 14 px lit annotation, accent spine, HUD corner bracket, entrance
+   lift/flash per stage (always runs to completion even when paused), 30 px
+   keyword rail. Highlight is now AUTHORITATIVE — the key phrase paints solid
+   in the chapter accent with dark ink (hero's paint language) and locks in with
+   a flash once typing passes it, instead of a soft underline that vanished.
+   Every rail curated to recognizable engineering keywords per the user's
+   explicit lists; internal jargon (TurnState, PartialHypotheses, QuestionPacket,
+   TypedOutputs, ProductTruth, 700Signals…) removed; step `stack` arrays folded
+   into `signals` so no case-variant duplicate hashtags appear.
+3. **Agent graphs.** AgentsGraphic rebuilt as a live message-passing graph:
+   committed answer → TURN HUB → four specialists (concept/weakness/discrepancy/
+   reasoning) firing with travelling pulses → typed findings landing in SHARED
+   STATE slots. Dual-lane background cluster wires each agent individually with
+   activation + fusion pulses.
+4. Interview replay CTA removed; `.vx-story-copy` is no longer a nested scroll
+   container (the wheel scrolls the page); contribution tile carries a permanent
+   accent frame + glow; research sequence loops forever at 4.2 s so no record's
+   operational graphic is ever frozen.
+
+Deployment: GitHub Pages via `.github/workflows/deploy-pages.yml`
+(`npm run build:pages`, basePath `/ai-systems-portfolio`) →
+https://yashwant-bhyri.github.io/ai-systems-portfolio/
