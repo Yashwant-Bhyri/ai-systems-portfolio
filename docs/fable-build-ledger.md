@@ -1121,3 +1121,23 @@ looks like a code error but clears with preview_stop/preview_start.
    - SOFT — supporting prose keeps the marker underline.
    Classification is derived, so adding a phrase to any annotation is graded
    automatically rather than hand-tagged.
+
+### Session 9n — full-weight restored, headings accented, reasoning rewritten
+
+1. **CORE_SIGNAL widened to named technologies.** WebRTC, WebSockets, Deepgram,
+   SenseVoice, Emotion2Vec+, ASR/TTS, Redis, OpenTelemetry, DeBERTa and DSM now
+   take the FULL highlight alongside the layer concepts. Split is 47 full / 5
+   half; the five remaining halves are pure description rather than technology:
+   interruption recovery · confidence-scored final transcript · typed,
+   turn-linked findings · evidence ledger · explicit dependencies.
+2. **Full weight strengthened back up** — 38→50% accent tint with white 640-680
+   text and an accent spine, replacing the too-quiet 20% tint.
+   INCIDENT: a stale white-emphasis block from the previous pass was sitting
+   LATER in the stylesheet and silently overriding the new rules. Caught by
+   reading computed styles back (colour resolved to #eef4f8, not #fff) rather
+   than trusting the edit. Removed; only one full-weight definition remains.
+3. **Column headings accented** — lime-tinted, 12.5px, 0.18em tracking, with the
+   rule under each header also in accent. They now read as section labels.
+4. **"Why this role" rewritten** — all 24 lines are now complete, parallel
+   sentences instead of abstract fragments ("I build the runtime around the
+   model, not just the prompt in front of it.").

@@ -1493,12 +1493,13 @@ function SignalTicker({
 
 type AnnotationRange = { phrase: string; start: number; end: number; weight: "full" | "half" | "soft" };
 
-/** Only the terms that map onto the five engineering layers earn the full
- *  highlight — agent runtime, knowledge & retrieval, evaluation & safety,
- *  inference platform, application. Everything else technical (WebRTC,
- *  Deepgram, TTS routers) is real but incidental, so it takes a half tint. */
+/** Named technologies and the concepts that define the five engineering layers
+ *  earn the FULL highlight — WebRTC, Deepgram, SenseVoice, Emotion2Vec+, HNSW,
+ *  BM25, LLM gateways, guardrails, agent evaluations, RL. What stays HALF is
+ *  descriptive behaviour rather than a technology or a layer concept
+ *  (interruption recovery, evidence ledger, turn-linked findings). */
 const CORE_SIGNAL =
-  /orchestrat|multi-agent|agent graph|agent evaluation|function call|tool call|tool graph|structured|contract|policy-valid|asynchronous|schema|json|vector|embedding|retriev|rerank|hnsw|faiss|bm25|medcpt|biolinkbert|\brag\b|memory|grounde?d?|ground|evaluation|guardrail|validat|deterministic|\bnli\b|telemetry|tracing|observab|\brl\b|regression|llm gateway|model routing|latency|token|quantiz|distill|cache|failover|fallback|deploy|\bapi\b|gated multimodal|behavioral state/i;
+  /webrtc|websocket|deepgram|sensevoice|emotion2vec|\basr\b|\btts\b|medcpt|hnsw|faiss|bm25|biolinkbert|deberta|\bnli\b|\bdsm\b|opentelemetry|redis|orchestrat|multi-agent|agent graph|agent evaluation|specialist agent|research agent|function call|tool call|tool graph|structured|contract|policy-valid|asynchronous|schema|json|vector|embedding|retriev|rerank|\brag\b|memory|ground|evaluation|guardrail|validat|deterministic|telemetry|tracing|observab|\brl\b|regression|human gate|human-release|human-in-the-loop|llm gateway|model routing|latency|throughput|token|quantiz|distill|cache|failover|fallback|deploy|\bapi\b|pipeline|skill file|compiler|interview graph|gated multimodal|behavioral state/i;
 
 function HighlightedStageAnnotation({
   text,
