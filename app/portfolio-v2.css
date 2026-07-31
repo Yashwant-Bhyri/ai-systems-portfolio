@@ -7289,12 +7289,68 @@ html {
 }
 
 .vx-profile-head h2 {
-  margin: 8px 0 0;
-  max-width: 34ch;
-  font-size: clamp(24px, 2.4vw, 34px);
+  margin: 0;
+  font-size: clamp(30px, 3.2vw, 46px);
   font-weight: 500;
-  line-height: 1.06;
-  letter-spacing: -0.04em;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  transition: font-size 620ms var(--vx-ease);
+}
+
+/* Once it has been read, the title shrinks and hands its height to the map. */
+.vx-profile-head[data-compact="true"] h2 {
+  font-size: clamp(19px, 1.6vw, 23px);
+}
+
+.vx-profile-head > div > p {
+  max-width: 56ch;
+  margin: 7px 0 0;
+  color: #97a3ae;
+  font-size: 13.5px;
+  line-height: 1.45;
+  transition: opacity 480ms var(--vx-ease), margin-top 480ms var(--vx-ease);
+}
+
+.vx-profile-head[data-compact="true"] > div > p {
+  margin-top: 4px;
+  font-size: 12.5px;
+}
+
+/* --- area accents: five recognisable colours, one per engineering area --- */
+.vx-map-glyph {
+  fill: none;
+  stroke: #6f7a85;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 320ms ease;
+}
+
+g[data-on="true"] .vx-map-glyph {
+  stroke: var(--area, var(--vx-lime));
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--area, var(--vx-lime)) 40%, transparent));
+}
+
+.vx-map-dot {
+  fill: #545e69;
+  transition: fill 320ms ease;
+}
+
+.vx-map-dot.is-on {
+  fill: var(--area, var(--vx-lime));
+}
+
+g[data-on="true"] .vx-map-box.is-on {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 55%, transparent);
+  fill: color-mix(in srgb, var(--area, var(--vx-lime)) 7%, rgba(255, 255, 255, 0.02));
+}
+
+g[data-on="true"] .vx-map-panel.is-on {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 26%, transparent);
+}
+
+g[data-on="true"] .vx-map-wire.is-on {
+  stroke: color-mix(in srgb, var(--area, var(--vx-lime)) 45%, transparent);
 }
 
 .vx-profile-head-meta {

@@ -18,7 +18,7 @@ const ROLES: readonly TargetRole[] = [
   {
     id: "systems",
     lines: ["AI Systems", "Engineer"],
-    short: "runtime · reliability",
+    short: "runtime systems & reliability",
     reasoning: [
       "the runtime around the model is where my depth is",
       "I built and ran a dual-lane multi-agent orchestration engine",
@@ -30,7 +30,7 @@ const ROLES: readonly TargetRole[] = [
   {
     id: "agents",
     lines: ["AI Agent &", "Application Developer"],
-    short: "agents as products",
+    short: "agentic systems as products",
     reasoning: [
       "every agent system I built shipped with a real product surface on it",
       "orchestration graphs, reasoning agents and tool calling in production",
@@ -42,7 +42,7 @@ const ROLES: readonly TargetRole[] = [
   {
     id: "full-stack",
     lines: ["Full-Stack", "AI / ML Engineer"],
-    short: "data to deployment",
+    short: "data to deployment pipeline",
     reasoning: [
       "I carry the path from data and models through to deployment",
       "distillation, quantization and evaluation on the model side",
@@ -55,6 +55,8 @@ const ROLES: readonly TargetRole[] = [
 
 type Area = {
   id: string;
+  /** Own accent so the five areas are told apart at a glance. */
+  accent: string;
   label: readonly [string, string];
   /** The curated, concrete skills this engineering area actually covers. */
   skills: readonly string[];
@@ -67,6 +69,7 @@ type Area = {
 const AREAS: readonly Area[] = [
   {
     id: "application",
+    accent: "var(--vx-violet)",
     label: ["AI application &", "product engineering"],
     skills: [
       "API integrations & management",
@@ -80,6 +83,7 @@ const AREAS: readonly Area[] = [
   },
   {
     id: "runtime",
+    accent: "var(--vx-lime)",
     label: ["Agent runtime &", "orchestration"],
     skills: [
       "multi-agent orchestration graphs",
@@ -93,6 +97,7 @@ const AREAS: readonly Area[] = [
   },
   {
     id: "knowledge",
+    accent: "var(--vx-cyan)",
     label: ["Knowledge, memory", "& retrieval"],
     skills: [
       "vector search & embeddings",
@@ -106,6 +111,7 @@ const AREAS: readonly Area[] = [
   },
   {
     id: "control",
+    accent: "var(--vx-amber)",
     label: ["Evaluation, safety", "& observability"],
     skills: [
       "agent & LLM evaluation harnesses",
@@ -119,6 +125,7 @@ const AREAS: readonly Area[] = [
   },
   {
     id: "platform",
+    accent: "var(--vx-blue)",
     label: ["Inference platform", "& production systems"],
     skills: [
       "model routing intelligence",
@@ -141,10 +148,50 @@ const ROLE_H = 94;
 const ROLE_Y = [92, 198, 304];
 const AREA_X = 350;
 const AREA_W = 280;
-const AREA_H = 80;
-const AREA_Y = [30, 118, 206, 294, 382];
+const AREA_H = 84;
+const AREA_Y = [26, 114, 202, 290, 378];
 const SKILL_X = 650;
 const SKILL_W = 662;
+
+
+/** One mark per engineering area: recognised before it is read. */
+function AreaGlyph({ id, x, y }: { id: string; x: number; y: number }) {
+  const g = (children: React.ReactNode) => (
+    <g transform={`translate(${x},${y})`} className="vx-map-glyph">{children}</g>
+  );
+  if (id === "application") {
+    return g(<>
+      <rect x={0} y={1} width={20} height={16} rx={2.5} />
+      <line x1={0} y1={6} x2={20} y2={6} />
+      <line x1={4} y1={11} x2={11} y2={11} />
+    </>);
+  }
+  if (id === "runtime") {
+    return g(<>
+      <circle cx={3} cy={4} r={2.6} /><circle cx={3} cy={15} r={2.6} />
+      <circle cx={17} cy={9.5} r={2.6} />
+      <line x1={5} y1={5} x2={15} y2={9} /><line x1={5} y1={14} x2={15} y2={10} />
+    </>);
+  }
+  if (id === "knowledge") {
+    return g(<>
+      <ellipse cx={10} cy={4} rx={9} ry={3} />
+      <path d="M1 4v5c0 1.7 4 3 9 3s9-1.3 9-3V4" />
+      <path d="M1 10v5c0 1.7 4 3 9 3s9-1.3 9-3v-5" />
+    </>);
+  }
+  if (id === "control") {
+    return g(<>
+      <path d="M10 1 18 4v6c0 4.4-3.4 7.4-8 8.6C5.4 17.4 2 14.4 2 10V4Z" />
+      <path d="M6.6 9.6 9 12l4.6-4.6" />
+    </>);
+  }
+  return g(<>
+    <rect x={1} y={1} width={18} height={5} rx={1.5} />
+    <rect x={1} y={8} width={18} height={5} rx={1.5} />
+    <rect x={1} y={15} width={18} height={4} rx={1.5} />
+  </>);
+}
 
 const SR_ONLY_STYLE: CSSProperties = {
   position: "absolute",
@@ -161,6 +208,7 @@ const SR_ONLY_STYLE: CSSProperties = {
 export function ProfileSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
+  const [compactHead, setCompactHead] = useState(false);
   const [activeRole, setActiveRole] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -183,6 +231,17 @@ export function ProfileSection() {
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
+
+  // The title states the question, then gets out of the way of the answer.
+  useEffect(() => {
+    if (!visible) return;
+    if (reducedMotion) {
+      setCompactHead(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setCompactHead(true), 2200);
+    return () => window.clearTimeout(timer);
+  }, [reducedMotion, visible]);
 
   const autoplaying = playing && !reducedMotion;
   const running = visible && autoplaying;
@@ -217,10 +276,10 @@ export function ProfileSection() {
       data-role={role.id}
       data-playing={autoplaying}
     >
-      <header className="vx-profile-head">
+      <header className="vx-profile-head" data-compact={compactHead}>
         <div>
-          <span className="vx-lens-label">What I&apos;m built for</span>
-          <h2>Three target roles, and the engineering areas and skills behind each one.</h2>
+          <h2>What I&apos;m built for.</h2>
+          <p>Three target roles — and the engineering areas and skills behind each one.</p>
         </div>
         <div className="vx-profile-head-meta">
           <strong>{liveAreas.length}<i>areas</i></strong>
@@ -313,36 +372,37 @@ export function ProfileSection() {
             const on = area.roles[activeRole];
             const y = AREA_Y[areaIndex];
             return (
-              <g key={area.id} data-on={on}>
+              <g key={area.id} data-on={on} style={{ "--area": area.accent } as CSSProperties}>
                 {/* engineering area */}
                 <rect x={AREA_X} y={y} width={AREA_W} height={AREA_H} rx={9} className={on ? "vx-map-box is-on" : "vx-map-box"} />
+                <AreaGlyph id={area.id} x={AREA_X + 16} y={y + 16} />
                 {area.label.map((line, lineIndex) => (
                   <text
                     key={line}
-                    x={AREA_X + 16}
-                    y={y + 28 + lineIndex * 19}
+                    x={AREA_X + 46}
+                    y={y + 28 + lineIndex * 18}
                     className={on ? "vx-map-area is-on" : "vx-map-area"}
                   >
                     {line}
                   </text>
                 ))}
-                <text x={AREA_X + 16} y={y + 68} className="vx-map-src">{area.learnedIn}</text>
+                <text x={AREA_X + 46} y={y + 70} className="vx-map-src">{area.learnedIn}</text>
 
                 {/* area → skills connector */}
                 <path d={`M ${AREA_X + AREA_W} ${y + AREA_H / 2} L ${SKILL_X} ${y + AREA_H / 2}`} className={on ? "vx-map-wire is-on" : "vx-map-wire"} />
 
                 {/* the skills themselves */}
                 <rect x={SKILL_X} y={y} width={SKILL_W} height={AREA_H} rx={9} className={on ? "vx-map-panel is-on" : "vx-map-panel"} />
-                {area.skills.map((skill, skillIndex) => (
-                  <text
-                    key={skill}
-                    x={SKILL_X + 20 + Math.floor(skillIndex / 3) * 330}
-                    y={y + 26 + (skillIndex % 3) * 21}
-                    className={on ? "vx-map-skill is-on" : "vx-map-skill"}
-                  >
-                    {skill}
-                  </text>
-                ))}
+                {area.skills.map((skill, skillIndex) => {
+                  const sx = SKILL_X + 20 + Math.floor(skillIndex / 3) * 330;
+                  const sy = y + 28 + (skillIndex % 3) * 22;
+                  return (
+                    <g key={skill}>
+                      <circle cx={sx + 3} cy={sy - 4} r={2.6} className={on ? "vx-map-dot is-on" : "vx-map-dot"} />
+                      <text x={sx + 14} y={sy} className={on ? "vx-map-skill is-on" : "vx-map-skill"}>{skill}</text>
+                    </g>
+                  );
+                })}
               </g>
             );
           })}

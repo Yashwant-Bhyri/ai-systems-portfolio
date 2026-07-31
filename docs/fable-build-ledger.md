@@ -965,3 +965,25 @@ Structure, per the user's stated chain:
 
 Verified: 0 label collisions and 0 labels outside their panel (measured across
 all 25), SVG fills 1228×437, tsc clean, 3/3 tests, static export builds.
+
+### Session 9g — profile made visually scannable
+
+Base structure kept; the complaint was that it still read as a block of text.
+Three changes, all aimed at recognition-before-reading:
+1. **Heading states then yields.** "What I'm built for." renders large, then
+   after 2.2 s shrinks (font-size transition) and hands its height back to the
+   map — the user's own suggestion, and it is also the space budget that lets
+   the area rows grow.
+2. **Five area accents + glyphs.** Each engineering area owns a colour
+   (application violet · runtime lime · knowledge cyan · control amber ·
+   platform blue) and a drawn mark (window · node graph · datastore · shield ·
+   stack). Areas the active role does not call on fall back to neutral grey, so
+   colour carries the lens as well as identity.
+3. **Skills gain colour-coded markers and air.** Each skill is preceded by a dot
+   in its area's accent; row pitch 21→22 px and AREA_H 80→84 px.
+Role subtitles set to the user's wording: "runtime systems & reliability",
+"agentic systems as products", "data to deployment pipeline".
+
+Verified: heading collapses, all five accents resolve to distinct colours
+(lime/cyan/amber/blue, inactive grey), 0 skill collisions, 0 skills outside
+their panel, 0 area labels outside their box. tsc clean, 3/3 tests, build ok.
