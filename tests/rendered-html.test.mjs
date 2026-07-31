@@ -34,6 +34,24 @@ function countStoryLabels(source) {
   return (source.match(/^\s{4}label:/gm) ?? []).length;
 }
 
+function countStorySignals(source) {
+  return (source.match(/^\s{4}signals:/gm) ?? []).length;
+}
+
+function countStoryHighlights(source) {
+  return (source.match(/^\s{4}annotationHighlights:/gm) ?? []).length;
+}
+
+function storySignalCounts(source) {
+  return [...source.matchAll(/^\s{4}signals: \[([^\]]+)\]/gm)].map(
+    (match) => (match[1].match(/"[^"]+"/g) ?? []).length,
+  );
+}
+
+function storyAnnotations(source) {
+  return [...source.matchAll(/^\s{4}annotation: "([^"]+)"/gm)].map((match) => match[1]);
+}
+
 test("server-renders the recruiter-first portfolio", async () => {
   const response = await render();
   assert.equal(response.status, 200);
@@ -57,6 +75,10 @@ test("server-renders the recruiter-first portfolio", async () => {
   assert.match(html, /AI APPLICATION ENGINEERING INTERNSHIP/);
   assert.match(html, /MEDICAL AI R&amp;D PROJECT/);
   assert.match(html, /250\+ completed interviews/);
+  assert.match(html, /IMPLEMENTATION SIGNAL/);
+  assert.match(html, /vx-stage-signal-console/);
+  assert.match(html, /vx-signal-ticker-track-base/);
+  assert.match(html, /vx-signal-ticker-track-mask/);
   assert.match(html, /href="\/yashwant-bhyri-resume\.pdf"/);
 });
 
@@ -81,7 +103,10 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   const skillSource = sourceSlice(profile, "const SKILLS", "type CapabilityDomain");
   const evidenceSource = sourceSlice(profile, "const EVIDENCE", "const ROLE_ADVANCE_MS");
   const antigravitySource = sourceSlice(portfolio, "const ANTIGRAVITY_STEPS", "const FILMORA_STEPS");
+  const filmoraSource = sourceSlice(portfolio, "const FILMORA_STEPS", "const MINDSCAPE_STEPS");
   const mindscapeSource = sourceSlice(portfolio, "const MINDSCAPE_STEPS", "const RESEARCH");
+  const researchSource = sourceSlice(portfolio, "const RESEARCH", "function useReducedMotion");
+  const annotations = [antigravitySource, filmoraSource, mindscapeSource].flatMap(storyAnnotations);
 
   assert.match(portfolio, /IntersectionObserver/);
   assert.match(portfolio, /className="vx-hero-highlight"/);
@@ -104,9 +129,38 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /vx-conclusion-focus/);
   assert.match(portfolio, /vx-contribution-tile/);
   assert.match(portfolio, /vx-stage-annotation/);
+  assert.match(portfolio, /function StageSignalConsole/);
+  assert.match(portfolio, /vx-stage-signal-micro-row/);
+  assert.match(portfolio, /vx-stage-annotation-emphasis/);
+  assert.match(portfolio, /vx-stage-signal-diagonal-sweep/);
+  assert.match(portfolio, /function SignalTicker/);
+  assert.match(portfolio, /vx-signal-ticker-track-base/);
+  assert.match(portfolio, /vx-signal-ticker-track-mask/);
+  assert.match(portfolio, /aria-hidden="true" role="presentation"/);
+  assert.match(portfolio, /vx-signal-ticker-star[^>]*aria-hidden="true">✦/);
+  assert.match(portfolio, /data-reduced-motion=\{reducedMotion\}/);
+  assert.match(portfolio, /data-running=\{active && !reducedMotion\}/);
   assert.match(portfolio, /vx-research-grid/);
   assert.equal(countStoryLabels(antigravitySource), 9);
+  assert.equal(countStoryLabels(filmoraSource), 8);
   assert.equal(countStoryLabels(mindscapeSource), 8);
+  assert.equal(countStorySignals(antigravitySource), 9);
+  assert.equal(countStorySignals(filmoraSource), 8);
+  assert.equal(countStorySignals(mindscapeSource), 8);
+  assert.equal(countStoryHighlights(antigravitySource), 9);
+  assert.equal(countStoryHighlights(filmoraSource), 8);
+  assert.equal(countStoryHighlights(mindscapeSource), 8);
+  [antigravitySource, filmoraSource, mindscapeSource].flatMap(storySignalCounts).forEach((count) => {
+    assert.ok(count >= 3, `Every microscope step needs at least three implementation signals; received ${count}`);
+  });
+  assert.equal(annotations.length, 25);
+  annotations.forEach((annotation) => {
+    assert.ok(annotation.length <= 175, `Microscope annotation is too long (${annotation.length} chars): ${annotation}`);
+    assert.doesNotMatch(annotation, /—|→/, `Microscope annotation should be a concise explanatory sentence: ${annotation}`);
+  });
+  assert.match(antigravitySource, /fast path selects the current question from the live interview graph/);
+  assert.match(filmoraSource, /LLM gateway routes six specialist agents/);
+  assert.match(mindscapeSource, /DeBERTa-v3 NLI tests every claim against its citations/);
   assert.match(antigravitySource, /label: "Evaluation loop"/);
   assert.match(mindscapeSource, /label: "Governed RL refinement"/);
   assert.match(liveVisuals, /EvaluationLoopGraphic/);
@@ -117,6 +171,13 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /next === 3/);
   assert.match(portfolio, /document\.querySelector<HTMLElement>\("#contact"\)/);
   assert.match(portfolio, /LiveResearchMini index=\{item\.visual\} active=\{active\}/);
+  assert.equal((researchSource.match(/^\s{4}signals:/gm) ?? []).length, 6);
+  assert.doesNotMatch(researchSource, /^\s{4}proof:/gm);
+  assert.doesNotMatch(portfolio, /item\.stack\.slice/);
+  assert.match(portfolio, /items=\{item\.stack\.map\(\(technology\) => \(\{ label: technology \}\)\)\}/);
+  assert.match(portfolio, /items=\{item\.signals\}/);
+  assert.match(portfolio, /variant="metrics"/);
+  assert.match(portfolio, /cycleMs=\{7600\}/);
   assert.match(portfolio, /Real-time AI-Native Interviewing Platform/);
   assert.match(portfolio, /End-to-End Multimodal AI Production System/);
   assert.match(portfolio, /Medical AI Clinician-Support Product/);
@@ -127,7 +188,7 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /250\+ completed interviews/);
   assert.match(portfolio, /built with a multi-agent orchestration and decision engine/);
   assert.match(portfolio, /integrated into Filmora Enterprise/);
-  assert.match(portfolio, /reinforcement-learning observability and refinement systems/);
+  assert.match(portfolio, /agent reinforcement-learning observability and refinement/);
   assert.match(portfolio, /Yashwant_Bhyri/);
   assert.match(portfolio, /\+86 159 1412 2353/);
   assert.match(portfolio, /inPrimary && ti === cycle % cluster\.terms\.length/);

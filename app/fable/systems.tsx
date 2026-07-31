@@ -48,30 +48,38 @@ export function BenchMini({ idx, t }: { idx: number; t: number }) {
     const hq = (t % 3200) / 3200;
     return (
       <g>
-        <text x={10} y={18} className="svg-sub tiny">SAM + INT8 DEPTH → WEBGL TEXTURE CONTRACT</text>
-        <rect x={10} y={28} width={64} height={48} rx={6} className="lv-track" />
-        <circle cx={q(24 + 36 * (0.5 + 0.5 * Math.sin(t / 800)))} cy={q(46 + 10 * Math.cos(t / 1100))} r={5} className="lv-pulse" />
-        <text x={10} y={90} className="svg-sub tiny">camera</text>
+        <text x={8} y={15} className="svg-sub tiny">SAM + INT8 DEPTH → 5-TEXTURE WEBGL CONTRACT</text>
+        <rect x={8} y={24} width={58} height={48} rx={6} className="lv-track" />
+        <circle cx={q(22 + 31 * (0.5 + 0.5 * Math.sin(t / 800)))} cy={q(43 + 8 * Math.cos(t / 1100))} r={4.5} className="lv-pulse" />
+        <text x={37} y={66} textAnchor="middle" className="svg-sub tiny">CAMERA</text>
+        <text x={71} y={51} className="svg-sub tiny">→</text>
+        <rect x={82} y={24} width={58} height={48} rx={6} className="lv-track" />
         {[0, 1, 2].map((b2) => (
-          <rect key={b2} x={90 + b2 * 15} y={30} width={12} height={44} rx={3} className="lv-bar" style={{ opacity: 0.3 + 0.6 * noise(b2 * 7 + 3, t / 2) }} />
+          <rect key={b2} x={87 + b2 * 15} y={29} width={11} height={28} rx={3} className="lv-bar" style={{ opacity: 0.3 + 0.6 * noise(b2 * 7 + 3, t / 2) }} />
         ))}
-        <text x={84} y={90} className="svg-sub tiny">SAM mask</text>
+        <text x={111} y={66} textAnchor="middle" className="svg-sub tiny">SAM MASK</text>
+        <text x={145} y={51} className="svg-sub tiny">→</text>
+        <rect x={156} y={24} width={58} height={48} rx={6} className="lv-track" />
         {[0, 1, 2, 3].map((d2) => (
-          <rect key={d2} x={148} y={30 + d2 * 12} width={40} height={9} rx={3} className="lv-bar bg" style={{ opacity: 0.9 - d2 * 0.2 }} />
+          <rect key={d2} x={161} y={28 + d2 * 6} width={48} height={5} rx={2.5} className="lv-bar bg" style={{ opacity: 0.9 - d2 * 0.2 }} />
         ))}
-        <text x={142} y={90} className="svg-sub tiny">Depth V2 · INT8</text>
+        <text x={185} y={61} textAnchor="middle" className="svg-sub tiny">DEPTH V2</text>
+        <text x={185} y={70} textAnchor="middle" className="svg-sub tiny">INT8</text>
+        <text x={219} y={51} className="svg-sub tiny">→</text>
         <g className="lv-chip win">
-          <rect x={208} y={34} width={100} height={36} rx={8} />
-          <text x={258} y={49} textAnchor="middle" className="svg-mono tinytext">5-texture GPU bus</text>
-          <text x={258} y={63} textAnchor="middle" className="svg-sub tiny">mask · depth · control</text>
+          <rect x={230} y={24} width={82} height={48} rx={8} />
+          <text x={271} y={44} textAnchor="middle" className="svg-mono tinytext">GPU CONTRACT</text>
+          <text x={271} y={59} textAnchor="middle" className="svg-sub tiny">5 TEXTURES</text>
         </g>
-        <text x={10} y={112} className="svg-mono tinytext">LIVE lane</text>
-        <rect x={80} y={104} width={150} height={7} rx={3.5} className="lv-track thin" />
-        <rect x={80} y={104} width={q(150 * live)} height={7} rx={3.5} className="lv-bar" />
-        <text x={10} y={130} className="svg-mono tinytext">HQ lane</text>
-        <rect x={80} y={122} width={150} height={7} rx={3.5} className="lv-track thin" />
-        <rect x={80} y={122} width={q(150 * hq)} height={7} rx={3.5} className="lv-bar warm" />
-        <text x={238} y={130} className="svg-sub tiny">cut guard · cache</text>
+        <text x={8} y={92} className="svg-mono tinytext">LIVE LANE</text>
+        <rect x={70} y={85} width={160} height={7} rx={3.5} className="lv-track thin" />
+        <rect x={70} y={85} width={q(160 * live)} height={7} rx={3.5} className="lv-bar" />
+        <text x={312} y={92} textAnchor="end" className="svg-sub tiny">SUBJECT LIFT</text>
+        <text x={8} y={115} className="svg-mono tinytext">HQ LANE</text>
+        <rect x={70} y={108} width={160} height={7} rx={3.5} className="lv-track thin" />
+        <rect x={70} y={108} width={q(160 * hq)} height={7} rx={3.5} className="lv-bar warm" />
+        <text x={312} y={115} textAnchor="end" className="svg-sub tiny">SCENE CACHE</text>
+        <text x={160} y={140} textAnchor="middle" className="svg-sub tiny">CUT GUARD ✦ CACHE BLEND ✦ MEMORY BUDGET</text>
       </g>
     );
   }
@@ -100,41 +108,6 @@ export function BenchMini({ idx, t }: { idx: number; t: number }) {
         </g>
         <text x={10} y={136} className="svg-sub tiny">typed control layer · provider output remains best-effort</text>
         <text x={10} y={148} className="svg-mono tinytext">PROJECT + SHOT STYLE + GLOBAL CONSISTENCY</text>
-      </g>
-    );
-  }
-  if (idx === 3) {
-    const role = Math.floor(t / 1300) % 3;
-    const blocked = Math.floor(t / 3600) % 2 === 1;
-    const risk = 42 + Math.round(38 * (0.5 + 0.5 * Math.sin(t / 1100)));
-    return (
-      <g>
-        <text x={10} y={18} className="svg-sub tiny">LALAMOVE R&D · BOUNDED AI OPERATIONS</text>
-        {['ADMIN', 'DRIVER', 'CUSTOMER'].map((label, index) => (
-          <g key={label} className={`lv-node ${role === index ? 'is-live' : ''}`}>
-            <rect x={10} y={30 + index * 31} width={66} height={24} rx={6} />
-            <text x={43} y={45 + index * 31} textAnchor="middle" className="svg-mono tinytext">{label}</text>
-            <path d={`M 76 ${42 + index * 31} L 98 70`} className="lv-edge" />
-          </g>
-        ))}
-        <g className="lv-node is-live">
-          <rect x={98} y={49} width={76} height={44} rx={8} />
-          <text x={136} y={67} textAnchor="middle" className="svg-label small">FLASK API</text>
-          <text x={136} y={82} textAnchor="middle" className="svg-sub tiny">role-gated</text>
-        </g>
-        <path d="M 174 62 L 197 49" className="lv-edge" />
-        <path d="M 174 80 L 197 106" className="lv-edge" />
-        <g className="lv-chip win">
-          <rect x={198} y={29} width={110} height={41} rx={8} />
-          <text x={253} y={45} textAnchor="middle" className="svg-mono tinytext">ROUTE RISK · {risk}</text>
-          <text x={253} y={60} textAnchor="middle" className="svg-sub tiny">weather + geospatial</text>
-        </g>
-        <g className={`lv-chip ${blocked ? 'win' : ''}`}>
-          <rect x={198} y={82} width={110} height={48} rx={8} />
-          <text x={253} y={99} textAnchor="middle" className="svg-mono tinytext">OPS COPILOT</text>
-          <text x={253} y={114} textAnchor="middle" className={blocked ? 'tick bad' : 'svg-sub tiny'}>{blocked ? 'unapproved intent · refused' : 'approved handler · running'}</text>
-        </g>
-        <text x={10} y={145} className="svg-sub tiny">Parameterized queries · observable actions · human-owned release</text>
       </g>
     );
   }
@@ -176,6 +149,104 @@ const ROLE_REQS = [
   { role: "CUSTOMER", req: "GET /orders/track/88" },
 ];
 const WEATHER = ["☀ clear", "🌧 storm cell", "🌫 fog", "☀ clear"];
+
+const MINI_ENDPOINTS = ["/fleet", "/route/12", "/track/88"];
+const MINI_WEATHER = ["CLEAR", "STORM", "FOG", "CLEAR"];
+
+/**
+ * Card-scale version of the full logistics simulation. It preserves the same
+ * 11-second role, weather, bounded-query, and refusal timeline without
+ * shrinking the 640×320 operational graphic into unreadable card text.
+ */
+export function LogisticsMiniGraphic({ t: elapsed }: { t: number }) {
+  const t = elapsed % 11000;
+  const pulses = ROLE_REQS.map((_, index) => {
+    const local = (t + index * 1150) % 3400;
+    return { progress: local < 700 ? local / 700 : -1, landed: local >= 700 && local < 1500 };
+  });
+  const lastLanded = pulses.findIndex((item) => item.landed);
+  const weatherIndex = Math.floor(t / 2750) % MINI_WEATHER.length;
+  const storm = weatherIndex === 1;
+  const risk = storm ? 0.55 + 0.35 * eph(t % 2750, 200, 1400) : 0.35 + 0.1 * pulse(t, 2400);
+  const rerouted = storm && risk > 0.75;
+  const refusalPhase = t >= 5200;
+  const refused = t >= 7400;
+  const prompt = refusalPhase
+    ? typed("> export customer records", t, 5600, 7000)
+    : typed("> late deliveries · Kowloon", t, 800, 2400);
+  const promptTyping = (!refusalPhase && t >= 800 && t < 2500) || (refusalPhase && t >= 5600 && t < 7100);
+  const status = refused
+    ? "✕ INTENT REFUSED · NO SQL"
+    : refusalPhase
+      ? "POLICY CHECK · EXPORT_ALL"
+      : t >= 2700
+        ? "✓ APPROVED HANDLER · BOUND SQL"
+        : "WAITING FOR APPROVED INTENT";
+  const statusClass = refused ? "tick bad" : t >= 2700 && !refusalPhase ? "tick ok" : "svg-sub tiny";
+
+  return (
+    <g>
+      <text x={8} y={15} className="svg-sub tiny">LALAMOVE R&amp;D · BOUNDED AI OPERATIONS</text>
+      <text x={312} y={15} textAnchor="end" className="svg-sub tiny">{MINI_WEATHER[weatherIndex]}</text>
+
+      {ROLE_REQS.map((request, index) => {
+        const y = 25 + index * 25;
+        const progress = pulses[index].progress;
+        const [px, py] = progress >= 0
+          ? bez(progress, [64, y + 11], [72, (y + 78) / 2], [82, 66])
+          : [0, 0];
+        return (
+          <g key={request.role}>
+            <g className={`lv-node ${pulses[index].landed ? "is-live" : ""}`}>
+              <rect x={8} y={y} width={56} height={22} rx={6} />
+            </g>
+            <text x={36} y={y + 10} textAnchor="middle" className="svg-mono tinytext">{request.role}</text>
+            <text x={36} y={y + 19} textAnchor="middle" className="svg-sub tiny">JWT</text>
+            <path d={`M 64 ${y + 11} Q 72 ${(y + 78) / 2} 82 66`} className="lv-edge" style={{ opacity: 0.32 }} />
+            {progress > 0 && progress < 1 ? <circle cx={q(px)} cy={q(py)} r={3.2} className="lv-pulse" /> : null}
+          </g>
+        );
+      })}
+
+      <g className="lv-node is-live">
+        <rect x={82} y={45} width={66} height={42} rx={8} />
+      </g>
+      <text x={115} y={60} textAnchor="middle" className="svg-label small">FLASK API</text>
+      <text x={115} y={75} textAnchor="middle" className="svg-sub tiny">
+        {lastLanded >= 0 ? MINI_ENDPOINTS[lastLanded] : "ROLE GATE"}
+      </text>
+      <path d="M 148 58 L 158 51" className="lv-edge" />
+      <path d="M 148 74 L 235 62" className="lv-edge" />
+
+      <g className={`lv-chip ${rerouted ? "win" : ""}`}>
+        <rect x={158} y={25} width={68} height={62} rx={8} />
+        <text x={192} y={39} textAnchor="middle" className="svg-sub tiny">ROUTE RISK</text>
+        <text x={192} y={61} textAnchor="middle" className="lv-counter mid">{Math.round(risk * 100)}</text>
+        <text x={192} y={76} textAnchor="middle" className={rerouted ? "tick ok" : "svg-sub tiny"}>
+          {rerouted ? "REROUTE ✓" : MINI_WEATHER[weatherIndex]}
+        </text>
+      </g>
+
+      <g className={`lv-chip ${refused ? "" : "win"}`}>
+        <rect x={235} y={25} width={77} height={62} rx={8} />
+        <text x={273.5} y={40} textAnchor="middle" className="svg-sub tiny">OPS COPILOT</text>
+        <text x={273.5} y={58} textAnchor="middle" className="svg-mono tinytext">
+          {refusalPhase ? "EXPORT ALL" : "BOUND QUERY"}
+        </text>
+        <text x={273.5} y={74} textAnchor="middle" className={refused ? "tick bad" : "tick ok"}>
+          {refused ? "REFUSED ✕" : "RUNNING ✓"}
+        </text>
+      </g>
+
+      <g className="lv-box">
+        <rect x={82} y={94} width={230} height={39} rx={7} />
+        <text x={92} y={109} className="svg-mono tinytext">{prompt}{promptTyping ? caret(t) : ""}</text>
+        <text x={92} y={126} className={statusClass}>{status}</text>
+      </g>
+      <text x={8} y={145} className="svg-sub tiny">BOUND SQL ✦ VISIBLE REFUSALS ✦ HUMAN ACTION</text>
+    </g>
+  );
+}
 
 export function LogisticsGraphic({ a }: { a: boolean }) {
   const el = useSim(a);

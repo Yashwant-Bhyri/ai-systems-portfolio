@@ -35,7 +35,7 @@ import {
   ReviewGraphic,
   ClinicalRefinementGraphic,
 } from "./fable/mindscape";
-import { BenchMini } from "./fable/systems";
+import { BenchMini, LogisticsMiniGraphic } from "./fable/systems";
 
 type Scene = ComponentType<{ a: boolean }>;
 
@@ -207,7 +207,7 @@ export function LiveResearchMini({ index, active = true }: { index: number; acti
       )}
       {index === 5 && (
         <svg viewBox="0 0 320 150" className="op-svg">
-          <BenchMini idx={3} t={el} />
+          <LogisticsMiniGraphic t={el} />
         </svg>
       )}
     </div>

@@ -39,7 +39,9 @@ type StoryStep = {
   label: string;
   title: string;
   explanation: string;
-  annotation?: string;
+  annotation: string;
+  annotationHighlights: readonly string[];
+  signals: readonly string[];
   maturity?: string;
   input: string;
   operation: string;
@@ -128,7 +130,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     label: "Live interview",
     title: "The candidate speaks inside a controlled technical interview—not a chat form.",
     explanation: "The actual room owns turn-taking, microphone state, interruption recovery, and the visible exchange between candidate and AI interviewer.",
-    annotation: "Turn state coordinates the microphone, interruptions, and interviewer response so the live conversation remains recoverable.",
+    annotation: "WebRTC audio and WebSocket turn events share one session state, so interruption recovery resumes the microphone, active question, and interviewer response together.",
+    annotationHighlights: ["WebRTC audio", "interruption recovery"],
+    signals: ["WebRTC", "WebSocket", "TurnState", "InterruptionRecovery", "FastAPI"],
     maturity: "PRODUCTION RUNTIME",
     input: "Active question + live candidate voice",
     operation: "Voice turn captured with session state",
@@ -140,7 +144,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     label: "Streaming STT",
     title: "Partial transcripts arrive while the candidate is still speaking.",
     explanation: "Deepgram streams partial hypotheses while the candidate speaks, then commits a stable transcript. Early text can warm the next-turn pipeline without entering the evidence record.",
-    annotation: "Partial text warms the next-turn pipeline; only the final transcript commits evidence or changes the interview graph.",
+    annotation: "Deepgram partials warm next-turn processing while the candidate speaks; only the confidence-scored final transcript writes to interview state and recruiter evidence.",
+    annotationHighlights: ["Deepgram partials", "confidence-scored final transcript"],
+    signals: ["Deepgram", "StreamingSTT", "PartialHypotheses", "FinalCommit", "EvidenceLineage"],
     maturity: "PRODUCTION RUNTIME",
     input: "16 kHz voice frames",
     operation: "Partial recognition → revision → final commit",
@@ -152,7 +158,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     label: "Question path",
     title: "The interview map keeps the current question, evidence gaps, and prepared probes in one live graph.",
     explanation: "The foreground path selects the next legal question while a deeper reasoning path continues updating the future interview route.",
-    annotation: "The fast path owns the current question; deeper agents prepare a policy-checked packet for a future branch.",
+    annotation: "The fast path selects the current question from the live interview graph; background agents reason deeper and promote a guardrail-checked packet into a future branch.",
+    annotationHighlights: ["fast path selects the current question from the live interview graph", "guardrail-checked packet"],
+    signals: ["InterviewGraph", "SemanticRouting", "StateGuards", "QuestionPacket", "FutureBranch"],
     maturity: "PRODUCTION RUNTIME",
     input: "Transcript + trajectory state",
     operation: "Score graph branches and route guards",
@@ -164,7 +172,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     label: "Dual-lane runtime",
     title: "The ⟪foreground lane returns the next question in about 900 ms⟫ while deeper interview reasoning continues.",
     explanation: "The low-latency route asks the immediate question. In parallel, specialist agents prepare a richer packet; only policy-validated packets enter the future interview map.",
-    annotation: "A fast model route returns the live question while the agent graph prepares a guardrail-validated question for a later turn.",
+    annotation: "An LLM gateway routes the live question to a low-latency model in about 900 ms while deeper agents build and validate the next-turn packet off the critical path.",
+    annotationHighlights: ["LLM gateway", "about 900 ms", "off the critical path"],
+    signals: ["LLMGateway", "ModelRouting", "900msPath", "QuestionGuardrails", "RedisFallback"],
     maturity: "PRODUCTION RUNTIME",
     input: "Committed turn + prepared packet",
     operation: "Route by latency budget + question policy",
@@ -176,7 +186,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     label: "Evidence agents",
     title: "Four specialist agents inspect the same answer from different angles.",
     explanation: "Concept coverage, weakness detection, résumé-claim discrepancy, and observable reasoning behavior run concurrently and emit typed findings.",
-    annotation: "Concept, weakness, discrepancy, and reasoning agents fire in parallel, then return typed evidence to one shared interview state.",
+    annotation: "Concept, weakness, discrepancy, and reasoning agents execute concurrently, emitting typed, turn-linked findings into the shared interview state.",
+    annotationHighlights: ["execute concurrently", "typed, turn-linked findings"],
+    signals: ["MultiAgent", "ParallelInference", "ConceptAgent", "DiscrepancyAgent", "TypedOutputs"],
     maturity: "PRODUCTION RUNTIME",
     input: "Committed candidate answer",
     operation: "Parallel evidence extraction",
@@ -188,7 +200,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     label: "Orchestrator",
     title: "The system converges on the single next probe with the highest evidence value.",
     explanation: "Answer state, trajectory position, agent findings, coverage, and agenda converge into a bounded route decision and updated interview state.",
-    annotation: "The orchestrator ranks evidence gain, applies route policy, and emits one legal follow-up through a typed contract.",
+    annotation: "Answer state, coverage gaps, and parallel findings converge in the orchestrator, which ranks evidence gain and emits one policy-valid probe through a structured contract.",
+    annotationHighlights: ["ranks evidence gain", "policy-valid probe", "structured contract"],
+    signals: ["AsyncOrchestration", "EvidenceGain", "RoutePolicy", "StateCheckpoint", "StructuredOutput"],
     maturity: "PRODUCTION RUNTIME",
     input: "Interview state + parallel findings",
     operation: "Evidence convergence and route selection",
@@ -200,7 +214,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     label: "Voice response",
     title: "Prepared response audio starts the next turn without waiting for fresh synthesis.",
     explanation: "The selected question first checks prepared audio, then routes synthesis through a timed provider gateway. Cache, provider fallback, and an acknowledgement bridge keep the voice turn recoverable.",
-    annotation: "Prepared audio plays first; a timed TTS gateway handles misses; provider fallback and a recovery bridge preserve the turn.",
+    annotation: "A prepared-audio cache serves known questions first; misses enter a timeout-bound TTS router with automatic provider failover and a recovery acknowledgement.",
+    annotationHighlights: ["prepared-audio cache", "timeout-bound TTS router", "automatic provider failover"],
+    signals: ["TTSGateway", "PreparedAudio", "ProviderFailover", "LatencyBudget", "RecoveryBridge"],
     maturity: "PRODUCTION RUNTIME",
     input: "Selected next question",
     operation: "Prepared-audio lookup and playback",
@@ -212,7 +228,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     label: "Recruiter report",
     title: "The interview ends as an evidence record—not an unexplained score.",
     explanation: "Turn evidence assembles into demonstrated depth, claim credibility, coverage, strengths, risks, uncertainty, and explicitly untested dimensions.",
-    annotation: "Each hiring signal links to its source turn, confidence, and coverage state—including dimensions the interview never tested.",
+    annotation: "The evidence ledger maps every hiring signal to its transcript timestamp, confidence, and coverage, including dimensions the interview never tested.",
+    annotationHighlights: ["evidence ledger", "transcript timestamp, confidence, and coverage"],
+    signals: ["EvidenceLedger", "TimestampLineage", "Coverage", "Uncertainty", "RecruiterIntelligence"],
     maturity: "PRODUCTION OUTPUT",
     input: "Turn-level evidence ledger",
     operation: "Aggregate evidence by assessment dimension",
@@ -224,7 +242,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     label: "Evaluation loop",
     title: "Post-interview traces expose where the agent was too hard, vague, leading, or punitive.",
     explanation: "Telemetry, agent evaluations, route-policy checks, token and latency traces, and recruiter feedback drive an offline refinement loop. Regression suites gate every prompt, route, and policy update.",
-    annotation: "Trace → agent evaluation → reinforcement-learning refinement → regression replay → versioned prompt, policy, and model route.",
+    annotation: "Agent evaluations score question value, coverage, route quality, tone, tokens, and latency; RL candidates must pass replay, regression, and human approval.",
+    annotationHighlights: ["Agent evaluations", "RL candidates", "replay, regression, and human approval"],
+    signals: ["AgentEvaluation", "RLRefinement", "RegressionReplay", "TokenOptimization", "LatencyTracing", "HumanGate"],
     maturity: "OFFLINE REFINEMENT",
     input: "Interview traces + evaluator signals",
     operation: "Score agent behavior and replay regressions",
@@ -239,7 +259,9 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     label: "Creative brief",
     title: "A product brief is grounded in audience, market, and creative context before generation begins.",
     explanation: "Format, audience, product truth, duration, mood, platform, and approval constraints become one structured production contract.",
-    annotation: "Audience, product truth, format, and approval constraints become a typed production contract before any tool runs.",
+    annotation: "An underspecified product brief becomes a typed production contract that drives research, retrieval, multimodal tool calls, and editable Filmora timeline assembly.",
+    annotationHighlights: ["typed production contract", "multimodal tool calls", "editable Filmora timeline assembly"],
+    signals: ["SchemaContract", "ProductTruth", "AudienceConstraints", "ApprovalGate", "FilmoraEnterprise"],
     maturity: "INTERNSHIP SYSTEM",
     input: "Underspecified creative prompt",
     operation: "Normalize intent and constraints",
@@ -250,7 +272,9 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     label: "Market + product intelligence",
     title: "Real-time market research and product intelligence become retrievable production context.",
     explanation: "Cross-platform research, product facts, and creative analytics are distilled into hooks, audio, themes, palettes, tempo, caption behavior, and effects that can guide the current brief.",
-    annotation: "Live market evidence and product facts become ranked, reusable creative context—700+ signals across the research library.",
+    annotation: "Research agents scan six content surfaces, deduplicate and brief-score patterns, then package 700+ product-linked creative signals for retrieval.",
+    annotationHighlights: ["scan six content surfaces", "deduplicate and brief-score patterns", "700+ product-linked creative signals"],
+    signals: ["ResearchAgent", "ProductIntelligence", "700Signals", "FeatureExtraction", "BriefScoring"],
     maturity: "INTERNSHIP SYSTEM",
     input: "Cross-platform creative trends",
     operation: "Extract, cluster, and package patterns",
@@ -262,7 +286,9 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     label: "Skill compilation",
     title: "Raw signals compile into durable, versioned skill files.",
     explanation: "Trend evidence becomes reusable playbooks, design rules, and editor parameters that the production agents can execute consistently.",
-    annotation: "Reusable signal clusters compile into versioned production skills, design rules, and Filmora editor parameters.",
+    annotation: "A signal compiler turns ranked evidence into versioned skill files, design rules, and Filmora-native parameters that agents reuse across briefs.",
+    annotationHighlights: ["signal compiler", "versioned skill files", "Filmora-native parameters"],
+    signals: ["SkillCompiler", "VersionedSkills", "DesignRules", "FilmoraParams", "ReusableMemory"],
     maturity: "INTERNSHIP SYSTEM",
     input: "Market, product, and creative signals",
     operation: "Compile evidence into skill artifacts",
@@ -274,7 +300,9 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     label: "Memory + recommendation",
     title: "The current brief retrieves relevant memory, then a recommendation layer ranks creative choices.",
     explanation: "The query activates skill files, context packets, design knowledge, and Filmora parameters before producing a context-aware creative recipe.",
-    annotation: "Vector retrieval, reranking, and recommendation select the creative memory that best fits the current brief.",
+    annotation: "Embeddings retrieve matching skills, product context, and editor presets; reranking selects the hook, audio, and edit recipe for the current brief.",
+    annotationHighlights: ["Embeddings retrieve", "reranking selects", "hook, audio, and edit recipe"],
+    signals: ["Embeddings", "VectorRetrieval", "Reranking", "Recommendation", "CreativeMemory"],
     maturity: "INTERNSHIP SYSTEM",
     input: "Brief + live trend context",
     operation: "Vectorize, retrieve, rank, recommend",
@@ -285,7 +313,9 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     label: "Context compiler",
     title: "Intent and context compile into executable, schema-bound instructions.",
     explanation: "User intent, recommendations, agent output, and production state are normalized into versioned tool contracts and dependencies.",
-    annotation: "Each function call receives typed arguments, explicit dependencies, and a versioned prompt contract.",
+    annotation: "Brief intent, market evidence, retrieved memory, and live timeline state compile into schema-validated function calls with explicit dependencies.",
+    annotationHighlights: ["schema-validated function calls", "explicit dependencies"],
+    signals: ["FunctionCalling", "SchemaValidation", "PromptTuning", "DependencyGraph", "VersionedContracts"],
     maturity: "INTERNSHIP SYSTEM",
     input: "Intent + context + production state",
     operation: "Resolve constraints and bind schemas",
@@ -296,7 +326,9 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     label: "Production graph",
     title: "Specialist agents generate independent media assets in a coordinated DAG.",
     explanation: "Video, music, dialogue/TTS, captions, transitions, effects, and editor assembly execute with handoffs, checkpoints, retries, and approval gates.",
-    annotation: "A model-routing gateway dispatches specialist media tools; checkpoints, retries, guardrails, and approval gates govern every handoff.",
+    annotation: "An LLM gateway routes six specialist agents; typed tool calls run in parallel where dependencies allow, with schema, safety, retry, and checkpoint gates.",
+    annotationHighlights: ["LLM gateway routes six specialist agents", "typed tool calls run in parallel", "schema, safety, retry, and checkpoint gates"],
+    signals: ["MultiAgentDAG", "LLMGateway", "ToolCalling", "Checkpointing", "Retries", "Guardrails"],
     maturity: "REPRESENTATIVE ABSTRACTION",
     input: "Compiled production graph",
     operation: "Parallel tool calls and governed handoffs",
@@ -307,7 +339,9 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     label: "Editor timeline",
     title: "Generated assets arrive as an editor-ready timeline—not one opaque video blob.",
     explanation: "Video, dialogue, music, captions, transitions, effects, and metadata remain individually editable inside the production timeline.",
-    annotation: "Video, audio, dialogue, captions, effects, and metadata remain separable and editable in the Filmora timeline.",
+    annotation: "The tool graph keeps video, music, dialogue, captions, effects, and metadata separate, then assembles them behind a human gate into editable Filmora tracks.",
+    annotationHighlights: ["metadata separate", "human gate", "editable Filmora tracks"],
+    signals: ["EditableAssets", "TimelineAssembly", "MultimodalIO", "HumanApproval", "ToolInspector"],
     maturity: "INTERNSHIP OUTPUT",
     input: "Completed media artifacts",
     operation: "Align dependencies and editor parameters",
@@ -318,7 +352,9 @@ const FILMORA_STEPS: readonly StoryStep[] = [
     label: "Evaluation + RL refinement",
     title: "Every handoff exposes model choice, tokens, latency, retries, guardrails, and creative quality.",
     explanation: "Runtime traces and agent evaluations feed a reinforcement-learning refinement loop across prompts, model routes, tool policies, token budgets, and regression suites before human approval.",
-    annotation: "Trace → agent evaluation → reinforcement-learning refinement → regression → versioned prompt, gateway, and tool policy.",
+    annotation: "Span-level telemetry attributes model route, tokens, tool cost, latency, retries, and creative scores; RL candidates pass regression, guardrail, and human-release gates.",
+    annotationHighlights: ["Span-level telemetry", "RL candidates", "regression, guardrail, and human-release gates"],
+    signals: ["Observability", "AgentEvaluation", "RLRefinement", "TokenCost", "LatencyTracing", "ModelRouting"],
     maturity: "INTERNSHIP RESULT",
     input: "Runtime traces + agent evaluations",
     operation: "Attribute, compare, regress, optimize",
@@ -333,7 +369,9 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "Capture",
     title: "Patient-language fragments become traceable, time-aligned analysis packets.",
     explanation: "A synthetic voice session enters a rolling buffer so language, event, and affect models inspect the same moment and retain the words that produced each packet.",
-    annotation: "Every signal packet retains its timestamp, source words, and confidence so the clinician can inspect where it came from.",
+    annotation: "A one-second WebRTC rolling buffer emits timestamped packets that retain the exact source words, keeping every downstream signal traceable to the session.",
+    annotationHighlights: ["one-second WebRTC rolling buffer", "exact source words", "traceable to the session"],
+    signals: ["WebRTC", "RollingBuffer", "16kHz", "TimestampLineage", "SourceWords"],
     maturity: "IMPLEMENTED LOCAL ENGINE",
     input: "Synthetic 16 kHz mono audio",
     operation: "Rolling temporal buffering",
@@ -344,7 +382,9 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "Perception",
     title: "One audio stream becomes language, event, and affect representations.",
     explanation: "Transcript content, SenseVoice paralinguistic tokens, and Emotion2Vec+ affect features remain synchronized but independently inspectable.",
-    annotation: "Transcript, speech-event, and acoustic-affect scores stay time-aligned while remaining independently inspectable.",
+    annotation: "ASR captures language, SenseVoice extracts speech events, and Emotion2Vec+ encodes affect on one shared timeline while each signal remains independently inspectable.",
+    annotationHighlights: ["SenseVoice extracts speech events", "Emotion2Vec+ encodes affect", "shared timeline"],
+    signals: ["SenseVoice", "Emotion2Vec", "ASR", "EventDetection", "SharedTimeline"],
     maturity: "R&D PROTOTYPE",
     input: "Buffered speech frames",
     operation: "Multimodal perception across three branches",
@@ -355,7 +395,9 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "State fusion",
     title: "Gated multimodal fusion creates a reusable Behavioral State Vector.",
     explanation: "Linguistic, paralinguistic, acoustic-affect, and longitudinal signals propagate through a fusion network into one patient-state representation.",
-    annotation: "A gated state vector preserves multimodal and longitudinal context for retrieval, reasoning, and review.",
+    annotation: "A Gated Multimodal Unit weights linguistic, paralinguistic, acoustic, and longitudinal vectors into one Behavioral State Vector reused downstream.",
+    annotationHighlights: ["Gated Multimodal Unit", "Behavioral State Vector"],
+    signals: ["GMU", "MultimodalFusion", "LongitudinalState", "BehavioralStateVector", "FeatureGating"],
     maturity: "FULL ARCHITECTURE",
     input: "Aligned modality vectors",
     operation: "Cross-modal gating and representation fusion",
@@ -366,7 +408,9 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "Clinical retrieval",
     title: "A retrieval agent traverses clinical references, finds supporting passages, and reranks the strongest evidence.",
     explanation: "Dense and lexical retrieval run together, merge their candidates, and return a grounded source set for validation and clinician review.",
-    annotation: "Dense and lexical retrieval scan trusted clinical references, merge candidates, rerank them, and attach sources to each claim.",
+    annotation: "MedCPT and HNSW dense search run beside BM25 lexical search; RRF merges candidates and BioLinkBERT reranks five source-linked passages.",
+    annotationHighlights: ["MedCPT and HNSW dense search", "BM25 lexical search", "BioLinkBERT reranks"],
+    signals: ["MedCPT", "HNSW", "BM25", "RRF", "BioLinkBERT", "HybridRetrieval"],
     maturity: "FULL RETRIEVAL ARCHITECTURE",
     input: "State-aware clinical query",
     operation: "HNSW + BM25 → RRF → cross-encoder rerank",
@@ -377,7 +421,9 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "Grounded reasoning",
     title: "Ranked evidence becomes a structured hypothesis with visible uncertainty.",
     explanation: "The reasoning layer attaches evidence to a bounded hypothesis, preserves conflicting or missing context, and emits targeted follow-up questions.",
-    annotation: "The reasoning layer may propose a bounded hypothesis only when supporting evidence, conflicts, and uncertainty remain visible.",
+    annotation: "A retrieval-grounded LLM emits a structured hypothesis only with linked session evidence, cited references, visible uncertainty, conflicts, and follow-up questions.",
+    annotationHighlights: ["retrieval-grounded LLM", "structured hypothesis", "visible uncertainty"],
+    signals: ["RAG", "StructuredOutput", "EvidenceCitations", "Uncertainty", "FollowUpGeneration"],
     maturity: "R&D PROTOTYPE",
     input: "Ranked clinical evidence + session context",
     operation: "Evidence-grounded structured reasoning",
@@ -388,7 +434,9 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "Validation",
     title: "Independent model and deterministic rule gates challenge unsupported output.",
     explanation: "DeBERTa-v3 NLI checks claim support while DSM-aligned deterministic rules block unsupported diagnostic language before review.",
-    annotation: "Independent support checks and deterministic rules flag unsupported language before anything reaches clinician review.",
+    annotation: "DeBERTa-v3 NLI tests every claim against its citations; DSM-aligned deterministic rules block unsupported diagnostic language before review.",
+    annotationHighlights: ["DeBERTa-v3 NLI", "DSM-aligned deterministic rules", "block unsupported diagnostic language"],
+    signals: ["DeBERTaV3", "NLI", "DSMRules", "ConfidenceGate", "ClaimBlocking"],
     maturity: "VALIDATION DESIGN TARGET",
     input: "Structured claims + cited evidence",
     operation: "NLI entailment + explicit rule validation",
@@ -399,7 +447,9 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "Clinician review",
     title: "The clinician receives the source, supported claim, uncertainty, warning state, and suggested follow-up together.",
     explanation: "Every recommendation remains editable and reviewable, and clinical judgment stays outside the model boundary.",
-    annotation: "Source evidence, support, uncertainty, warnings, and follow-up actions arrive together; the clinician retains final judgment.",
+    annotation: "The review UI binds each observation to its source, validation state, and uncertainty; the clinician can edit, ask a follow-up, or hold.",
+    annotationHighlights: ["source, validation state, and uncertainty", "edit, ask a follow-up, or hold"],
+    signals: ["ClinicianInTheLoop", "SourceLinked", "EditableReview", "Uncertainty", "HumanJudgment"],
     maturity: "HUMAN-OWNED PROTOTYPE",
     input: "Validated review packet",
     operation: "Human review, edit, and governed action",
@@ -411,7 +461,9 @@ const MINDSCAPE_STEPS: readonly StoryStep[] = [
     label: "Governed RL refinement",
     title: "Clinician feedback enters an offline evaluation queue, never a live self-training loop.",
     explanation: "Approved review outcomes, retrieval quality, safety-gate behavior, latency, and subgroup monitoring feed offline reinforcement-learning refinement. Regression and human review gate every future release.",
-    annotation: "Governed feedback → offline RL refinement → safety regression → human-reviewed, versioned release candidate.",
+    annotation: "Approved, de-identified clinician actions enter an offline RL and evaluation queue; grounding, subgroup, safety, regression, and human-release gates govern each candidate.",
+    annotationHighlights: ["Approved, de-identified clinician actions", "offline RL and evaluation queue", "human-release gates"],
+    signals: ["OfflineRL", "DeidentifiedFeedback", "SafetyRegression", "SubgroupMonitoring", "HumanRelease"],
     maturity: "R&D DESIGN TARGET",
     input: "Approved review feedback + runtime traces",
     operation: "Evaluate, refine, and replay safety regressions",
@@ -428,7 +480,12 @@ const RESEARCH = [
     title: "Embedded Audio Intelligence Model",
     meta: "OPTEK MICROELECTRONICS · 2025",
     copy: "Optimized an embedded audio-intelligence pipeline for constrained hardware, connecting MediaPipe Audio features, TFLM INT8 inference, structured pruning, and an edge deployment toolchain in one measurable path.",
-    proof: "95%+ accuracy · sub-10-ms inference · 4× compression · 200 KB runtime",
+    signals: [
+      { label: "accuracy", value: "95%+" },
+      { label: "inference", value: "sub-10 ms" },
+      { label: "compression", value: "4×" },
+      { label: "runtime", value: "200 KB" },
+    ],
     stack: ["MediaPipe Audio", "TFLM INT8", "structured pruning", "Edge Impulse", "edge SoC"],
     tone: "blue",
     visual: 0,
@@ -438,7 +495,11 @@ const RESEARCH = [
     title: "BIRD-SQL Research Workflow",
     meta: "HKU × GOOGLE CLOUD · OFFICIAL BIRD-SQL BENCHMARK",
     copy: "Contributed to an execution-grounded text-to-SQL research workflow associated with BIRD-SQL, emphasizing schema-aware generation, database execution, and failure diagnosis rather than surface-form matching.",
-    proof: "Official benchmark context · 12,751 question-SQL pairs · 95 databases",
+    signals: [
+      { label: "context", value: "official benchmark" },
+      { label: "question-SQL pairs", value: "12,751" },
+      { label: "databases", value: "95" },
+    ],
     stack: ["BIRD-SQL", "Text-to-SQL", "execution accuracy", "schema grounding", "failure analysis"],
     tone: "open",
     visual: 1,
@@ -448,7 +509,10 @@ const RESEARCH = [
     title: "SLM Distillation & Evaluation",
     meta: "CUHK-SZ NLP GROUP · 2024",
     copy: "Built a distillation and evaluation workflow that filters synthetic data with an LLM judge, trains on accepted samples, and exposes factuality and response-quality behavior through paired evaluation.",
-    proof: "31% fewer factual errors · 200+ response pairs",
+    signals: [
+      { label: "factual errors", value: "31% fewer" },
+      { label: "evaluation pairs", value: "200+" },
+    ],
     stack: ["TRL", "LLM-as-judge", "distillation", "factuality", "paired evaluation"],
     tone: "blue",
     visual: 2,
@@ -458,7 +522,11 @@ const RESEARCH = [
     title: "Logistics AI Ops Platform / Lalamove R&D Project",
     meta: "LALAMOVE · FLASK + MYSQL · BOUNDED AI OPERATIONS",
     copy: "Built role-based customer, driver, and administrator workflows with weather and geospatial route-risk scoring, plus a bounded AI operations copilot restricted to approved intents, parameterized queries, and human-owned actions.",
-    proof: "Lalamove collaboration · bounded query contracts · human-owned actions",
+    signals: [
+      { label: "collaboration", value: "Lalamove" },
+      { label: "query controls", value: "bounded contracts" },
+      { label: "action owner", value: "human-owned" },
+    ],
     stack: ["Flask", "MySQL", "JWT", "geospatial risk", "bounded AI copilot"],
     tone: "lalamove",
     visual: 5,
@@ -469,7 +537,12 @@ const RESEARCH = [
     title: "webGLR Browser Perception Engine",
     meta: "PERCEPTION → TEMPORAL CONTROL → WEBGL SHADER",
     copy: "Built a browser-native perception-to-shader engine that fuses SAM segmentation masks with INT8-quantized Depth Anything V2 Small maps and compiles them into five GPU texture controls. A low-latency live lane drives subject lift and background falloff while an HQ lane performs scene-aware sampling, cut guards, cache blending, and memory-budgeted analysis.",
-    proof: "SAM segmentation · INT8 monocular depth · five-texture shader contract · live + HQ lanes",
+    signals: [
+      { label: "segmentation", value: "SAM" },
+      { label: "depth", value: "INT8 Depth Anything V2" },
+      { label: "shader contract", value: "five textures" },
+      { label: "runtime lanes", value: "live + HQ" },
+    ],
     stack: ["SAM", "Depth Anything V2 Small", "INT8 quantization", "five GPU textures", "WebGL"],
     tone: "webglr",
     visual: 3,
@@ -479,7 +552,12 @@ const RESEARCH = [
     title: "COL-VEO Controlled Video Orchestration",
     meta: "PROMPT STEERING · SEED-AWARE REGENERATION · CONTROL LAYER",
     copy: "Built a FastAPI creative-control prototype that compiles a 15-control style surface into structured per-shot Veo prompts. Soft regeneration reuses the seed for style-safe changes; hard regeneration assigns a new seed for structural changes. Exact prompt preview, lifecycle gates, sequential shot extension, and browser WebGL Post-FX keep the loop inspectable.",
-    proof: "Deterministic prompt compiler · same-seed soft regen · new-seed hard regen · provider-best-effort output",
+    signals: [
+      { label: "control", value: "deterministic prompt compiler" },
+      { label: "soft regeneration", value: "same seed" },
+      { label: "hard regeneration", value: "new seed" },
+      { label: "provider output", value: "best-effort" },
+    ],
     stack: ["FastAPI", "prompt compiler", "style-axis ranking", "seed control", "WebGL post-FX"],
     tone: "colveo",
     visual: 4,
@@ -647,8 +725,8 @@ const HERO_STATEMENTS: readonly HeroStatement[] = [
     ],
   },
   {
-    full: "I have 1+ years of experience building advanced AI applications spanning agent and multi-agent orchestration, deep reasoning, multimodal I/O, advanced memory and retrieval, production observability, and reinforcement-learning observability and refinement systems.",
-    compact: "1+ years spanning agent and multi-agent orchestration, deep reasoning, multimodal I/O, advanced memory + retrieval, production observability, and RL observability + refinement systems.",
+    full: "I have 1+ years of experience building advanced AI applications spanning agent and multi-agent orchestration, deep reasoning, multimodal I/O, advanced memory and retrieval, production observability, and agent reinforcement-learning observability and refinement.",
+    compact: "1+ years spanning agent and multi-agent orchestration, deep reasoning, multimodal I/O, advanced memory + retrieval, production observability, and agent RL observability + refinement.",
     highlights: [
       { phrase: "1+ years", kind: "metric" },
       { phrase: "agent and multi-agent orchestration", kind: "signal" },
@@ -656,7 +734,7 @@ const HERO_STATEMENTS: readonly HeroStatement[] = [
       { phrase: "multimodal I/O", kind: "signal" },
       { phrase: "advanced memory and retrieval", kind: "proof" },
       { phrase: "production observability", kind: "proof" },
-      { phrase: "reinforcement-learning observability and refinement systems", kind: "signal" },
+      { phrase: "agent reinforcement-learning observability and refinement", kind: "signal" },
     ],
     compactHighlights: [
       { phrase: "1+ years", kind: "metric" },
@@ -1217,24 +1295,175 @@ function StageControls({ controller, total }: { controller: SequenceController; 
   );
 }
 
-function TypedStageAnnotation({ text }: { text: string }) {
-  const reducedMotion = useReducedMotion();
-  const [cursor, setCursor] = useState(reducedMotion ? text.length : 0);
+type SignalTickerEntry = {
+  label: string;
+  value?: string;
+};
+
+function signalHashtag(label: string) {
+  return `#${label.replace(/[^a-zA-Z0-9+#]+/g, "")}`;
+}
+
+function SignalTicker({
+  items,
+  label,
+  active,
+  reducedMotion,
+  variant = "tags",
+  cycleMs = 7600,
+}: {
+  items: readonly SignalTickerEntry[];
+  label: string;
+  active: boolean;
+  reducedMotion: boolean;
+  variant?: "tags" | "metrics";
+  cycleMs?: number;
+}) {
+  const [centerIndex, setCenterIndex] = useState(0);
+  const slotMs = Math.max(640, Math.min(2200, Math.floor(cycleMs / Math.max(1, items.length))));
+  const itemWidth = variant === "metrics" ? 210 : 144;
+  const starWidth = variant === "metrics" ? 22 : 18;
 
   useEffect(() => {
-    if (reducedMotion || cursor >= text.length) return;
-    const timer = window.setTimeout(() => setCursor((value) => Math.min(text.length, value + 1)), 17);
-    return () => window.clearTimeout(timer);
-  }, [cursor, reducedMotion, text.length]);
+    if (!active || reducedMotion || items.length < 2) return;
+    const timer = window.setInterval(() => {
+      setCenterIndex((current) => (current + 1) % items.length);
+    }, slotMs);
+    return () => window.clearInterval(timer);
+  }, [active, items.length, reducedMotion, slotMs]);
+
+  if (items.length === 0) return null;
+
+  const renderCycle = (cycle: number, accessible: boolean) => items.flatMap((item, index) => [
+    <li
+      key={`${cycle}-${item.label}-${item.value ?? "tag"}`}
+      aria-hidden={accessible ? undefined : true}
+      data-center={index === centerIndex}
+      data-signal-index={index}
+    >
+      {variant === "tags" ? (
+        <span aria-label={item.label}>{signalHashtag(item.label)}</span>
+      ) : (
+        <>
+          <span>{item.label}</span>
+          <strong>{item.value}</strong>
+        </>
+      )}
+    </li>,
+    <li key={`${cycle}-${item.label}-star`} className="vx-signal-ticker-star" aria-hidden="true">✦</li>,
+  ]);
+  const tickerStyle = {
+    "--vx-signal-count": items.length,
+    "--vx-signal-index": centerIndex,
+    "--vx-signal-slot-ms": `${slotMs}ms`,
+    "--vx-signal-cycle-ms": `${cycleMs}ms`,
+    "--vx-signal-item-width": `${itemWidth}px`,
+    "--vx-signal-star-width": `${starWidth}px`,
+    "--vx-signal-offset": `${-(centerIndex * (itemWidth + starWidth) + itemWidth / 2)}px`,
+  } as CSSProperties;
 
   return (
-    <div className="vx-stage-annotation" aria-label={text}>
-      <span className="vx-stage-annotation-live" aria-hidden="true">
-        {text.slice(0, cursor)}
-        {cursor < text.length ? <i /> : null}
-      </span>
-      <b className="vx-stage-annotation-ghost" aria-hidden="true">{text}</b>
+    <div
+      className={`vx-signal-ticker vx-signal-ticker-${variant}`}
+      data-active={active}
+      data-running={active && !reducedMotion}
+      data-reduced-motion={reducedMotion}
+      style={tickerStyle}
+    >
+      <div className="vx-signal-ticker-viewport">
+        <ul className="vx-signal-ticker-track vx-signal-ticker-track-base" aria-label={label} role="list">
+          {renderCycle(0, true)}
+          {renderCycle(1, false)}
+        </ul>
+        <ul className="vx-signal-ticker-track vx-signal-ticker-track-mask" aria-hidden="true" role="presentation">
+          {renderCycle(0, false)}
+          {renderCycle(1, false)}
+        </ul>
+        <i className="vx-signal-ticker-center-lens" aria-hidden="true" />
+      </div>
     </div>
+  );
+}
+
+function HighlightedStageAnnotation({
+  text,
+  cursor,
+  highlights,
+}: {
+  text: string;
+  cursor: number;
+  highlights: readonly string[];
+}) {
+  const visibleEnd = Math.min(cursor, text.length);
+  const ranges = highlights
+    .map((phrase) => {
+      const start = text.indexOf(phrase);
+      return start < 0 ? null : { phrase, start, end: start + phrase.length };
+    })
+    .filter((range): range is { phrase: string; start: number; end: number } => Boolean(range))
+    .sort((a, b) => a.start - b.start);
+  const segments: React.ReactNode[] = [];
+  let position = 0;
+
+  ranges.forEach((range, index) => {
+    if (range.start < position) return;
+    if (position < range.start && position < visibleEnd) {
+      segments.push(<span key={`plain-${index}`}>{text.slice(position, Math.min(range.start, visibleEnd))}</span>);
+    }
+    if (visibleEnd > range.start) {
+      segments.push(
+        <em
+          key={`${range.phrase}-${index}`}
+          className="vx-stage-annotation-emphasis"
+          data-complete={visibleEnd >= range.end}
+        >
+          {text.slice(range.start, Math.min(range.end, visibleEnd))}
+        </em>,
+      );
+    }
+    position = range.end;
+  });
+  if (position < visibleEnd) segments.push(<span key="plain-tail">{text.slice(position, visibleEnd)}</span>);
+  return <>{segments}</>;
+}
+
+function StageSignalConsole({ step, active }: { step: StoryStep; active: boolean }) {
+  const reducedMotion = useReducedMotion();
+  const [cursor, setCursor] = useState(reducedMotion ? step.annotation.length : 0);
+  const tickerItems = useMemo(() => Array.from(new Set([...step.signals, ...step.stack])).map((label) => ({ label })), [step.signals, step.stack]);
+  const visibleCursor = reducedMotion ? step.annotation.length : cursor;
+
+  useEffect(() => {
+    if (reducedMotion || cursor >= step.annotation.length) return;
+    const timer = window.setTimeout(() => setCursor((value) => Math.min(step.annotation.length, value + 1)), 12);
+    return () => window.clearTimeout(timer);
+  }, [cursor, reducedMotion, step.annotation.length]);
+
+  return (
+    <section
+      className="vx-stage-signal-console"
+      data-typing={visibleCursor < step.annotation.length}
+      aria-label={`Implementation signal for ${step.label}`}
+    >
+      <div className="vx-stage-signal-micro-row" aria-hidden="true">
+        <span><i />IMPLEMENTATION SIGNAL</span>
+        <small>{step.label}</small>
+      </div>
+      <i className="vx-stage-signal-diagonal-sweep" aria-hidden="true" />
+      <div className="vx-stage-annotation" aria-label={step.annotation}>
+        <span className="vx-stage-annotation-live" aria-hidden="true">
+          <HighlightedStageAnnotation text={step.annotation} cursor={visibleCursor} highlights={step.annotationHighlights} />
+          {visibleCursor < step.annotation.length ? <i /> : null}
+        </span>
+        <b className="vx-stage-annotation-ghost" aria-hidden="true">{step.annotation}</b>
+      </div>
+      <SignalTicker
+        items={tickerItems}
+        label={`${step.label} technologies and engineering capabilities`}
+        active={active}
+        reducedMotion={reducedMotion}
+      />
+    </section>
   );
 }
 
@@ -1323,6 +1552,9 @@ function SystemWalkthrough({
         label: "Conclusion",
         title: "The complete system resolves into six recruiter-ready signals.",
         explanation: "Product, contribution, runtime, output, impact, and reliability take the stage one at a time for a fast final revision.",
+        annotation: "The completed walkthrough resolves its strongest product, runtime, output, impact, and reliability evidence into one recruiter-ready summary.",
+        annotationHighlights: ["recruiter-ready summary"],
+        signals: ["Product", "Contribution", "Runtime", "Output", "Impact", "Reliability"],
         input: "Complete component walkthrough",
         operation: "Consolidate the strongest engineering evidence",
         output: "One legible project narrative",
@@ -1369,7 +1601,6 @@ function SystemWalkthrough({
           <span>{step.label}</span>
           <h3><Emph text={step.title} /></h3>
           <p>{step.explanation}</p>
-          <div className="vx-tech-stack">{step.stack.map((item) => <i key={item}>{item}</i>)}</div>
           {step.proof ? <strong className="vx-proof-chip"><i />{step.proof}</strong> : null}
         </div>
         <StageControls controller={controller} total={steps.length + 1} />
@@ -1382,9 +1613,10 @@ function SystemWalkthrough({
           <i>{controller.playing ? "AUTOPLAY" : "MANUAL"}</i>
         </div>
         {!isConclusion ? (
-          <TypedStageAnnotation
+          <StageSignalConsole
             key={`${name}-${step.label}`}
-            text={step.annotation ?? step.explanation}
+            step={step}
+            active={controller.playing}
           />
         ) : null}
         <div className="vx-visual-window">
@@ -1706,6 +1938,8 @@ function ResearchCard({
   index,
   active,
   seen,
+  reducedMotion,
+  playing,
   setRef,
   onSelect,
 }: {
@@ -1713,6 +1947,8 @@ function ResearchCard({
   index: number;
   active: boolean;
   seen: boolean;
+  reducedMotion: boolean;
+  playing: boolean;
   setRef: (node: HTMLElement | null) => void;
   onSelect: () => void;
 }) {
@@ -1755,8 +1991,24 @@ function ResearchCard({
       <div className="vx-research-card-copy">
         <h3>{item.title}</h3>
         <p>{item.copy}</p>
-        <div>{item.stack.slice(0, 3).map((technology) => <i key={technology}>{technology}</i>)}</div>
-        <strong>{item.proof}</strong>
+        <div className="vx-research-card-signals">
+          <SignalTicker
+            items={item.stack.map((technology) => ({ label: technology }))}
+            label={`${item.title} technologies`}
+            active={active && playing}
+            reducedMotion={reducedMotion}
+            variant="tags"
+            cycleMs={7600}
+          />
+          <SignalTicker
+            items={item.signals}
+            label={`${item.title} engineering metrics`}
+            active={active && playing}
+            reducedMotion={reducedMotion}
+            variant="metrics"
+            cycleMs={7600}
+          />
+        </div>
       </div>
       <i className="vx-research-progress" aria-hidden="true" />
     </article>
@@ -1821,6 +2073,8 @@ function ResearchSection() {
             index={index}
             active={active === index}
             seen={index <= active}
+            reducedMotion={reducedMotion}
+            playing={playing}
             setRef={(node) => {
               cardRefs.current[index] = node;
             }}
@@ -1832,7 +2086,7 @@ function ResearchSection() {
   );
 
   return (
-    <div ref={sequenceRef} className="vx-research-sequence">
+    <div ref={sequenceRef} className="vx-research-sequence" data-motion-paused={!playing}>
       <section id="research" className="vx-research vx-research-page vx-section-shell vx-page" data-vx-page>
         <div className="vx-research-heading">
           <span>04 / OPEN SOURCE · RESEARCH · R&amp;D</span>

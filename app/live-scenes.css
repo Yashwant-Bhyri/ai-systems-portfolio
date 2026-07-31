@@ -320,7 +320,9 @@
 /* ============================================================
    OPERATOR PROFILE — roles · domains · keyword tray
    ============================================================ */
-.vx-profile { position: relative; padding-top: 96px; padding-bottom: 84px; scroll-margin-top: 70px; }
+/* The active profile page owns its viewport spacing in portfolio-v2.css.
+   Keep this legacy vocabulary scoped to its child components so the
+   late-loaded scene sheet cannot steal vertical space from the page. */
 .vx-profile-tier { display: block; margin-bottom: 12px; color: var(--vx-lime); font: 600 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.15em; }
 .vx-profile-grid { margin-top: 52px; display: grid; grid-template-columns: minmax(300px, 0.38fr) minmax(0, 0.62fr); gap: 18px; align-items: start; }
 
