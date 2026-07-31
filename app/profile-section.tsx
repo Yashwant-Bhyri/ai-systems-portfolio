@@ -168,7 +168,7 @@ const EVIDENCE: readonly Evidence[] = [
 ] as const;
 
 const ROLE_ADVANCE_MS = 9600;
-const DOMAIN_ADVANCE_MS = 1800;
+const DOMAIN_ADVANCE_MS = 2400;
 
 const SR_ONLY_STYLE: CSSProperties = {
   position: "absolute",
@@ -182,14 +182,27 @@ const SR_ONLY_STYLE: CSSProperties = {
   border: 0,
 };
 
+type Wire = {
+  d: string;
+  kind: "role" | "evidence";
+  strength: number;
+  lit: boolean;
+};
+
 export function ProfileSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const roleRailRef = useRef<HTMLDivElement>(null);
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const roleTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const domainRefs = useRef<Array<HTMLElement | null>>([]);
+  const evidenceRefs = useRef<Array<HTMLElement | null>>([]);
   const [visible, setVisible] = useState(false);
   const [activeRole, setActiveRole] = useState(0);
   const [activeDomain, setActiveDomain] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [wires, setWires] = useState<Wire[]>([]);
+  const [wireBox, setWireBox] = useState({ w: 0, h: 0 });
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -229,6 +242,68 @@ export function ProfileSection() {
 
   const role = ROLES[activeRole];
   const roleEvidence = EVIDENCE.filter((item) => item.role === role.id);
+
+  // The storytelling layer: measure the real positions of the active role tab,
+  // the five domain nodes, and the evidence cards, then draw bezier wires
+  // between them. Role -> domain wire weight mirrors the domain's relevance to
+  // the role; the currently lit domain wires onward into the evidence it powers.
+  useEffect(() => {
+    const compute = () => {
+      const layout = layoutRef.current;
+      const roleTab = roleTabRefs.current[activeRole];
+      if (!layout || !roleTab) return;
+      const box = layout.getBoundingClientRect();
+      if (box.width < 700) {
+        setWires([]);
+        return;
+      }
+      const next: Wire[] = [];
+      const tab = roleTab.getBoundingClientRect();
+      const startX = tab.right - box.left;
+      const startY = tab.top + tab.height / 2 - box.top;
+      CAPABILITY_DOMAINS.forEach((domain, index) => {
+        const node = domainRefs.current[index]?.getBoundingClientRect();
+        if (!node) return;
+        const endX = node.left - box.left;
+        const endY = node.top + node.height / 2 - box.top;
+        const bendX = startX + (endX - startX) * 0.55;
+        next.push({
+          d: `M ${startX.toFixed(1)} ${startY.toFixed(1)} C ${bendX.toFixed(1)} ${startY.toFixed(1)}, ${bendX.toFixed(1)} ${endY.toFixed(1)}, ${endX.toFixed(1)} ${endY.toFixed(1)}`,
+          kind: "role",
+          strength: domain.heat[activeRole],
+          lit: index === activeDomain,
+        });
+      });
+      const litDomain = domainRefs.current[activeDomain]?.getBoundingClientRect();
+      if (litDomain) {
+        const sX = litDomain.right - box.left;
+        const sY = litDomain.top + litDomain.height / 2 - box.top;
+        roleEvidence.forEach((item, index) => {
+          if (!item.domains.includes(CAPABILITY_DOMAINS[activeDomain].id)) return;
+          const card = evidenceRefs.current[index]?.getBoundingClientRect();
+          if (!card) return;
+          const eX = card.left - box.left;
+          const eY = card.top + card.height / 2 - box.top;
+          const bendX = sX + (eX - sX) * 0.55;
+          next.push({
+            d: `M ${sX.toFixed(1)} ${sY.toFixed(1)} C ${bendX.toFixed(1)} ${sY.toFixed(1)}, ${bendX.toFixed(1)} ${eY.toFixed(1)}, ${eX.toFixed(1)} ${eY.toFixed(1)}`,
+            kind: "evidence",
+            strength: 3,
+            lit: true,
+          });
+        });
+      }
+      setWireBox({ w: box.width, h: box.height });
+      setWires(next);
+    };
+    compute();
+    const settle = window.setTimeout(compute, 420);
+    window.addEventListener("resize", compute);
+    return () => {
+      window.clearTimeout(settle);
+      window.removeEventListener("resize", compute);
+    };
+  }, [activeRole, activeDomain, roleEvidence]);
   const strongSkillCount = SKILLS.filter((skill) => skill.heat[activeRole] >= 2).length;
   const autoplaying = playing && !reducedMotion;
 
@@ -267,7 +342,7 @@ export function ProfileSection() {
       <header className="vx-profile-map-header">
         <div>
           <h2>What I&apos;m built for.</h2>
-          <p>Choose a role. The capability system and build evidence recompose around it.</p>
+          <p>Pick a target role — the skill system rewires live to show what powers it and what proves it.</p>
         </div>
         <div className="vx-profile-map-controls" aria-label="Role lens playback">
           <button
@@ -284,7 +359,23 @@ export function ProfileSection() {
         </div>
       </header>
 
-      <div className="vx-role-lens-layout">
+      <div ref={layoutRef} className="vx-role-lens-layout" data-wired="true">
+        <svg
+          className="vx-profile-wires"
+          viewBox={`0 0 ${Math.max(1, wireBox.w)} ${Math.max(1, wireBox.h)}`}
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          {wires.map((wire, index) => (
+            <path
+              key={`${wire.kind}-${index}`}
+              d={wire.d}
+              data-kind={wire.kind}
+              data-strength={wire.strength}
+              data-lit={wire.lit}
+            />
+          ))}
+        </svg>
         <nav className="vx-role-lens-rail" aria-label="Target roles">
           <span className="vx-lens-label">Target role</span>
           <div
@@ -297,6 +388,9 @@ export function ProfileSection() {
             {ROLES.map((item, index) => (
               <button
                 key={item.id}
+                ref={(node) => {
+                  roleTabRefs.current[index] = node;
+                }}
                 id={`vx-role-lens-${item.id}`}
                 type="button"
                 role="tab"
@@ -342,6 +436,9 @@ export function ProfileSection() {
               return (
                 <article
                   key={domain.id}
+                  ref={(node) => {
+                    domainRefs.current[domainIndex] = node;
+                  }}
                   data-active={active}
                   data-strength={strength}
                   style={{ "--domain-strength": strength / 3 } as CSSProperties}
@@ -383,7 +480,13 @@ export function ProfileSection() {
             {roleEvidence.map((item, index) => {
               const active = item.domains.includes(CAPABILITY_DOMAINS[activeDomain].id);
               return (
-                <article key={item.id} data-active={active}>
+                <article
+                  key={item.id}
+                  ref={(node) => {
+                    evidenceRefs.current[index] = node;
+                  }}
+                  data-active={active}
+                >
                   <small>{item.source}</small>
                   <strong>{item.title}</strong>
                   <p>{item.proof}</p>
