@@ -83,7 +83,9 @@ test("server-renders the recruiter-first portfolio", async () => {
 });
 
 test("removes the rejected imitation Antigravity walkthrough route", async () => {
-  const response = await render("/antigravity-experience");
+  // trailingSlash (GitHub Pages static export) 308-redirects the bare path,
+  // so probe the canonical trailing-slash URL.
+  const response = await render("/antigravity-experience/");
   assert.equal(response.status, 404);
 });
 
@@ -110,7 +112,7 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
 
   assert.match(portfolio, /IntersectionObserver/);
   assert.match(portfolio, /className="vx-hero-highlight"/);
-  assert.match(portfolio, /src="\/brands\/cuhk\.png"/);
+  assert.match(portfolio, /assetPath\("\/brands\/cuhk\.png"\)/);
   assert.match(portfolio, /CUHK · QS World #18/);
   assert.equal(countObjectIds(roleSource), 3);
   assert.equal(countInlineObjectIds(skillSource), 20);
@@ -188,7 +190,7 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(portfolio, /Open-Source, Research & R&D Experience/);
   assert.match(portfolio, /Pre-generated \/ cached response audio/);
   assert.match(portfolio, /Decision support—not autonomous diagnosis/);
-  assert.match(portfolio, /Start the real interview/);
+  assert.doesNotMatch(portfolio, /Start the real interview/);
   assert.match(portfolio, /250\+ completed interviews/);
   assert.match(portfolio, /built with a multi-agent orchestration and decision engine/);
   assert.match(portfolio, /integrated into Filmora Enterprise/);

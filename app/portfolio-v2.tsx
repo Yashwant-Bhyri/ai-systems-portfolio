@@ -1879,23 +1879,6 @@ function FlagshipChapter({
 }
 
 function AntigravityChapter() {
-  const [launchState, setLaunchState] = useState<"idle" | "starting" | "fallback">("idle");
-  const launchReplay = useCallback(async () => {
-    const local = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    const appBase = local ? "http://localhost:3010" : "https://antigravity-gz2r.vercel.app";
-    const apiBase = local ? "http://localhost:8000/api" : `${appBase}/api`;
-    setLaunchState("starting");
-    try {
-      const response = await fetch(`${apiBase}/portfolio_demo/start`, { method: "POST" });
-      if (!response.ok) throw new Error("Replay could not start");
-      const started = await response.json() as { session_id?: string };
-      if (!started.session_id) throw new Error("Session missing");
-      window.location.assign(`${appBase}/interview-room/${encodeURIComponent(started.session_id)}?autoplay=1&source=portfolio`);
-    } catch {
-      setLaunchState("fallback");
-    }
-  }, []);
-
   return (
     <FlagshipChapter
       id="antigravity"
@@ -1914,15 +1897,10 @@ function AntigravityChapter() {
         { label: "CONTRIBUTION", value: "Multi-agent orchestration + decision engine", detail: "Question routing, agent convergence, guarded prepared-question promotion, and report logic" },
         { label: "RUNTIME", value: "Guarded dual-lane interview graph", detail: "Latency-aware foreground routing while deeper next-turn analysis continues" },
         { label: "OUTPUT", value: "Evidence-linked recruiter report", detail: "Ability, credibility, coverage, uncertainty, and untested dimensions" },
-        { label: "IMPACT", value: "250+ completed interviews", detail: "A deployed workflow with a real three-turn portfolio replay" },
+        { label: "IMPACT", value: "250+ completed interviews", detail: "A deployed interviewing workflow operating at screening scale" },
         { label: "RELIABILITY", value: "Fallbacks + offline agent evaluation", detail: "Prepared audio, state recovery, telemetry, regression replay, and versioned route policies" },
       ]}
-    >
-      <button id="antigravity-demo" className="vx-demo-action" type="button" onClick={launchReplay} disabled={launchState === "starting"}>
-        <span>{launchState === "starting" ? "Starting the real interview…" : launchState === "fallback" ? "Interview replay unavailable · retry" : "Start the real interview"}</span>
-        <small>Actual Antigravity room → three fictional turns → recruiter report ↗</small>
-      </button>
-    </FlagshipChapter>
+    />
   );
 }
 
@@ -2084,20 +2062,25 @@ function ResearchSection() {
     return () => observer.disconnect();
   }, []);
 
+  // One record is always live: the sequence loops forever so no card's
+  // operational graphic is ever frozen. Page handoffs (page two, then the
+  // contact section) happen only on the first guided pass.
+  const firstPassDone = useRef(false);
   useEffect(() => {
     if (!visible || !playing || reducedMotion) return;
     const timer = window.setTimeout(() => {
-      if (active < RESEARCH.length - 1) {
-        const next = active + 1;
-        setActive(next);
+      const next = (active + 1) % RESEARCH.length;
+      if (!firstPassDone.current) {
         if (next === 3) {
           secondPageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-        return;
+        if (next === 0) {
+          firstPassDone.current = true;
+          document.querySelector<HTMLElement>("#contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       }
-      setPlaying(false);
-      document.querySelector<HTMLElement>("#contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 7600);
+      setActive(next);
+    }, 4200);
     return () => window.clearTimeout(timer);
   }, [active, playing, reducedMotion, visible]);
 
