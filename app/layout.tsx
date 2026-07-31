@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
 import "./globals.css";
 import "./portfolio-v2.css";
 
@@ -11,37 +10,32 @@ export const viewport: Viewport = {
   themeColor: "#050608",
 };
 
-export async function generateMetadata(): Promise<Metadata> {
-  const requestHeaders = await headers();
-  const forwardedHost = requestHeaders.get("x-forwarded-host")?.split(",")[0]?.trim();
-  const host = forwardedHost || requestHeaders.get("host") || "localhost:7500";
-  const forwardedProtocol = requestHeaders.get("x-forwarded-proto")?.split(",")[0]?.trim();
-  const protocol = forwardedProtocol || (host.startsWith("localhost") ? "http" : "https");
-  const metadataBase = new URL(`${protocol}://${host}`);
-  const socialImage = new URL("/og.png", metadataBase).toString();
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ai-systems-portfolio-ecru.vercel.app";
+const metadataBase = new URL(siteUrl);
+const socialImage = new URL(`${basePath}/og.png`, metadataBase).toString();
 
-  return {
-    metadataBase,
+export const metadata: Metadata = {
+  metadataBase,
+  title,
+  description,
+  icons: {
+    icon: `${basePath}/favicon.svg`,
+    shortcut: `${basePath}/favicon.svg`,
+  },
+  openGraph: {
+    type: "website",
     title,
     description,
-    icons: {
-      icon: "/favicon.svg",
-      shortcut: "/favicon.svg",
-    },
-    openGraph: {
-      type: "website",
-      title,
-      description,
-      images: [{ url: socialImage, width: 1672, height: 941, alt: title }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [socialImage],
-    },
-  };
-}
+    images: [{ url: socialImage, width: 1672, height: 941, alt: title }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: [socialImage],
+  },
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
