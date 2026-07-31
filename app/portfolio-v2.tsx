@@ -23,6 +23,8 @@ import {
   LiveResearchMini,
 } from "./live-visuals";
 
+const assetPath = (path: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
+
 type SequenceController = {
   index: number;
   playing: boolean;
@@ -795,7 +797,7 @@ function HeroHighlightedText({
           {range.crest ? (
             <Image
               className="vx-cuhk-inline-logo"
-              src="/brands/cuhk.png"
+              src={assetPath("/brands/cuhk.png")}
               alt=""
               aria-hidden="true"
               width={32}
@@ -1130,7 +1132,7 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
               </ul>
               <div className="vx-hero-actions">
                 <a className="vx-primary-action" href="#projects">Explore my projects <i>↓</i></a>
-                <a href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">View my résumé ↗</a>
+                <a href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">View my résumé ↗</a>
                 <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">Open GitHub ↗</a>
                 <a href="#hero-contact">Contact me ↘</a>
               </div>
@@ -2236,7 +2238,7 @@ function ContactSection() {
           <p>Reach me directly for a relevant role, an applied AI system, a research collaboration, or a short technical conversation.</p>
           <div className="vx-contact-page-actions">
             <a className="vx-primary-action" href={SHORT_CALL_HREF}>Request a 15-minute call ↗</a>
-            <a href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">Open résumé ↗</a>
+            <a href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">Open résumé ↗</a>
             <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">Open GitHub ↗</a>
           </div>
         </div>
@@ -2297,7 +2299,7 @@ export function PortfolioV2() {
         <header className="vx-header">
           <a href="#top" className="vx-brand" aria-label="Yashwant Bhyri, portfolio home"><span>YB</span><div><strong>Yashwant Bhyri</strong><small>AI systems &amp; application engineer</small></div></a>
           <nav aria-label="Portfolio navigation"><a href="#profile">Profile</a><a href="#projects">Projects</a><a href="#antigravity">Interview AI</a><a href="#filmora">Filmora</a><a href="#mindscape">Medical AI</a><a href="#research">Research</a><a href="#contact">Contact</a></nav>
-          <a className="vx-header-resume" href="/yashwant-bhyri-resume.pdf" target="_blank" rel="noreferrer">Résumé ↗</a>
+          <a className="vx-header-resume" href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">Résumé ↗</a>
         </header>
         <Hero reducedMotion={reducedMotion} />
         <ProfileSection />
