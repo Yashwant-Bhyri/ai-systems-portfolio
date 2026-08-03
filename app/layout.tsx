@@ -19,6 +19,13 @@ export const metadata: Metadata = {
   metadataBase,
   title,
   description,
+  alternates: {
+    canonical: `${basePath}/`,
+    languages: {
+      en: `${basePath}/`,
+      "zh-Hans": `${basePath}/zh/`,
+    },
+  },
   icons: {
     icon: `${basePath}/favicon.svg`,
     shortcut: `${basePath}/favicon.svg`,
@@ -38,9 +45,18 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // The Chinese portal lives at /zh/; the document language is set there by a
+  // small inline script so the CJK font stack and screen readers both agree.
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "if(location.pathname.indexOf('/zh')!==-1){document.documentElement.lang='zh-Hans';}",
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

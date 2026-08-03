@@ -1,7 +1,10 @@
 "use client";
 
+import { T, TD } from "./i18n";
+
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
+import { useT, useTranslated, useLang, type Lang } from "./i18n";
 import "./live-scenes.css";
 
 type RoleId = "systems" | "agents" | "full-stack";
@@ -14,7 +17,7 @@ type TargetRole = {
   reasoning: readonly string[];
 };
 
-const ROLES: readonly TargetRole[] = [
+const ROLES_EN: readonly TargetRole[] = [
   {
     id: "systems",
     lines: ["AI Systems", "Engineer"],
@@ -78,7 +81,7 @@ type Area = {
   evidence: string;
 };
 
-const AREAS: readonly Area[] = [
+const AREAS_EN: readonly Area[] = [
   {
     id: "application",
     accent: "var(--vx-violet)",
@@ -180,9 +183,12 @@ const BRIEF: Geometry = {
   // aspect ~2.0 so the map fits its container by height instead of
   // overflowing and clipping the last row; header owns its own band
   viewBox: "0 0 1010 456",
-  headerY: 15,
+  // The header owns a real band: the column rule sits at headerY + 8, and the
+  // figures render 46 * 0.86 above their row centre, so the first row has to
+  // clear rule + figure overhang or the rule slices through the graphic.
+  headerY: 12,
   roleX: 8, roleW: 280, roleH: 96, roleY: [87, 183, 279],
-  areaX: 372, areaW: 416, areaH: 74, areaY: [22, 108, 194, 280, 366],
+  areaX: 372, areaW: 416, areaH: 74, areaY: [29, 114, 199, 284, 369],
   figureX: 806,
   skillX: 0, skillW: 0, skillTop: 0, skillPitch: 0,
 };
@@ -269,7 +275,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
   const wrap = (label: string, children: React.ReactNode) => (
     <g className="vx-map-figure" aria-hidden="true">
       <rect x={x} y={top} width={FIGURE_W} height={FIGURE_H} rx={7} className="vx-fig-plate" />
-      <text x={x + 9} y={top + 14} className="vx-fig-tag start">{label}</text>
+      <text x={x + 9} y={top + 14} className="vx-fig-tag start">{T(label)}</text>
       <text x={x + FIGURE_W - 9} y={top + 14} className="vx-fig-focus">{focus}</text>
       {children}
     </g>
@@ -282,7 +288,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
   /* ---------- 1 · AI application & product engineering ---------- */
   if (id === "application") {
     if (v === 0) return wrap("layered app", <>
-      {["ui", "api", "data"].map((tier, i) => (
+      {[T("ui"), T("api"), T("data")].map((tier, i) => (
         <g key={tier}>
           <rect x={x + 24} y={mid - 26 + i * 22} width={92} height={17} rx={3} className={i === 0 ? "vx-fig-frame lit" : "vx-fig-frame"} />
           <text x={x + 32} y={mid - 14 + i * 22} className="vx-fig-axis">{tier}</text>
@@ -302,7 +308,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
       {flow(`M ${x + 126} ${mid + 10} L ${x + 46} ${mid + 10}`, 0, true)}
     </>);
     if (v === 2) return wrap("build · ship", <>
-      {["build", "test", "ship"].map((stage, i) => (
+      {[T("build"), T("test"), T("ship")].map((stage, i) => (
         <g key={stage}>
           <rect x={x + 12 + i * 52} y={mid - 12} width={40} height={24} rx={4} className={i === 2 ? "vx-fig-frame lit" : "vx-fig-frame"} />
           <text x={x + 32 + i * 52} y={mid + 3} className="vx-fig-tag">{stage}</text>
@@ -321,7 +327,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
         </g>
       ))}
       <rect x={x + 122} y={mid - 8} width={36} height={16} rx={3} className="vx-fig-chip pass" />
-      <text x={x + 140} y={mid + 4} className="vx-fig-tag">valid</text>
+      <text x={x + 140} y={mid + 4} className="vx-fig-tag">{T("valid")}</text>
     </>);
     return wrap("human gate", <>
       <rect x={x + 14} y={mid - 24} width={80} height={48} rx={4} className="vx-fig-frame" />
@@ -329,9 +335,9 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
         <rect key={i} x={x + 24} y={mid - 14 + i * 12} width={58 - i * 14} height={5} rx={2.5} className="vx-fig-bar dim" style={{ animationDelay: `${i * 0.25}s` } as CSSProperties} />
       ))}
       <rect x={x + 106} y={mid - 20} width={52} height={18} rx={4} className="vx-fig-chip pass" />
-      <text x={x + 132} y={mid - 8} className="vx-fig-tag">approve</text>
+      <text x={x + 132} y={mid - 8} className="vx-fig-tag">{T("approve")}</text>
       <rect x={x + 106} y={mid + 4} width={52} height={18} rx={4} className="vx-fig-chip" />
-      <text x={x + 132} y={mid + 16} className="vx-fig-tag">hold</text>
+      <text x={x + 132} y={mid + 16} className="vx-fig-tag">{T("hold")}</text>
     </>);
   }
 
@@ -339,7 +345,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
   if (id === "runtime") {
     if (v === 0) return wrap("workflow dag", <>
       <rect x={x + 10} y={mid - 12} width={30} height={24} rx={4} className="vx-fig-frame lit" />
-      <text x={x + 25} y={mid + 4} className="vx-fig-tag">plan</text>
+      <text x={x + 25} y={mid + 4} className="vx-fig-tag">{T("plan")}</text>
       <path d={`M ${x + 42} ${mid} L ${x + 54} ${mid}`} className="vx-fig-spoke is-on" />
       <path d={`M ${x + 54} ${mid - 24} L ${x + 54} ${mid + 24}`} className="vx-fig-spoke is-on" />
       {[-24, 0, 24].map((dy, i) => (
@@ -365,17 +371,17 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
         </g>
       ))}
       {flow(`M ${x + 24} ${mid} L ${x + 144} ${mid}`)}
-      <text x={x + 9} y={top + 84} className="vx-fig-axis">step by step</text>
+      <text x={x + 9} y={top + 84} className="vx-fig-axis">{T("step by step")}</text>
     </>);
     if (v === 2) return wrap("tool call", <>
       <rect x={x + 10} y={mid - 16} width={44} height={32} rx={4} className="vx-fig-frame lit" />
-      <text x={x + 32} y={mid + 3} className="vx-fig-tag">agent</text>
+      <text x={x + 32} y={mid + 3} className="vx-fig-tag">{T("agent")}</text>
       <rect x={x + 112} y={mid - 16} width={50} height={32} rx={4} className="vx-fig-frame" />
-      <text x={x + 137} y={mid + 3} className="vx-fig-tag">tool</text>
+      <text x={x + 137} y={mid + 3} className="vx-fig-tag">{T("tool")}</text>
       <path d={`M ${x + 56} ${mid - 8} L ${x + 110} ${mid - 8}`} className="vx-fig-spoke is-on" />
-      <text x={x + 83} y={mid - 13} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>call</text>
+      <text x={x + 83} y={mid - 13} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>{T("call")}</text>
       <path d={`M ${x + 110} ${mid + 9} L ${x + 56} ${mid + 9}`} className="vx-fig-spoke" />
-      <text x={x + 83} y={mid + 21} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>typed result</text>
+      <text x={x + 83} y={mid + 21} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>{T("typed result")}</text>
       {flow(`M ${x + 56} ${mid - 8} L ${x + 110} ${mid - 8}`)}
       {flow(`M ${x + 110} ${mid + 9} L ${x + 56} ${mid + 9}`, 0, true)}
     </>);
@@ -397,7 +403,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
           className="vx-fig-bar" style={{ animationDelay: `${i * 0.09}s` } as CSSProperties} />
       ))}
       <rect x={x + 10} y={mid + 4} width={100} height={14} rx={3} className="vx-fig-frame lit" />
-      <text x={x + 16} y={mid + 14} className="vx-fig-axis">partial → final</text>
+      <text x={x + 16} y={mid + 14} className="vx-fig-axis">{T("partial → final")}</text>
       <path d={`M ${x + 114} ${mid + 11} L ${x + 130} ${mid + 11}`} className="vx-fig-spoke is-on" />
       <circle cx={x + 146} cy={mid + 11} r={9} className="vx-fig-hub" />
       <text x={x + 146} y={mid + 14} className="vx-fig-tag">tts</text>
@@ -445,7 +451,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
             className={row.lit ? "vx-fig-bar" : "vx-fig-bar dim"} style={{ animationDelay: `${i * 0.2}s` } as CSSProperties} />
         </g>
       ))}
-      <text x={x + FIGURE_W - 8} y={top + 84} className="vx-fig-axis end">cross-encoder reorder</text>
+      <text x={x + FIGURE_W - 8} y={top + 84} className="vx-fig-axis end">{T("cross-encoder reorder")}</text>
     </>);
     if (v === 2) return wrap("grounding", <>
       {[0, 1, 2].map((i) => (
@@ -456,7 +462,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
         </g>
       ))}
       <rect x={x + 106} y={mid - 14} width={56} height={28} rx={4} className="vx-fig-frame lit" />
-      <text x={x + 134} y={mid + 3} className="vx-fig-tag">cited</text>
+      <text x={x + 134} y={mid + 3} className="vx-fig-tag">{T("cited")}</text>
       {flow(`M ${x + 56} ${mid - 1} L ${x + 104} ${mid}`)}
     </>);
     if (v === 3) return wrap("session recall", <>
@@ -469,13 +475,13 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
         </g>
       ))}
       <rect x={x + 128} y={mid - 10} width={34} height={26} rx={4} className="vx-fig-frame lit" />
-      <text x={x + 145} y={mid + 6} className="vx-fig-tag">now</text>
+      <text x={x + 145} y={mid + 6} className="vx-fig-tag">{T("now")}</text>
       <path d={`M ${x + 27} ${mid - 8} Q ${x + 88} ${mid - 30}, ${x + 145} ${mid - 12}`} className="vx-fig-spoke is-on" />
       {flow(`M ${x + 27} ${mid - 8} Q ${x + 88} ${mid - 30}, ${x + 145} ${mid - 12}`)}
-      <text x={x + 12} y={top + 84} className="vx-fig-axis">longitudinal recall</text>
+      <text x={x + 12} y={top + 84} className="vx-fig-axis">{T("longitudinal recall")}</text>
     </>);
     return wrap("ingest pipeline", <>
-      {["src", "chunk", "embed"].map((stage, i) => (
+      {["src", T("chunk"), T("embed")].map((stage, i) => (
         <g key={stage}>
           <rect x={x + 12 + i * 50} y={mid - 24} width={40} height={20} rx={3} className={i === 2 ? "vx-fig-frame lit" : "vx-fig-frame"} />
           <text x={x + 32 + i * 50} y={mid - 11} className="vx-fig-tag">{stage}</text>
@@ -486,7 +492,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
       <g className="vx-fig-store">
         <ellipse cx={x + 86} cy={mid + 14} rx={48} ry={6} className="vx-fig-frame lit" />
         <path d={`M ${x + 38} ${mid + 14} v 10 a 48 6 0 0 0 96 0 v -10`} className="vx-fig-frame lit" />
-        <text x={x + 86} y={mid + 26} className="vx-fig-tag">vector store</text>
+        <text x={x + 86} y={mid + 26} className="vx-fig-tag">{T("vector store")}</text>
       </g>
       {flow(`M ${x + 12} ${mid - 14} L ${x + 132} ${mid - 14} L ${x + 132} ${mid + 8}`)}
     </>);
@@ -495,7 +501,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
   /* ---------- 4 · Evaluation, safety & observability ---------- */
   if (id === "control") {
     if (v === 0) return wrap("eval harness", <>
-      {["accuracy", "coverage", "tone"].map((metric, i) => (
+      {[T("accuracy"), T("coverage"), T("tone")].map((metric, i) => (
         <g key={metric}>
           <text x={x + 12} y={mid - 12 + i * 18} className="vx-fig-axis">{metric}</text>
           <rect x={x + 74} y={mid - 20 + i * 18} width={76} height={7} rx={3.5} className="vx-fig-track" />
@@ -503,15 +509,15 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
             className="vx-fig-bar" style={{ animationDelay: `${i * 0.25}s` } as CSSProperties} />
         </g>
       ))}
-      <text x={x + FIGURE_W - 8} y={top + 84} className="vx-fig-axis end">llm-judge scored</text>
+      <text x={x + FIGURE_W - 8} y={top + 84} className="vx-fig-axis end">{T("llm-judge scored")}</text>
     </>);
     if (v === 1) return wrap("regression suite", <>
       {Array.from({ length: 24 }).map((_, i) => (
         <rect key={i} x={x + 12 + (i % 8) * 18} y={mid - 24 + Math.floor(i / 8) * 15} width={13} height={11} rx={2.5}
           className={i === 13 ? "vx-fig-cell bad" : "vx-fig-cell"} style={{ animationDelay: `${i * 0.05}s` } as CSSProperties} />
       ))}
-      <text x={x + 12} y={mid + 30} className="vx-fig-axis">23 pass</text>
-      <text x={x + FIGURE_W - 8} y={mid + 30} className="vx-fig-axis end">1 caught</text>
+      <text x={x + 12} y={mid + 30} className="vx-fig-axis">{T("23 pass")}</text>
+      <text x={x + FIGURE_W - 8} y={mid + 30} className="vx-fig-axis end">{T("1 caught")}</text>
     </>);
     if (v === 2) return wrap("policy gate", <>
       <line x1={x + 8} y1={mid} x2={x + 118} y2={mid} className="vx-fig-line" />
@@ -523,18 +529,18 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
       <rect x={x + 130} y={mid - 9} width={32} height={18} rx={4} className="vx-fig-chip block" />
       <path d={`M ${x + 141} ${mid - 4} l 9 9 M ${x + 150} ${mid - 4} l -9 9`} className="vx-fig-check block" />
       {flow(`M ${x + 8} ${mid} L ${x + 118} ${mid}`)}
-      <text x={x + 8} y={top + 84} className="vx-fig-axis">unsupported claim blocked</text>
+      <text x={x + 8} y={top + 84} className="vx-fig-axis">{T("unsupported claim blocked")}</text>
     </>);
     if (v === 3) return wrap("rl refinement", <>
       {/* a closed loop: traces feed scoring, scoring updates the policy */}
       <ellipse cx={x + 62} cy={mid} rx={44} ry={26} className="vx-fig-loop" />
       <circle r={3.4} className="vx-fig-orbit" style={{ offsetPath: `path("M ${x + 106} ${mid} A 44 26 0 1 1 ${x + 18} ${mid} A 44 26 0 1 1 ${x + 106} ${mid}")` } as CSSProperties} />
       <rect x={x + 34} y={mid - 34} width={56} height={16} rx={3} className="vx-fig-frame lit" />
-      <text x={x + 62} y={mid - 23} className="vx-fig-tag">traces</text>
+      <text x={x + 62} y={mid - 23} className="vx-fig-tag">{T("traces")}</text>
       <rect x={x + 34} y={mid + 18} width={56} height={16} rx={3} className="vx-fig-frame" />
-      <text x={x + 62} y={mid + 29} className="vx-fig-tag">policy</text>
+      <text x={x + 62} y={mid + 29} className="vx-fig-tag">{T("policy")}</text>
       <rect x={x + 118} y={mid - 9} width={44} height={18} rx={3} className="vx-fig-chip pass" />
-      <text x={x + 140} y={mid + 4} className="vx-fig-tag">gated</text>
+      <text x={x + 140} y={mid + 4} className="vx-fig-tag">{T("gated")}</text>
       <path d={`M ${x + 106} ${mid} L ${x + 116} ${mid}`} className="vx-fig-spoke is-on" />
     </>);
     const spans = [{ off: 0, len: 74 }, { off: 12, len: 46 }, { off: 30, len: 58 }, { off: 52, len: 34 }];
@@ -547,7 +553,7 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
         </g>
       ))}
       <line x1={x + 10} y1={mid + 22} x2={x + 162} y2={mid + 22} className="vx-fig-rule" />
-      <text x={x + 10} y={top + 84} className="vx-fig-axis">4 spans · 1 trace</text>
+      <text x={x + 10} y={top + 84} className="vx-fig-axis">{T("4 spans · 1 trace")}</text>
       {flow(`M ${x + 10} ${mid - 22} L ${x + 84} ${mid - 22}`)}
     </>);
   }
@@ -563,34 +569,34 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
       </g>
     ))}
     <line x1={x + 132} y1={mid - 26} x2={x + 132} y2={mid + 26} className="vx-fig-gateline" />
-    <text x={x + FIGURE_W - 8} y={top + 84} className="vx-fig-axis end">budget</text>
+    <text x={x + FIGURE_W - 8} y={top + 84} className="vx-fig-axis end">{T("budget")}</text>
   </>);
   if (v === 2) return wrap("cache · fallback", <>
     <rect x={x + 10} y={mid - 16} width={40} height={32} rx={4} className="vx-fig-frame lit" />
-    <text x={x + 30} y={mid + 3} className="vx-fig-tag">cache</text>
+    <text x={x + 30} y={mid + 3} className="vx-fig-tag">{T("cache")}</text>
     <path d={`M ${x + 52} ${mid - 8} L ${x + 116} ${mid - 8}`} className="vx-fig-spoke is-on" />
     <text x={x + 84} y={mid - 13} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>hit</text>
     <path d={`M ${x + 52} ${mid + 10} L ${x + 116} ${mid + 10}`} className="vx-fig-spoke" />
-    <text x={x + 84} y={mid + 22} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>miss → fallback</text>
+    <text x={x + 84} y={mid + 22} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>{T("miss → fallback")}</text>
     <rect x={x + 118} y={mid - 18} width={44} height={16} rx={3} className="vx-fig-chip pass" />
-    <text x={x + 140} y={mid - 6} className="vx-fig-tag">served</text>
+    <text x={x + 140} y={mid - 6} className="vx-fig-tag">{T("served")}</text>
     <rect x={x + 118} y={mid + 2} width={44} height={16} rx={3} className="vx-fig-chip" />
-    <text x={x + 140} y={mid + 14} className="vx-fig-tag">backup</text>
+    <text x={x + 140} y={mid + 14} className="vx-fig-tag">{T("backup")}</text>
     {flow(`M ${x + 52} ${mid - 8} L ${x + 116} ${mid - 8}`)}
   </>);
   if (v === 3) return wrap("compression", <>
     <rect x={x + 12} y={mid - 26} width={52} height={52} rx={5} className="vx-fig-frame" />
-    <text x={x + 38} y={mid + 3} className="vx-fig-tag">fp32</text>
+    <text x={x + 38} y={mid + 3} className="vx-fig-tag">{T("fp32")}</text>
     <path d={`M ${x + 68} ${mid} L ${x + 96} ${mid}`} className="vx-fig-spoke is-on" />
     <text x={x + 82} y={mid - 6} className="vx-fig-axis" style={{ textAnchor: "middle" } as CSSProperties}>4×</text>
     <rect x={x + 100} y={mid - 13} width={26} height={26} rx={4} className="vx-fig-frame lit" />
-    <text x={x + 113} y={mid + 4} className="vx-fig-tag">int8</text>
+    <text x={x + 113} y={mid + 4} className="vx-fig-tag">{T("int8")}</text>
     <rect x={x + 132} y={mid - 9} width={30} height={18} rx={3} className="vx-fig-chip pass" />
-    <text x={x + 147} y={mid + 4} className="vx-fig-tag">edge</text>
+    <text x={x + 147} y={mid + 4} className="vx-fig-tag">{T("edge")}</text>
     {flow(`M ${x + 68} ${mid} L ${x + 96} ${mid}`)}
   </>);
   if (v === 4) return wrap("ci/cd deploy", <>
-    {["ci", "img", "prod"].map((stage, i) => (
+    {["ci", "img", T("prod")].map((stage, i) => (
       <g key={stage}>
         <rect x={x + 10 + i * 46} y={mid - 22} width={38} height={18} rx={3} className={i === 2 ? "vx-fig-frame lit" : "vx-fig-frame"} />
         <text x={x + 29 + i * 46} y={mid - 10} className="vx-fig-tag">{stage}</text>
@@ -601,13 +607,13 @@ function AreaFigure({ id, x, y, variant, focus }: { id: string; x: number; y: nu
       <rect key={i} x={x + 106 + i * 20} y={mid + 8} width={16} height={16} rx={3}
         className="vx-fig-cell" style={{ animationDelay: `${i * 0.3}s` } as CSSProperties} />
     ))}
-    <text x={x + 10} y={mid + 20} className="vx-fig-axis">replicas</text>
+    <text x={x + 10} y={mid + 20} className="vx-fig-axis">{T("replicas")}</text>
     {flow(`M ${x + 10} ${mid - 13} L ${x + 146} ${mid - 13}`)}
   </>);
   const lanes = [
-    { dy: -22, w: 58, tag: "fast" },
-    { dy: 0, w: 40, tag: "deep" },
-    { dy: 22, w: 26, tag: "fallback" },
+    { dy: -22, w: 58, tag: T("fast") },
+    { dy: 0, w: 40, tag: T("deep") },
+    { dy: 22, w: 26, tag: T("fallback") },
   ].map((lane, i) => ({ ...lane, lit: i === 0 }));
   return wrap("model routing", <>
     <rect x={x + 8} y={mid - 14} width={26} height={28} rx={4} className="vx-fig-frame lit" />
@@ -637,7 +643,26 @@ const SR_ONLY_STYLE: CSSProperties = {
   border: 0,
 };
 
+/* The map labels are monospace: one Latin advance is 6.9 user units and one CJK
+ * glyph is exactly 11.5 (5/3 of it), so a highlight painted from the glyph count
+ * stays flush in both portals. Pure-Latin labels give the same width as before. */
+const WIDE_GLYPH = /[\u2E80-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFF60\u3000-\u303F]/;
+
+/* The advances above are for the 11.5px the map declares in English. The Chinese
+ * portal raises .vx-map-skill to 13.5px for legibility, and the highlight paint
+ * has to track that or it stops covering the label it is painting. Kept as an
+ * explicit ratio rather than a live measurement so the server render matches. */
+const SKILL_FONT_PX = { en: 11.5, zh: 13.5 } as const;
+
+function labelWidth(label: string, lang: Lang = "en") {
+  const ratio = SKILL_FONT_PX[lang] / SKILL_FONT_PX.en;
+  let width = 0;
+  for (const glyph of label) width += (WIDE_GLYPH.test(glyph) ? 11.5 : 6.9) * ratio;
+  return width;
+}
+
 export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full" } = {}) {
+  const lang = useLang();
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
   const [compactHead, setCompactHead] = useState(false);
@@ -697,6 +722,9 @@ export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full
 
   const brief = variant === "brief";
   const G = brief ? BRIEF : FULL;
+  const t = useT();
+  const ROLES = useTranslated(TD(ROLES_EN));
+  const AREAS = useTranslated(TD(AREAS_EN));
   const role = ROLES[activeRole];
   const liveAreas = AREAS.filter((area) => area.roles[activeRole]);
   // Three highlights, three different areas, re-rolled every few seconds.
@@ -723,12 +751,12 @@ export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full
     >
       <header className="vx-profile-head" data-compact={compactHead}>
         <div>
-          <h2>{brief ? "What roles am I targeting?" : "Every capability, and where I built it."}</h2>
-          <p>{brief ? "Three roles — and the five engineering layers I build them on." : "All five layers in full: every capability, and the work that proves it."}</p>
+          <h2>{brief ? T("What roles am I targeting?") : T("Every capability, and where I built it.")}</h2>
+          <p>{brief ? T("Three roles — and the five engineering layers I build them on.") : T("All five layers in full: every capability, and the work that proves it.")}</p>
         </div>
         <div className="vx-profile-head-meta">
-          <strong>{liveAreas.length}<i>areas</i></strong>
-          {brief ? null : <strong>{skillCount}<i>skills</i></strong>}
+          <strong>{liveAreas.length}<i>{T("areas")}</i></strong>
+          {brief ? null : <strong>{skillCount}<i>{T("skills")}</i></strong>}
           <button
             type="button"
             className="vx-map-pause"
@@ -737,7 +765,7 @@ export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full
             onClick={() => setPlaying((value) => !value)}
           >
             <i data-playing={autoplaying} aria-hidden="true" />
-            {reducedMotion ? "Static" : autoplaying ? "Pause" : "Resume"}
+            {reducedMotion ? T("Static") : autoplaying ? T("Pause") : T("Resume")}
           </button>
         </div>
       </header>
@@ -747,18 +775,18 @@ export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full
           viewBox={G.viewBox}
           className="op-svg"
           role="tablist"
-          aria-label="Target roles mapped to engineering areas and skills"
+          aria-label={T("Target roles mapped to engineering areas and skills")}
           tabIndex={0}
           onKeyDown={handleRoleKeys}
         >
-          <text x={G.roleX} y={G.headerY} className="vx-map-col">TARGET ROLES</text>
+          <text x={G.roleX} y={G.headerY} className="vx-map-col">{T("TARGET ROLES")}</text>
           <line x1={G.roleX} y1={G.headerY + 8} x2={G.roleX + G.roleW} y2={G.headerY + 8} className="vx-map-col-rule" />
           <line x1={G.areaX} y1={G.headerY + 8} x2={G.areaX + G.areaW} y2={G.headerY + 8} className="vx-map-col-rule" />
           <line x1={brief ? G.figureX : G.skillX} y1={G.headerY + 8} x2={brief ? G.figureX + FIGURE_W : G.skillX + G.skillW} y2={G.headerY + 8} className="vx-map-col-rule" />
-          <text x={G.areaX} y={G.headerY} className="vx-map-col">HOW I BUILD AI SYSTEMS</text>
+          <text x={G.areaX} y={G.headerY} className="vx-map-col">{T("HOW I BUILD AI SYSTEMS")}</text>
           {brief
-            ? <text x={G.figureX} y={G.headerY} className="vx-map-col">HOW EACH LAYER RUNS</text>
-            : <text x={G.skillX} y={G.headerY} className="vx-map-col">MY CORE CAPABILITIES IN EACH AREA</text>}
+            ? <text x={G.figureX} y={G.headerY} className="vx-map-col">{T("HOW EACH LAYER RUNS")}</text>
+            : <text x={G.skillX} y={G.headerY} className="vx-map-col">{T("MY CORE CAPABILITIES IN EACH AREA")}</text>}
 
           {/* Only the active role's edges are drawn: role → its engineering areas. */}
           {AREAS.map((area, areaIndex) => {
@@ -872,7 +900,7 @@ export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full
                         <rect
                           x={sx + 11}
                           y={sy - 11}
-                          width={skill.length * 6.9 + 12}
+                          width={labelWidth(skill, lang) + 12}
                           height={15}
                           rx={3}
                           className="vx-map-skill-paint"
@@ -898,7 +926,7 @@ export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full
 
       {/* The reasoning rolls continuously under the map. */}
       <div className="vx-reason-bar" data-motion-paused={!autoplaying} aria-label={`Why ${role.lines.join(" ")}`}>
-        <span className="vx-lens-label">Why this role</span>
+        <span className="vx-lens-label">{T("Why this role")}</span>
         <div className="vx-reason-viewport">
           <div className="vx-reason-track" key={role.id}>
             {[0, 1].map((copy) => (
@@ -912,8 +940,8 @@ export function ProfileSection({ variant = "full" }: { variant?: "brief" | "full
         </div>
       </div>
 
-      <output style={SR_ONLY_STYLE} aria-live="polite">
-        {role.lines.join(" ")}: {liveAreas.length} engineering areas, {skillCount} skills.
+      <output style={TD(SR_ONLY_STYLE)} aria-live="polite">
+        {role.lines.join(" ")}: {liveAreas.length} {T("engineering areas,")} {skillCount} {T("skills.")}
       </output>
     </section>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import { T, TD } from "./i18n";
+
 import Image from "next/image";
 import {
   useCallback,
@@ -16,6 +18,8 @@ import {
   MindScapeOverview,
 } from "./portfolio-visuals";
 import { ProfileSection } from "./profile-section";
+import { LangProvider, useLang, useT, useTranslated, type Lang } from "./i18n";
+import { LanguageGate } from "./language-gate";
 import {
   LiveAntigravityVisual,
   LiveFilmoraVisual,
@@ -524,6 +528,9 @@ const RESEARCH = [
     badge: "OPEN-SOURCE CONTRIBUTION",
     title: "BIRD-SQL Research Workflow",
     meta: "HKU × GOOGLE CLOUD · OFFICIAL BIRD-SQL BENCHMARK",
+    // Surfaced as a credential rather than buried in the meta line: this is the
+    // only record whose weight comes from who runs the benchmark.
+    crest: ["HKU × GOOGLE CLOUD", "OFFICIAL BENCHMARK"],
     copy: "Contributed to an execution-grounded text-to-SQL research workflow associated with BIRD-SQL, emphasizing schema-aware generation, database execution, and failure diagnosis rather than surface-form matching.",
     signals: [
       { label: "context", value: "official benchmark" },
@@ -620,7 +627,6 @@ function useAutoplaySequence(
   // intro resolves instead of being permanently initialized as paused.
   const [visible, setVisible] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
-  const [pointerActive, setPointerActive] = useState(false);
 
   useEffect(() => {
     const node = rootRef.current;
@@ -639,23 +645,9 @@ function useAutoplaySequence(
     return () => observer.disconnect();
   }, [observeSelector, rootRef]);
 
-  useEffect(() => {
-    if (!pointerSelector) return;
-    const node = rootRef.current?.querySelector<HTMLElement>(pointerSelector);
-    if (!node) return;
-    const pause = () => setPointerActive(true);
-    const resume = () => setPointerActive(false);
-    node.addEventListener("pointerenter", pause);
-    node.addEventListener("pointerleave", resume);
-    node.addEventListener("focusin", pause);
-    node.addEventListener("focusout", resume);
-    return () => {
-      node.removeEventListener("pointerenter", pause);
-      node.removeEventListener("pointerleave", resume);
-      node.removeEventListener("focusin", pause);
-      node.removeEventListener("focusout", resume);
-    };
-  }, [pointerSelector, rootRef]);
+  /* Hovering or focusing the stage used to pause the whole walkthrough, which
+   * is why touching a component stopped the keyword rail. The pause button is
+   * now the only thing that pauses. */
 
   useEffect(() => {
     const update = () => setPageVisible(!document.hidden);
@@ -665,20 +657,24 @@ function useAutoplaySequence(
   }, []);
 
   useEffect(() => {
-    if (!sequence.requestedPlay || !visible || !pageVisible || reducedMotion || pointerActive) return;
+    if (!sequence.requestedPlay || !visible || !pageVisible || reducedMotion) return;
+    // A non-looping sequence simply stops advancing at the last step. It used to
+    // also write requestedPlay: false, which silently revoked the reader's own
+    // play preference and stopped the keyword rail — a second pause pathway
+    // nobody asked for. Reaching the end is not a pause; only the button is.
+    if (!loop && sequence.index === count - 1) return;
     const timer = window.setTimeout(() => {
       setSequence((current) => {
         const nextIndex = loop ? (current.index + 1) % count : Math.min(current.index + 1, count - 1);
-        const reachedEnd = !loop && nextIndex === count - 1;
         return {
           index: nextIndex,
-          requestedPlay: reachedEnd ? false : current.requestedPlay,
+          requestedPlay: current.requestedPlay,
           visitedMask: current.visitedMask | (1 << nextIndex),
         };
       });
     }, interval);
     return () => window.clearTimeout(timer);
-  }, [count, interval, loop, pageVisible, pointerActive, reducedMotion, sequence.index, sequence.requestedPlay, visible]);
+  }, [count, interval, loop, pageVisible, reducedMotion, sequence.index, sequence.requestedPlay, visible]);
 
   const choose = useCallback((nextIndex: number) => {
     const boundedIndex = Math.max(0, Math.min(count - 1, nextIndex));
@@ -715,7 +711,7 @@ function useAutoplaySequence(
 
   return {
     index: sequence.index,
-    playing: sequence.requestedPlay && visible && pageVisible && !pointerActive && !reducedMotion,
+    playing: sequence.requestedPlay && visible && pageVisible && !reducedMotion,
     autoplayEnabled: sequence.requestedPlay,
     complete: sequence.visitedMask === (1 << count) - 1,
     motionDisabled: reducedMotion,
@@ -843,17 +839,24 @@ function HeroHighlightedText({
   return <>{segments}</>;
 }
 
-function useHeroChoreography(reducedMotion: boolean) {
+function useHeroChoreography(reducedMotion: boolean, statements: readonly HeroStatement[]) {
+  /* Chinese says the same thing in roughly half the characters, so at one
+   * ms/char the reader gets half the time for the same information — measured,
+   * the sequence ran 10.4s against English's 18.4s. Slow the keystroke and
+   * lengthen the beat after each statement instead of only one or the other,
+   * so the typing keeps its energy and the finished line gets a real pause. */
+  const lang = useLang();
+  const cjk = lang !== "en";
   const [statement, setStatement] = useState(0);
   const [cursor, setCursor] = useState(0);
   const [resolved, setResolved] = useState(0);
   const [phase, setPhase] = useState<"boot" | "typing" | "holding" | "deleting" | "split" | "deck" | "ready">("boot");
-  const text = HERO_STATEMENTS[statement].full;
+  const text = statements[statement].full;
 
   const skip = useCallback(() => {
-    setStatement(HERO_STATEMENTS.length - 1);
+    setStatement(statements.length - 1);
     setCursor(0);
-    setResolved(HERO_STATEMENTS.length);
+    setResolved(statements.length);
     setPhase("ready");
   }, []);
 
@@ -873,15 +876,15 @@ function useHeroChoreography(reducedMotion: boolean) {
       else setCursor((value) => Math.min(text.length, value + 1));
       // Paced 20% slower than the original 18-30 ms/char so a first-time
       // reader can finish each statement before it backspaces away.
-    }, cursor >= text.length ? 0 : 22 + (cursor % 5) * 3.6);
+    }, cursor >= text.length ? 0 : (cjk ? 40 : 22) + (cursor % 5) * (cjk ? 4.5 : 3.6));
     return () => window.clearTimeout(timer);
-  }, [cursor, phase, text.length]);
+  }, [cursor, phase, text.length, cjk]);
 
   useEffect(() => {
     if (phase !== "holding") return;
-    const timer = window.setTimeout(() => setPhase("deleting"), 1420);
+    const timer = window.setTimeout(() => setPhase("deleting"), cjk ? 2900 : 1420);
     return () => window.clearTimeout(timer);
-  }, [phase]);
+  }, [phase, cjk]);
 
   useEffect(() => {
     if (phase !== "deleting") return;
@@ -891,7 +894,7 @@ function useHeroChoreography(reducedMotion: boolean) {
         return;
       }
       setResolved((value) => Math.max(value, statement + 1));
-      if (statement === HERO_STATEMENTS.length - 1) {
+      if (statement === statements.length - 1) {
         setPhase("split");
       } else {
         setStatement((value) => value + 1);
@@ -968,7 +971,7 @@ function GalaxyField({ reducedMotion }: { reducedMotion: boolean }) {
   const secondary = (cycle + 2) % GALAXY_CLUSTERS.length;
   const tertiary = (cycle + 4) % GALAXY_CLUSTERS.length;
   // the space itself drifts toward the primary cluster
-  const pc = GALAXY_CLUSTERS[primary];
+  const pc = TD(GALAXY_CLUSTERS)[primary];
   const driftX = (50 - pc.cx) * 0.22;
   const driftY = (50 - pc.cy) * 0.22;
 
@@ -977,7 +980,7 @@ function GalaxyField({ reducedMotion }: { reducedMotion: boolean }) {
       <div className="vx-nebula vx-nebula-a" /><div className="vx-nebula vx-nebula-b" />
       <div className="vx-starfield" style={{ transform: `translate(${driftX * 0.5}%, ${driftY * 0.5}%)`, transition: "transform 3.2s cubic-bezier(.4,0,.2,1)" }}>{stars.map((star, index) => <i key={index} style={{ "--x": `${star.x}%`, "--y": `${star.y}%`, "--size": `${star.size}px`, "--delay": `${star.delay}s` } as CSSProperties} />)}</div>
       <div className="vx-termfield" style={{ transform: `translate(${driftX}%, ${driftY}%)`, transition: "transform 3.2s cubic-bezier(.4,0,.2,1)" }}>
-        {GALAXY_CLUSTERS.map((cluster, ci) =>
+        {TD(GALAXY_CLUSTERS).map((cluster, ci) =>
           cluster.terms.map(([term, dx, dy], ti) => {
             const inPrimary = ci === primary;
             const inSecondary = ci === secondary;
@@ -995,7 +998,7 @@ function GalaxyField({ reducedMotion }: { reducedMotion: boolean }) {
             );
           }),
         )}
-        {GALAXY_ANCHORS.map(([term, x, y], index) => (
+        {TD(GALAXY_ANCHORS).map(([term, x, y], index) => (
           <span
             key={term}
             className="vx-galaxy-anchor"
@@ -1020,6 +1023,8 @@ function GalaxyField({ reducedMotion }: { reducedMotion: boolean }) {
 
 function HeroProjectDeck({ reducedMotion, ready }: { reducedMotion: boolean; ready: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
+  const t = useT();
+  const projects = useTranslated(TD(PROJECTS));
   // The deck flips on its own, always — only hovering the controls pauses it,
   // never merely resting the cursor on the cards.
   const deck = useAutoplaySequence(PROJECTS.length, 2800, ref, reducedMotion || !ready, {
@@ -1028,10 +1033,10 @@ function HeroProjectDeck({ reducedMotion, ready }: { reducedMotion: boolean; rea
   });
   return (
     <div ref={ref} className="vx-hero-deck" data-ready={ready} data-motion-paused={!deck.playing} aria-hidden={!ready}>
-      <div className="vx-deck-status"><i className={deck.playing ? "is-live" : ""} /> SELECTED SYSTEMS <span>{String(deck.index + 1).padStart(2, "0")} / {String(PROJECTS.length).padStart(2, "0")}</span></div>
+      <div className="vx-deck-status"><i className={deck.playing ? "is-live" : ""} /> {t("SELECTED SYSTEMS")} <span>{String(deck.index + 1).padStart(2, "0")} / {String(PROJECTS.length).padStart(2, "0")}</span></div>
       <div className="vx-deck-stage">
-        {PROJECTS.map((project, index) => {
-          const offset = (index - deck.index + PROJECTS.length) % PROJECTS.length;
+        {projects.map((project, index) => {
+          const offset = (index - deck.index + projects.length) % projects.length;
           const active = offset === 0;
           return (
             <a
@@ -1047,15 +1052,15 @@ function HeroProjectDeck({ reducedMotion, ready }: { reducedMotion: boolean; rea
               <strong>{project.category}</strong>
               <p>{project.summary}</p>
               <div>{project.proof.slice(0, 2).map((item) => <i key={item}>{item}</i>)}</div>
-              <small>Explore this system <b>↘</b></small>
+              <small>{t("Explore this system")} <b>↘</b></small>
             </a>
           );
         })}
       </div>
       <div className="vx-deck-controls">
-        <button type="button" onClick={deck.previous} aria-label="Previous project" disabled={!ready}>←</button>
-        <div>{PROJECTS.map((project, index) => <button key={project.id} type="button" className={deck.index === index ? "is-active" : ""} onClick={() => deck.choose(index)} aria-label={`Show ${project.category}`} disabled={!ready} />)}</div>
-        <button type="button" onClick={deck.next} aria-label="Next project" disabled={!ready}>→</button>
+        <button type="button" onClick={deck.previous} aria-label={T("Previous project")} disabled={!ready}>←</button>
+        <div>{TD(PROJECTS).map((project, index) => <button key={project.id} type="button" className={deck.index === index ? "is-active" : ""} onClick={() => deck.choose(index)} aria-label={`Show ${project.category}`} disabled={!ready} />)}</div>
+        <button type="button" onClick={deck.next} aria-label={T("Next project")} disabled={!ready}>→</button>
       </div>
     </div>
   );
@@ -1093,11 +1098,12 @@ const SHORT_CALL_HREF =
   "mailto:123040005@link.cuhk.edu.cn?subject=Portfolio%20opportunity%20or%2015-minute%20call";
 
 function ContactChannels({ compact = false }: { compact?: boolean }) {
+  const t = useT();
   return (
     <div className="vx-contact-channels" data-compact={compact}>
-      {CONTACT_CHANNELS.map((channel) => (
+      {TD(CONTACT_CHANNELS).map((channel) => (
         <a key={channel.label} href={channel.href} title={`${channel.label}: ${channel.value}`}>
-          <span>{channel.label}</span>
+          <span>{t(channel.label)}</span>
           <strong>{channel.value}</strong>
         </a>
       ))}
@@ -1111,6 +1117,19 @@ const RESUMES = [
 ] as const;
 
 /** The résumé exists in two languages, so every entry point asks which. */
+/** Two portals, one site. The toggle is a plain link pair so it works in a
+ *  static export and gives each language a real, shareable URL. */
+function LangToggle() {
+  const lang = useLang();
+  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  return (
+    <div className="vx-lang-toggle" role="group" aria-label={T("Language / 语言")}>
+      <a href={`${base}/`} aria-current={lang === "en" ? "true" : undefined} data-active={lang === "en"}>{T("EN")}</a>
+      <a href={`${base}/zh/`} aria-current={lang === "zh" ? "true" : undefined} data-active={lang === "zh"}>中文</a>
+    </div>
+  );
+}
+
 function ResumeMenu({ className, label }: { className?: string; label: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -1138,7 +1157,7 @@ function ResumeMenu({ className, label }: { className?: string; label: string })
       </button>
       {open ? (
         <div className="vx-resume-options" role="menu">
-          {RESUMES.map((item) => (
+          {TD(RESUMES).map((item) => (
             <a key={item.lang} role="menuitem" href={assetPath(item.file)} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>
               {item.lang} <i aria-hidden="true">↗</i>
             </a>
@@ -1150,7 +1169,9 @@ function ResumeMenu({ className, label }: { className?: string; label: string })
 }
 
 function Hero({ reducedMotion }: { reducedMotion: boolean }) {
-  const hero = useHeroChoreography(reducedMotion);
+  const t = useT();
+  const statements = useTranslated(TD(HERO_STATEMENTS));
+  const hero = useHeroChoreography(reducedMotion, statements);
   return (
     <section id="top" className="vx-hero vx-page" data-vx-page data-phase={hero.phase}>
       <GalaxyField reducedMotion={reducedMotion} />
@@ -1158,14 +1179,14 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
         <div className="vx-hero-credentials">
           <div className="vx-terminal-label">
             <i />
-            <span>YASHWANT / AI SYSTEMS PORTFOLIO</span>
-            <small>{hero.ready ? "READY" : hero.deleting ? "BACKSPACING" : "WRITING"}</small>
+            <span>{t("YASHWANT / AI SYSTEMS PORTFOLIO")}</span>
+            <small>{t(hero.ready ? T("READY") : hero.deleting ? T("BACKSPACING") : T("WRITING"))}</small>
           </div>
           {!hero.collapsed ? (
             <div className="vx-hero-central-intro">
               <h1 className="vx-hero-script" aria-label={hero.text} data-statement={hero.statement}>
                 <span className="vx-hero-script-measures" aria-hidden="true">
-                  {HERO_STATEMENTS.map((item, index) => (
+                  {statements.map((item, index) => (
                     <span key={item.full} data-statement={index}>
                       <HeroHighlightedText
                         text={item.full}
@@ -1179,7 +1200,7 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
                   <HeroHighlightedText
                     text={hero.text}
                     cursor={hero.cursor}
-                    highlights={HERO_STATEMENTS[hero.statement].highlights}
+                    highlights={statements[hero.statement].highlights}
                   />
                   <i data-deleting={hero.deleting} />
                 </span>
@@ -1187,10 +1208,10 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
             </div>
           ) : (
             <div className="vx-hero-capsule-content">
-              <p className="vx-hero-intro">Hi, I&apos;m</p>
-              <h1>Yashwant Bhyri.</h1>
-              <ul className="vx-credential-list" aria-label="Profile summary">
-                {HERO_STATEMENTS.map((item, index) => (
+              <p className="vx-hero-intro">{t("Hi, I'm")}</p>
+              <h1>{t("Yashwant Bhyri.")}</h1>
+              <ul className="vx-credential-list" aria-label={T("Profile summary")}>
+                {statements.map((item, index) => (
                   <li key={item.compact} style={{ "--credential-delay": `${index * 90}ms` } as CSSProperties}>
                     <i aria-hidden="true">✦</i>
                     <span>
@@ -1205,27 +1226,27 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
                 ))}
               </ul>
               <div className="vx-hero-actions">
-                <a className="vx-primary-action" href="#projects">Explore my projects <i>↓</i></a>
-                <ResumeMenu label="View my résumé" />
-                <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">Open GitHub ↗</a>
-                <a href="#hero-contact">Contact me ↘</a>
+                <a className="vx-primary-action" href="#projects">{t("Explore my projects")} <i>↓</i></a>
+                <ResumeMenu label={T("View my résumé")} />
+                <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">{t("Open GitHub ↗")}</a>
+                <a href="#hero-contact">{t("Contact me ↘")}</a>
               </div>
             </div>
           )}
         </div>
         {hero.contactVisible ? (
-          <aside id="hero-contact" className="vx-hero-contact" aria-label="Contact Yashwant">
+          <aside id="hero-contact" className="vx-hero-contact" aria-label={T("Contact Yashwant")}>
             <div>
-              <span>OPEN TO RELEVANT AI ROLES</span>
-              <strong>Have a position or a system worth building?</strong>
+              <span>{t("OPEN TO RELEVANT AI ROLES")}</span>
+              <strong>{t("Have a position or a system worth building?")}</strong>
             </div>
             <ContactChannels compact />
-            <a className="vx-short-call" href={SHORT_CALL_HREF}>Request a 15-minute call <i>↗</i></a>
+            <a className="vx-short-call" href={SHORT_CALL_HREF}>{t("Request a 15-minute call")} <i>↗</i></a>
           </aside>
         ) : null}
         <HeroProjectDeck reducedMotion={reducedMotion} ready={hero.deckVisible} />
       </div>
-      {!hero.ready ? <button type="button" className="vx-skip-intro" onClick={hero.skip} data-hero-skip-ignore>Skip introduction →</button> : <a className="vx-scroll-cue" href="#projects"><i /> Scroll into the systems</a>}
+      {!hero.ready ? <button type="button" className="vx-skip-intro" onClick={hero.skip} data-hero-skip-ignore>{t("Skip introduction →")}</button> : <a className="vx-scroll-cue" href="#projects"><i /> {t("Scroll into the systems")}</a>}
     </section>
   );
 }
@@ -1263,13 +1284,19 @@ function useTypeOnView(
 
 /** Spotlight cycle for the project cards: one quick lap, then a slow lap, looping. */
 const SPOT_DURATIONS = [3600, 3600, 3600, 3600];
+/* Chinese cards carry the same content in fewer characters, so the same dwell
+ * gives the reader less time. One extra second per card on the Chinese portal. */
+const SPOT_DURATIONS_CJK = SPOT_DURATIONS.map((ms) => ms + 1000);
 
 const INDEX_SUB = "Four systems, each introduced in human terms before the architecture goes deep.";
 
 function ProjectIndex() {
+  const t = useT();
+  const lang = useLang();
+  const projects = useTranslated(TD(PROJECTS));
   const reducedMotion = useReducedMotion();
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const hook = useTypeOnView(headingRef, "So, what did I build?", 22);
+  const hook = useTypeOnView(headingRef, T("So, what did I build?"), 22);
   const [subN, setSubN] = useState(0);
   useEffect(() => {
     if (reducedMotion) return;
@@ -1277,8 +1304,9 @@ function ProjectIndex() {
     const timer = window.setTimeout(() => setSubN((v) => v + 1), 24);
     return () => window.clearTimeout(timer);
   }, [hook.done, reducedMotion, subN]);
-  const visibleSubN = reducedMotion ? INDEX_SUB.length : subN;
-  const sub = { visible: INDEX_SUB.slice(0, visibleSubN), done: visibleSubN >= INDEX_SUB.length };
+  const indexSub = T(INDEX_SUB);
+  const visibleSubN = reducedMotion ? indexSub.length : subN;
+  const sub = { visible: indexSub.slice(0, visibleSubN), done: visibleSubN >= indexSub.length };
   const [spot, setSpot] = useState(-1);
   const [manualSpot, setManualSpot] = useState<number | null>(null);
   useEffect(() => {
@@ -1291,34 +1319,34 @@ function ProjectIndex() {
       timer = window.setTimeout(() => {
         step += 1;
         tick();
-      }, SPOT_DURATIONS[step % SPOT_DURATIONS.length]);
+      }, (lang === "en" ? SPOT_DURATIONS : SPOT_DURATIONS_CJK)[step % SPOT_DURATIONS.length]);
     };
     tick();
     return () => window.clearTimeout(timer);
-  }, [reducedMotion, sub.done]);
+  }, [reducedMotion, sub.done, lang]);
   const currentSpot = manualSpot ?? (reducedMotion ? 0 : spot < 0 ? 0 : spot);
   return (
     <section id="projects" className="vx-project-index vx-section-shell vx-page" data-vx-page>
       <div className="vx-section-heading">
-        <span>SELECTED WORK / FOUR SYSTEMS</span>
-        <h2 ref={headingRef} className={`vx-typed-h ${hook.done ? "is-done" : ""}`} aria-label="So, what did I build?">
+        <span>{t("SELECTED WORK / FOUR SYSTEMS")}</span>
+        <h2 ref={headingRef} className={`vx-typed-h ${hook.done ? "is-done" : ""}`} aria-label={T("So, what did I build?")}>
           <span className="vx-typed-live" aria-hidden="true">
             <em className="vx-paint-target">{hook.visible}</em>
             {hook.started && !hook.done ? <i className="vx-type-caret" /> : null}
           </span>
-          <b className="vx-typed-ghost" aria-hidden="true">So, what did I build?</b>
+          <b className="vx-typed-ghost" aria-hidden="true">{T("So, what did I build?")}</b>
         </h2>
         <p className="vx-typed-sub">
           <span className="vx-typed-live" aria-hidden="true">
             {hook.done ? sub.visible : ""}
             {hook.done && !sub.done ? <i className="vx-type-caret" /> : null}
           </span>
-          <b className="vx-typed-ghost" aria-hidden="true">{INDEX_SUB}</b>
+          <b className="vx-typed-ghost" aria-hidden="true">{indexSub}</b>
         </p>
-        <p>The walkthrough starts automatically when a project reaches the viewport. Pause only when you want to inspect a state.</p>
+        <p>{t("The walkthrough starts automatically when a project reaches the viewport. Pause only when you want to inspect a state.")}</p>
       </div>
       <div className="vx-project-grid">
-        {PROJECTS.map((project, cardIdx) => {
+        {projects.map((project, cardIdx) => {
           const active = currentSpot === cardIdx;
           return (
             <a
@@ -1340,7 +1368,7 @@ function ProjectIndex() {
                   <div className="vx-project-proof">{project.proof.map((item) => <span key={item}>{item}</span>)}</div>
                 </div>
                 <div className="vx-project-mini-architecture" aria-hidden={active}>
-                  <span>COMPRESSED SYSTEM FLOW</span>
+                  <span>{t("COMPRESSED SYSTEM FLOW")}</span>
                   <ol>
                     {project.architecture.map((node, index) => (
                       <li key={node}><i>{String(index + 1).padStart(2, "0")}</i><strong>{node}</strong><b /></li>
@@ -1349,7 +1377,7 @@ function ProjectIndex() {
                 </div>
               </div>
               <div className="vx-project-topology" aria-hidden="true"><i /><i /><i /><i /><b /></div>
-              <strong>Explore architecture <i>↘</i></strong>
+              <strong>{t("Explore architecture")} <i>↘</i></strong>
             </a>
           );
         })}
@@ -1361,12 +1389,12 @@ function ProjectIndex() {
 function StageControls({ controller, total }: { controller: SequenceController; total: number }) {
   return (
     <div className="vx-stage-controls">
-      <button type="button" onClick={controller.previous} aria-label="Previous stage">←</button>
+      <button type="button" onClick={controller.previous} aria-label={T("Previous stage")}>←</button>
       <button type="button" className="vx-play" onClick={controller.toggle} disabled={controller.motionDisabled}>
-        {controller.motionDisabled ? "Static view" : controller.autoplayEnabled ? "Pause walkthrough" : "Play walkthrough"}
+        {controller.motionDisabled ? T("Static view") : controller.autoplayEnabled ? T("Pause walkthrough") : T("Play walkthrough")}
       </button>
       <span>{String(controller.index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</span>
-      <button type="button" onClick={controller.next} aria-label="Next stage">→</button>
+      <button type="button" onClick={controller.next} aria-label={T("Next stage")}>→</button>
     </div>
   );
 }
@@ -1497,9 +1525,11 @@ type AnnotationRange = { phrase: string; start: number; end: number; weight: "fu
  *  earn the FULL highlight — WebRTC, Deepgram, SenseVoice, Emotion2Vec+, HNSW,
  *  BM25, LLM gateways, guardrails, agent evaluations, RL. What stays HALF is
  *  descriptive behaviour rather than a technology or a layer concept
- *  (interruption recovery, evidence ledger, turn-linked findings). */
+ *  (interruption recovery, evidence ledger, turn-linked findings). The Chinese
+ *  group below mirrors the same split, so /zh/ resolves identical weights: the
+ *  three half-weight phrases (打断恢复, 证据台账, 类型化…结论) match nothing here. */
 const CORE_SIGNAL =
-  /webrtc|websocket|deepgram|sensevoice|emotion2vec|\basr\b|\btts\b|medcpt|hnsw|faiss|bm25|biolinkbert|deberta|\bnli\b|\bdsm\b|opentelemetry|redis|orchestrat|multi-agent|agent graph|agent evaluation|specialist agent|research agent|function call|tool call|tool graph|structured|contract|policy-valid|asynchronous|schema|json|vector|embedding|retriev|rerank|\brag\b|memory|ground|evaluation|guardrail|validat|deterministic|telemetry|tracing|observab|\brl\b|regression|human gate|human-release|human-in-the-loop|llm gateway|model routing|latency|throughput|token|quantiz|distill|cache|failover|fallback|deploy|\bapi\b|pipeline|skill file|compiler|interview graph|gated multimodal|behavioral state/i;
+  /webrtc|websocket|deepgram|sensevoice|emotion2vec|\basr\b|\btts\b|medcpt|hnsw|faiss|bm25|biolinkbert|deberta|\bnli\b|\bdsm\b|opentelemetry|redis|orchestrat|multi-agent|agent graph|agent evaluation|specialist agent|research agent|function call|tool call|tool graph|structured|contract|policy-valid|asynchronous|schema|json|vector|embedding|retriev|rerank|\brag\b|memory|ground|evaluation|guardrail|validat|deterministic|telemetry|tracing|observab|\brl\b|regression|human gate|human-release|human-in-the-loop|llm gateway|model routing|latency|throughput|token|quantiz|distill|cache|failover|fallback|deploy|\bapi\b|pipeline|skill file|compiler|interview graph|gated multimodal|behavioral state|网关|时延|吞吐|面试图|护栏|异步|符合策略|结构化|契约|缓存|服务商切换|故障转移|兜底|评估|强化学习|工具调用|函数调用|工具图|调研\s?agent|多智能体|编排|编译器|技能文件|重排序|检索|嵌入|遥测|链路追踪|可观测|回归|人工审批|人工发布|人机协同|门控多模态|行为状态|校验|事实锚定|确定性|量化|蒸馏|部署|流水线/i;
 
 function HighlightedStageAnnotation({
   text,
@@ -1552,6 +1582,7 @@ function HighlightedStageAnnotation({
 }
 
 function StageSignalConsole({ step, active }: { step: StoryStep; active: boolean }) {
+  const t = useT();
   const reducedMotion = useReducedMotion();
   const [cursor, setCursor] = useState(reducedMotion ? step.annotation.length : 0);
   const tickerItems = useMemo(() => Array.from(new Set([...step.signals, ...step.stack])).map((label) => ({ label })), [step.signals, step.stack]);
@@ -1570,8 +1601,8 @@ function StageSignalConsole({ step, active }: { step: StoryStep; active: boolean
       aria-label={`Implementation signal for ${step.label}`}
     >
       <div className="vx-stage-signal-micro-row" aria-hidden="true">
-        <span><i />IMPLEMENTATION SIGNAL</span>
-        <small>{step.label}</small>
+        <span><i />{t("IMPLEMENTATION SIGNAL")}</span>
+        <small>{t(step.label)}</small>
       </div>
       <i className="vx-stage-signal-diagonal-sweep" aria-hidden="true" />
       <div className="vx-stage-annotation" aria-label={step.annotation}>
@@ -1607,6 +1638,7 @@ function ProjectConclusion({
   signals?: readonly SignalTickerEntry[];
   extra?: React.ReactNode;
 }) {
+  const t = useT();
   const reducedMotion = useReducedMotion();
   const [active, setActive] = useState(0);
   const [completedCycle, setCompletedCycle] = useState(false);
@@ -1628,8 +1660,8 @@ function ProjectConclusion({
   return (
     <div className="vx-project-conclusion" data-complete={completedCycle || reducedMotion}>
       <div className="vx-conclusion-heading">
-        <span>SYSTEM CONCLUSION</span>
-        <strong>{name}, resolved into the signals that matter.</strong>
+        <span>{t("SYSTEM CONCLUSION")}</span>
+        <strong>{name}{T(", resolved into the signals that matter.")}</strong>
       </div>
       <div className="vx-conclusion-focus" key={`${metric.label}-${active}`}>
         <span>{String(active + 1).padStart(2, "0")} / {String(metrics.length).padStart(2, "0")} · {metric.label}</span>
@@ -1656,7 +1688,7 @@ function ProjectConclusion({
       </div>
       {signals && signals.length > 0 ? (
         <div className="vx-conclusion-signal-rail" aria-label={`${name} complete engineering signal rail`}>
-          <span><i />FULL SYSTEM SIGNAL RAIL</span>
+          <span><i />{t("FULL SYSTEM SIGNAL RAIL")}</span>
           <SignalTicker
             items={signals}
             label={`${name} engineering signals across every component`}
@@ -1672,7 +1704,7 @@ function ProjectConclusion({
 
 function SystemWalkthrough({
   name,
-  steps,
+  steps: rawSteps,
   controller,
   Visual,
   accent,
@@ -1687,6 +1719,9 @@ function SystemWalkthrough({
   proof: readonly ConclusionMetric[];
   conclusionExtra?: React.ReactNode;
 }) {
+  const t = useT();
+  const steps = useTranslated(rawSteps);
+  const translatedProof = useTranslated(proof);
   const isConclusion = controller.index === steps.length;
   // Every technology and engineering capability the walkthrough demonstrated,
   // deduplicated into one slow revision loop for the conclusion stage.
@@ -1697,8 +1732,8 @@ function SystemWalkthrough({
   const componentStep = steps[Math.min(controller.index, steps.length - 1)];
   const step: StoryStep = isConclusion
     ? {
-        label: "Conclusion",
-        title: "The complete system resolves into six recruiter-ready signals.",
+        label: T("Conclusion"),
+        title: T("The complete system resolves into six recruiter-ready signals."),
         explanation: "Product, contribution, runtime, output, impact, and reliability take the stage one at a time for a fast final revision.",
         annotation: "The completed walkthrough resolves its strongest product, runtime, output, impact, and reliability evidence into one recruiter-ready summary.",
         annotationHighlights: [],
@@ -1714,11 +1749,14 @@ function SystemWalkthrough({
   return (
     <div
       className={`vx-walkthrough vx-accent-${accent}`}
-      data-motion-paused={!controller.playing}
+      /* Follows the pause button alone. `playing` also folds in scroll position
+         and page visibility, and letting those reach the CSS pause is what
+         stopped the keyword rail when the reader was simply looking around. */
+      data-motion-paused={!controller.autoplayEnabled}
       data-stage-kind={isConclusion ? "conclusion" : "component"}
     >
       <aside className="vx-story-panel">
-        <div className="vx-story-kicker"><span>COMPONENT MICROSCOPE</span><i className={controller.playing ? "is-live" : ""} /></div>
+        <div className="vx-story-kicker"><span>{t("COMPONENT MICROSCOPE")}</span><i className={controller.playing ? "is-live" : ""} /></div>
         <div className="vx-stage-rail" role="group" aria-label={`${name} walkthrough stages`}>
           {steps.map((item, index) => (
             <button
@@ -1742,7 +1780,7 @@ function SystemWalkthrough({
             data-stage-kind="conclusion"
           >
             <i>{String(steps.length + 1).padStart(2, "0")}</i>
-            <span>Conclusion</span>
+            <span>{t("Conclusion")}</span>
             <b />
           </button>
         </div>
@@ -1756,31 +1794,31 @@ function SystemWalkthrough({
       </aside>
       <div className="vx-operational-stage" aria-label={`${name}: ${step.title}`}>
         <div className="vx-stage-top">
-          <span>{isConclusion ? "SYSTEM REVISION" : "OPERATIONAL GRAPHIC"}</span>
-          <strong>{step.label}</strong>
+          <span>{t(isConclusion ? T("SYSTEM REVISION") : T("OPERATIONAL GRAPHIC"))}</span>
+          <strong>{t(step.label)}</strong>
           {step.maturity ? <em>{step.maturity}</em> : null}
-          <i>{controller.playing ? "AUTOPLAY" : "MANUAL"}</i>
+          <i>{t(controller.playing ? T("AUTOPLAY") : T("MANUAL"))}</i>
         </div>
         {!isConclusion ? (
           <StageSignalConsole
             key={`${name}-${step.label}`}
             step={step}
-            active={controller.playing}
+            active={controller.autoplayEnabled}
           />
         ) : null}
         <div className="vx-visual-window">
           {isConclusion ? (
-            <ProjectConclusion name={name} metrics={proof} signals={systemSignals} extra={conclusionExtra} />
+            <ProjectConclusion name={name} metrics={translatedProof} signals={systemSignals} extra={conclusionExtra} />
           ) : (
             <Visual active={controller.index} />
           )}
         </div>
         <div className="vx-io-rail">
-          <div><span>INPUT</span><strong>{step.input}</strong></div>
+          <div><span>{t("INPUT")}</span><strong>{step.input}</strong></div>
           <i aria-hidden="true" />
-          <div><span>OPERATION</span><strong>{step.operation}</strong></div>
+          <div><span>{t("OPERATION")}</span><strong>{step.operation}</strong></div>
           <i aria-hidden="true" />
-          <div><span>OUTPUT</span><strong>{step.output}</strong></div>
+          <div><span>{t("OUTPUT")}</span><strong>{step.output}</strong></div>
         </div>
       </div>
     </div>
@@ -1838,6 +1876,7 @@ function CaseHeading({
   title,
   copy,
   accent,
+  badges,
 }: {
   number: string;
   brand: string;
@@ -1845,24 +1884,35 @@ function CaseHeading({
   title: string;
   copy: string;
   accent: "lime" | "violet" | "cyan";
+  /* Hard credentials for the chapter opener — scale, status, ownership. Kept
+   * to three so they read as facts rather than decoration. */
+  badges?: readonly { label: string; value: string }[];
 }) {
+  const t = useT();
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const typedTitle = useTypeOnView(titleRef, title, 46);
+  const typedTitle = useTypeOnView(titleRef, t(title), 46);
   return (
     <div className={`vx-case-heading vx-accent-${accent}`}>
       <span>{number} / {brand}</span>
-      <small>{category}</small>
-      <h2 ref={titleRef} className="vx-typed-h" aria-label={title}>
+      <small>{t(category)}</small>
+      {badges?.length ? (
+        <div className="vx-case-badges">
+          {badges.map((b) => (
+            <i key={b.label}><b>{t(b.value)}</b><em>{t(b.label)}</em></i>
+          ))}
+        </div>
+      ) : null}
+      <h2 ref={titleRef} className="vx-typed-h" aria-label={t(title)}>
         <span className="vx-typed-live" aria-hidden="true">
           {typedTitle.visible}
           {typedTitle.started && !typedTitle.done ? <i className="vx-type-caret" /> : null}
         </span>
         {/* reserves final height so the layout never jumps while typing */}
-        <b className="vx-typed-ghost" aria-hidden="true">{title}</b>
+        <b className="vx-typed-ghost" aria-hidden="true">{t(title)}</b>
       </h2>
       <aside className="vx-contribution-tile">
-        <span>MY CONTRIBUTION</span>
-        <p><Emph text={copy} /></p>
+        <span>{t("MY CONTRIBUTION")}</span>
+        <p><Emph text={t(copy)} /></p>
         <i aria-hidden="true" />
       </aside>
     </div>
@@ -1882,6 +1932,7 @@ function FlagshipChapter({
   Visual,
   proof,
   architecturePath,
+  badges,
   children,
 }: {
   id: string;
@@ -1895,9 +1946,11 @@ function FlagshipChapter({
   Overview: OverviewComponent;
   Visual: VisualComponent;
   proof: readonly { label: string; value: string; detail: string }[];
+  badges?: readonly { label: string; value: string }[];
   architecturePath: readonly number[];
   children?: React.ReactNode;
 }) {
+  const t = useT();
   const reducedMotion = useReducedMotion();
   const overviewRef = useRef<HTMLElement>(null);
   const microscopeRef = useRef<HTMLElement>(null);
@@ -1929,12 +1982,12 @@ function FlagshipChapter({
         data-chapter={id}
       >
         <div className="vx-section-shell">
-          <CaseHeading number={number} brand={brand} category={category} title={title} copy={copy} accent={accent} />
+          <CaseHeading number={number} brand={brand} category={category} title={title} copy={copy} accent={accent} badges={badges} />
           <div className="vx-overview-shell">
             <div className="vx-overview-top">
-              <span>HIGH-LEVEL ARCHITECTURE</span>
-              <strong>Follow the signal from input to outcome.</strong>
-              <i>{overviewController.playing ? "AUTOPLAY" : "READY"}</i>
+              <span>{t("HIGH-LEVEL ARCHITECTURE")}</span>
+              <strong>{t("Follow the signal from input to outcome.")}</strong>
+              <i>{t(overviewController.playing ? T("AUTOPLAY") : T("READY"))}</i>
             </div>
             <Overview
               active={architecturePath[overviewController.index] ?? 0}
@@ -1942,8 +1995,8 @@ function FlagshipChapter({
             />
           </div>
           <button type="button" className="vx-architecture-handoff" onClick={moveToMicroscope}>
-            <span>Architecture complete</span>
-            <strong>Continue into the component microscope</strong>
+            <span>{t("Architecture complete")}</span>
+            <strong>{t("Continue into the component microscope")}</strong>
             <i>↓</i>
           </button>
         </div>
@@ -1959,7 +2012,7 @@ function FlagshipChapter({
           <div className="vx-microscope-identity">
             <span>{number} / {brand}</span>
             <strong>{title}</strong>
-            <small>{category}</small>
+            <small>{t(category)}</small>
           </div>
           <SystemWalkthrough
             name={brand}
@@ -1981,22 +2034,27 @@ function AntigravityChapter() {
     <FlagshipChapter
       id="antigravity"
       number="01"
-      brand="ANTIGRAVITY"
+      brand={T("ANTIGRAVITY")}
       category="PRODUCTION-GRADE SOFTWARE PRODUCT · REAL-TIME AI-NATIVE INTERVIEWING PLATFORM"
-      title="Production-grade AI interview software for automating technical interviews at scale."
+      title={T("Production-grade AI interview software for automating technical interviews at scale.")}
       copy="I built the ⟪multi-agent orchestration and decision engine⟫ behind Antigravity. It conducts live technical interviews, reasons over candidate responses, adapts the question graph, interacts through a real-time voice layer, and assembles ⟪evidence-backed recruiter reports⟫ for hiring decisions."
       accent="lime"
-      steps={ANTIGRAVITY_STEPS}
+      badges={[
+        { label: "SCALE", value: "250+ INTERVIEWS RUN" },
+        { label: "MY SCOPE", value: "ORCHESTRATION + DECISION ENGINE" },
+        { label: "EVIDENCE", value: "EVERY CLAIM TRACEABLE" },
+      ]}
+      steps={TD(ANTIGRAVITY_STEPS)}
       Overview={AntigravityOverview}
       Visual={LiveAntigravityVisual}
       architecturePath={[0, 1, 5, 6]}
       proof={[
-        { label: "PRODUCT", value: "Voice-native technical interviewing", detail: "Adaptive interviews designed to operate at screening scale" },
-        { label: "CONTRIBUTION", value: "Multi-agent orchestration + decision engine", detail: "Question routing, agent convergence, guarded prepared-question promotion, and report logic" },
-        { label: "RUNTIME", value: "Guarded dual-lane interview graph", detail: "Latency-aware foreground routing while deeper next-turn analysis continues" },
-        { label: "OUTPUT", value: "Evidence-linked recruiter report", detail: "Ability, credibility, coverage, uncertainty, and untested dimensions" },
-        { label: "IMPACT", value: "250+ completed interviews", detail: "A deployed interviewing workflow operating at screening scale" },
-        { label: "RELIABILITY", value: "Fallbacks + offline agent evaluation", detail: "Prepared audio, state recovery, telemetry, regression replay, and versioned route policies" },
+        { label: T("PRODUCT"), value: "Voice-native technical interviewing", detail: "Adaptive interviews designed to operate at screening scale" },
+        { label: T("CONTRIBUTION"), value: "Multi-agent orchestration + decision engine", detail: "Question routing, agent convergence, guarded prepared-question promotion, and report logic" },
+        { label: T("RUNTIME"), value: "Guarded dual-lane interview graph", detail: "Latency-aware foreground routing while deeper next-turn analysis continues" },
+        { label: T("OUTPUT"), value: "Evidence-linked recruiter report", detail: "Ability, credibility, coverage, uncertainty, and untested dimensions" },
+        { label: T("IMPACT"), value: "250+ completed interviews", detail: "A deployed interviewing workflow operating at screening scale" },
+        { label: T("RELIABILITY"), value: "Fallbacks + offline agent evaluation", detail: "Prepared audio, state recovery, telemetry, regression replay, and versioned route policies" },
       ]}
     />
   );
@@ -2007,25 +2065,25 @@ function FilmoraChapter() {
     <FlagshipChapter
       id="filmora"
       number="02"
-      brand="WONDERSHARE FILMORA"
+      brand={T("WONDERSHARE FILMORA")}
       category="AI APPLICATION ENGINEERING INTERNSHIP · MULTIMODAL AI PRODUCTION SYSTEM"
-      title="An end-to-end multimodal AI production runtime integrated into Filmora Enterprise."
+      title={T("An end-to-end multimodal AI production runtime integrated into Filmora Enterprise.")}
       copy="During my Wondershare Filmora internship, I built an ⟪end-to-end multimodal AI production runtime integrated into Filmora Enterprise⟫. It combines real-time market research and product intelligence with memory, retrieval, function calling, and multimodal agent-planning graphs across video, audio, dialogue, captions, effects, and editable timeline assembly. ⟪Guardrails, observability, reinforcement-learning refinement, cost controls, and human approval⟫ govern the workflow."
       accent="violet"
-      steps={FILMORA_STEPS}
+      steps={TD(FILMORA_STEPS)}
       Overview={FilmoraOverview}
       Visual={LiveFilmoraVisual}
       architecturePath={[0, 1, 4, 5, 6]}
       proof={[
-        { label: "PRODUCT", value: "End-to-end multimodal AI production runtime", detail: "Research, planning, generation, editable assembly, and human review integrated into Filmora Enterprise" },
-        { label: "CONTRIBUTION", value: "Research-to-production orchestration layer", detail: "Memory, retrieval, function contracts, agent handoffs, guardrails, tracing, and evaluation" },
-        { label: "INPUT", value: "Research + product intelligence", detail: "700+ reusable signals become ranked production context and executable skills" },
-        { label: "OUTPUT", value: "Editable multimodal timeline", detail: "Video, music, dialogue, captions, effects, and metadata stay separable" },
-        { label: "IMPACT", value: "Trace-led cost + latency optimization", detail: "Token, route, retry, and generation traces expose cost and latency at every handoff" },
-        { label: "RELIABILITY", value: "Guarded human-in-the-loop runtime", detail: "Fallbacks, checkpoints, model routing, agent evaluations, regression, and final approval" },
+        { label: T("PRODUCT"), value: "End-to-end multimodal AI production runtime", detail: "Research, planning, generation, editable assembly, and human review integrated into Filmora Enterprise" },
+        { label: T("CONTRIBUTION"), value: "Research-to-production orchestration layer", detail: "Memory, retrieval, function contracts, agent handoffs, guardrails, tracing, and evaluation" },
+        { label: T("INPUT"), value: "Research + product intelligence", detail: "700+ reusable signals become ranked production context and executable skills" },
+        { label: T("OUTPUT"), value: "Editable multimodal timeline", detail: "Video, music, dialogue, captions, effects, and metadata stay separable" },
+        { label: T("IMPACT"), value: "Trace-led cost + latency optimization", detail: "Token, route, retry, and generation traces expose cost and latency at every handoff" },
+        { label: T("RELIABILITY"), value: "Guarded human-in-the-loop runtime", detail: "Fallbacks, checkpoints, model routing, agent evaluations, regression, and final approval" },
       ]}
     >
-      <div className="vx-confidentiality"><span>REPRESENTATIVE SYSTEM VISUALIZATION</span><small>Confidential Filmora internals and source media are abstracted.</small></div>
+      <div className="vx-confidentiality"><span>{T("REPRESENTATIVE SYSTEM VISUALIZATION")}</span><small>{T("Confidential Filmora internals and source media are abstracted.")}</small></div>
     </FlagshipChapter>
   );
 }
@@ -2035,25 +2093,25 @@ function MindScapeChapter() {
     <FlagshipChapter
       id="mindscape"
       number="03"
-      brand="MINDSCAPE"
+      brand={T("MINDSCAPE")}
       category="MEDICAL AI R&D PROJECT · CLINICIAN-SUPPORT PRODUCT"
-      title="A medical AI assistant for evidence-grounded, clinician-controlled mental-health screening and diagnostic review."
+      title={T("A medical AI assistant for evidence-grounded, clinician-controlled mental-health screening and diagnostic review.")}
       copy="I built a medical AI R&D product that turns live session signals into a ⟪traceable mental-health screening and diagnostic-review workflow⟫. Multimodal perception, longitudinal memory, hybrid clinical retrieval, grounded reasoning, independent validation, and human review remain inspectable from source evidence to final action. ⟪The clinician retains final judgment⟫."
       accent="cyan"
-      steps={MINDSCAPE_STEPS}
+      steps={TD(MINDSCAPE_STEPS)}
       Overview={MindScapeOverview}
       Visual={LiveMindScapeVisual}
       architecturePath={[0, 1, 2, 3, 4, 5, 6]}
       proof={[
-        { label: "PRODUCT", value: "Medical AI clinician-support R&D product", detail: "A synthetic-data prototype for traceable review, not production clinical software" },
-        { label: "CONTRIBUTION", value: "Inspectable session-to-review workflow", detail: "Capture, perception, fusion, retrieval, reasoning, validation, review, and governed RL refinement" },
-        { label: "RUNTIME", value: "Streaming session-to-review path", detail: "Time-aligned packets preserve the words and signals behind each state" },
-        { label: "GROUNDING", value: "Dense + lexical + rerank", detail: "Clinical evidence is retrieved, merged, reranked, and attached to claims" },
-        { label: "SAFETY", value: "Model + deterministic validation", detail: "Unsupported language is challenged before the review surface" },
-        { label: "OUTPUT", value: "Clinician-owned review packet", detail: "Source, claim, uncertainty, warnings, follow-up, and governed feedback stay together" },
+        { label: T("PRODUCT"), value: "Medical AI clinician-support R&D product", detail: "A synthetic-data prototype for traceable review, not production clinical software" },
+        { label: T("CONTRIBUTION"), value: "Inspectable session-to-review workflow", detail: "Capture, perception, fusion, retrieval, reasoning, validation, review, and governed RL refinement" },
+        { label: T("RUNTIME"), value: "Streaming session-to-review path", detail: "Time-aligned packets preserve the words and signals behind each state" },
+        { label: T("GROUNDING"), value: "Dense + lexical + rerank", detail: "Clinical evidence is retrieved, merged, reranked, and attached to claims" },
+        { label: T("SAFETY"), value: "Model + deterministic validation", detail: "Unsupported language is challenged before the review surface" },
+        { label: T("OUTPUT"), value: "Clinician-owned review packet", detail: "Source, claim, uncertainty, warnings, follow-up, and governed feedback stay together" },
       ]}
     >
-      <div className="vx-safety-note"><span>SYNTHETIC CLINICAL WORKFLOW</span><small>Research and decision support only: not autonomous diagnosis, medical advice, emergency dispatch, or production clinical software.</small></div>
+      <div className="vx-safety-note"><span>{T("SYNTHETIC CLINICAL WORKFLOW")}</span><small>{T("Research and decision support only: not autonomous diagnosis, medical advice, emergency dispatch, or production clinical software.")}</small></div>
     </FlagshipChapter>
   );
 }
@@ -2098,13 +2156,18 @@ function ResearchCard({
         onSelect();
       }}
     >
-      <div className="vx-research-card-top">
+      <div className="vx-research-card-top" data-crest={"crest" in item ? "true" : undefined}>
         <span>{String(index + 1).padStart(2, "0")} · {item.badge}</span>
+        {"crest" in item ? (
+          <div className="vx-research-crest" aria-hidden="true">
+            {(item.crest as readonly string[]).map((line) => <b key={line}>{T(line)}</b>)}
+          </div>
+        ) : null}
         {"logo" in item ? (
           <Image
             className="vx-lalamove-logo"
             src={item.logo}
-            alt="Lalamove"
+            alt={T("Lalamove")}
             width={164}
             height={42}
             unoptimized
@@ -2183,18 +2246,18 @@ function ResearchSection() {
   }, [active, playing, reducedMotion, visible]);
 
   const controls = (
-    <div className="vx-research-sequence-controls" aria-label="Research walkthrough playback">
+    <div className="vx-research-sequence-controls" aria-label={T("Research walkthrough playback")}>
       <span>{String(active + 1).padStart(2, "0")} / {String(RESEARCH.length).padStart(2, "0")}</span>
       <button type="button" disabled={reducedMotion} onClick={() => setPlaying((value) => !value)}>
         <i data-playing={playing && !reducedMotion} />
-        {reducedMotion ? "Static view" : playing ? "Pause sequence" : "Resume sequence"}
+        {reducedMotion ? T("Static view") : playing ? T("Pause sequence") : T("Resume sequence")}
       </button>
     </div>
   );
 
   const cards = (start: number, end: number) => (
     <div className="vx-research-grid" data-page={start === 0 ? "one" : "two"}>
-      {RESEARCH.slice(start, end).map((item, localIndex) => {
+      {TD(RESEARCH).slice(start, end).map((item, localIndex) => {
         const index = start + localIndex;
         return (
           <ResearchCard
@@ -2219,10 +2282,10 @@ function ResearchSection() {
     <div ref={sequenceRef} className="vx-research-sequence" data-motion-paused={!playing}>
       <section id="research" className="vx-research vx-research-page vx-section-shell vx-page" data-vx-page>
         <div className="vx-research-heading">
-          <span>04 / OPEN SOURCE · RESEARCH · R&amp;D</span>
-          <h2>Open-source, research, internship, and R&amp;D work—six systems with the mechanism visible.</h2>
+          <span>{T("04 / OPEN SOURCE · RESEARCH · R&amp;D")}</span>
+          <h2>{T("Open-source, research, internship, and R&amp;D work—six systems with the mechanism visible.")}</h2>
           <div>
-            <p>Each record shows what ran, how it was evaluated, and what the work produced.</p>
+            <p>{T("Each record shows what ran, how it was evaluated, and what the work produced.")}</p>
             {controls}
           </div>
         </div>
@@ -2235,10 +2298,10 @@ function ResearchSection() {
         data-vx-page
       >
         <div className="vx-research-heading vx-research-heading-cont">
-          <span>04–06 / LOGISTICS · BROWSER PERCEPTION · CONTROLLED GENERATION</span>
-          <h2>Applied R&amp;D across operational AI, browser perception, and controlled generation.</h2>
+          <span>{T("04–06 / LOGISTICS · BROWSER PERCEPTION · CONTROLLED GENERATION")}</span>
+          <h2>{T("Applied R&amp;D across operational AI, browser perception, and controlled generation.")}</h2>
           <div>
-            <p>The sequence continues automatically through the final three records.</p>
+            <p>{T("The sequence continues automatically through the final three records.")}</p>
             {controls}
           </div>
         </div>
@@ -2249,6 +2312,7 @@ function ResearchSection() {
 }
 
 function ContactDock() {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -2271,7 +2335,7 @@ function ContactDock() {
   }, [open]);
 
   return (
-    <aside className="vx-contact-dock" data-open={open} aria-label="Contact Yashwant">
+    <aside className="vx-contact-dock" data-open={open} aria-label={T("Contact Yashwant")}>
       {open ? (
         <div
           ref={drawerRef}
@@ -2281,12 +2345,12 @@ function ContactDock() {
           aria-labelledby="vx-contact-panel-title"
         >
           <div>
-            <span>CONTACT</span>
-            <strong id="vx-contact-panel-title">Let&apos;s discuss the role, the system, or the research.</strong>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close contact panel">×</button>
+            <span>{t("Contact").toUpperCase() === t("Contact") ? t("Contact") : t("Contact")}</span>
+            <strong id="vx-contact-panel-title">{t("Let's discuss the role, the system, or the research.")}</strong>
+            <button type="button" onClick={() => setOpen(false)} aria-label={T("Close contact panel")}>×</button>
           </div>
           <ContactChannels />
-          <a className="vx-short-call" href={SHORT_CALL_HREF}>Request a 15-minute call <i aria-hidden="true">↗</i></a>
+          <a className="vx-short-call" href={SHORT_CALL_HREF}>{t("Request a 15-minute call")} <i aria-hidden="true">↗</i></a>
         </div>
       ) : null}
       <button
@@ -2296,10 +2360,10 @@ function ContactDock() {
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls="vx-contact-panel"
-        aria-label={open ? "Close contact panel" : "Open contact panel"}
+        aria-label={open ? T("Close contact panel") : T("Open contact panel")}
       >
         <i aria-hidden="true" />
-        <span>{open ? "Close contact" : "Contact me"}</span>
+        <span>{t(open ? T("Close contact") : T("Contact me"))}</span>
         <b aria-hidden="true">{open ? "×" : "↗"}</b>
       </button>
     </aside>
@@ -2307,27 +2371,28 @@ function ContactDock() {
 }
 
 function ContactSection() {
+  const t = useT();
   return (
     <section id="contact" className="vx-contact-page vx-page" data-vx-page>
       <div className="vx-section-shell">
         <div className="vx-contact-page-copy">
-          <span>OPEN TO AI SYSTEMS, AGENT, AND APPLICATION ENGINEERING ROLES</span>
-          <h2>If the work is technically ambitious, I&apos;d like to hear about it.</h2>
-          <p>Reach me directly for a relevant role, an applied AI system, a research collaboration, or a short technical conversation.</p>
+          <span>{t("OPEN TO AI SYSTEMS, AGENT, AND APPLICATION ENGINEERING ROLES")}</span>
+          <h2>{t("If the work is technically ambitious, I'd like to hear about it.")}</h2>
+          <p>{t("Reach me directly for a relevant role, an applied AI system, a research collaboration, or a short technical conversation.")}</p>
           <div className="vx-contact-page-actions">
-            <a className="vx-primary-action" href={SHORT_CALL_HREF}>Request a 15-minute call ↗</a>
-            <ResumeMenu label="Open résumé" />
-            <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">Open GitHub ↗</a>
+            <a className="vx-primary-action" href={SHORT_CALL_HREF}>{t("Request a 15-minute call ↗")}</a>
+            <ResumeMenu label={T("Open résumé")} />
+            <a href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">{t("Open GitHub ↗")}</a>
           </div>
         </div>
         <div className="vx-contact-page-card">
           <ContactChannels />
-          <small>WeChat: Yashwant_Bhyri · QR available on request.</small>
+          <small>{t("WeChat: Yashwant_Bhyri · QR available on request.")}</small>
         </div>
         <footer className="vx-contact-footer">
-          <div><strong>Yashwant Bhyri</strong><span>AI Systems · AI Agents · Full-Stack AI / ML</span></div>
-          <p>Built to make the engineering visible.</p>
-          <a href="#top">Return to the introduction ↑</a>
+          <div><strong>{T("Yashwant Bhyri")}</strong><span>{t("AI Systems · AI Agents · Full-Stack AI / ML")}</span></div>
+          <p>{t("Built to make the engineering visible.")}</p>
+          <a href="#top">{t("Return to the introduction ↑")}</a>
         </footer>
       </div>
     </section>
@@ -2364,20 +2429,46 @@ function useExperienceMotion(shellRef: React.RefObject<HTMLElement | null>, redu
   }, [reducedMotion, shellRef]);
 }
 
-export function PortfolioV2() {
+export function PortfolioV2({ lang = "en" }: { lang?: Lang } = {}) {
+  return (
+    <LangProvider lang={lang}>
+      <PortfolioShell />
+    </LangProvider>
+  );
+}
+
+const NAV = [
+  { href: "#profile", label: "Profile" },
+  { href: "#projects", label: "Projects" },
+  { href: "#antigravity", label: "Interview AI" },
+  { href: "#filmora", label: "Filmora" },
+  { href: "#mindscape", label: "Medical AI" },
+  { href: "#research", label: "Research" },
+  { href: "#capabilities", label: "Capabilities" },
+  { href: "#contact", label: "Contact" },
+] as const;
+
+function PortfolioShell() {
+  const t = useT();
   const reducedMotion = useReducedMotion();
   const shellRef = useRef<HTMLElement>(null);
   useExperienceMotion(shellRef, reducedMotion);
   return (
     <>
-      <a className="vx-skip-link" href="#profile">Skip to portfolio content</a>
+      <a className="vx-skip-link" href="#profile">{t("Skip to portfolio content")}</a>
       <main ref={shellRef} className="vx-shell">
         <div className="vx-progress" aria-hidden="true"><i /></div>
         <div className="vx-cursor-light" aria-hidden="true" />
+        <LanguageGate basePath={process.env.NEXT_PUBLIC_BASE_PATH ?? ""} />
         <header className="vx-header">
-          <a href="#top" className="vx-brand" aria-label="Yashwant Bhyri, portfolio home"><span>YB</span><div><strong>Yashwant Bhyri</strong><small>AI systems &amp; application engineer</small></div></a>
-          <nav aria-label="Portfolio navigation"><a href="#profile">Profile</a><a href="#projects">Projects</a><a href="#antigravity">Interview AI</a><a href="#filmora">Filmora</a><a href="#mindscape">Medical AI</a><a href="#research">Research</a><a href="#capabilities">Capabilities</a><a href="#contact">Contact</a></nav>
-          <ResumeMenu className="vx-header-resume" label="Résumé" />
+          <a href="#top" className="vx-brand" aria-label={t("Yashwant Bhyri, portfolio home")}><span>{T("YB")}</span><div><strong>{T("Yashwant Bhyri")}</strong><small>{t("AI systems & application engineer")}</small></div></a>
+          <nav aria-label={t("Portfolio navigation")}>{TD(NAV).map((item) => (
+            <a key={item.href} href={item.href}>{t(item.label)}</a>
+          ))}</nav>
+          <div className="vx-header-end">
+            <LangToggle />
+            <ResumeMenu className="vx-header-resume" label={T("Résumé")} />
+          </div>
         </header>
         <Hero reducedMotion={reducedMotion} />
         {/* Beat one: the light frame — roles and the five engineering areas. */}

@@ -1,5 +1,7 @@
 "use client";
 
+import { T, TD } from "../i18n";
+
 import { ChapterShell, type StepDef } from "./chapter-shell";
 import { useSim, ph, eph, pulse, noise, bez, typed, caret, rise, Wave, LiveNet, q } from "./live";
 
@@ -31,10 +33,10 @@ export function PipelineGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={24} y={120} className="svg-sub">SESSION AUDIO · TEXT · CHECK-INS</text>
-      <text x={616} y={120} textAnchor="end" className="svg-sub">CLINICIAN HANDOFF</text>
+      <text x={24} y={120} className="svg-sub">{T("SESSION AUDIO · TEXT · CHECK-INS")}</text>
+      <text x={616} y={120} textAnchor="end" className="svg-sub">{T("CLINICIAN HANDOFF")}</text>
 
-      {STAGES.map((s, i) => {
+      {TD(STAGES).map((s, i) => {
         const isActive = t > 600 && i === active && t < 7600;
         return (
           <g key={s}>
@@ -51,29 +53,29 @@ export function PipelineGraphic({ a }: { a: boolean }) {
       })}
 
       {t > 600 && t < 8400 && <circle cx={q(mainX)} cy={y - 18} r={6} className="lv-pulse" />}
-      {t > 600 && t < 8400 && <text x={q(mainX)} y={y - 32} textAnchor="middle" className="svg-sub tiny">session</text>}
+      {t > 600 && t < 8400 && <text x={q(mainX)} y={y - 32} textAnchor="middle" className="svg-sub tiny">{T("session")}</text>}
       {t >= 8400 && (
         <g className="lv-stamp" style={rise(eph(t, 8400, 8800), 6)}>
           <rect x={470} y={252} width={150} height={38} rx={9} />
-          <text x={545} y={276} textAnchor="middle" className="svg-label small">validated ✓</text>
+          <text x={545} y={276} textAnchor="middle" className="svg-label small">{T("validated ✓")}</text>
         </g>
       )}
 
       {t > 2200 && dropP < 1 && (
         <g style={{ opacity: 1 - dropP }}>
           <circle cx={q(sX)} cy={q(y + 66 + dropP * 60)} r={5} className="lv-pulse bad" />
-          <text x={q(sX)} y={q(y + 84 + dropP * 60)} textAnchor="middle" className="svg-sub">{blocked ? "ungrounded claim" : "draft claim"}</text>
+          <text x={q(sX)} y={q(y + 84 + dropP * 60)} textAnchor="middle" className="svg-sub">{blocked ? T("ungrounded claim") : T("draft claim")}</text>
         </g>
       )}
       {blocked && dropP < 1 && (
-        <text x={stageX(5)} y={y + 110} textAnchor="middle" className="tick bad" style={rise(eph(t, 6600, 7000), 4)}>✗ blocked at the gate</text>
+        <text x={stageX(5)} y={y + 110} textAnchor="middle" className="tick bad" style={rise(eph(t, 6600, 7000), 4)}>{T("✗ blocked at the gate")}</text>
       )}
 
       <text x={24} y={356} className="svg-note">
-        The session advances only when each stage can support the next one.
+        {T("The session advances only when each stage can support the next one.")}
       </text>
       <text x={24} y={374} className="svg-note">
-        Unsupported claims stop at validation; only traceable context reaches clinician review.
+        {T("Unsupported claims stop at validation; only traceable context reaches clinician review.")}
       </text>
     </svg>
   );
@@ -106,11 +108,11 @@ export function CaptureGraphic({ a }: { a: boolean }) {
   // that have already landed. When k advances, the prior chip becomes row 3.
   const traceablePackets = [3, 2, 1].map((offset) => {
     const packetId = latestPacket - offset;
-    const moment = CAPTURE_MOMENTS[((packetId % CAPTURE_MOMENTS.length) + CAPTURE_MOMENTS.length) % CAPTURE_MOMENTS.length];
+    const moment = TD(CAPTURE_MOMENTS)[((packetId % CAPTURE_MOMENTS.length) + CAPTURE_MOMENTS.length) % CAPTURE_MOMENTS.length];
     return {
       tag: `A-${packetId}`,
       words: moment.words,
-      signal: `${sessionClock(18 + packetId - 196)} · ${moment.cue}`,
+      signal: `${sessionClock(18 + packetId - 196)} · ${T(moment.cue)}`,
     };
   });
 
@@ -118,19 +120,19 @@ export function CaptureGraphic({ a }: { a: boolean }) {
     <svg viewBox="0 0 640 420" className="op-svg">
       <g className="lv-node is-live">
         <rect x={30} y={40} width={168} height={78} rx={12} />
-        <text x={114} y={68} textAnchor="middle" className="svg-label small">SIMULATED SESSION</text>
-        <text x={114} y={86} textAnchor="middle" className="svg-mono">WebRTC audio</text>
-        <text x={114} y={102} textAnchor="middle" className="svg-sub">16 kHz mono</text>
+        <text x={114} y={68} textAnchor="middle" className="svg-label small">{T("SIMULATED SESSION")}</text>
+        <text x={114} y={86} textAnchor="middle" className="svg-mono">{T("WebRTC audio")}</text>
+        <text x={114} y={102} textAnchor="middle" className="svg-sub">{T("16 kHz mono")}</text>
       </g>
       <circle cx={48} cy={58} r={4} className="lv-pulse bad" style={{ opacity: 0.4 + 0.6 * pulse(t, 900) }} />
 
       {/* rolling buffer — the wave IS the last second of audio */}
       <g className="lv-box hot">
         <rect x={30} y={140} width={580} height={110} rx={12} />
-        <text x={48} y={164} className="svg-sub">ROLLING BUFFER · last 1000 ms, always live</text>
+        <text x={48} y={164} className="svg-sub">{T("ROLLING BUFFER · last 1000 ms, always live")}</text>
         <Wave x={48} y={172} w={520} h={48} bars={42} t={t} on={1} />
-        {["−1000", "−750", "−500", "−250", "NOW"].map((m2, i) => (
-          <text key={m2} x={48 + i * 130} y={242} className="svg-sub">{m2}{i < 4 ? " ms" : ""}</text>
+        {["−1000", "−750", "−500", "−250", T("NOW")].map((m2, i) => (
+          <text key={m2} x={48 + i * 130} y={242} className="svg-sub">{m2}{i < 4 ? T(" ms") : ""}</text>
         ))}
         <line x1={568} y1={168} x2={568} y2={224} className="lv-playhead" style={{ opacity: 0.5 + 0.5 * pulse(t, 700) }} />
         {/* V2's analysis window, sweeping the buffer */}
@@ -153,7 +155,7 @@ export function CaptureGraphic({ a }: { a: boolean }) {
           <text x={0} y={4} textAnchor="middle" className="svg-mono">A-{latestPacket}</text>
         </g>
       )}
-      <text x={30} y={282} className="svg-sub">SOURCE-LINKED PACKETS · DERIVED SIGNALS RETAIN THE SPOKEN WORDS</text>
+      <text x={30} y={282} className="svg-sub">{T("SOURCE-LINKED PACKETS · DERIVED SIGNALS RETAIN THE SPOKEN WORDS")}</text>
       {traceablePackets.map((packet, index) => (
         <g key={packet.tag} className={`lv-chip ${index === 2 && k > 0 && flyP < 0.28 ? "win" : ""}`}>
           <rect x={30} y={292 + index * 28} width={580} height={24} rx={7} />
@@ -164,8 +166,8 @@ export function CaptureGraphic({ a }: { a: boolean }) {
         </g>
       ))}
 
-      <text x={30} y={394} className="svg-note">New packets replace older rows as the session advances.</text>
-      <text x={30} y={410} className="svg-note">Every derived signal remains linked to its timestamped source words.</text>
+      <text x={30} y={394} className="svg-note">{T("New packets replace older rows as the session advances.")}</text>
+      <text x={30} y={410} className="svg-note">{T("Every derived signal remains linked to its timestamped source words.")}</text>
     </svg>
   );
 }
@@ -197,7 +199,7 @@ export function PerceiveGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={40} y={40} className="svg-sub">SYNCHRONIZED AUDIO · SIMULATED STREAM · THREE SIGNALS</text>
+      <text x={40} y={40} className="svg-sub">{T("SYNCHRONIZED AUDIO · SIMULATED STREAM · THREE SIGNALS")}</text>
       <Wave x={40} y={50} w={250} h={30} bars={26} t={t} on={t % 3400 < 2500 ? 1 : 0.1} />
 
       {/* branch edges firing */}
@@ -208,22 +210,22 @@ export function PerceiveGraphic({ a }: { a: boolean }) {
       {/* linguistic — a real stretch of session language */}
       <g className="lv-box">
         <rect x={40} y={112} width={180} height={166} rx={11} />
-        <text x={54} y={136} className="svg-sub">LINGUISTIC</text>
-        {LINGUISTIC.map((ln, i) => (
+        <text x={54} y={136} className="svg-sub">{T("LINGUISTIC")}</text>
+        {TD(LINGUISTIC).map((ln, i) => (
           <text key={ln.text} x={54} y={160 + i * 26} className="svg-mono small">
             {typed(ln.text, t, ln.at, ln.at + 1900)}
             {t > ln.at && t < ln.at + 2000 ? caret(t) : ""}
           </text>
         ))}
-        <text x={54} y={240} className="svg-sub" style={{ opacity: t > 7800 ? 1 : 0.4 }}>→ embedded per sentence</text>
-        <text x={54} y={262} className="svg-sub">transcript embeddings</text>
+        <text x={54} y={240} className="svg-sub" style={{ opacity: t > 7800 ? 1 : 0.4 }}>{T("→ embedded per sentence")}</text>
+        <text x={54} y={262} className="svg-sub">{T("transcript embeddings")}</text>
       </g>
 
       {/* event tokens — the paralinguistic stream */}
       <g className="lv-box">
         <rect x={230} y={112} width={180} height={166} rx={11} />
-        <text x={244} y={136} className="svg-sub">EVENT TOKENS</text>
-        {EVENT_TOKENS.map((e2, i) => {
+        <text x={244} y={136} className="svg-sub">{T("EVENT TOKENS")}</text>
+        {TD(EVENT_TOKENS).map((e2, i) => {
           const p = eph(t, e2.at, e2.at + 400);
           const col = i % 2;
           const row = Math.floor(i / 2);
@@ -236,13 +238,13 @@ export function PerceiveGraphic({ a }: { a: boolean }) {
             </g>
           );
         })}
-        <text x={244} y={262} className="svg-sub">SenseVoice events</text>
+        <text x={244} y={262} className="svg-sub">{T("SenseVoice events")}</text>
       </g>
 
       {/* acoustic affect — live point on the valence/arousal plane */}
       <g className="lv-box">
         <rect x={420} y={112} width={180} height={166} rx={11} />
-        <text x={434} y={136} className="svg-sub">ACOUSTIC AFFECT</text>
+        <text x={434} y={136} className="svg-sub">{T("ACOUSTIC AFFECT")}</text>
         <g transform="translate(450,148)">
           <rect x={0} y={0} width={124} height={92} rx={6} className="lv-track" />
           <line x1={62} y1={0} x2={62} y2={92} className="lv-tick" style={{ opacity: 0.4 }} />
@@ -254,15 +256,15 @@ export function PerceiveGraphic({ a }: { a: boolean }) {
             return <circle key={g2} cx={q(70 - 34 * dr + 7 * Math.sin(td / 700))} cy={q(62 - 30 * dr + 6 * Math.cos(td / 900))} r={2.4} className="lv-pulse" style={{ opacity: 0.12 * (5 - g2) }} />;
           })}
           <circle cx={q(ax)} cy={q(ay)} r={4.4} className="lv-pulse" />
-          <text x={4} y={88} className="svg-sub">valence →</text>
-          <text x={4} y={12} className="svg-sub">arousal ↑</text>
+          <text x={4} y={88} className="svg-sub">{T("valence →")}</text>
+          <text x={4} y={12} className="svg-sub">{T("arousal ↑")}</text>
         </g>
-        <text x={434} y={262} className="svg-sub">Emotion2Vec+ space</text>
+        <text x={434} y={262} className="svg-sub">{T("Emotion2Vec+ space")}</text>
       </g>
 
-      <text x={40} y={320} className="svg-sub" style={{ opacity: eph(t, 8600, 9100) }}>alignment tick ✓ — three channels, one clock → fusion</text>
+      <text x={40} y={320} className="svg-sub" style={{ opacity: eph(t, 8600, 9100) }}>{T("alignment tick ✓ — three channels, one clock → fusion")}</text>
       <text x={40} y={380} className="svg-note">
-        Three timestamped channels describe the same moment; none is treated as a diagnosis on its own.
+        {T("Three timestamped channels describe the same moment; none is treated as a diagnosis on its own.")}
       </text>
     </svg>
   );
@@ -277,17 +279,17 @@ export function FuseGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={30} y={40} className="svg-sub">GATED MULTIMODAL FUSION · edges firing layer to layer</text>
+      <text x={30} y={40} className="svg-sub">{T("GATED MULTIMODAL FUSION · edges firing layer to layer")}</text>
       <LiveNet
         x={30}
         y={54}
         w={580}
         h={168}
         inputs={[
-          { label: "text", value: "768d" },
-          { label: "events", value: "sparse" },
-          { label: "affect", value: "1024d" },
-          { label: "longitudinal", value: "state" },
+          { label: T("text"), value: "768d" },
+          { label: T("events"), value: T("sparse") },
+          { label: T("affect"), value: "1024d" },
+          { label: T("longitudinal"), value: "state" },
         ]}
         hidden={6}
         core="GMU"
@@ -299,8 +301,8 @@ export function FuseGraphic({ a }: { a: boolean }) {
       {/* the BSV — named dimensions with live magnitudes, not an audio bar */}
       <g className="lv-box hot">
         <rect x={30} y={252} width={580} height={104} rx={12} />
-        <text x={48} y={276} className="svg-sub">BEHAVIORAL STATE VECTOR · SIMULATED SESSION STATE</text>
-        {["sleep debt", "affect", "speech", "adherence", "energy", "risk"].map((dim, i) => {
+        <text x={48} y={276} className="svg-sub">{T("BEHAVIORAL STATE VECTOR · SIMULATED SESSION STATE")}</text>
+        {[T("sleep debt"), T("affect"), T("speech"), T("adherence"), T("energy"), T("risk")].map((dim, i) => {
           const v = 0.25 + 0.65 * noise(i * 3 + 1, t / 2.6);
           const on2 = eph(t, 1400 + i * 150, 2100 + i * 150);
           return (
@@ -311,11 +313,11 @@ export function FuseGraphic({ a }: { a: boolean }) {
             </g>
           );
         })}
-        <text x={48} y={346} className="svg-sub">One session-state representation is reused by retrieval, reasoning, and review.</text>
+        <text x={48} y={346} className="svg-sub">{T("One session-state representation is reused by retrieval, reasoning, and review.")}</text>
       </g>
 
       <text x={30} y={392} className="svg-note">
-        Fusion weighs each synchronized signal before evidence retrieval begins.
+        {T("Fusion weighs each synchronized signal before evidence retrieval begins.")}
       </text>
     </svg>
   );
@@ -344,7 +346,7 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = MINDSCAPE_STEP_MS;
   const t = el % L;
-  const qtext = typed("persistent low mood + anhedonia", t, 200, 1300);
+  const qtext = typed(T("persistent low mood + anhedonia"), t, 200, 1300);
   const mergeP = eph(t, 5000, 6200);
   const scanStart = 6600;
   const scanRow = Math.min(4, Math.floor(Math.max(0, t - scanStart) / 480));
@@ -354,14 +356,14 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
     <svg viewBox="0 0 640 420" className="op-svg">
       <g className="lv-box hot">
         <rect x={30} y={24} width={330} height={44} rx={10} />
-        <text x={44} y={42} className="svg-sub">QUERY STATE · BSV + transcript</text>
+        <text x={44} y={42} className="svg-sub">{T("QUERY STATE · BSV + transcript")}</text>
         <text x={44} y={59} className="svg-mono">“{qtext}{t < 1400 ? caret(t) : ""}”</text>
       </g>
 
       <g className="lv-box">
         <rect x={380} y={24} width={240} height={54} rx={10} />
-        <text x={392} y={42} className="svg-sub">RETRIEVAL AGENT · TRUSTED CORPUS</text>
-        <text x={392} y={62} className="svg-sub">references + session notes</text>
+        <text x={392} y={42} className="svg-sub">{T("RETRIEVAL AGENT · TRUSTED CORPUS")}</text>
+        <text x={392} y={62} className="svg-sub">{T("references + session notes")}</text>
         {Array.from({ length: 5 }).map((_, index) => {
           const active = index === Math.floor(t / 260) % 5;
           return (
@@ -376,7 +378,7 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
 
       {/* DENSE lane: HNSW descent — coarse top layer, greedy hops, dense floor */}
       <g style={{ opacity: mergeP > 0 ? Math.max(0.3, 1 - mergeP) : 1 }}>
-        <text x={30} y={96} className="svg-sub">DENSE · MedCPT over HNSW/Faiss</text>
+        <text x={30} y={96} className="svg-sub">{T("DENSE · MedCPT")}</text>
         <g transform="translate(36,106)">
           <rect x={0} y={0} width={172} height={162} rx={10} className="lv-track" />
           {HNSW_LAYERS.map((ly, li) => (
@@ -416,15 +418,15 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
             );
           })}
           <text x={86} y={156} textAnchor="middle" className="svg-sub">
-            {t < 1600 ? "vector index ready" : hop < 4 ? "descending layers…" : "2 source-linked neighbors"}
+            {t < 1600 ? T("vector index ready") : hop < 4 ? T("descending layers…") : T("2 source-linked neighbors")}
           </text>
         </g>
       </g>
 
       {/* LEXICAL lane: BM25 score bars filling */}
       <g style={{ opacity: mergeP > 0 ? Math.max(0.3, 1 - mergeP) : 1 }}>
-        <text x={232} y={96} className="svg-sub">LEXICAL · BM25 SAMPLE RANKING</text>
-        {BM25_ROWS.map(([label, v], i) => {
+        <text x={232} y={96} className="svg-sub">{T("LEXICAL · BM25 SAMPLE RANKING")}</text>
+        {TD(BM25_ROWS).map(([label, v], i) => {
           const p = eph(t, 1800 + i * 320, 2600 + i * 320);
           return (
             <g key={label}>
@@ -437,8 +439,8 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
         })}
       </g>
       {/* RRF merge — ranked lists visibly interleave (D=dense, L=lexical) → rerank sweep */}
-      <text x={430} y={96} className="svg-sub">RRF MERGE → BioLinkBERT RERANK</text>
-      {MERGED.map((m, i) => {
+      <text x={412} y={96} className="svg-sub">{T("RRF → BioLinkBERT")}</text>
+      {TD(MERGED).map((m, i) => {
         const p = eph(t, 5100 + i * 240, 5500 + i * 240);
         if (p <= 0) return null;
         const scanning = scanRow === i && t > scanStart && t < scanStart + 5 * 480;
@@ -455,10 +457,10 @@ export function RetrievalGraphic({ a }: { a: boolean }) {
           </g>
         );
       })}
-      <text x={430} y={288} className="svg-sub" style={{ opacity: t > 9200 ? 1 : 0 }}>evidence set → reasoning ✓</text>
+      <text x={430} y={288} className="svg-sub" style={{ opacity: t > 9200 ? 1 : 0 }}>{T("evidence set → reasoning ✓")}</text>
 
-      <text x={30} y={330} className="svg-note">Dense retrieval finds related session context; lexical search finds exact clinical language.</text>
-      <text x={30} y={348} className="svg-note">Rank fusion and biomedical reranking return a compact, source-linked evidence set.</text>
+      <text x={30} y={330} className="svg-note">{T("Dense retrieval finds related session context; lexical search finds exact clinical language.")}</text>
+      <text x={30} y={348} className="svg-note">{T("Rank fusion and biomedical reranking return a compact, source-linked evidence set.")}</text>
     </svg>
   );
 }
@@ -495,17 +497,17 @@ function EvidenceInset({ kind, x, y, t, lit }: { kind: string; x: number; y: num
         {[0, 1, 2, 3].map((i) => (
           <rect key={i} x={5} y={6 + i * 9} width={i === 2 ? 34 : 26} height={4} rx={2} className={i === 2 ? "lv-bar" : "lv-feedbar"} style={i === 2 ? { opacity: hitOn ? 1 : 0.5 } : undefined} />
         ))}
-        <text x={52} y={16} className="svg-sub">criteria</text>
-        <text x={52} y={30} className="tick ok">matched ✓</text>
+        <text x={52} y={16} className="svg-sub">{T("criteria")}</text>
+        <text x={52} y={30} className="tick ok">{T("matched ✓")}</text>
       </g>
     );
   }
   const u = (((t / 16) % 56) + 56) % 56;
   return (
     <g transform={`translate(${x},${y})`}>
-      <text x={0} y={12} className="svg-sub">“nothing feels fun”</text>
+      <text x={0} y={12} className="svg-sub">{T("“nothing feels fun”")}</text>
       <rect x={0} y={18} width={q(Math.min(56, u) * 1.9)} height={3} rx={1.5} className="lv-bar" />
-      <text x={0} y={36} className="svg-sub">turn 14 matched</text>
+      <text x={0} y={36} className="svg-sub">{T("turn 14 matched")}</text>
     </g>
   );
 }
@@ -520,11 +522,11 @@ export function ReasonGraphic({ a }: { a: boolean }) {
     <svg viewBox="0 0 640 420" className="op-svg">
       <g className="lv-box hot">
         <rect x={40} y={46} width={560} height={84} rx={12} />
-        <text x={58} y={74} className="svg-sub">DRAFT CLINICAL OBSERVATION · SOURCE-LINKED AS IT IS WRITTEN</text>
+        <text x={58} y={74} className="svg-sub">{T("DRAFT CLINICAL OBSERVATION · SOURCE-LINKED AS IT IS WRITTEN")}</text>
         <text x={58} y={104} className="svg-mono">“{draft}{t < 6200 ? caret(t) : ""}”</text>
       </g>
 
-      {EVIDENCE.map((e2, i) => {
+      {TD(EVIDENCE).map((e2, i) => {
         const lit = t > e2.trigger;
         const p = eph(t, e2.trigger, e2.trigger + 450);
         return (
@@ -548,9 +550,9 @@ export function ReasonGraphic({ a }: { a: boolean }) {
 
       {/* structured output lands: hypothesis · uncertainty · follow-ups */}
       {[
-        ["hypothesis", "bounded"],
-        ["uncertainty", "visible"],
-        ["follow-ups", "3 questions"],
+        [T("hypothesis"), T("bounded")],
+        [T("uncertainty"), T("visible")],
+        [T("follow-ups"), T("3 questions")],
       ].map(([k2, v], i) => (
         <g key={k2} className="lv-chip win" style={rise(eph(t, 6800 + i * 380, 7250 + i * 380), 8)}>
           <rect x={60 + i * 180} y={358} width={164} height={34} rx={9} />
@@ -560,7 +562,7 @@ export function ReasonGraphic({ a }: { a: boolean }) {
       ))}
 
       <text x={40} y={412} className="svg-note">
-        Every observation retains evidence and uncertainty; the system does not issue a diagnosis.
+        {T("Every observation retains evidence and uncertainty; the system does not issue a diagnosis.")}
       </text>
     </svg>
   );
@@ -579,17 +581,17 @@ export function ValidateGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = MINDSCAPE_STEP_MS;
   const t = el % L;
-  const active = V_CLAIMS.findIndex((c) => t >= c.at && t < c.at + 3200);
-  const clauseFor = active >= 0 ? V_CLAIMS[active] : null;
+  const active = TD(V_CLAIMS).findIndex((c) => t >= c.at && t < c.at + 3200);
+  const clauseFor = active >= 0 ? TD(V_CLAIMS)[active] : null;
   // which rulebook line the retrieval lands on, per claim
   const clauseLine = active === 0 ? 0 : active === 1 ? 3 : 1;
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={30} y={32} className="lv-phase small">VALIDATION REPLAY · EVIDENCE SUPPORT + FIXED SAFETY RULES</text>
+      <text x={30} y={32} className="lv-phase small">{T("VALIDATION REPLAY · EVIDENCE SUPPORT + FIXED SAFETY RULES")}</text>
 
       {/* claims queue, left */}
-      {V_CLAIMS.map((c, i) => {
+      {TD(V_CLAIMS).map((c, i) => {
         const phase = t < c.at ? "wait" : t < c.at + 1100 ? "retrieve" : t < c.at + 2300 ? "check" : "done";
         return (
           <g key={c.text}>
@@ -597,7 +599,7 @@ export function ValidateGraphic({ a }: { a: boolean }) {
               <rect x={30} y={54 + i * 58} width={190} height={44} rx={10} />
               <text x={44} y={73 + i * 58} className="svg-mono">{c.text}</text>
               <text x={44} y={90 + i * 58} className="svg-sub">
-                {phase === "wait" ? "queued" : phase === "retrieve" ? "finding evidence…" : phase === "check" ? "checking support…" : c.verdict === "pass" ? `✓ ${c.clause}` : `✗ ${c.clause}`}
+                {phase === "wait" ? T("queued") : phase === "retrieve" ? T("finding evidence…") : phase === "check" ? T("checking support…") : c.verdict === "pass" ? `✓ ${c.clause}` : `✗ ${c.clause}`}
               </text>
             </g>
             {(phase === "retrieve" || phase === "check") && (
@@ -610,9 +612,9 @@ export function ValidateGraphic({ a }: { a: boolean }) {
       {/* THE RULEBOOK — DSM-5 + policy, an actual open book being consulted */}
       <g className="lv-box hot">
         <rect x={296} y={54} width={210} height={200} rx={12} />
-        <text x={312} y={78} className="svg-sub">TRUSTED REFERENCES + POLICY</text>
-        {RULEBOOK_LINES.map((ln, i) => {
-          const hit = clauseFor && i === clauseLine && t > V_CLAIMS[active].at + 500;
+        <text x={312} y={78} className="svg-sub">{T("TRUSTED REFERENCES + POLICY")}</text>
+        {TD(RULEBOOK_LINES).map((ln, i) => {
+          const hit = clauseFor && i === clauseLine && t > TD(V_CLAIMS)[active].at + 500;
           return (
             <g key={ln}>
               {hit && <rect x={306} y={88 + i * 30} width={190} height={24} rx={6} className="scanline" style={{ opacity: 0.5 + 0.4 * pulse(t, 400) }} />}
@@ -620,19 +622,19 @@ export function ValidateGraphic({ a }: { a: boolean }) {
             </g>
           );
         })}
-        <text x={312} y={246} className="svg-sub">{clauseFor && t > V_CLAIMS[active].at + 500 ? `matched: ${clauseFor.clause}` : "awaiting claim…"}</text>
+        <text x={312} y={246} className="svg-sub">{clauseFor && t > TD(V_CLAIMS)[active].at + 500 ? `matched: ${clauseFor.clause}` : T("awaiting claim…")}</text>
       </g>
 
       {/* verdict lane, right */}
       <g className="lv-box">
         <rect x={528} y={54} width={92} height={200} rx={12} />
-        <text x={574} y={78} textAnchor="middle" className="svg-sub">VERDICTS</text>
-        {V_CLAIMS.map((c, i) => {
+        <text x={574} y={78} textAnchor="middle" className="svg-sub">{T("VERDICTS")}</text>
+        {TD(V_CLAIMS).map((c, i) => {
           const done = t > c.at + 2300;
           return (
             <g key={c.text} style={rise(done ? 1 : 0, 6)}>
-              <text x={574} y={106 + i * 44} textAnchor="middle" className={c.verdict === "pass" ? "tick ok" : "tick bad"}>{c.verdict === "pass" ? "✓ pass" : "✗ block"}</text>
-              <text x={574} y={120 + i * 44} textAnchor="middle" className="svg-sub">{c.verdict === "pass" ? "cited" : "removed"}</text>
+              <text x={574} y={106 + i * 44} textAnchor="middle" className={c.verdict === "pass" ? "tick ok" : "tick bad"}>{c.verdict === "pass" ? T("✓ pass") : T("✗ block")}</text>
+              <text x={574} y={120 + i * 44} textAnchor="middle" className="svg-sub">{c.verdict === "pass" ? T("cited") : T("removed")}</text>
             </g>
           );
         })}
@@ -641,21 +643,21 @@ export function ValidateGraphic({ a }: { a: boolean }) {
       {/* the double gate beneath: model check + deterministic rules */}
       <g className="lv-box">
         <rect x={30} y={274} width={476} height={72} rx={10} />
-        <text x={46} y={296} className="svg-sub">TWO RELEASE GATES</text>
-        <text x={46} y={316} className="svg-mono">1 · NLI evidence-support check</text>
-        <text x={490} y={316} textAnchor="end" className="tick ok">{t % 3000 < 1600 ? "checking…" : "scored ✓"}</text>
-        <text x={46} y={334} className="svg-mono">2 · deterministic criteria + risk-language rules</text>
-        <text x={490} y={334} textAnchor="end" className="tick ok">{t % 3000 < 2300 ? "checking…" : "enforced ✓"}</text>
+        <text x={46} y={296} className="svg-sub">{T("TWO RELEASE GATES")}</text>
+        <text x={46} y={316} className="svg-mono">{T("1 · NLI evidence-support check")}</text>
+        <text x={490} y={316} textAnchor="end" className="tick ok">{t % 3000 < 1600 ? T("checking…") : T("scored ✓")}</text>
+        <text x={46} y={334} className="svg-mono">{T("2 · deterministic criteria + risk-language rules")}</text>
+        <text x={490} y={334} textAnchor="end" className="tick ok">{t % 3000 < 2300 ? T("checking…") : T("enforced ✓")}</text>
       </g>
       <g className="lv-chip">
         <rect x={528} y={274} width={92} height={72} rx={10} />
         <text x={574} y={300} textAnchor="middle" className="svg-mono">2 ✓ · 1 ✗</text>
-        <text x={574} y={318} textAnchor="middle" className="svg-sub">this replay</text>
-        <text x={574} y={336} textAnchor="middle" className="tick ok" style={{ opacity: eph(t, 10200, 10700) }}>cited ✓</text>
+        <text x={574} y={318} textAnchor="middle" className="svg-sub">{T("this replay")}</text>
+        <text x={574} y={336} textAnchor="middle" className="tick ok" style={{ opacity: eph(t, 10200, 10700) }}>{T("cited ✓")}</text>
       </g>
 
-      <text x={30} y={376} className="svg-note">A claim passes only when evidence and fixed rules support it.</text>
-      <text x={30} y={394} className="svg-note">Failed claims are removed before review; the clinician still owns the final judgment.</text>
+      <text x={30} y={376} className="svg-note">{T("A claim passes only when evidence and fixed rules support it.")}</text>
+      <text x={30} y={394} className="svg-note">{T("Failed claims are removed before review; the clinician still owns the final judgment.")}</text>
     </svg>
   );
 }
@@ -668,23 +670,23 @@ export function ReviewGraphic({ a }: { a: boolean }) {
   const t = el % L;
   const reviewStep = Math.min(2, Math.floor(t / 2200));
   const sources = [
-    { id: "A-197", lines: ["“I have felt low", "most of this week.”"], support: "session evidence" },
-    { id: "R-04", lines: ["Low-mood pattern", "requires follow-up."], support: "retrieved reference" },
-    { id: "V-02", lines: ["Evidence supports a", "bounded observation."], support: "validation gate" },
+    { id: "A-197", lines: [T("“I have felt low"), T("most of this week.”")], support: T("session evidence") },
+    { id: "R-04", lines: [T("Low-mood pattern"), T("requires follow-up.")], support: T("retrieved reference") },
+    { id: "V-02", lines: [T("Evidence supports a"), T("bounded observation.")], support: T("validation gate") },
   ];
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
       <g className="lv-box hot">
         <rect x={24} y={20} width={592} height={42} rx={10} />
-        <text x={40} y={39} className="svg-label small">CLINICIAN REVIEW SURFACE</text>
-        <text x={40} y={54} className="svg-sub">source → supported claim → uncertainty → human action</text>
-        <text x={600} y={46} textAnchor="end" className="tick ok">HUMAN-OWNED ✓</text>
+        <text x={40} y={39} className="svg-label small">{T("CLINICIAN REVIEW SURFACE")}</text>
+        <text x={40} y={54} className="svg-sub">{T("source → supported claim → uncertainty → human action")}</text>
+        <text x={600} y={46} textAnchor="end" className="tick ok">{T("HUMAN-OWNED ✓")}</text>
       </g>
 
       <g className="lv-box">
         <rect x={24} y={78} width={260} height={258} rx={12} />
-        <text x={40} y={101} className="svg-sub">TRACEABLE SOURCE PACKET</text>
+        <text x={40} y={101} className="svg-sub">{T("TRACEABLE SOURCE PACKET")}</text>
         {sources.map((source, index) => (
           <g key={source.id} className={`lv-chip ${reviewStep >= index ? "win" : ""}`} style={rise(eph(t, 500 + index * 700, 1050 + index * 700), 6)}>
             <rect x={38} y={114 + index * 64} width={232} height={54} rx={8} />
@@ -695,34 +697,34 @@ export function ReviewGraphic({ a }: { a: boolean }) {
             <text x={96} y={160 + index * 64} className="svg-sub">{source.support}</text>
           </g>
         ))}
-        <text x={40} y={320} className="svg-sub">Every claim opens its source packet.</text>
+        <text x={40} y={320} className="svg-sub">{T("Every claim opens its source packet.")}</text>
       </g>
 
       <g className="lv-box hot">
         <rect x={300} y={78} width={316} height={158} rx={12} />
-        <text x={318} y={101} className="svg-sub">SUPPORTED REVIEW STATEMENT</text>
-        <text x={318} y={126} className="svg-label">Recent sessions show a persistent</text>
-        <text x={318} y={143} className="svg-label">low-mood pattern for follow-up.</text>
-        <text x={318} y={162} className="svg-mono">evidence linked · uncertainty retained</text>
-        <text x={318} y={178} className="svg-mono">longitudinal context</text>
+        <text x={318} y={101} className="svg-sub">{T("SUPPORTED REVIEW STATEMENT")}</text>
+        <text x={318} y={126} className="svg-label">{T("Recent sessions show a persistent")}</text>
+        <text x={318} y={143} className="svg-label">{T("low-mood pattern for follow-up.")}</text>
+        <text x={318} y={162} className="svg-mono">{T("evidence linked · uncertainty retained")}</text>
+        <text x={318} y={178} className="svg-mono">{T("longitudinal context")}</text>
         <g className="lv-chip win">
           <rect x={318} y={188} width={132} height={25} rx={7} />
-          <text x={384} y={204} textAnchor="middle" className="tick ok">SUPPORTED ✓</text>
+          <text x={384} y={204} textAnchor="middle" className="tick ok">{T("SUPPORTED ✓")}</text>
         </g>
         <g className="lv-chip">
           <rect x={460} y={188} width={138} height={25} rx={7} />
-          <text x={529} y={204} textAnchor="middle" className="svg-sub">UNCERTAINTY SHOWN</text>
+          <text x={529} y={204} textAnchor="middle" className="svg-sub">{T("UNCERTAINTY SHOWN")}</text>
         </g>
-        <text x={318} y={228} className="svg-sub">No autonomous diagnosis · clinician decides.</text>
+        <text x={318} y={228} className="svg-sub">{T("No autonomous diagnosis · clinician decides.")}</text>
       </g>
 
       <g className="lv-box">
         <rect x={300} y={250} width={316} height={86} rx={12} />
-        <text x={318} y={273} className="svg-sub">CLINICIAN ACTIONS</text>
+        <text x={318} y={273} className="svg-sub">{T("CLINICIAN ACTIONS")}</text>
         {[
-          { x: 318, label: "EDIT NOTE" },
-          { x: 410, label: "ASK FOLLOW-UP" },
-          { x: 516, label: "HOLD" },
+          { x: 318, label: T("EDIT NOTE") },
+          { x: 410, label: T("ASK FOLLOW-UP") },
+          { x: 516, label: T("HOLD") },
         ].map((action, index) => (
           <g key={action.label} className={`lv-chip ${reviewStep === index ? "win" : ""}`}>
             <rect x={action.x} y={286} width={index === 1 ? 98 : 82} height={30} rx={7} />
@@ -732,8 +734,8 @@ export function ReviewGraphic({ a }: { a: boolean }) {
       </g>
 
       <path d="M 284 198 C 292 198 292 144 300 144 M 284 262 C 292 262 292 294 300 294" className="lv-edge win" style={{ opacity: 0.65 }} />
-      <text x={24} y={374} className="svg-note">Source, support, uncertainty, and available clinician actions stay together.</text>
-      <text x={24} y={396} className="svg-note">Synthetic-data support prototype: the system proposes context; the clinician decides.</text>
+      <text x={24} y={374} className="svg-note">{T("Source, support, uncertainty, and available clinician actions stay together.")}</text>
+      <text x={24} y={396} className="svg-note">{T("Synthetic-data support prototype: the system proposes context; the clinician decides.")}</text>
     </svg>
   );
 }
@@ -752,16 +754,16 @@ export function ClinicalRefinementGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={24} y={28} className="lv-phase small">GOVERNED RL REFINEMENT · OFFLINE ONLY</text>
+      <text x={24} y={28} className="lv-phase small">{T("GOVERNED RL REFINEMENT · OFFLINE ONLY")}</text>
       <g className="lv-chip">
         <rect x={476} y={10} width={142} height={28} rx={8} />
-        <text x={547} y={28} textAnchor="middle" className="svg-mono">R&amp;D DESIGN TARGET</text>
+        <text x={547} y={28} textAnchor="middle" className="svg-mono">{T("R&amp;D DESIGN TARGET")}</text>
       </g>
 
       <g className="lv-box hot">
         <rect x={24} y={58} width={152} height={170} rx={11} />
-        <text x={100} y={82} textAnchor="middle" className="svg-label small">CLINICIAN ACTION</text>
-        {["accept context", "revise note", "request evidence", "escalate"].map((label, index) => (
+        <text x={100} y={82} textAnchor="middle" className="svg-label small">{T("CLINICIAN ACTION")}</text>
+        {[T("accept context"), T("revise note"), T("request evidence"), T("escalate")].map((label, index) => (
           <g key={label} className={`lv-chip ${queueP > (index + 1) / 5 ? "win" : ""}`}>
             <rect x={38} y={96 + index * 29} width={124} height={22} rx={6} />
             <text x={100} y={111 + index * 29} textAnchor="middle" className="svg-mono small">{label}</text>
@@ -771,16 +773,16 @@ export function ClinicalRefinementGraphic({ a }: { a: boolean }) {
 
       <g className={`lv-node ${queueP > 0 && evalP < 0.2 ? "is-live" : ""}`}>
         <rect x={208} y={58} width={154} height={78} rx={11} />
-        <text x={285} y={83} textAnchor="middle" className="svg-label small">GOVERNED QUEUE</text>
-        <text x={285} y={103} textAnchor="middle" className="svg-sub">approved · de-ID</text>
-        <text x={285} y={121} textAnchor="middle" className="tick ok">offline only ✓</text>
+        <text x={285} y={83} textAnchor="middle" className="svg-label small">{T("GOVERNED QUEUE")}</text>
+        <text x={285} y={103} textAnchor="middle" className="svg-sub">{T("approved · de-ID")}</text>
+        <text x={285} y={121} textAnchor="middle" className="tick ok">{T("offline only ✓")}</text>
       </g>
       <path d="M 176 142 C 190 142 194 98 208 98" className="lv-edge win" style={{ opacity: queueP }} />
 
       <g className="lv-box">
         <rect x={208} y={154} width={154} height={154} rx={11} />
-        <text x={285} y={178} textAnchor="middle" className="svg-label small">OFFLINE RL + EVAL</text>
-        {["retrieval grounding", "safety behavior", "latency + drift", "subgroup review"].map((label, index) => {
+        <text x={285} y={178} textAnchor="middle" className="svg-label small">{T("OFFLINE RL + EVAL")}</text>
+        {[T("retrieval grounding"), T("safety behavior"), T("latency + drift"), T("subgroup review")].map((label, index) => {
           const rowP = eph(t, 2600 + index * 480, 3300 + index * 480);
           return (
             <g key={label} style={{ opacity: 0.25 + rowP * 0.75 }}>
@@ -793,8 +795,8 @@ export function ClinicalRefinementGraphic({ a }: { a: boolean }) {
 
       <g className={`lv-node ${candidateP > 0 && gateP === 0 ? "is-live" : ""}`}>
         <rect x={400} y={58} width={216} height={112} rx={11} />
-        <text x={508} y={82} textAnchor="middle" className="svg-label small">VERSION CANDIDATE</text>
-        {["prompt policy", "retrieval path", "safety rules", "review UI"].map((label, index) => (
+        <text x={508} y={82} textAnchor="middle" className="svg-label small">{T("VERSION CANDIDATE")}</text>
+        {[T("prompt policy"), T("retrieval path"), T("safety rules"), T("review UI")].map((label, index) => (
           <g key={label} className={`lv-chip ${candidateP > (index + 1) / 5 ? "win" : ""}`}>
             <rect x={414 + (index % 2) * 96} y={96 + Math.floor(index / 2) * 32} width={90} height={24} rx={6} />
             <text x={459 + (index % 2) * 96} y={112 + Math.floor(index / 2) * 32} textAnchor="middle" className="svg-mono small">{label}</text>
@@ -805,8 +807,8 @@ export function ClinicalRefinementGraphic({ a }: { a: boolean }) {
 
       <g className="lv-box hot">
         <rect x={400} y={194} width={216} height={114} rx={11} />
-        <text x={508} y={218} textAnchor="middle" className="svg-label small">SAFETY + REGRESSION GATE</text>
-        {["unsupported claims", "retrieval grounding", "clinical boundary", "human review"].map((label, index) => (
+        <text x={508} y={218} textAnchor="middle" className="svg-label small">{T("SAFETY + REGRESSION GATE")}</text>
+        {[T("unsupported claims"), T("retrieval grounding"), T("clinical boundary"), T("human review")].map((label, index) => (
           <g key={label} style={{ opacity: 0.28 + gateP * 0.72 }}>
             <text x={416} y={243 + index * 17} className="svg-mono small">
               {gateP > (index + 1) / 5 ? "✓ " : "… "}{label}
@@ -817,16 +819,16 @@ export function ClinicalRefinementGraphic({ a }: { a: boolean }) {
 
       <g className="lv-box">
         <rect x={24} y={334} width={592} height={58} rx={10} />
-        <text x={42} y={358} className="svg-sub">NO LIVE WEIGHT UPDATES FROM CLINICIAN ACTIONS</text>
-        <text x={42} y={377} className="svg-mono small">approved feedback → offline RL/eval → regression suite → human release</text>
+        <text x={42} y={358} className="svg-sub">{T("NO LIVE WEIGHT UPDATES FROM CLINICIAN ACTIONS")}</text>
+        <text x={42} y={377} className="svg-mono small">{T("approved feedback → offline RL/eval → regression suite → human release")}</text>
         <g className={`lv-stamp ${releaseP > 0 ? "big" : ""}`} style={rise(releaseP, 6)}>
           <rect x={476} y={344} width={124} height={36} rx={8} />
-          <text x={538} y={367} textAnchor="middle" className="tick ok">FUTURE RELEASE ✓</text>
+          <text x={538} y={367} textAnchor="middle" className="tick ok">{T("FUTURE RELEASE ✓")}</text>
         </g>
       </g>
 
       <path d="M 508 308 C 508 326 538 326 538 344" className="lv-edge win" style={{ opacity: releaseP }} />
-      <text x={24} y={414} className="svg-note">Offline evaluation and a human release board decide whether a candidate ships.</text>
+      <text x={24} y={414} className="svg-note">{T("Offline evaluation and a human release board decide whether a candidate ships.")}</text>
     </svg>
   );
 }
@@ -958,10 +960,10 @@ export function MindscapeChapter() {
     <ChapterShell
       id="mindscape"
       accent="#8ef0c0"
-      kicker="PROJECT 03 · MEDICAL AI R&D"
-      title="MindScape"
+      kicker={T("PROJECT 03 · MEDICAL AI R&D")}
+      title={T("MindScape")}
       subtitle="A medical AI assistant for evidence-grounded, clinician-controlled mental-health screening and diagnostic review."
-      steps={STEPS}
+      steps={TD(STEPS)}
       stepMs={MINDSCAPE_STEP_MS}
     />
   );

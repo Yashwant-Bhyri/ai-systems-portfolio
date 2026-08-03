@@ -1,5 +1,7 @@
 "use client";
 
+import { T, TD } from "../i18n";
+
 import { useState } from "react";
 import { ChapterShell, type StepDef } from "./chapter-shell";
 import { useSim, ph, eph, pulse, noise, bez, typed, caret, rise, q, LiveNet } from "./live";
@@ -82,7 +84,7 @@ export function RuntimeGraphic({ a }: { a: boolean }) {
       {/* the prompt being typed by the user */}
       <g className="lv-box hot">
         <rect x={30} y={30} width={340} height={54} rx={11} />
-        <text x={46} y={52} className="svg-sub">USER PROMPT</text>
+        <text x={46} y={52} className="svg-sub">{T("USER PROMPT")}</text>
         <text x={46} y={72} className="svg-mono small">“{ptyped}{t < 2300 ? caret(t) : ""}”</text>
       </g>
 
@@ -90,14 +92,14 @@ export function RuntimeGraphic({ a }: { a: boolean }) {
       <circle cx={470} cy={57} r={22} className="lv-ring track" />
       <circle cx={470} cy={57} r={22} className="lv-ring" pathLength={100} strokeDasharray={`${ring * 100} 100`} transform="rotate(-90 470 57)" />
       <text x={470} y={61} textAnchor="middle" className="svg-mono tinytext">{Math.round(ring * 100)}%</text>
-      <text x={510} y={53} className="svg-sub">agent runtime</text>
-      <text x={510} y={68} className="svg-mono tinytext">{ring < 1 ? "producing…" : "done ✓"}</text>
+      <text x={510} y={53} className="svg-sub">{T("agent runtime")}</text>
+      <text x={510} y={68} className="svg-mono tinytext">{ring < 1 ? T("producing…") : T("done ✓")}</text>
 
       {/* live agent log */}
       <g className="lv-box">
         <rect x={30} y={104} width={340} height={150} rx={12} />
-        <text x={48} y={130} className="svg-sub">RUNTIME LOG · live</text>
-        {RUN_LOG.map((r, i) => {
+        <text x={48} y={130} className="svg-sub">{T("RUNTIME LOG · live")}</text>
+        {TD(RUN_LOG).map((r, i) => {
           const started = t > r.at;
           const done = t > r.at + 800;
           if (!started) return null;
@@ -114,7 +116,7 @@ export function RuntimeGraphic({ a }: { a: boolean }) {
       </g>
 
       {/* timeline assembling inside the editor */}
-      <text x={30} y={296} className="svg-sub">FILMORA TIMELINE · assembling</text>
+      <text x={30} y={296} className="svg-sub">{T("FILMORA TIMELINE · assembling")}</text>
       <g transform="translate(30,306)">
         {CLIP_LAYOUT.map(({ width, x }, i) => {
           const p = eph(t, 6000 + i * 620, 6500 + i * 620);
@@ -124,10 +126,10 @@ export function RuntimeGraphic({ a }: { a: boolean }) {
       </g>
       <g className="lv-stamp" style={rise(eph(t, 9500, 9900), 6)}>
         <rect x={418} y={232} width={202} height={42} rx={9} />
-        <text x={519} y={258} textAnchor="middle" className="svg-label small">editable Filmora timeline ✓</text>
+        <text x={519} y={258} textAnchor="middle" className="svg-label small">{T("editable Filmora timeline ✓")}</text>
       </g>
       <text x={30} y={402} className="svg-note">
-        Market context, memory, and specialist tools resolve into an editable Filmora timeline.
+        {T("Market context, memory, and specialist tools resolve into an editable Filmora timeline.")}
       </text>
     </svg>
   );
@@ -149,12 +151,12 @@ const PLAT_BADGES: { glyph: string; bg: string; fg: string }[] = [
 const PLAT_FILES = ["tiktok", "douyin", "xiaohongshu", "instagram", "wechat", "facebook"];
 
 function PlatBadge({ i, x, y, s = 16 }: { i: number; x: number; y: number; s?: number }) {
-  const b = PLAT_BADGES[i];
+  const b = TD(PLAT_BADGES)[i];
   return (
     <g className="lv-platbadge" transform={`translate(${x},${y})`}>
       <rect width={s} height={s} rx={4.5} fill={b.bg} stroke="rgba(255,255,255,0.22)" strokeWidth={0.8} />
       {/* the real platform mark, downloaded into /public/brands */}
-      <image href={`/brands/${PLAT_FILES[i]}.svg`} x={2.5} y={2.5} width={s - 5} height={s - 5} />
+      <image href={`/brands/${TD(PLAT_FILES)[i]}.svg`} x={2.5} y={2.5} width={s - 5} height={s - 5} />
     </g>
   );
 }
@@ -187,7 +189,7 @@ export function TrendGraphic({ a }: { a: boolean }) {
         </clipPath>
       </defs>
       <g style={{ filter: focus > 0 ? `blur(${q(focus * 4.5)}px)` : undefined, opacity: 1 - focus * 0.62 }}>
-        {PLATFORMS.map((p, i) => {
+        {TD(PLATFORMS).map((p, i) => {
           const col = i % 3;
           const row = Math.floor(i / 3);
           const x = 34 + col * 196;
@@ -200,7 +202,7 @@ export function TrendGraphic({ a }: { a: boolean }) {
               </g>
               <PlatBadge i={i} x={x + 12} y={y + 10} />
               <text x={x + 34} y={y + 23} className="svg-label small">{p}</text>
-              {isActive && <text x={x + 164} y={y + 23} textAnchor="end" className="svg-mono tinytext">reading…</text>}
+              {isActive && <text x={x + 164} y={y + 23} textAnchor="end" className="svg-mono tinytext">{T("reading…")}</text>}
               {/* real trend posters, genuinely scrolling */}
               <g transform={`translate(${x + 14},${y + 32})`} clipPath="url(#feedclip)">
                 {[0, 1, 2, 3].map((j) => {
@@ -210,10 +212,10 @@ export function TrendGraphic({ a }: { a: boolean }) {
                   return (
                     <g key={j}>
                       <svg x={0} y={yy} width={26} height={38} viewBox="0 0 120 180">
-                        <use href={`/trend-media.svg#${TREND_MOTIFS[motif]}`} />
+                        <use href={`/trend-media.svg#${TD(TREND_MOTIFS)[motif]}`} />
                       </svg>
                       <rect x={32} y={yy + 8} width={q(70 + noise(i * 7 + j, 0) * 40)} height={8} rx={4} className="lv-feedbar" />
-                      <text x={32} y={yy + 30} className="svg-sub tiny">{TREND_TAGS[motif]}</text>
+                      <text x={32} y={yy + 30} className="svg-sub tiny">{TD(TREND_TAGS)[motif]}</text>
                     </g>
                   );
                 })}
@@ -245,17 +247,17 @@ export function TrendGraphic({ a }: { a: boolean }) {
         <g style={{ opacity: 1 - expandedLabel }}>
           <text x={320} y={198} textAnchor="middle" className="lv-counter mid">{raw}</text>
           <text x={320} y={215} textAnchor="middle" className="svg-sub">
-            {scrolling ? "scoring signals" : "ranked signals"}
+            {scrolling ? T("scoring signals") : T("ranked signals")}
           </text>
         </g>
         <g style={{ opacity: expandedLabel }}>
-          <text x={320} y={194} textAnchor="middle" className="lv-counter mid">700+ creative signals</text>
-          <text x={320} y={216} textAnchor="middle" className="svg-sub">deduplicated · scored · brief-linked</text>
+          <text x={320} y={194} textAnchor="middle" className="lv-counter mid">{T("700+ creative signals")}</text>
+          <text x={320} y={216} textAnchor="middle" className="svg-sub">{T("deduplicated · scored · brief-linked")}</text>
         </g>
       </g>
       {t > 8200 && (
         <g style={rise(eph(t, 8200, 8600), 6)}>
-          {["market evidence ✓", "product context ✓", "creative rules ✓"].map((f, i) => (
+          {[T("market evidence ✓"), T("product context ✓"), T("creative rules ✓")].map((f, i) => (
             <g key={f} className="lv-chip win">
               <rect x={130 + i * 135} y={330} width={125} height={26} rx={8} />
               <text x={192 + i * 135} y={347} textAnchor="middle" className="svg-mono tinytext">{f}</text>
@@ -265,7 +267,7 @@ export function TrendGraphic({ a }: { a: boolean }) {
       )}
 
       <text x={34} y={396} className="svg-note">
-        Live market and product signals become ranked evidence for the production plan.
+        {T("Live market and product signals become ranked evidence for the production plan.")}
       </text>
     </svg>
   );
@@ -287,7 +289,7 @@ const SKILL_FILES = [
   {
     name: "filmora-params.json",
     start: 6600,
-    lines: ['{ "transition": 7,', '  "beat_sync": true,', '  "caption_style": "pop" }'],
+    lines: ["{ \"transition\": 7,", "  \"beat_sync\": true,", "  \"caption_style\": \"pop\" }"],
   },
 ];
 
@@ -303,8 +305,8 @@ export function SkillGraphic({ a }: { a: boolean }) {
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
       {/* the six platforms, scanned one by one */}
-      <text x={30} y={40} className="svg-sub">MARKET + PRODUCT SIGNALS · compiling reusable execution rules</text>
-      {PLATFORMS.map((p, i) => {
+      <text x={30} y={40} className="svg-sub">{T("MARKET + PRODUCT SIGNALS · compiling reusable execution rules")}</text>
+      {TD(PLATFORMS).map((p, i) => {
         const scanning = i === scanIdx;
         return (
           <g key={p}>
@@ -321,7 +323,7 @@ export function SkillGraphic({ a }: { a: boolean }) {
       })}
 
       {/* extracted famous snippets fly to the compiler */}
-      {SNIPPETS.map((s2, j) => {
+      {TD(SNIPPETS).map((s2, j) => {
         const p = ph(scanP, 0.3 + j * 0.2, 0.55 + j * 0.2);
         if (p <= 0 || p >= 1) return null;
         const src: [number, number] = [180, 71 + scanIdx * 46];
@@ -336,14 +338,14 @@ export function SkillGraphic({ a }: { a: boolean }) {
 
       <g className="lv-node is-live">
         <rect x={236} y={72} width={116} height={64} rx={12} />
-        <text x={294} y={99} textAnchor="middle" className="svg-label small">SIGNAL</text>
-        <text x={294} y={116} textAnchor="middle" className="svg-label small">COMPILER</text>
+        <text x={294} y={99} textAnchor="middle" className="svg-label small">{T("SIGNAL")}</text>
+        <text x={294} y={116} textAnchor="middle" className="svg-label small">{T("COMPILER")}</text>
       </g>
       <circle cx={294} cy={146} r={3.5} className="lv-pulse" style={{ opacity: 0.4 + 0.6 * pulse(t, 600) }} />
-      <text x={294} y={166} textAnchor="middle" className="svg-sub">research + product context</text>
+      <text x={294} y={166} textAnchor="middle" className="svg-sub">{T("research + product context")}</text>
 
       {/* files being written */}
-      {SKILL_FILES.map((f, i) => {
+      {TD(SKILL_FILES).map((f, i) => {
         const y = 44 + i * 120;
         const done = t > f.start + 2200;
         const writing = t > f.start && !done;
@@ -367,7 +369,7 @@ export function SkillGraphic({ a }: { a: boolean }) {
             </g>
             <text x={424} y={y + 22} className="svg-mono small">{f.name}</text>
             {done && <text x={608} y={y + 22} textAnchor="end" className="tick ok">✓ v13</text>}
-            {writing && <text x={608} y={y + 22} textAnchor="end" className="svg-sub">writing…</text>}
+            {writing && <text x={608} y={y + 22} textAnchor="end" className="svg-sub">{T("writing…")}</text>}
             {f.lines.map((ln, j) => (
               <text key={ln} x={424} y={y + 44 + j * 18} className="svg-mono tinytext">
                 {typed(ln, t, f.start + 200 + j * 650, f.start + 750 + j * 650)}
@@ -379,7 +381,7 @@ export function SkillGraphic({ a }: { a: boolean }) {
       })}
 
       <text x={30} y={402} className="svg-note">
-        Ranked evidence compiles into versioned creative rules and Filmora tool parameters.
+        {T("Ranked evidence compiles into versioned creative rules and Filmora tool parameters.")}
       </text>
     </svg>
   );
@@ -397,19 +399,19 @@ export function MemoryGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = FILMORA_STEP_MS;
   const t = el % L;
-  const qq = typed("beach reel, fast cuts, golden hour", t, 200, 1500);
+  const qq = typed(T("beach reel, fast cuts, golden hour"), t, 200, 1500);
   const probe = eph(t, 2600, 3200);
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
       <g className="lv-box hot">
         <rect x={30} y={30} width={280} height={50} rx={10} />
-        <text x={44} y={50} className="svg-sub">QUERY</text>
+        <text x={44} y={50} className="svg-sub">{T("QUERY")}</text>
         <text x={44} y={68} className="svg-mono small">“{qq}{t < 1600 ? caret(t) : ""}”</text>
       </g>
 
       {/* embedding vector computes */}
-      <text x={30} y={116} className="svg-sub">embedded</text>
+      <text x={30} y={116} className="svg-sub">{T("embedded")}</text>
       {[0.9, 0.4, 0.75, 0.25, 0.85, 0.5, 0.65, 0.35].map((v, i) => {
         const p = eph(t, 1500 + i * 90, 1900 + i * 90);
         return <rect key={i} x={100 + i * 15} y={q(122 - 26 * v * p)} width={10} height={q(26 * v * p + 4)} rx={2} className="lv-bar" />;
@@ -423,12 +425,12 @@ export function MemoryGraphic({ a }: { a: boolean }) {
       <g className="lv-db">
         <ellipse cx={356} cy={150} rx={40} ry={12} />
         <path d="M 316 150 v 74 a 40 12 0 0 0 80 0 v -74" />
-        <text x={356} y={246} textAnchor="middle" className="svg-sub">vector store</text>
+        <text x={356} y={246} textAnchor="middle" className="svg-sub">{T("vector store")}</text>
         {probe === 1 && <ellipse cx={356} cy={150} rx={q(40 + 14 * ((t / 500) % 1))} ry={q(12 + 5 * ((t / 500) % 1))} className="lv-ripple" style={{ opacity: 1 - ((t / 500) % 1) }} />}
       </g>
 
       {/* hits light up with live scores — the irrelevant one never does */}
-      {MEM_HITS.map((h, i) => {
+      {TD(MEM_HITS).map((h, i) => {
         const p = eph(t, 3300 + i * 450, 4900);
         const val = h.score * p;
         const hit = h.score > 0.5;
@@ -441,29 +443,29 @@ export function MemoryGraphic({ a }: { a: boolean }) {
       })}
 
       {/* recommendation: a live layered net — hits feed it, ranks come out */}
-      <text x={30} y={252} className="svg-sub">RETRIEVAL + RECOMMENDATION · live similarity and ranking</text>
+      <text x={30} y={252} className="svg-sub">{T("RETRIEVAL + RECOMMENDATION · live similarity and ranking")}</text>
       <LiveNet
         x={30}
         y={262}
         w={580}
         h={116}
         inputs={[
-          { label: "market ctx", value: "700+" },
-          { label: "brief", value: "0.91" },
-          { label: "memory hits", value: "×3" },
+          { label: T("market ctx"), value: "700+" },
+          { label: T("brief"), value: "0.91" },
+          { label: T("memory hits"), value: "×3" },
         ]}
         hidden={5}
-        core="RECO"
-        outputs={["surf transition", "golden-hour LUT", "beat-sync cuts"]}
+        core={T("RECOMMENDATION")}
+        outputs={[T("surf transition"), T("golden-hour LUT"), T("beat-sync cuts")]}
         t={t}
         start={5200}
       />
       {t > 7600 && (
-        <text x={610} y={252} textAnchor="end" className="tick ok" style={rise(eph(t, 7600, 7950), 4)}>ranked ✓</text>
+        <text x={610} y={252} textAnchor="end" className="tick ok" style={rise(eph(t, 7600, 7950), 4)}>{T("ranked ✓")}</text>
       )}
 
       <text x={30} y={404} className="svg-note">
-        Retrieval grounds the plan in relevant skills, product context, and editor presets.
+        {T("Retrieval grounds the plan in relevant skills, product context, and editor presets.")}
       </text>
     </svg>
   );
@@ -500,9 +502,9 @@ export function CompilerGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      {PANES.map((p2, i) => (
+      {TD(PANES).map((p2, i) => (
         <g key={p2.label}>
-          <g className={`lv-node ${TOKENS.some((tk) => tk.from === i && t > tk.at && t < tk.at + 700) ? "is-live" : ""}`}>
+          <g className={`lv-node ${TD(TOKENS).some((tk) => tk.from === i && t > tk.at && t < tk.at + 700) ? "is-live" : ""}`}>
             <rect x={30} y={p2.y} width={190} height={72} rx={11} />
           </g>
           <text x={46} y={p2.y + 26} className="svg-label small">{p2.label}</text>
@@ -514,9 +516,9 @@ export function CompilerGraphic({ a }: { a: boolean }) {
       {/* compiled brief */}
       <g className="lv-box">
         <rect x={340} y={70} width={280} height={220} rx={12} />
-        <text x={358} y={98} className="svg-sub">COMPILED INSTRUCTION</text>
-        {BRIEF_LINES.map((ln, i) => {
-          const landAt = TOKENS[Math.min(i, TOKENS.length - 1)].at + 650;
+        <text x={358} y={98} className="svg-sub">{T("COMPILED INSTRUCTION")}</text>
+        {TD(BRIEF_LINES).map((ln, i) => {
+          const landAt = TD(TOKENS)[Math.min(i, TOKENS.length - 1)].at + 650;
           return (
             <text key={ln} x={358} y={128 + i * 26} className="svg-mono small" style={rise(eph(t, landAt, landAt + 350), 6)}>
               {ln}
@@ -526,11 +528,11 @@ export function CompilerGraphic({ a }: { a: boolean }) {
       </g>
 
       {/* tokens physically flying into the brief */}
-      {TOKENS.map((tk) => {
+      {TD(TOKENS).map((tk) => {
         const p = ph(t, tk.at, tk.at + 650);
         if (p <= 0 || p >= 1) return null;
-        const src: [number, number] = [220, PANES[tk.from].y + 39];
-        const dst: [number, number] = [358, 122 + Math.min(TOKENS.indexOf(tk), 4) * 26];
+        const src: [number, number] = [220, TD(PANES)[tk.from].y + 39];
+        const dst: [number, number] = [358, 122 + Math.min(TD(TOKENS).indexOf(tk), 4) * 26];
         const [x, y] = bez(p, src, [290, (src[1] + dst[1]) / 2 - 30], dst);
         const tokenWidth = Math.max(80, tk.word.length * 6.2 + 18);
         return (
@@ -543,12 +545,12 @@ export function CompilerGraphic({ a }: { a: boolean }) {
 
       {/* determinism check */}
       <g style={rise(eph(t, 7400, 7900), 6)}>
-        <text x={358} y={320} className="svg-mono tinytext">validate compile fingerprint…</text>
-        <text x={358} y={340} className="tick ok" style={{ opacity: eph(t, 8200, 8600) }}>✓ stable plan for identical inputs</text>
+        <text x={358} y={320} className="svg-mono tinytext">{T("validate compile fingerprint…")}</text>
+        <text x={358} y={340} className="tick ok" style={{ opacity: eph(t, 8200, 8600) }}>{T("✓ stable plan for identical inputs")}</text>
       </g>
 
       <text x={30} y={404} className="svg-note">
-        Brief, market evidence, memory, and timeline state compile into one tool-ready plan.
+        {T("Brief, market evidence, memory, and timeline state compile into one tool-ready plan.")}
       </text>
     </svg>
   );
@@ -581,10 +583,10 @@ export function OrchestrationGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={40} y={40} className="lv-phase small">MODEL-ROUTED AGENT RUN · REPRESENTATIVE REPLAY</text>
-      <text x={600} y={40} textAnchor="end" className="lv-counter mid">trace +{clock.toFixed(1)} s</text>
+      <text x={40} y={40} className="lv-phase small">{T("MODEL-ROUTED AGENT RUN · REPRESENTATIVE REPLAY")}</text>
+      <text x={600} y={40} textAnchor="end" className="lv-counter mid">{T("trace +")}{clock.toFixed(1)} s</text>
 
-      {GANTT.map((g, i) => {
+      {TD(GANTT).map((g, i) => {
         const w = Math.max(0, Math.min(g.end, t) - g.start) * 0.05;
         const running = t > g.start && t < g.end;
         return (
@@ -608,20 +610,20 @@ export function OrchestrationGraphic({ a }: { a: boolean }) {
         return (
           <g key={h.at} className="lv-chip win" transform={`translate(${q(x)},${q(y)})`}>
             <rect x={-30} y={-10} width={60} height={18} rx={6} />
-            <text x={0} y={3} textAnchor="middle" className="svg-mono tinytext">tool result</text>
+            <text x={0} y={3} textAnchor="middle" className="svg-mono tinytext">{T("tool result")}</text>
           </g>
         );
       })}
 
       {/* governed checkpoints remain visible beneath the specialist lanes */}
-      <text x={140} y={342} textAnchor="end" className="svg-mono small">guardrail gates</text>
+      <text x={140} y={342} textAnchor="end" className="svg-mono small">{T("guardrail gates")}</text>
       {HANDOFFS.map((h) => (
         <rect key={h.at} x={GX(h.at)} y={330} width={9} height={14} rx={3} className="lv-bar warm" style={{ opacity: t > h.at ? 1 : 0.15 }} />
       ))}
-      <text x={600} y={362} textAnchor="end" className="svg-sub" style={{ opacity: t > 8200 ? 1 : 0 }}>schema · safety · retry</text>
+      <text x={600} y={362} textAnchor="end" className="svg-sub" style={{ opacity: t > 8200 ? 1 : 0 }}>{T("schema · safety · retry")}</text>
 
       <text x={40} y={396} className="svg-note">
-        The router runs tools in parallel; traced guardrails validate each handoff.
+        {T("The router runs tools in parallel; traced guardrails validate each handoff.")}
       </text>
     </svg>
   );
@@ -654,16 +656,16 @@ export function EditorGraphic({ a }: { a: boolean }) {
   const L = FILMORA_STEP_MS;
   const t = el % L;
   const [focus, setFocus] = useState<string | null>(null);
-  const node = (id: string) => DAG.find((n) => n.id === id)!;
+  const node = (id: string) => TD(DAG).find((n) => n.id === id)!;
   const stateOf = (n: DagNode) => (t < n.start ? "wait" : t < n.start + n.dur ? "run" : "done");
-  const focused = focus ? node(focus) : DAG.find((n) => stateOf(n) === "run") ?? DAG[DAG.length - 1];
+  const focused = focus ? node(focus) : TD(DAG).find((n) => stateOf(n) === "run") ?? TD(DAG)[DAG.length - 1];
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={30} y={32} className="svg-sub">MULTIMODAL TOOL GRAPH · MODEL-ROUTED RUN — select a node to inspect</text>
+      <text x={30} y={32} className="svg-sub">{T("MULTIMODAL TOOL GRAPH · MODEL-ROUTED RUN — select a node to inspect")}</text>
 
       {/* dependency edges, tokens travelling on the active ones */}
-      {DAG.flatMap((n) =>
+      {TD(DAG).flatMap((n) =>
         n.deps.map((d) => {
           const a2 = node(d);
           const running = stateOf(n) === "run" || (stateOf(a2) === "done" && stateOf(n) === "wait" && t > a2.start + a2.dur - 300);
@@ -678,7 +680,7 @@ export function EditorGraphic({ a }: { a: boolean }) {
       )}
 
       {/* nodes */}
-      {DAG.map((n) => {
+      {TD(DAG).map((n) => {
         const st = stateOf(n);
         const isFocus = focused.id === n.id;
         return (
@@ -701,7 +703,7 @@ export function EditorGraphic({ a }: { a: boolean }) {
             </g>
             <text x={n.x} y={n.y - 2} textAnchor="middle" className="svg-sub" style={{ fill: "var(--text-hi)" }}>{n.label}</text>
             <text x={n.x} y={n.y + 13} textAnchor="middle" className={st === "done" ? "tick ok" : "svg-sub"}>
-              {st === "done" ? "✓ " + n.ms : st === "run" ? (n.async ? "async…" : "running…") : "queued"}
+              {st === "done" ? "✓ " + n.ms : st === "run" ? (n.async ? T("async…") : T("running…")) : T("queued")}
             </text>
             {st === "run" && <rect x={n.x - 36} y={n.y + 17} width={q(72 * ((t - n.start) / n.dur))} height={3} rx={1.5} className="lv-bar" />}
           </g>
@@ -711,17 +713,17 @@ export function EditorGraphic({ a }: { a: boolean }) {
       {/* inspector card for the focused / running node */}
       <g className="lv-box hot">
         <rect x={30} y={300} width={580} height={72} rx={12} />
-        <text x={48} y={324} className="svg-sub">TOOL-CALL INSPECTOR · {focused.label}</text>
-        <text x={48} y={346} className="svg-mono tinytext">api: {focused.api}</text>
-        <text x={250} y={346} className="svg-mono tinytext">out: {focused.file}</text>
-        <text x={470} y={346} className="svg-mono tinytext">latency: {focused.ms}</text>
+        <text x={48} y={324} className="svg-sub">{T("TOOL-CALL INSPECTOR ·")} {focused.label}</text>
+        <text x={48} y={346} className="svg-mono tinytext">{T("api:")} {focused.api}</text>
+        <text x={250} y={346} className="svg-mono tinytext">{T("out:")} {focused.file}</text>
+        <text x={470} y={346} className="svg-mono tinytext">{T("latency:")} {focused.ms}</text>
         <text x={48} y={362} className="svg-sub">
-          deps: {focused.deps.length ? focused.deps.join(" + ") : "none"} · {focused.async ? "async lane" : "sync"} · retries: 0
+          {T("deps:")} {focused.deps.length ? focused.deps.join(" + ") : "none"} · {focused.async ? T("async lane") : T("sync")} {T("· retries: 0")}
         </text>
       </g>
 
       <text x={30} y={400} className="svg-note">
-        Video, audio, dialogue, captions, and effects converge behind a human approval gate.
+        {T("Video, audio, dialogue, captions, and effects converge behind a human approval gate.")}
       </text>
     </svg>
   );
@@ -733,7 +735,7 @@ export function EditorGraphic({ a }: { a: boolean }) {
 const LOOP_STATIONS = [
   { name: "ROUTE + COST TRACE", sub: "model, token, tool spans", work: "tracing route cost…" },
   { name: "OUTPUT EVALUATION", sub: "creative + factual scores", work: "scoring outputs…" },
-  { name: "RL REFINEMENT", sub: "reinforcement-learning", work: "ranking policy updates…" },
+  { name: "RL REFINEMENT", sub: T("reinforcement-learning"), work: "ranking policy updates…" },
   { name: "GUARDRAIL TESTS", sub: "safety + regression suite", work: "replaying guardrails…" },
   { name: "HUMAN APPROVAL", sub: "review before release", work: "reviewing candidate…" },
   { name: "MODEL GATEWAY", sub: "versioned route config", work: "shipping v-next…" },
@@ -756,15 +758,15 @@ export function OutputGraphic({ a }: { a: boolean }) {
   const pAng = ang(stIdx) + (ang(stIdx + 1) - ang(stIdx)) * stP;
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={40} y={34} className="lv-phase small">OBSERVABILITY + GOVERNED RL REFINEMENT</text>
-      <text x={600} y={34} textAnchor="end" className="svg-mono tinytext">cycle #{cycle + 1}</text>
+      <text x={40} y={34} className="lv-phase small">{T("OBSERVABILITY + GOVERNED RL REFINEMENT")}</text>
+      <text x={600} y={34} textAnchor="end" className="svg-mono tinytext">{T("cycle #")}{cycle + 1}</text>
 
       {/* orbit */}
       <ellipse cx={cx} cy={cy} rx={rx} ry={ry} className="lv-ring track" />
       <circle cx={q(cx + rx * Math.cos(pAng))} cy={q(cy + ry * Math.sin(pAng))} r={5.5} className="lv-pulse" />
 
       {/* stations — each does visible work when the packet arrives */}
-      {LOOP_STATIONS.map((st, i) => {
+      {TD(LOOP_STATIONS).map((st, i) => {
         const sx = cx + rx * Math.cos(ang(i));
         const sy = cy + ry * Math.sin(ang(i));
         const activeSt = i === stIdx;
@@ -785,25 +787,25 @@ export function OutputGraphic({ a }: { a: boolean }) {
       })}
 
       {/* center: what one governed lap produces */}
-      <text x={cx} y={cy - 8} textAnchor="middle" className="svg-sub">trace → evaluate → RL update</text>
-      <text x={cx} y={cy + 8} textAnchor="middle" className="svg-sub">guardrail → approve → version</text>
+      <text x={cx} y={cy - 8} textAnchor="middle" className="svg-sub">{T("trace → evaluate → RL update")}</text>
+      <text x={cx} y={cy + 8} textAnchor="middle" className="svg-sub">{T("guardrail → approve → version")}</text>
 
       {/* operational evidence remains visible without implying unsupported gains */}
       {[
-        { k: "ROUTE COST", v: "traced", s: "model · token · tool" },
-        { k: "LATENCY", v: "spans", s: "agent · route · API" },
-        { k: "RELEASE", v: "gated", s: "eval · guardrail · human" },
+        { k: T("ROUTE COST"), v: T("traced"), s: T("model · token · tool") },
+        { k: T("LATENCY"), v: T("spans"), s: T("agent · route · API") },
+        { k: T("RELEASE"), v: T("gated"), s: T("eval · guardrail · human") },
       ].map((m, i) => (
         <g key={m.k} className="lv-chip win">
-          <rect x={40 + i * 196} y={324} width={184} height={56} rx={10} />
-          <text x={56 + i * 196} y={344} className="svg-sub">{m.k}</text>
-          <text x={56 + i * 196} y={366} className="lv-counter mid">{m.v}</text>
-          <text x={218 + i * 196} y={376} textAnchor="end" className="svg-sub">{m.s}</text>
+          <rect x={40 + i * 196} y={318} width={184} height={68} rx={10} />
+          <text x={56 + i * 196} y={338} className="svg-sub">{m.k}</text>
+          <text x={56 + i * 196} y={360} className="lv-counter mid">{m.v}</text>
+          <text x={56 + i * 196} y={378} className="svg-sub">{m.s}</text>
         </g>
       ))}
 
       <text x={40} y={404} className="svg-note">
-        Evaluation drives RL refinement; guardrails and human approval gate each release.
+        {T("Evaluation drives RL refinement; guardrails and human approval gate each release.")}
       </text>
     </svg>
   );
@@ -910,10 +912,10 @@ export function FilmoraChapter() {
     <ChapterShell
       id="filmora"
       accent="#ff8fb2"
-      kicker="PROJECT 02 · WONDERSHARE INTERNSHIP"
-      title="Filmora Multimodal Agent Runtime"
-      subtitle="An end-to-end multimodal AI production system combining live market research, product intelligence, memory, and agent-planned tool execution — integrated into Filmora Enterprise."
-      steps={STEPS}
+      kicker={T("PROJECT 02 · WONDERSHARE INTERNSHIP")}
+      title={T("Filmora Multimodal Agent Runtime")}
+      subtitle={T("An end-to-end multimodal AI production system combining live market research, product intelligence, memory, and agent-planned tool execution — integrated into Filmora Enterprise.")}
+      steps={TD(STEPS)}
       stepMs={FILMORA_STEP_MS}
     />
   );

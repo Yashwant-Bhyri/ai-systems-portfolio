@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "../i18n";
+
 import { useEffect, useRef, type ReactNode } from "react";
 import { useTour, useStepper, useOnScreen, type ChapterId } from "./director";
 
@@ -67,7 +69,7 @@ export function ChapterShell({
       </header>
 
       <div className="chapter-body">
-        <ol className="step-rail" aria-label="System components, in execution order">
+        <ol className="step-rail" aria-label={T("System components, in execution order")}>
           {steps.map((s, i) => (
             <li key={s.label}>
               <button

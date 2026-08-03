@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "./i18n";
+
 import { useRef, type ComponentType } from "react";
 import "./live-scenes.css";
 import { useOnScreen } from "./fable/director";
@@ -119,24 +121,24 @@ function SqlMini({ a }: { a: boolean }) {
     <svg viewBox="0 0 320 150" className="op-svg">
       <g className="lv-chip">
         <rect x={6} y={8} width={54} height={22} rx={6} />
-        <text x={33} y={23} textAnchor="middle" className="svg-sub tiny">Q + IMG</text>
+        <text x={33} y={23} textAnchor="middle" className="svg-sub tiny">{T("Q + IMG")}</text>
       </g>
-      <text x={66} y={23} className="svg-sub tiny">→ OCR + intent</text>
+      <text x={66} y={23} className="svg-sub tiny">{T("→ OCR + intent")}</text>
       {[0, 1, 2].map((s2) => (
         <rect key={s2} x={160 + s2 * 20} y={10} width={16} height={18} rx={3} className="lv-bar bg" style={{ opacity: t > 400 + s2 * 260 ? 0.9 : 0.25 }} />
       ))}
-      <text x={224} y={23} className="svg-sub tiny">schema subset</text>
+      <text x={224} y={23} className="svg-sub tiny">{T("schema subset")}</text>
       <rect x={6} y={40} width={240} height={62} rx={8} className="lv-track" />
       {lines.map((ln, i) => (
         <text key={i} x={14} y={58 + i * 16} className="svg-mono tinytext">{ln}{i === lines.length - 1 && t < 3500 ? caret(t) : ""}</text>
       ))}
       <g className={`lv-chip ${exOk ? "win" : ""}`}>
         <rect x={256} y={56} width={58} height={30} rx={7} />
-        <text x={285} y={69} textAnchor="middle" className={exOk ? "tick ok" : "svg-sub tiny"}>{exOk ? "EX ✓" : "EX …"}</text>
-        <text x={285} y={81} textAnchor="middle" className="svg-sub tiny">execute</text>
+        <text x={285} y={69} textAnchor="middle" className={exOk ? "tick ok" : "svg-sub tiny"}>{exOk ? T("EX ✓") : T("EX …")}</text>
+        <text x={285} y={81} textAnchor="middle" className="svg-sub tiny">{T("execute")}</text>
       </g>
-      <text x={6} y={122} className="svg-mono tinytext">12,751+ question-SQL pairs</text>
-      <text x={6} y={138} className="svg-mono tinytext">95+ databases · failure diagnosis</text>
+      <text x={6} y={122} className="svg-mono tinytext">{T("12,751+ question-SQL pairs")}</text>
+      <text x={6} y={138} className="svg-mono tinytext">{T("95+ databases · failure diagnosis")}</text>
     </svg>
   );
 }
@@ -148,32 +150,32 @@ function DistillMini({ a }: { a: boolean }) {
   const verdictOk = sampleIdx !== 1;
   return (
     <svg viewBox="0 0 320 150" className="op-svg">
-      <text x={6} y={16} className="svg-sub tiny">DISTILLATION QUALITY GATE · running</text>
+      <text x={6} y={16} className="svg-sub tiny">{T("DISTILLATION QUALITY GATE · running")}</text>
       {[0, 1, 2].map((s2) => (
         <g key={s2} className="lv-chip">
           <rect x={6 + s2 * 62} y={26} width={56} height={22} rx={6} style={{ opacity: sampleIdx === s2 ? 1 : 0.4 }} />
-          <text x={34 + s2 * 62} y={41} textAnchor="middle" className="svg-sub tiny">sample 0{s2 + 1}</text>
+          <text x={34 + s2 * 62} y={41} textAnchor="middle" className="svg-sub tiny">{T("sample 0")}{s2 + 1}</text>
         </g>
       ))}
       <g className="lv-node is-live">
         <rect x={200} y={20} width={80} height={34} rx={8} />
-        <text x={240} y={34} textAnchor="middle" className="svg-label small">LLM judge</text>
-        <text x={240} y={48} textAnchor="middle" className={verdictOk ? "tick ok" : "tick bad"}>{verdictOk ? "✓ accept" : "✗ reject"}</text>
+        <text x={240} y={34} textAnchor="middle" className="svg-label small">{T("LLM judge")}</text>
+        <text x={240} y={48} textAnchor="middle" className={verdictOk ? "tick ok" : "tick bad"}>{verdictOk ? T("✓ accept") : T("✗ reject")}</text>
       </g>
       <g className="lv-chip win">
         <rect x={6} y={66} width={70} height={26} rx={7} />
-        <text x={41} y={83} textAnchor="middle" className="svg-mono tinytext">SLM ← TRL</text>
+        <text x={41} y={83} textAnchor="middle" className="svg-mono tinytext">{T("SLM ← TRL")}</text>
       </g>
-      <text x={84} y={83} className="svg-sub tiny">trained on accepted data only</text>
+      <text x={84} y={83} className="svg-sub tiny">{T("trained on accepted data only")}</text>
       {[0.82, 0.64].map((v, i) => (
         <g key={i}>
-          <text x={6} y={112 + i * 16} className="svg-sub tiny">{i === 0 ? "distilled" : "baseline"}</text>
+          <text x={6} y={112 + i * 16} className="svg-sub tiny">{i === 0 ? T("distilled") : T("baseline")}</text>
           <rect x={60} y={105 + i * 16} width={180} height={7} rx={3.5} className="lv-track thin" />
           <rect x={60} y={105 + i * 16} width={q(180 * v * (0.4 + 0.6 * pulse(t + i * 400, 4200)))} height={7} rx={3.5} className={i === 0 ? "lv-bar" : "lv-bar bg"} />
-          <text x={248} y={112 + i * 16} className="svg-sub tiny">{i === 0 ? "paired eval" : ""}</text>
+          <text x={248} y={112 + i * 16} className="svg-sub tiny">{i === 0 ? T("paired eval") : ""}</text>
         </g>
       ))}
-      <text x={6} y={146} className="svg-mono tinytext">31% fewer factual errors · 200+ pairs</text>
+      <text x={6} y={146} className="svg-mono tinytext">{T("31% fewer factual errors · 200+ pairs")}</text>
     </svg>
   );
 }

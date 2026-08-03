@@ -715,9 +715,6 @@ html {
 .vx-telemetry-rail > i { height: 8px; background: linear-gradient(90deg,var(--active-accent),rgba(255,255,255,.08)); }
 .vx-telemetry-rail > strong { color: #929da9; font: 520 11px/1.3 var(--font-geist-mono), monospace; }
 
-.vx-map-packet { position: absolute; width: 12px; height: 12px; border: 2px solid var(--active-accent); border-radius: 50%; background: #090c10; box-shadow: 0 0 16px var(--active-accent); pointer-events: none; }
-.vx-map-packet-antigravity { left: 7%; top: 44%; animation: vxOverviewPacketA 7s var(--vx-scene) infinite; }
-.vx-map-packet-filmora { left: 5%; top: 46%; animation: vxOverviewPacketB 8s var(--vx-scene) infinite; }
 
 .vx-mind-overview-track { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 6px; }
 .vx-mind-overview-unit { min-width: 0; display: flex; align-items: center; gap: 5px; }
@@ -727,7 +724,6 @@ html {
 .vx-mind-overview-unit .vx-map-link span { display: none; }
 .vx-mind-feedback { margin: 28px 8% 0; min-height: 34px; position: relative; display: grid; place-items: end center; color: #7f8b98; font: 520 11px/1.2 var(--font-geist-mono), monospace; }
 .vx-mind-feedback i { position: absolute; inset: 0 4% auto; height: 18px; border: 1px solid var(--vx-line-strong); border-top: 0; border-radius: 0 0 26px 26px; }
-.vx-map-packet-mindscape { left: 5%; top: 42%; animation: vxOverviewPacketB 9s var(--vx-scene) infinite; }
 
 /* Walkthrough */
 
@@ -7932,6 +7928,12 @@ g[data-on="true"] .vx-map-wire.is-on {
 }
 
 /* Résumé exists in English and 中文 — every entry point offers the choice. */
+/* The résumé dropdown lives inside the header (z-index 160), so it can never
+   paint above the floating contact dock (205) — the Chinese option ended up
+   hidden behind 联系我. Lift the whole header only while the menu is open, so
+   every other stacking relationship on the page stays exactly as it was. */
+.vx-header:has(.vx-resume-menu[data-open="true"]) { z-index: 210; }
+
 .vx-resume-menu { position: relative; display: inline-flex; }
 
 .vx-resume-menu > button > i {
@@ -8358,3 +8360,630 @@ g[data-on="true"] .vx-map-wire.is-on {
   .vx-map-float { animation: none; }
   .vx-stage-annotation-emphasis[data-weight="full"][data-complete="true"] { animation: none; }
 }
+
+
+/* Two portals: English and 简体中文. */
+/* The toggle and the résumé button share the header's trailing grid column, so
+   the column stays a single cell and the toggle border hugs its two buttons. */
+.vx-header-end {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vx-lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  border: 1px solid var(--vx-line-strong);
+}
+
+.vx-lang-toggle > a {
+  min-height: 30px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  color: #8d99a5;
+  font: 600 11px/1 var(--font-geist-mono), monospace;
+  letter-spacing: 0.06em;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+.vx-lang-toggle > a[data-active="true"] {
+  background: var(--vx-lime);
+  color: #071004;
+}
+
+.vx-lang-toggle > a:not([data-active="true"]):hover {
+  background: rgba(184, 255, 99, 0.12);
+  color: var(--vx-lime);
+}
+
+/* CJK needs a real font stack and looser leading; mono tracking that suits
+   Latin small-caps makes Chinese look broken. The attribute selector is |= so it
+   matches the document's zh-Hans, and everything here is scoped to the Chinese
+   portal — the English document never sees any of it. */
+/* Redefining the two stacks rather than restyling `body`: every rule in this
+   sheet already reads them through var(), so the Han faces land everywhere at
+   once. The CJK families sit before the generic — after `sans-serif` they would
+   never be reached — and after the Latin families, so Latin runs are unchanged. */
+:root[lang|="zh"] {
+  --font-system-sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Source Han Sans SC", "Noto Sans CJK SC", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-system-mono:
+    ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Source Han Sans SC", "Noto Sans CJK SC", monospace;
+}
+
+/* Chinese wants more leading than the Latin setting: no ascenders or
+   descenders to open the line up, so 1.5 reads as a solid block. */
+:root[lang|="zh"] p,
+:root[lang|="zh"] .vx-stage-annotation,
+:root[lang|="zh"] .vx-story-copy p,
+:root[lang|="zh"] .vx-case-heading p,
+:root[lang|="zh"] .vx-project-card p {
+  line-height: 1.75;
+}
+
+/* Wide small-caps tracking is a Latin device. On Han glyphs — which are already
+   full-width — it reads as broken spacing, so the two widest labels come down. */
+:root[lang|="zh"] .vx-map-col,
+:root[lang|="zh"] .vx-story-kicker {
+  letter-spacing: 0.08em;
+}
+
+/* ============================================================================
+   CHINESE TYPE FLOOR
+
+   Latin and Han have different legibility floors. A 9px Latin cap is a clean
+   shape; 纵向回溯 at 9px has roughly forty strokes competing for nine pixels.
+   The ramp above 12px is fine — Han is if anything *more* legible than Latin at
+   display sizes — so this is not a magnification, it is a floor under the
+   bottom of the scale, in two steps so subordination survives:
+
+       under 10.5px effective  ->  11.5px
+       10.5 - 11.9px effective ->  12.5px
+       12px and above          ->  untouched
+
+   Two 1px steps are perceptible; a smooth remap is not, because the whole
+   sub-legible range only spans 4px and compressing it under the floor puts the
+   steps below the perceptual threshold. The hierarchy those sizes encoded was
+   not doing any work anyway while none of them could be read.
+
+   Everything is scoped to the Chinese document, so the English page cannot move.
+   ========================================================================= */
+
+/* --- SVG labels -----------------------------------------------------------
+   Inside an SVG the rendered size is the declared size times the viewBox
+   scale, and the same class renders at four different scales across the page.
+   So these target the *effective* size and divide by the local scale, which is
+   why the same class carries different numbers per section. */
+
+/* full capability map — viewBox 1320 wide, renders at ×0.924 */
+:root[lang|="zh"] #capabilities .vx-fig-axis { font-size: 12.4px; }   /* 7.9 -> 11.5 */
+:root[lang|="zh"] #capabilities .vx-fig-tag,
+:root[lang|="zh"] #capabilities .vx-fig-focus { font-size: 12.4px; }  /* 8.3 -> 11.5 */
+:root[lang|="zh"] #capabilities .vx-map-sub { font-size: 12.4px; }    /* 10.2 -> 11.5 */
+:root[lang|="zh"] #capabilities .vx-map-skill,
+:root[lang|="zh"] #capabilities .vx-map-src,
+:root[lang|="zh"] #capabilities .vx-map-col { font-size: 13.5px; }    /* 10.6-11.6 -> 12.5 */
+
+/* brief role map — viewBox 1010 wide, renders at ×1.208 */
+:root[lang|="zh"] #profile .vx-fig-axis { font-size: 9.5px; }         /* 10.3 -> 11.5 */
+:root[lang|="zh"] #profile .vx-fig-tag,
+:root[lang|="zh"] #profile .vx-fig-focus { font-size: 10.3px; }       /* 10.9 -> 12.5 */
+
+/* research micro-graphics — render at ×1.167 */
+:root[lang|="zh"] #research .svg-sub.tiny,
+:root[lang|="zh"] #research-cont .svg-sub.tiny { font-size: 10.7px; }        /* 10.5 -> 12.5 */
+:root[lang|="zh"] #research .svg-mono.tinytext,
+:root[lang|="zh"] #research-cont .svg-mono.tinytext { font-size: 10.7px; }   /* 11.7 -> 12.5 */
+
+/* --- DOM labels -----------------------------------------------------------
+   Scale 1, so declared size is the rendered size. Only the selectors that were
+   measured to actually carry Chinese below the floor are listed. */
+
+/* tier 1: was 9 - 10px */
+:root[lang|="zh"] .vx-contact-channels span,
+:root[lang|="zh"] .vx-stage-rail button i,
+:root[lang|="zh"] .vx-stage-top span,
+:root[lang|="zh"] .vx-stage-top strong,
+:root[lang|="zh"] .vx-stage-top i,
+:root[lang|="zh"] .vx-contact-footer span,
+:root[lang|="zh"] .vx-contact-footer p,
+:root[lang|="zh"] .vx-signal-ticker-metrics li > strong,
+:root[lang|="zh"] .vx-io-rail strong,
+:root[lang|="zh"] .vx-research-heading > span,
+:root[lang|="zh"] .vx-contact-trigger > span,
+:root[lang|="zh"] .vx-contact-page-copy > span,
+:root[lang|="zh"] .vx-contact-page-actions a,
+:root[lang|="zh"] .vx-contact-page-card > small,
+:root[lang|="zh"] .vx-project-mini-architecture > span,
+:root[lang|="zh"] .vx-case-overview-page .vx-case-heading > small,
+:root[lang|="zh"] .vx-overview-top > span,
+:root[lang|="zh"] .vx-architecture-handoff > span,
+:root[lang|="zh"] .vx-microscope-identity > span,
+:root[lang|="zh"] .vx-microscope-identity > small,
+:root[lang|="zh"] .vx-case-microscope-page .vx-stage-top > span,
+:root[lang|="zh"] .vx-case-microscope-page .vx-io-rail span,
+:root[lang|="zh"] .vx-research-card-top > span,
+:root[lang|="zh"] .vx-research-card-top > small,
+:root[lang|="zh"] .vx-contribution-tile > span { font-size: 11.5px; }
+
+/* tier 2: was 10.5 - 11.5px */
+:root[lang|="zh"] .vx-case-microscope-page .vx-stage-rail button i,
+:root[lang|="zh"] .vx-case-microscope-page .vx-story-copy > span,
+:root[lang|="zh"] .vx-case-microscope-page .vx-stage-controls .vx-play,
+:root[lang|="zh"] .vx-case-overview-page .vx-map-node > small,
+:root[lang|="zh"] .vx-lens-label,
+:root[lang|="zh"] .vx-capability-board > header > span,
+:root[lang|="zh"] .vx-brand small,
+:root[lang|="zh"] .vx-header nav a,
+:root[lang|="zh"] .vx-header-resume,
+:root[lang|="zh"] .vx-skip-intro,
+:root[lang|="zh"] .vx-scroll-cue,
+:root[lang|="zh"] .vx-deck-card > span,
+:root[lang|="zh"] .vx-section-heading > span,
+:root[lang|="zh"] .vx-project-proof span,
+:root[lang|="zh"] .vx-case-heading > small,
+:root[lang|="zh"] .vx-map-node > span,
+:root[lang|="zh"] .vx-map-node > small,
+:root[lang|="zh"] .vx-map-link > span,
+:root[lang|="zh"] .vx-evidence-rail > span,
+:root[lang|="zh"] .vx-telemetry-rail > span,
+:root[lang|="zh"] .vx-telemetry-rail > strong,
+:root[lang|="zh"] .vx-stage-rail button span,
+:root[lang|="zh"] .vx-story-copy > span,
+:root[lang|="zh"] .vx-stage-controls .vx-play,
+:root[lang|="zh"] .vx-io-rail span,
+:root[lang|="zh"] .vx-project-mini-architecture li > strong,
+:root[lang|="zh"] .vx-lang-toggle > a,
+:root[lang|="zh"] .vx-case-microscope-page .vx-io-rail strong { font-size: 12.5px; }
+
+/* The nav gap was set when Latin labels averaged 66px wide. Chinese labels
+   average 36px, so the same gap reads as scattered — and the larger type needs
+   the room back. */
+:root[lang|="zh"] .vx-header nav { gap: 18px; }
+
+/* Stragglers the first selector sweep missed — same two tiers. */
+:root[lang|="zh"] .vx-project-badge,
+:root[lang|="zh"] .vx-profile-head-meta > strong > i,
+:root[lang|="zh"] .vx-stage-top > em,
+:root[lang|="zh"] .vx-contact-footer a { font-size: 11.5px; }
+
+:root[lang|="zh"] .vx-terminal-label { font-size: 12.5px; }
+
+/* Final sweep — sections whose Chinese was still under the floor. */
+:root[lang|="zh"] .vx-overview-top > span,
+:root[lang|="zh"] .vx-overview-top > i,
+:root[lang|="zh"] .vx-stage-signal-micro-row,
+:root[lang|="zh"] .vx-conclusion-heading > span,
+:root[lang|="zh"] .vx-conclusion-grid span,
+:root[lang|="zh"] .vx-conclusion-grid small,
+:root[lang|="zh"] .vx-conclusion-focus > span,
+:root[lang|="zh"] .vx-conclusion-rail button > i,
+:root[lang|="zh"] .vx-conclusion-rail button > span,
+:root[lang|="zh"] .vx-conclusion-signal-rail > span { font-size: 11.5px; }
+
+:root[lang|="zh"] .vx-project-meta,
+:root[lang|="zh"] .vx-overview-return,
+:root[lang|="zh"] .vx-story-kicker,
+:root[lang|="zh"] .vx-mind-feedback { font-size: 12.5px; }
+
+:root[lang|="zh"] .vx-signal-ticker-metrics li > span { font-size: 11.5px; }
+
+/* ============================================================================
+   CHINESE TYPE FLOOR — SECOND PASS: THE OPERATIONAL GRAPHICS
+
+   The scene type in live-scenes.css measured 10.5-18.7px effective, so the
+   first pass left it alone. In practice the dense Chinese labels inside the
+   scenes still read small, and the scenes have vertical slack because Chinese
+   copy wraps to fewer lines than the English it was laid out for. So the whole
+   scene family goes up roughly one step, using that slack.
+   ========================================================================= */
+:root[lang|="zh"] .vx-live-stage .svg-sub.tiny { font-size: 10.5px; }   /* 10.5 -> 12.3 eff */
+:root[lang|="zh"] .vx-live-stage .svg-sub { font-size: 12px; }          /* 11.7 -> 14.0 */
+:root[lang|="zh"] .vx-live-stage .svg-mono.tinytext { font-size: 11.5px; }
+:root[lang|="zh"] .vx-live-stage .svg-mono.small { font-size: 12px; }
+:root[lang|="zh"] .vx-live-stage .svg-mono { font-size: 13.5px; }       /* 14.0 -> 15.8 */
+:root[lang|="zh"] .vx-live-stage .svg-note { font-size: 13.5px; }
+:root[lang|="zh"] .vx-live-stage .svg-label.small { font-size: 12.5px; }
+:root[lang|="zh"] .vx-live-stage .svg-label { font-size: 14.5px; }      /* 15.2 -> 16.9 */
+:root[lang|="zh"] .vx-live-stage .svg-label.big { font-size: 17.5px; }
+:root[lang|="zh"] .vx-live-stage .tick { font-size: 12.5px; }
+:root[lang|="zh"] .vx-live-stage .lv-phase { font-size: 13.5px; }
+:root[lang|="zh"] .vx-live-stage .lv-phase.small { font-size: 11.5px; }
+
+/* ============================================================================
+   CHINESE SPACE DISTRIBUTION
+
+   Chinese copy wraps to fewer lines than the English these panels were laid out
+   for, so flexible rows end up with the content bunched at the top and a void
+   where a footer rail is pinned. Measured against the English page: the void
+   under the research description grows 129px -> 166px, the microscope panel
+   51 -> 67, the architecture panel 71 -> 88.
+
+   Rather than just closing the gaps, spend them on the thing that needed the
+   room anyway — the research graphics scale with their container, so a taller
+   visual row enlarges the graphic and its labels at once.
+   ========================================================================= */
+
+/* Research cards: more room to the graphic, less auto-margin void under the
+   copy, and a description at reading size rather than label size. */
+:root[lang|="zh"] .vx-research-page .vx-research-grid article {
+  grid-template-rows: auto minmax(150px, 1.15fr) minmax(0, 1fr);
+}
+:root[lang|="zh"] .vx-research-page .vx-research-grid article > .vx-research-card-copy > p {
+  font-size: 14.5px;
+  line-height: 1.75;
+}
+
+/* Microscope left panel: the copy row is 1fr with the controls pinned below. */
+:root[lang|="zh"] .vx-case-microscope-page .vx-story-copy > p { font-size: 15px; line-height: 1.75; }
+
+
+/* ---------------------------------------------------------------------------
+   Trial changes from the review pass. Each is one block so any of them can be
+   reverted on its own.
+   ------------------------------------------------------------------------- */
+
+/* 1. The diagonal light sweep on the implementation-signal console, removed to
+      see whether it was earning its place. The keyword emphasis is untouched —
+      only the moving gradient bar goes. Restore by deleting this rule. */
+.vx-stage-signal-diagonal-sweep { display: none; }
+
+/* 2. The "enter the component microscope" button sat hard against the bottom
+      corner of its panel. Lift it off the edge. */
+.vx-architecture-handoff { margin-bottom: 10px; }
+@media (max-height: 840px) { .vx-architecture-handoff { margin-bottom: 7px; } }
+
+/* 3. The four flow labels on the project cards ("live voice turn", "adaptive
+      interview graph", …) read small against the card. Both portals. */
+.vx-project-mini-architecture li > strong { font-size: 12px; }
+.vx-project-mini-architecture > span { font-size: 10.5px; }
+:root[lang|="zh"] .vx-project-mini-architecture li > strong { font-size: 13.5px; }
+:root[lang|="zh"] .vx-project-mini-architecture > span { font-size: 12px; }
+
+/* 4. The implementation-signal console, stripped to plain. The accent lived in
+      five places, not one: a tinted border, a diagonal accent wash, an inset
+      3px bar down the left edge (the colour in the left corner), an outer
+      accent glow, HUD corner brackets, and a faint accent grid. All off, so the
+      box can be judged on the words alone. The keyword emphasis inside is
+      untouched. Delete this block to restore. */
+.vx-stage-signal-console {
+  border-color: var(--vx-line);
+  background: rgba(6, 9, 12, 0.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 14px 40px rgba(0, 0, 0, 0.22);
+  animation: none;
+}
+.vx-stage-signal-console::before,
+.vx-stage-signal-console::after { content: none; }
+
+/* 5. Measured, not guessed: sampling every scene across its animation cycle,
+      text-ink density per viewBox came out at
+
+        antigravity-microscope  0.042      research          0.132–0.214
+        filmora-microscope      0.060      research-cont     0.217–0.254
+        mindscape-microscope    0.143      capability maps   0.130–0.145
+
+      The two flagship walkthrough scenes carry three to six times less ink than
+      every other scene, and their text fills only ~9–10% of the plate it sits
+      in against 0.23–0.37 in the research minis. That is the "empty on one
+      side, small text" reading — they have the room, so they take another step.
+      Chinese portal only; English stays the deployed baseline. */
+:root[lang|="zh"] #antigravity-microscope .vx-live-stage .svg-sub,
+:root[lang|="zh"] #filmora-microscope .vx-live-stage,
+:root[lang|="zh"] #mindscape-microscope .vx-live-stage .svg-sub { font-size: 14px; }
+:root[lang|="zh"] #antigravity-microscope .vx-live-stage .svg-sub.tiny,
+:root[lang|="zh"] #filmora-microscope .vx-live-stage,
+:root[lang|="zh"] #mindscape-microscope .vx-live-stage .svg-sub.tiny { font-size: 12.5px; }
+:root[lang|="zh"] #antigravity-microscope .vx-live-stage .svg-label,
+:root[lang|="zh"] #filmora-microscope .vx-live-stage,
+:root[lang|="zh"] #mindscape-microscope .vx-live-stage .svg-label { font-size: 17px; }
+:root[lang|="zh"] #antigravity-microscope .vx-live-stage .svg-label.small,
+:root[lang|="zh"] #filmora-microscope .vx-live-stage,
+:root[lang|="zh"] #mindscape-microscope .vx-live-stage .svg-label.small { font-size: 14.5px; }
+:root[lang|="zh"] #antigravity-microscope .vx-live-stage .svg-mono,
+:root[lang|="zh"] #filmora-microscope .vx-live-stage,
+:root[lang|="zh"] #mindscape-microscope .vx-live-stage .svg-mono { font-size: 16px; }
+:root[lang|="zh"] #antigravity-microscope .vx-live-stage .svg-mono.small,
+:root[lang|="zh"] #filmora-microscope .vx-live-stage,
+:root[lang|="zh"] #mindscape-microscope .vx-live-stage .svg-mono.small { font-size: 14px; }
+:root[lang|="zh"] #antigravity-microscope .vx-live-stage .svg-mono.tinytext,
+:root[lang|="zh"] #filmora-microscope .vx-live-stage,
+:root[lang|="zh"] #mindscape-microscope .vx-live-stage .svg-mono.tinytext { font-size: 13.5px; }
+:root[lang|="zh"] #antigravity-microscope .vx-live-stage .svg-note,
+:root[lang|="zh"] #filmora-microscope .vx-live-stage,
+:root[lang|="zh"] #mindscape-microscope .vx-live-stage .svg-note { font-size: 16px; }
+:root[lang|="zh"] #antigravity-microscope .vx-live-stage .lv-phase,
+:root[lang|="zh"] #filmora-microscope .vx-live-stage,
+:root[lang|="zh"] #mindscape-microscope .vx-live-stage .lv-phase { font-size: 16px; }
+:root[lang|="zh"] #antigravity-microscope .vx-live-stage .tick,
+:root[lang|="zh"] #filmora-microscope .vx-live-stage,
+:root[lang|="zh"] #mindscape-microscope .vx-live-stage .tick { font-size: 14.5px; }
+
+
+/* The architecture ring, rebound to the highlight.
+
+   It was an absolutely-positioned element on a 7s/8s/9s CSS animation while the
+   node highlight ran on a 1600ms JS interval — 6.4s, 8s and 11.2s cycles against
+   7s, 8s and 9s rings. Only Filmora matched, and even that drifted because a CSS
+   animation and a setInterval are different clocks. The ring is now a child of
+   whichever node is lit, so "which node is highlighted" and "where is the ring"
+   are the same fact. It pulses in place on each hop. */
+.vx-map-packet {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--active-accent);
+  border-radius: 50%;
+  background: #090c10;
+  box-shadow: 0 0 16px var(--active-accent);
+  pointer-events: none;
+  animation: vxMapPacketHop 1600ms var(--vx-ease) both;
+}
+
+@keyframes vxMapPacketHop {
+  0%   { transform: scale(0.2); opacity: 0; }
+  22%  { transform: scale(1.15); opacity: 1; }
+  38%  { transform: scale(1); opacity: 1; }
+  82%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-map-packet { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   First-visit language gate. Renders only when no prior choice is stored, so a
+   returning reader never sees it and the exported HTML is unchanged.
+   ------------------------------------------------------------------------- */
+.vx-lang-gate {
+  position: fixed;
+  z-index: 500;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 6, 8, 0.86);
+  backdrop-filter: blur(18px) saturate(130%);
+  animation: vxLangGateIn 300ms var(--vx-ease) both;
+}
+
+.vx-lang-gate-panel {
+  width: min(560px, 100%);
+  padding: 34px 34px 30px;
+  border: 1px solid var(--vx-line-strong);
+  background:
+    linear-gradient(150deg, rgba(184, 255, 99, 0.06), transparent 46%),
+    rgba(8, 11, 15, 0.97);
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
+}
+
+.vx-lang-gate-kicker {
+  color: var(--vx-lime);
+  font: 600 10px/1 var(--font-geist-mono), monospace;
+  letter-spacing: 0.14em;
+}
+
+.vx-lang-gate h2 {
+  margin: 16px 0 0;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.vx-lang-gate h2 em,
+.vx-lang-gate p em {
+  display: block;
+  color: var(--vx-muted);
+  font-style: normal;
+}
+
+.vx-lang-gate h2 em { margin-top: 4px; font-size: 22px; }
+
+.vx-lang-gate p {
+  margin: 14px 0 0;
+  color: #aab4bf;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.vx-lang-gate p em { margin-top: 3px; font-size: 13px; line-height: 1.75; }
+
+.vx-lang-gate-actions {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.vx-lang-gate-actions button {
+  min-height: 76px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+  border: 1px solid var(--vx-line-strong);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--vx-ink);
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
+}
+
+.vx-lang-gate-actions button:hover {
+  border-color: rgba(184, 255, 99, 0.55);
+  background: rgba(184, 255, 99, 0.07);
+  transform: translateY(-1px);
+}
+
+.vx-lang-gate-actions strong { font-size: 17px; font-weight: 600; }
+.vx-lang-gate-actions small { color: var(--vx-muted); font-size: 11.5px; }
+
+@keyframes vxLangGateIn { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-width: 560px) {
+  .vx-lang-gate-panel { padding: 26px 22px 24px; }
+  .vx-lang-gate h2 { font-size: 23px; }
+  .vx-lang-gate-actions { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-lang-gate { animation: none; }
+  .vx-lang-gate-actions button { transition: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Credential badges.
+   Two places, one visual idea: a hard fact above its label, in the chapter's
+   accent, so a recruiter reads status/scale/scope before any prose.
+   ------------------------------------------------------------------------- */
+.vx-case-badges {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vx-case-badges > i {
+  min-height: 40px;
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid color-mix(in srgb, var(--active-accent) 38%, var(--vx-line));
+  background: color-mix(in srgb, var(--active-accent) 7%, rgba(255, 255, 255, 0.015));
+  font-style: normal;
+}
+
+.vx-case-badges b {
+  color: var(--active-accent);
+  font: 650 11.5px/1.1 var(--font-geist-mono), monospace;
+  letter-spacing: 0.05em;
+}
+
+.vx-case-badges em {
+  color: var(--vx-muted);
+  font: 550 8.5px/1 var(--font-geist-mono), monospace;
+  font-style: normal;
+  letter-spacing: 0.13em;
+}
+
+/* The one research record whose weight comes from who runs the benchmark. */
+.vx-research-card-top[data-crest="true"] { align-items: start; }
+
+.vx-research-crest {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--vx-lime) 42%, var(--vx-line));
+  background: color-mix(in srgb, var(--vx-lime) 8%, transparent);
+}
+
+.vx-research-crest b {
+  color: var(--vx-lime);
+  font: 650 9.5px/1.15 var(--font-geist-mono), monospace;
+  letter-spacing: 0.08em;
+}
+
+.vx-research-crest b + b { color: var(--vx-muted); font-weight: 550; }
+
+:root[lang|="zh"] .vx-case-badges b { font-size: 12.5px; }
+:root[lang|="zh"] .vx-case-badges em { font-size: 11.5px; letter-spacing: 0.06em; }
+:root[lang|="zh"] .vx-research-crest b { font-size: 11px; letter-spacing: 0.04em; }
+
+@media (max-width: 900px) {
+  .vx-case-badges > i { min-height: 36px; padding: 5px 10px; }
+}
+
+/* Three Chinese labels were still under the 11.5px floor: the two claim-boundary
+   notes (which are exactly the text a careful reader must be able to read) and
+   my own new crest. */
+:root[lang|="zh"] .vx-confidentiality span,
+:root[lang|="zh"] .vx-safety-note span,
+:root[lang|="zh"] .vx-research-crest b { font-size: 11.5px; }
+
+/* The hero deck renders only once the intro sequence resolves, so these four
+   sat below the floor unnoticed until the measurement harness sampled after the
+   hero had settled. */
+:root[lang|="zh"] .vx-hero-credentials .vx-hero-actions a,
+:root[lang|="zh"] .vx-deck-badge,
+:root[lang|="zh"] .vx-hero-availability span { font-size: 11.5px; }
+:root[lang|="zh"] .vx-deck-card > span,
+:root[lang|="zh"] .vx-deck-card > div i { font-size: 12.5px; }
+
+/* ---------------------------------------------------------------------------
+   Round 3 fixes, measured.
+   ------------------------------------------------------------------------- */
+
+/* The return line under the architecture ("自适应追问返回给候选人") sits in a
+   fixed 30px lane with a 17px arc above it, leaving ~13px for text — fine for
+   11px Latin on line-height 1, but the Chinese at 12.5px was being clipped. */
+:root[lang|="zh"] .vx-overview-return,
+:root[lang|="zh"] .vx-mind-feedback {
+  height: auto;
+  min-height: 38px;
+  line-height: 1.5;
+  padding-bottom: 2px;
+}
+
+/* Staggered stars around the credential badges. Sizes, offsets and delays are
+   deliberately uneven — an even ring reads as a border, a scattered one reads
+   as emphasis. Purely decorative, so aria-hidden and motion-safe. */
+.vx-case-badges > i { position: relative; overflow: visible; }
+
+.vx-case-badges > i::before,
+.vx-case-badges > i::after {
+  content: "✦";
+  position: absolute;
+  color: var(--active-accent);
+  pointer-events: none;
+  animation: vxBadgeStar 3.6s ease-in-out infinite;
+}
+
+.vx-case-badges > i::before { left: -7px;  top: -8px;  font-size: 9px;  opacity: 0.85; animation-delay: 0s; }
+.vx-case-badges > i::after  { right: -5px; bottom: -7px; font-size: 6px; opacity: 0.55; animation-delay: 1.1s; }
+
+/* stagger each badge so the three do not twinkle in lockstep */
+.vx-case-badges > i:nth-child(2)::before { left: auto; right: -8px; top: -9px; font-size: 7px; animation-delay: 0.7s; }
+.vx-case-badges > i:nth-child(2)::after  { right: auto; left: -6px; bottom: -6px; font-size: 8px; animation-delay: 1.9s; }
+.vx-case-badges > i:nth-child(3)::before { left: -6px; top: auto; bottom: -9px; font-size: 8px; animation-delay: 1.4s; }
+.vx-case-badges > i:nth-child(3)::after  { right: -7px; bottom: auto; top: -7px; font-size: 6px; animation-delay: 2.6s; }
+
+@keyframes vxBadgeStar {
+  0%, 100% { transform: scale(0.72) rotate(0deg); opacity: 0.28; }
+  45%      { transform: scale(1.12) rotate(14deg); opacity: 0.95; }
+  70%      { transform: scale(0.9) rotate(4deg); opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-case-badges > i::before,
+  .vx-case-badges > i::after { animation: none; opacity: 0.6; }
+}
+
+
+/* Filmora's scenes render at a smaller scale than Antigravity's, so sharing one
+   set of declared sizes left the whole chapter at 12.9-14.1px against a 16.6
+   benchmark. Its own step, sized to land on the benchmark rather than near it. */
+:root[lang|="zh"] #filmora-microscope .vx-live-stage .svg-sub { font-size: 15.5px; }
+:root[lang|="zh"] #filmora-microscope .vx-live-stage .svg-sub.tiny { font-size: 14px; }
+:root[lang|="zh"] #filmora-microscope .vx-live-stage .svg-label { font-size: 18.5px; }
+:root[lang|="zh"] #filmora-microscope .vx-live-stage .svg-label.small { font-size: 16px; }
+:root[lang|="zh"] #filmora-microscope .vx-live-stage .svg-mono { font-size: 17.5px; }
+:root[lang|="zh"] #filmora-microscope .vx-live-stage .svg-mono.small { font-size: 15.5px; }
+:root[lang|="zh"] #filmora-microscope .vx-live-stage .svg-mono.tinytext { font-size: 15px; }
+:root[lang|="zh"] #filmora-microscope .vx-live-stage .svg-note { font-size: 17.5px; }
+:root[lang|="zh"] #filmora-microscope .vx-live-stage .lv-phase { font-size: 17.5px; }
+:root[lang|="zh"] #filmora-microscope .vx-live-stage .tick { font-size: 16px; }

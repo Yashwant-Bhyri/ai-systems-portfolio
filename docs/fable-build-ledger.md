@@ -1141,3 +1141,508 @@ looks like a code error but clears with preview_stop/preview_start.
 4. **"Why this role" rewritten** — all 24 lines are now complete, parallel
    sentences instead of abstract fragments ("I build the runtime around the
    model, not just the prompt in front of it.").
+
+### Session 10 — the Chinese portal
+
+The site now serves two portals from one build: `/` (English, unchanged) and
+`/zh/` (Simplified Chinese). Nothing about the English deployment moves.
+
+1. **Dictionary keyed by the English source string** (`app/i18n-zh.ts`, ~950
+   entries). Because the key IS the English text, no data array had to be
+   restructured, and a missing entry degrades to English instead of an empty
+   box. The English portal never reads the dictionary at all.
+2. **Three ways in** (`app/i18n.tsx`): `useT()/useTranslated()` for components,
+   `T()` for inline labels anywhere, `TD()` for module constants.
+   `LangProvider` sets a module-level `activeLang` during render, which is what
+   lets `T()` work outside a component — safe here because a page renders
+   exactly one language and there is no route that mounts both.
+   INCIDENT: the first pass wrapped labels inside module-level constants in
+   `T()`. Those evaluate at import time, before any language is chosen, so they
+   froze English. Fixed by unwrapping them and translating at the read site with
+   `TD()` instead — hence the split between the two helpers.
+   `translateDeep` skips an `OPAQUE_KEYS` list (id, kind, glyph, file, …) so a
+   deep-translate can never rewrite an identifier that code compares against.
+3. **~850 graphic labels converted by codemod** across the fable scenes,
+   portfolio-visuals, profile-section and portfolio-v2. The transform excludes
+   equality operands, className values and non-display attributes.
+   INCIDENT: the codemod's SVG path-data guard (`/^[MmLlCc…][\d\s.,-]/`) also
+   matched ordinary prose starting "A " or "L ", silently skipping those
+   strings. Tightened to require two numbers.
+4. **Emphasis survives translation.** Highlight weight is derived at render time
+   from `CORE_SIGNAL.test(phrase)`, so the regex now carries a Chinese group
+   (网关, 时延, 护栏, 编排, 重排序, 检索, 遥测, 校验 …). Each translated highlight
+   phrase is also authored to be a verbatim substring of its translated
+   annotation, because `HighlightedStageAnnotation` locates it with `indexOf`.
+   Verified: 47 full / 5 half / 31 soft — identical to English.
+   `tests/rendered-html.test.mjs` now asserts both halves of this.
+5. **CJK typography.** The font stack is applied by redefining
+   `--font-system-sans/mono` under `:root[lang|="zh"]`, so every existing
+   `var()` in the sheet picks it up at once. Prose leading goes 1.55 → 1.75; the
+   two widest small-caps trackings (0.18em, 0.15em) come down to 0.08em, because
+   Latin tracking on full-width Han glyphs reads as broken spacing.
+   INCIDENT: the first attempt used `[lang="zh"]` while the document is
+   `zh-Hans`, so none of it applied; and appending the Han families *after*
+   `sans-serif` meant they were never reached. Both fixed.
+6. **Capability highlight width** — `skill.length * 6.9` assumed a Latin mono
+   advance. Replaced with `labelWidth()`, which counts a Han glyph as 11.5
+   (measured: exactly 5/3 of the 6.9 Latin advance). Pure-Latin labels give the
+   identical number, so the English map is untouched.
+7. **Header layout fix.** The language toggle had been added as a fourth child
+   of the header's three-column grid, which pushed the résumé button onto a
+   second row and stretched the toggle's border across the whole column. Both
+   now sit in one `.vx-header-end` cell.
+8. **Per-portal document metadata** — Chinese title/description/OG on `/zh/`,
+   `hreflang` alternates on both, and `scripts/postbuild-lang.mjs` stamps
+   `lang="zh-Hans"` into the exported Chinese page (the root layout owns
+   `<html>`, so a static export cannot do it per route).
+
+Verification: 4/4 tests pass; `tsc` clean; zero SVG text overflows and zero
+horizontal document overflow on `/zh/` at 375px, 768px and 1440px; the English
+page still resolves `lang="en"`, no CJK font, 1.55 leading, 0.18em headings, and
+carries no Chinese text beyond the language-toggle affordance itself.
+
+#### Session 10 review pass
+
+The three review subagents I launched all terminated on a session limit before
+reporting, so the audits were run inline instead. What they turned up:
+
+- **`data-state` fed from a translated value** (`portfolio-visuals.tsx`, NLI
+  matrix). CSS colours the amber/red verdicts off `[data-state="uncertain"]` and
+  `[data-state="blocked"]`; a translated value would never match the selector.
+  Split into an English state key plus a translated label. (This component turns
+  out to sit in the dead half of `portfolio-visuals.tsx` — only the three
+  `*Overview` exports are still reachable — but the pattern was worth fixing.)
+- **Six live labels still unwrapped**: the three trajectory probe labels,
+  `Q PACKET`, `v-next ✓`, and the MindScape validation note.
+- **Terminology divergence**: `observability` was rendering as 观测 in the three
+  RL entries and 可观测性 everywhere else. Unified on 可观测性.
+- Checked and found correct, not changed: 内存/显存 for hardware memory (vs 记忆
+  for agent memory), 可追溯 for traceable (vs 链路 for a trace), 事件标记 for
+  speech-event tokens (vs Token for LLM tokens).
+- **All 49 claim-boundary strings verified**: 虚构回放, 示意性, 合成数据, 研发原型,
+  仅离线 · 绝不在线自训练, 不构成自主诊断、医疗建议、急救调度，也不是生产级临床
+  软件, 最终判断权始终属于医生. No hedge was lost or weakened in translation.
+- Dictionary: 0 duplicate keys; 26 no-op entries, all deliberate keeps (brand
+  names, code fragments, hashtags) that record the decision explicitly.
+
+#### Session 10 — second external review (correct dictionary this time)
+
+Applied 24 fixes. Semantic corrections first:
+
+- `DENSE · MedCPT over HNSW/Faiss` read `MedCPT 之上的 HNSW/Faiss` — the
+  architecture inverted. Now `基于 HNSW/Faiss 的 MedCPT`.
+- `Embeddings` → was `Embedding 检索`, which folded the verb into the component
+  name. Now `Embedding` (still a substring of its annotation, still FULL weight).
+- `answer streaming` sits under the CANDIDATE node; `流式输入` described it from
+  the server's side. Now the neutral `流式传输`.
+- `ownership` was `归属权` (property title). In systems work it means
+  accountability scope: `负责范围`, and the probe is `职责边界追问`.
+- `DISCREPANCY` was the bare `一致性`, which reads as the property rather than
+  the check. Now `一致性核查`, matching the walkthrough's own wording.
+- `human action` in the clinical chain was `人工动作` — reads as an actuator.
+  Now `人工决策`. The Lalamove rail keeps `由人执行动作`, where it is an action.
+- `FULL SYSTEM SIGNAL RAIL` was `全系统技术栈` — a tech stack is a different
+  thing. Now `全系统信号链`.
+- Policy slips: `api:` → `API：`, `FLASK 接口` → `FLASK API`. The layered-app
+  figure mixed `ui`/`api` in English with `数据` in Chinese; all three are now
+  Chinese (`界面 / 接口 / 数据`).
+- Register: `被真正用起来` → `落地可用`, `兜底挽回了这一轮` → `兜底恢复了本轮`,
+  `仅限受限行数` → `仅返回受限行数`, `让工程本身可被看见` → `让工程本身可见`,
+  `交叉编码器重排` → `重排序`, `副语言特征` → `副语言标记` (matching the sibling
+  `事件标记`), `招聘证据` → `招聘方证据`.
+
+Rejected, with reasons:
+
+- `Skill compilation` → `技能固化`. The Filmora section is built on one compiler
+  metaphor (`信号编译器`, `Prompt 编译器`, `语义上下文编译器`); breaking a single
+  link makes the chain incoherent.
+- `observable reasoning behavior` → `可观测`. Here it means behaviour that can be
+  observed in the interview, not observability tooling. `可观察` is correct.
+- `context` → `上下文`. It is a research-record metric whose value is "official
+  benchmark" — the setting of the work. `背景` is right.
+- `BM25 lexical search` → `词项检索`. `词法检索` is the established counterpart to
+  `稠密检索` and is used consistently across eight entries.
+- `Profile` → `简介`. That section is the role↔capability map headed 我在寻找什么
+  样的岗位？ — positioning, not a bio.
+- `COMPONENT MICROSCOPE` → `组件透视`. The microscope is a deliberate metaphor the
+  section is built on, and Chinese uses 显微镜 figuratively too.
+- `Human-in-the-loop` kept as `人机协同` — settled Chinese, and it sits in a
+  keyword field of Chinese terms.
+
+Re-verified after: 47/5/31 emphasis split unchanged, zero SVG text overflow,
+zero horizontal overflow, 4/4 tests, tsc clean.
+
+#### Session 10 — Chinese type floor
+
+Latin and Han have different legibility floors. A 9px Latin cap is a clean
+shape; 纵向回溯 at 9px has roughly forty strokes competing for nine pixels. The
+ramp above 12px was fine — Han is if anything *more* legible than Latin at
+display sizes — so this is a floor under the bottom of the scale, not a
+magnification. 40 style buckets were below it.
+
+Measured headroom before touching anything: 39 of the 40 already had more room
+than they needed, several by 6–36×, because the containers were padded for a
+Latin scale and Chinese labels are physically shorter. Exactly one had none
+(问题 + 图像, 2% short) and was tightened to 问题+图像.
+
+Two tiers rather than a smooth remap: under 10.5px effective → 11.5px,
+10.5–11.9 → 12.5px, 12+ untouched. A continuous remap does not survive the
+arithmetic — the whole sub-legible range spans 4px, so compressing it under the
+floor puts the steps below the perceptual threshold. The hierarchy those sizes
+encoded was not doing any work while none of them could be read.
+
+Inside an SVG the rendered size is the declared size times the viewBox scale,
+and the same class renders at four different scales across the page (×0.924
+full capability map, ×1.167 research minis, ×1.208 brief role map, ×1.23). So
+the CSS targets *effective* size and divides by the local scale, which is why
+the same class carries different declared numbers per section.
+
+The big walkthrough graphics needed nothing — they were already 12.3–16px.
+
+INCIDENT: the capability highlight paint is drawn from a hardcoded glyph-advance
+table (6.9px Latin / 11.5px Han) measured at the old size. Raising .vx-map-skill
+to 12.5px left the highlight too narrow and three labels overflowed it.
+`labelWidth()` now takes the language and scales the advance. This only showed
+up in measurement, never in review.
+
+Nav gap 26px → 18px on the Chinese portal: the larger labels need the room back,
+and the old gap was calibrated for 66px-wide Latin words against 36px Chinese
+ones. Verified at 1440 / 1180 / 1024: 260 / 130 / 52px of slack to the brand,
+never clipped; the nav hides below ~900px.
+
+Everything is scoped to `:root[lang|="zh"]`. English verified unchanged: 26px
+nav gap, 11px nav, 9px badges, 1.55 leading, no CJK font, and the only Chinese
+on the page is the 中文 toggle label.
+
+#### Session 10 — third external review pass
+
+Accepted: `api` → `API` (the file's own policy), `Profile`/`What I'm built for`
+→ `技术定位`/`我的技术定位` (bare 定位 reads as "positioning/locate" cold in a nav;
+`简介` would be wrong because the section is a role↔capability map, not a bio),
+`组件显微镜` → `组件透视` (显微镜 names the instrument, 透视 names the view),
+`技能编译` → `技能固化` (you do not 编译 a skill; the compiler metaphor survives in
+the step's own annotation), `运行体积` → `运行时体积`, `自动服务商切换` →
+`自动服务商故障转移` (切换 loses the failure semantics — emphasis phrase, so its
+annotation moved with it), and `词法检索` → `词项检索` across ten entries (词法 reads
+as 词法分析/lexing in Chinese CS; 词项 is the IR term against 稠密检索).
+
+Rejected: `context` → `上下文` for the second time — the metric is
+`context: official benchmark`, the setting of the work, so `背景` is right; the
+reviewer is pattern-matching the key without its value. `人机协同` kept over
+English `Human-in-the-loop` — it is settled Chinese and sits in a keyword field
+of Chinese terms.
+
+#### Session 10 — Chinese space distribution and scene type
+
+Feedback: the Chinese page reads cramped in places while leaving voids in
+others, and the labels inside the operational graphics are still too small.
+
+Measured the largest internal gap in each flagged container, English vs Chinese
+at a fixed 1440px viewport:
+
+| container            | EN gap | ZH gap |
+|----------------------|--------|--------|
+| architecture panel   |  71px  |  88px  |
+| microscope left panel|  51px  |  67px  |
+| research card        | 129px  | 166px  |
+
+The gaps are a design property, not a Chinese regression — but Chinese widens
+them because the copy wraps to fewer lines. The research card was the worst: its
+signal rail is pinned with `margin-top: auto`, and that auto margin measured
+147px of pure void, while the description sat at 12.5px — micro-label size for
+what is actually body copy.
+
+Rather than only closing gaps, the space went to the thing that needed it. The
+research graphics scale with their container, so widening the visual row makes
+the graphic *and its Chinese labels* bigger and eats the void at the same time:
+`minmax(150px, 0.72fr)` -> `minmax(150px, 1.15fr)`. Visual 236 -> 302px (+28%),
+auto-margin void 147 -> 71px, description 12.5 -> 14.5px.
+
+The scene type in live-scenes.css also went up a step on the Chinese portal
+(.svg-sub 10 -> 12, .svg-label 13 -> 14.5, .svg-mono/.svg-note 12 -> 13.5, and
+so on). The first pass had skipped it because it measured 10.5-18.7px effective,
+which is above the floor but still small for dense Chinese labels.
+
+INCIDENT: an attempt to give the architecture nodes more height used a flat
+`min-height: 172px`, which *lowered* them — a media query sets 192px at 1440px
+and the unconditional rule overrode it downward. Caught by comparing the two
+portals at a pinned viewport; rule removed. Re-measured afterwards, that panel
+is 35/89 top/bottom in English and 43/97 in Chinese, and the lower band holds
+the return line, so it is close to balanced in both and was left alone.
+
+Verified: zero SVG text overflow despite the 28% larger graphics, zero
+horizontal overflow, no vertical clipping outside the intentional hero, English
+unchanged (card rows 50/215/298, description 12.5px, .svg-sub 10px, nodes
+192px), 4/4 tests, tsc clean.
+
+#### Session 10 — review round: rule collision, hero cadence, trial changes
+
+**The green column rule cut through the graphics (both languages).** In the
+brief role map the rule sits at `headerY + 8` = 23, but the first area box began
+at y=22 and the operational figure rendered from y=19.4 — the figures draw
+46 * 0.86 above their row centre, so they overhang the row band by ~9px and the
+first one reached above the rule no matter where the rule went. Fixed by solving
+the header band, row pitch and figure overhang together rather than nudging one:
+headerY 15 -> 12, rows [22,108,194,280,366] -> [29,114,199,284,369] (pitch 86 ->
+85). Result: rule 20, figure clears by 6.4px, box by 9px, and the last figure
+still ends at 445.6 in a 456 viewBox, so the old fifth-row clipping does not
+return. The full map was already clear (rule 26, boxes 38) and is untouched.
+
+**The Chinese hero ran at 56% of the English duration.** Measured per statement:
+EN 5.2/9.0/4.2s against ZH 3.7/4.1/2.6s — 18.4s total against 10.4s. Chinese
+says the same thing in roughly half the characters, so an identical ms/char
+gives the reader half the time for the same information. Both levers moved
+rather than one: keystroke 22 -> 36ms base (avg 29 -> 45) and the beat after
+each completed statement 1420 -> 2200ms, so the typing keeps its energy and the
+finished line gets a real pause. Now 16.0s, 87% of English.
+
+Trial changes, each isolated so any can be reverted alone:
+- `.vx-stage-signal-diagonal-sweep` hidden — the rotated gradient bar that swept
+  in from the left of the implementation-signal console. Keyword emphasis is
+  untouched; only the moving light is gone.
+- `.vx-architecture-handoff` lifted off the bottom corner (margin-bottom 10px,
+  7px on short viewports).
+- Project-card flow labels up a step (11 -> 12px, and 12.5 -> 13.5px on Chinese).
+
+INCIDENT: a mid-check reported 320px of horizontal overflow. It was an artefact
+— the browser pane had collapsed to zero width, so every element "overflowed" a
+0px viewport. Re-measured at 1440: zero overflow. Worth remembering that a
+viewport reading of 0 invalidates the whole sweep.
+
+#### Session 10 — CRASH: Filmora tool graph on the Chinese portal
+
+Clicking step 7 of the Filmora component walkthrough (剪辑时间线) tore down the
+React tree on /zh/:
+
+    TypeError: Cannot read properties of undefined (reading 'start')
+      at stateOf (app/fable/filmora.tsx)
+      at EditorGraphic
+
+Cause, and it is mine. `EditorGraphic` looks a node up by id:
+
+    const node = (id) => TD(DAG).find((n) => n.id === id)!;
+    const a2 = node(d);          // d comes from n.deps
+
+`id` was in OPAQUE_KEYS so ids stayed English — but `deps` was not, so
+translateDeep rewrote the reference list: `deps: ["brief"]` became `["需求"]`
+while `id: "brief"` stayed. The lookup returned undefined and `.start` threw.
+
+This is exactly the failure mode the OPAQUE_KEYS guard existed to prevent. The
+guard was incomplete: protecting the identifier is not enough when other records
+carry that identifier as a foreign key. OPAQUE_KEYS now also covers deps, dep,
+refs, parents, children, targets, source, from, to, next, prev, links, edges.
+
+Two things it exposed about the earlier verification:
+- The audits only ever rendered the *default* step of each walkthrough. Nothing
+  clicked through the other steps, so a crash reachable only by interaction was
+  invisible to every sweep, to tsc, and to the tests.
+- A fifth test now asserts OPAQUE_KEYS protects the identifier keys and that
+  every id referenced from a `deps` list matches a real node id.
+
+Re-verified by clicking all 28 walkthrough steps across the three chapters on
+/zh/ after a clean reload: zero throws, every stage still renders its SVG text.
+
+#### Session 10 — measurement harness for the operational graphics
+
+Every earlier audit sampled a scene at one instant. These scenes run on a sim
+clock, so a label that fits at t=0 can overflow at t=4200 and a node centred
+early can be crowded later. `scripts/measure-graphics.mjs` carries the probe:
+it walks every scene, clicks through all 28 walkthrough steps, and samples
+repeatedly at each so the clock advances — 2,376 measurements per run. Per
+sample it records text-ink density against the viewBox, how far text escapes
+its plate, the smallest gap from text to a plate wall, left/right imbalance,
+average fill of text within its plate, and effective on-screen px; then keeps
+the worst of each across the whole cycle.
+
+First run answered the standing "should the graphic text be bigger" question
+with numbers instead of opinion:
+
+    antigravity-microscope  density 0.042   fill 0.10
+    filmora-microscope      density 0.060   fill 0.09
+    mindscape-microscope    density 0.143   fill 0.22
+    capability maps         0.130-0.145     fill 0.10-0.11
+    research minis          0.132-0.254     fill 0.16-0.37
+
+The two flagship walkthrough scenes carry three to six times less ink than every
+other scene. They had the room, so their type went up a step on the Chinese
+portal: density 0.042 -> 0.054 and 0.060 -> 0.080, smallest text 14.8 -> 17.2px
+and 14.1 -> 16.6px.
+
+The same run found three labels sitting on or over a plate wall, two of them
+pre-existing and invisible to the old snapshot audits:
+- `ANTIGRAVITY · 语音合成` went 1.6px over once the type grew — reverted to
+  `ANTIGRAVITY · TTS`, which is what the acronym policy wanted anyway.
+- `边缘端` 0.4px over -> `边缘`.
+- `小模型 ← TRL` 0.4px over -> `SLM ← TRL`.
+Re-measured after: zero overflow anywhere across the full cycle.
+
+Also this round: Chinese hero 16.0s -> 19.0s against English 18.4s (keystroke
+40ms base, beat 2900ms); project banner 3.6s -> 4.6s per card on Chinese only;
+and the implementation-signal console stripped of its accent treatment, which
+lived in five places rather than one — tinted border, diagonal wash, an inset
+3px bar down the left edge, an outer glow, HUD corner brackets and an accent
+grid. All off behind one revertable block.
+
+### Session 11 — four-item iteration, on a fork
+
+Fork: portfolio-elite-next, served on 7602. portfolio-elite untouched.
+
+**1. Architecture ring, resynced.** The travelling ring ran on a CSS animation
+(7s / 8s / 9s) while the node highlight ran on a JS interval (4/5/7 nodes ×
+1600ms = 6.4s / 8s / 11.2s). Only Filmora matched, and even that drifted because
+the two are different clocks. Rather than retune numbers that would drift again,
+the ring is now a child of whichever node is lit — "which node is highlighted"
+and "where is the ring" became the same fact. The three free-floating packets
+and their keyframes are gone.
+
+**2. The walkthrough now has exactly one pause.** Two pathways were removing
+control from the reader:
+- `pointerenter` / `focusin` on the stage set `pointerActive`, which fed the
+  `playing` expression. Hovering the stage paused everything, which is why
+  touching a component stopped the keyword rail. Pathway deleted.
+- The auto-advance wrote `requestedPlay: false` on reaching the last step of a
+  non-looping sequence, silently revoking the reader's own play preference. It
+  now simply stops advancing and leaves the preference alone.
+The CSS motion pause and the signal console now read `autoplayEnabled` (the
+button) rather than `playing` (which also folds in scroll position and page
+visibility). Verified: hover, two component clicks and focus all leave the rail
+running; the button pauses and resumes it.
+
+**3. First-visit language gate.** `app/language-gate.tsx`. Static export means no
+server-side negotiation, so the choice is made in the browser and stored. It
+renders nothing on the server, so both exported pages are byte-identical to
+before. Following a /zh/ link is itself a choice, so the gate records it and
+stays out of the way rather than interrupting. Verified: shown on a fresh visit,
+routes to /zh/, remembered, and never shown again.
+
+**4. Badges.** BIRD-SQL carries a crest — HKU × GOOGLE CLOUD / OFFICIAL
+BENCHMARK — because that record's weight comes from who runs the benchmark.
+Antigravity's opener carries three: IN PRODUCTION, 250+ INTERVIEWS,
+ORCHESTRATION + DECISION ENGINE. Both translated.
+
+INCIDENTS worth keeping:
+- My first pause test read the DOM synchronously after `.click()`, before React
+  had re-rendered, so every reading was stale and I nearly "confirmed" behaviour
+  that was not happening. Re-tested with a render gap between action and read.
+- The type floor had three holes I had introduced or missed: my own badge label
+  at 10.5px, the two claim-boundary notes at 11px (exactly the text a careful
+  reader must be able to read), and four hero-deck labels at 9-11px that only
+  render after the intro resolves, which is why every earlier sweep missed them.
+  All at 11.5px+ now; smallest Chinese text on the page is 11.5px.
+
+Verified on the fork: 28 walkthrough steps clicked with zero crashes, zero SVG
+text overflow, zero horizontal overflow, 5/5 tests, tsc clean. English baseline
+unchanged — 26px nav gap, 11px nav, 9px badges, 10px scene text, 1.55 leading,
+and the only CJK on it is the 中文 toggle.
+
+### Session 11b — text-vs-text collision detector
+
+The plate audit only ever asked "does this label escape its box". Every
+complaint in this round was "does this label sit on top of another label" — a
+different question the harness could not answer. Added a collision pass: for
+every SVG scene, compare each visible text's box against every other, report
+pairs overlapping by more than 15% of the smaller one.
+
+Two mistakes in building it, both worth keeping:
+
+1. The first version sampled five times per step inside one synchronous loop.
+   A synchronous loop cannot let a sim clock advance, so it read the same frame
+   five times and reported 4 collisions site-wide. Rewritten to sample on a
+   200ms interval with a real dwell per step; the same walk then found 156.
+
+2. The second version counted both halves of a cross-fade. These scenes dissolve
+   between two <g> layers, and opacity lives on the group, not the text — so a
+   label at opacity 1 inside a group at 0.05 was being counted as colliding with
+   the label replacing it. Acting on that would have "fixed" a deliberate
+   animation. Effective opacity now walks the ancestor chain and only text above
+   0.55 counts.
+
+Confirmed and fixed from the data:
+- Antigravity future map: current/ready/analyzing/promoted were never translated,
+  and at Chinese size the start-anchored label met the end-anchored state inside
+  a 92-unit chip. Translated; chips 92 -> 108, box 108 -> 124.
+- Filmora release chips: ROUTE COST / LATENCY / RELEASE and their values were
+  untranslated, and the sub-line ran back underneath the value 10 units below it.
+  Translated; box 56 -> 68 tall, sub-line moved below rather than beside.
+- Antigravity agent sink: name over status with 13 units of leading in a 30-unit
+  chip. Chip 30 -> 38.
+- Research minis: the JWT tag repeated under all three role rows and collided
+  with each at 28% — the legend already says it, so the repetition is gone.
+  DEPTH V2 over INT8 with 9 units of leading collapsed to one line.
+- The Redis transcript line was long enough in Chinese to run under the word
+  chips above it; shortened to "Redis 掉线时兜底存储接手本轮".
+
+Antigravity went 45 collisions -> 4 -> 0 after the sink fix. The remaining
+filmora counts are still being measured with the corrected detector.
+
+Badges reworked: the vague "IN PRODUCTION" status chip is gone in favour of
+three concrete facts — 250+ INTERVIEWS RUN, ORCHESTRATION + DECISION ENGINE,
+EVERY CLAIM TRACEABLE.
+
+### Session 11c — the benchmark comparison
+
+The user named a reference: Antigravity component step 03 is the readability
+they want everywhere. That turned a matter of taste into a measurement.
+
+Benchmark profile (antigravity 03): 24 labels, ink density 0.172, smallest text
+16.6px effective, average margin from text to plate wall 33.1 units.
+
+Scoring all 28 steps against it put eight of the twelve worst in MindScape:
+
+    mindscape 03, 04   12.9px   -3.7 against the benchmark
+    mindscape 06, 08   14.1px   -2.5
+    mindscape 01,02,05,07  14.8px  -1.8
+
+MindScape had been skipped in the earlier scene-type pass because it measured
+denser than Antigravity and Filmora — but density is not legibility, and against
+the benchmark it was the smallest text on the site. Raised to match.
+
+That immediately produced what the user had warned about: growing the type broke
+boxes that previously fit. Seven new plate overflows appeared, and two of them
+turned out to be strings that were never translated at all — the DSM rulebook
+lines (A. five+ symptoms / 2 wks, C. not substance-induced, R-04 no outcome
+claims, R-11 risk language screen) had stayed English and only became visible as
+overflow once they grew. Translated and shortened to fit the 210-unit plate.
+Also shortened "稠密 · 基于 HNSW/Faiss 的 MedCPT" (255 units in a 172 plate) to
+"稠密 · MedCPT + HNSW", and the source-packet note by 8 units.
+
+Three detectors now exist, and each was wrong before it was right:
+  1. plate overflow      — text escaping its own box
+  2. text-vs-text        — first version read one frame five times; second
+                           counted both halves of a cross-fade
+  3. viewBox escape      — text leaving the scene entirely
+  4. DOM overlap         — first version counted the typed ghost layer, 1088
+                           false positives
+Plus the benchmark profile, which is the one that found the MindScape gap.
+
+Other fixes this round: the architecture return line ("自适应追问返回给候选人")
+was clipped by a fixed 30px lane holding a 17px arc; now auto-height. Badges
+carry staggered stars — uneven sizes, offsets and delays, because an even ring
+reads as a border and a scattered one reads as emphasis.
+
+### Session 11d — closing the benchmark loop
+
+Filmora was still 12.9-14.1px against the 16.6 benchmark after the shared scene
+step, because its scenes render at a smaller viewBox scale than Antigravity's —
+one set of declared sizes cannot land two different scales on the same effective
+size. Filmora got its own step. Range across all 28 steps went 12.9-17.2 to
+15.4-19.1.
+
+Raising type kept exposing English that had never been translated, each time
+only visible once it grew past its plate:
+  - MOMENTS quotes (hashing explanation, failover recovery, résumé claim
+    challenged, reasoning under pressure) — reached through TD() but absent
+    from the dictionary
+  - filmora recommendation outputs (surf transition, golden-hour LUT,
+    beat-sync cuts)
+  - `sub: "reinforcement-learning"` in the RL station
+  - the DSM rulebook lines, found in the previous pass
+That is four separate discoveries of the same class. The lesson for the ledger:
+an untranslated string is invisible while it fits, so translation coverage and
+layout audits are the same audit, not two.
+
+Also this pass: `core="RECO"` spelled out to RECOMMENDATION / 推荐, and eight
+Chinese labels shortened rather than shrunk where they measured past their
+plates — 已去重 · 已打分 · 与需求关联 (45 over), 应答通路 · 约 900 毫秒, 下一步：Q4
+· 故障切换追问, 700+ 条已打分的创意信号, 特效 / 转场, 质检 · 评估, 缓存 → 语音合成,
+and the voice-recovery sentence.

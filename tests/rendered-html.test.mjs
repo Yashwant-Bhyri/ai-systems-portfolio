@@ -128,7 +128,10 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(profile, /opacity: brief \? 0 : 1/);
   assert.match(portfolio, /<ProfileSection variant="brief" \/>/);
   assert.match(portfolio, /<ProfileSection variant="full" \/>/);
-  assert.match(portfolio, /href="#capabilities"/);
+  assert.match(portfolio, /href: "#capabilities"/);
+  // two portals: English at / and 简体中文 at /zh/
+  assert.match(portfolio, /vx-lang-toggle/);
+  assert.match(portfolio, /LangProvider lang=\{lang\}/);
   // Each area carries its own operational figure, not one shared decoration.
   assert.match(profile, /function AreaFigure/);
   ["application", "runtime", "knowledge", "control"].forEach((area) => {
@@ -255,4 +258,79 @@ test("keeps assets, autoplay mechanics, operational graphics, and claim boundari
   assert.match(css, /vxTrendPlatformCycle/);
   await access(new URL("../public/yashwant-bhyri-resume.pdf", import.meta.url));
   await access(new URL("../public/trend-media.svg", import.meta.url));
+});
+
+test("keeps the two language portals separate and complete", async () => {
+  const en = await (await render("/")).text();
+  const zh = await (await render("/zh/")).text();
+  const cjk = /[一-鿿]/g;
+
+  // The English portal is the existing deployment: the only Chinese on it is
+  // the affordance that offers the Chinese portal.
+  const enChinese = en.match(/[^<>]{0,60}[一-鿿]+[^<>]{0,60}/g) ?? [];
+  for (const context of enChinese) {
+    assert.match(
+      context,
+      /Language \/ 语言|中文/,
+      `Unexpected Chinese text bled into the English portal: ${context}`,
+    );
+  }
+
+  // The Chinese portal is actually translated, not a copy of the English page.
+  assert.ok((zh.match(cjk) ?? []).length > 4000, "Chinese portal is under-translated");
+  assert.match(zh, /跳至主要内容/);
+  assert.match(zh, /目标岗位|定位/);
+
+  // Emphasis weights survive translation: every highlighted phrase must still be
+  // a verbatim substring of its annotation, or the three-weight rail goes blank.
+  const source = await readFile(new URL("../app/portfolio-v2.tsx", import.meta.url), "utf8");
+  const zhDict = await readFile(new URL("../app/i18n-zh.ts", import.meta.url), "utf8");
+  const entries = [...zhDict.matchAll(/^\s{2}"((?:[^"\\]|\\.)*)":\s*\n?\s*"((?:[^"\\]|\\.)*)",/gm)];
+  const dict = new Map(entries.map((m) => [JSON.parse(`"${m[1]}"`), JSON.parse(`"${m[2]}"`)]));
+  const blocks = [
+    ...source.matchAll(
+      /annotation:\s*\n?\s*"((?:[^"\\]|\\.)*)",\s*\n\s*annotationHighlights:\s*\[([^\]]*)\],(?:\s*\n\s*annotationSoftHighlights:\s*\[([^\]]*)\],)?/g,
+    ),
+  ];
+  assert.ok(blocks.length >= 26, "expected the full set of annotated stages");
+  for (const [, rawAnnotation, hard, soft] of blocks) {
+    const annotation = JSON.parse(`"${rawAnnotation}"`);
+    const translated = dict.get(annotation);
+    assert.ok(translated, `Untranslated stage annotation: ${annotation.slice(0, 48)}…`);
+    const phrases = [...`${hard} ${soft ?? ""}`.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((m) =>
+      JSON.parse(`"${m[1]}"`),
+    );
+    for (const phrase of phrases) {
+      const zhPhrase = dict.get(phrase);
+      assert.ok(zhPhrase, `Untranslated emphasis phrase: ${phrase}`);
+      assert.ok(
+        translated.includes(zhPhrase),
+        `Emphasis phrase "${zhPhrase}" is not a substring of its translated annotation`,
+      );
+    }
+  }
+});
+
+test("deep translation never rewrites a foreign key", async () => {
+  // A node that points at another node by id keeps that reference in a list.
+  // `id` being opaque is not enough — if the list is translated the lookup
+  // silently returns undefined and the graphic crashes at render. This is the
+  // Filmora tool-graph failure: deps ["brief"] became ["需求"] while the ids
+  // stayed English, so node("需求") was undefined and `.start` threw.
+  const source = await readFile(new URL("../app/i18n.tsx", import.meta.url), "utf8");
+  const block = sourceSlice(source, "const OPAQUE_KEYS", "]);");
+  for (const key of ["id", "deps", "kind", "glyph", "file", "type"]) {
+    assert.match(block, new RegExp(`"${key}"`), `OPAQUE_KEYS must protect "${key}"`);
+  }
+
+  // Every id referenced from a deps list must exist as an id in the same data.
+  const filmora = await readFile(new URL("../app/fable/filmora.tsx", import.meta.url), "utf8");
+  const dag = sourceSlice(filmora, "const DAG: DagNode[] = [", "\n];");
+  const ids = new Set([...dag.matchAll(/\bid:\s*"([^"]+)"/g)].map((m) => m[1]));
+  assert.ok(ids.size > 4, "expected the tool-graph nodes");
+  for (const m of dag.matchAll(/deps:\s*\[([^\]]*)\]/g)) {
+    for (const d of m[1].matchAll(/"([^"]+)"/g)) {
+      assert.ok(ids.has(d[1]), `tool-graph dep "${d[1]}" does not match any node id`);
+    }
+  }
 });

@@ -1,5 +1,7 @@
 "use client";
 
+import { T, TD } from "../i18n";
+
 import { ChapterShell, type StepDef } from "./chapter-shell";
 import { useSim, ph, eph, ez, pulse, noise, bez, script, typed, caret, rise, Wave, fmtMs, q } from "./live";
 
@@ -27,12 +29,12 @@ export function LoopGraphic({ a }: { a: boolean }) {
 
   const partial = script(
     [
-      { at: 700, end: 1700, text: "“i sharded the red is state”" },
-      { at: 1900, end: 2500, text: "“i sharded the redis state by session”" },
+      { at: 700, end: 1700, text: T("“i sharded the red is state”") },
+      { at: 1900, end: 2500, text: T("“i sharded the redis state by session”") },
     ],
     t,
   );
-  const q = typed("“what happens when one shard dies mid-interview?”", t, 4000, 6300);
+  const q = typed(T("“what happens when one shard dies mid-interview?”"), t, 4000, 6300);
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
@@ -50,9 +52,9 @@ export function LoopGraphic({ a }: { a: boolean }) {
           <circle cx={72} cy={193} r={5} />
           <path d="M 63 205 a 9 7 0 0 1 18 0" />
         </g>
-        <text x={144} y={198} textAnchor="middle" className="svg-label small">CANDIDATE</text>
+        <text x={144} y={198} textAnchor="middle" className="svg-label small">{T("CANDIDATE")}</text>
         <text x={144} y={216} textAnchor="middle" className="svg-sub">
-          {listening ? "answer streaming" : deciding ? "route pending" : speaking ? "hearing question" : "turn complete"}
+          {listening ? T("answer streaming") : deciding ? T("route pending") : speaking ? T("hearing question") : T("turn complete")}
         </text>
       </g>
       <Wave x={54} y={252} w={150} h={26} t={t} on={listening ? 1 : 0.06} />
@@ -60,17 +62,17 @@ export function LoopGraphic({ a }: { a: boolean }) {
       {/* STT */}
       <g className={`lv-node ${listening && t > 600 ? "is-live" : ""}`}>
         <rect x={244} y={40} width={190} height={54} rx={12} />
-        <text x={339} y={62} textAnchor="middle" className="svg-label">STREAMING STT</text>
-        <text x={339} y={80} textAnchor="middle" className="svg-sub">voice → text, live</text>
+        <text x={339} y={62} textAnchor="middle" className="svg-label">{T("STREAMING STT")}</text>
+        <text x={339} y={80} textAnchor="middle" className="svg-sub">{T("voice → text, live")}</text>
       </g>
       <text x={339} y={116} textAnchor="middle" className="svg-mono small">{partial}{listening && partial ? caret(t) : ""}</text>
 
       {/* orchestrator */}
       <g className={`lv-node ${deciding ? "is-live" : ""}`}>
         <rect x={432} y={172} width={172} height={72} rx={12} />
-        <text x={518} y={198} textAnchor="middle" className="svg-label">ORCHESTRATOR</text>
+        <text x={518} y={198} textAnchor="middle" className="svg-label">{T("ORCHESTRATOR")}</text>
         <text x={518} y={216} textAnchor="middle" className="svg-sub">
-          {deciding ? "evaluating the turn…" : t >= 3800 ? "next question ready ✓" : "two reasoning lanes"}
+          {deciding ? T("evaluating the turn…") : t >= 3800 ? T("next question ready ✓") : T("two reasoning lanes")}
         </text>
       </g>
 
@@ -83,8 +85,8 @@ export function LoopGraphic({ a }: { a: boolean }) {
           <circle cx={265.5} cy={343} r={1.6} className="lv-avatar-eye" />
           <circle cx={270.5} cy={343} r={1.6} className="lv-avatar-eye" />
         </g>
-        <text x={352} y={340} textAnchor="middle" className="svg-label small">ANTIGRAVITY · TTS</text>
-        <text x={352} y={358} textAnchor="middle" className="svg-sub">{speaking ? "next question" : "standby"}</text>
+        <text x={352} y={340} textAnchor="middle" className="svg-label small">{T("ANTIGRAVITY · TTS")}</text>
+        <text x={352} y={358} textAnchor="middle" className="svg-sub">{speaking ? T("next question") : T("standby")}</text>
       </g>
       <Wave x={452} y={286} w={140} h={24} t={t} on={speaking ? 1 : 0.06} />
       <text x={339} y={396} textAnchor="middle" className="svg-mono small">{q}{speaking ? caret(t) : ""}</text>
@@ -92,7 +94,7 @@ export function LoopGraphic({ a }: { a: boolean }) {
       {/* live center readout */}
       <g>
         <text x={320} y={168} textAnchor="middle" className="lv-phase">
-          {listening ? "LISTENING" : deciding ? "DECIDING" : speaking ? "SPEAKING" : "TURN CLOSED"}
+          {listening ? T("LISTENING") : deciding ? T("DECIDING") : speaking ? T("SPEAKING") : T("TURN CLOSED")}
         </text>
         {deciding && (
           <text x={320} y={206} textAnchor="middle" className="lv-counter">{fmtMs(decideMs)}</text>
@@ -100,11 +102,11 @@ export function LoopGraphic({ a }: { a: boolean }) {
         {closed && (
           <g style={rise(eph(t, 6600, 7100))}>
             <text x={320} y={206} textAnchor="middle" className="lv-counter">≈ 0.9 s</text>
-            <text x={320} y={230} textAnchor="middle" className="svg-sub">answer → decision → voice · under one second ✓</text>
+            <text x={320} y={230} textAnchor="middle" className="svg-sub">{T("answer → decision → voice · under one second ✓")}</text>
           </g>
         )}
         {(listening || speaking) && (
-          <text x={320} y={206} textAnchor="middle" className="svg-sub">turn #{turn} · live replay</text>
+          <text x={320} y={206} textAnchor="middle" className="svg-sub">{T("turn #")}{turn} {T("· live replay")}</text>
         )}
       </g>
     </svg>
@@ -124,12 +126,12 @@ export function SttGraphic({ a }: { a: boolean }) {
 
   const partial = script(
     [
-      { at: 500, end: 1500, text: "i shard it the red" },
-      { at: 1700, end: 2400, text: "i sharded the redis state" },
-      { at: 2500, end: 3100, text: "i sharded the redis state by sess" },
+      { at: 500, end: 1500, text: T("i shard it the red") },
+      { at: 1700, end: 2400, text: T("i sharded the redis state") },
+      { at: 2500, end: 3100, text: T("i sharded the redis state by sess") },
       { at: 3300, end: 3650, text: "" },
-      { at: 4600, end: 5500, text: "the fallback store keeps the turn al" },
-      { at: 5600, end: 6300, text: "the fallback store keeps the turn alive if redis drops" },
+      { at: 4600, end: 5500, text: T("the fallback store keeps the turn al") },
+      { at: 5600, end: 6300, text: T("the fallback store keeps the turn alive if redis drops") },
       { at: 7000, end: 7350, text: "" },
     ],
     t,
@@ -141,22 +143,22 @@ export function SttGraphic({ a }: { a: boolean }) {
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
       {/* live mic feed */}
-      <text x={40} y={52} className="svg-sub">LIVE AUDIO · 16 kHz</text>
+      <text x={40} y={52} className="svg-sub">{T("LIVE AUDIO · 16 kHz")}</text>
       <Wave x={40} y={64} w={220} h={56} bars={26} t={t} on={talking ? 1 : 0.05} />
-      <text x={40} y={150} className="svg-mono small">{talking ? "● listening live" : "○ final transcript ready"}</text>
+      <text x={40} y={150} className="svg-mono small">{talking ? T("● listening live") : T("○ final transcript ready")}</text>
 
       {/* latency ticker */}
       <g className="lv-chip">
         <rect x={452} y={40} width={158} height={46} rx={10} />
-        <text x={466} y={59} className="svg-sub">LIVE TRANSCRIPT</text>
-        <text x={466} y={78} className="svg-mono tinytext">while speaking</text>
+        <text x={466} y={59} className="svg-sub">{T("LIVE TRANSCRIPT")}</text>
+        <text x={466} y={78} className="svg-mono tinytext">{T("while speaking")}</text>
       </g>
 
       {/* live transcript lane — words may revise until the turn is committed */}
       <g className="lv-box hot">
         <rect x={300} y={96} width={310} height={76} rx={10} />
-        <text x={314} y={116} className="svg-sub">WORDS REVISE WHILE THE CANDIDATE SPEAKS</text>
-        {partial && <text x={598} y={116} textAnchor="end" className="svg-sub tiny">LIVE{caret(t)}</text>}
+        <text x={314} y={116} className="svg-sub">{T("WORDS REVISE WHILE THE CANDIDATE SPEAKS")}</text>
+        {partial && <text x={598} y={116} textAnchor="end" className="svg-sub tiny">{T("LIVE")}{caret(t)}</text>}
         {(() => {
           const words = partial.replace(/[“”]/g, "").split(" ").filter(Boolean);
           const layout = words.reduce<{
@@ -188,14 +190,14 @@ export function SttGraphic({ a }: { a: boolean }) {
       {/* committed transcript log */}
       <g className="lv-box">
         <rect x={40} y={190} width={570} height={170} rx={12} />
-        <text x={58} y={216} className="svg-sub">COMMITTED TRANSCRIPT · STABLE INPUT FOR REASONING</text>
-        <text x={58} y={244} className="svg-mono small dim">…the interview state retains the full turn context.</text>
+        <text x={58} y={216} className="svg-sub">{T("COMMITTED TRANSCRIPT · STABLE INPUT FOR REASONING")}</text>
+        <text x={58} y={244} className="svg-mono small dim">{T("…the interview state retains the full turn context.")}</text>
         {final1 > 0 && (
           <g style={rise(final1)}>
-            {STT_FINAL_1.map((w, i) => {
+            {TD(STT_FINAL_1).map((w, i) => {
               const p = eph(t, 3450 + i * 90, 3750 + i * 90);
               const pw = w.length * 6.8 + 16;
-              const px = 58 + STT_FINAL_1.slice(0, i).reduce((s, ww) => s + ww.length * 6.8 + 16 + 8, 0);
+              const px = 58 + TD(STT_FINAL_1).slice(0, i).reduce((s, ww) => s + ww.length * 6.8 + 16 + 8, 0);
               return (
                 <g key={w} style={{ opacity: p }}>
                   <rect x={q(px)} y={262} width={q(pw)} height={22} rx={6} className="lv-tokenpill" style={{ opacity: 0.4 + 0.6 * STT_CONF_1[i] }} />
@@ -208,14 +210,14 @@ export function SttGraphic({ a }: { a: boolean }) {
         )}
         {final2 > 0 && (
           <g style={rise(final2)}>
-            <text x={58} y={334} className="svg-mono">In-memory fallback keeps the turn running if Redis drops.</text>
-            <text x={520} y={334} className="tick ok" style={{ opacity: final2 }}>✓ final</text>
+            <text x={58} y={334} className="svg-mono">{T("In-memory fallback keeps the turn running if Redis drops.")}</text>
+            <text x={520} y={334} className="tick ok" style={{ opacity: final2 }}>{T("✓ final")}</text>
           </g>
         )}
       </g>
 
       <text x={40} y={396} className="svg-note">
-        Reasoning can start early, but only the stable final is stored as interview evidence.
+        {T("Reasoning can start early, but only the stable final is stored as interview evidence.")}
       </text>
     </svg>
   );
@@ -234,7 +236,7 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 11000;
   const t = el % L;
-  const ans = typed("“we hash sessions across shards; only that node's turns die…”", t, 3400, 5200);
+  const ans = typed(T("“we hash sessions across shards; only that node's turns die…”"), t, 3400, 5200);
   const win = eph(t, 6600, 7200);
 
   const introP = eph(t, 200, 900);
@@ -244,25 +246,25 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
       <g style={{ opacity: introP }}>
         <g className="lv-chip win">
           <rect x={186} y={14} width={200} height={30} rx={9} />
-          <text x={286} y={33} textAnchor="middle" className="svg-mono tinytext">CURRENT TURN · choose now</text>
+          <text x={286} y={33} textAnchor="middle" className="svg-mono tinytext">{T("CURRENT TURN · choose now")}</text>
         </g>
         <g className="lv-chip">
           <rect x={398} y={14} width={216} height={30} rx={9} />
-          <text x={506} y={33} textAnchor="middle" className="svg-mono tinytext">FUTURE PATH · analyze deeper</text>
+          <text x={506} y={33} textAnchor="middle" className="svg-mono tinytext">{T("FUTURE PATH · analyze deeper")}</text>
         </g>
       </g>
       {/* résumé source */}
       <g className="lv-node is-live">
         <rect x={30} y={48} width={120} height={128} rx={12} />
-        <text x={90} y={74} textAnchor="middle" className="svg-label">RÉSUMÉ</text>
+        <text x={90} y={74} textAnchor="middle" className="svg-label">{T("RÉSUMÉ")}</text>
         {[0, 1, 2, 3, 4].map((i) => (
           <rect key={i} x={46} y={88 + i * 16} width={88 - (i % 3) * 14} height={6} rx={3} className="lv-docline" style={{ opacity: 0.6 }} />
         ))}
       </g>
-      <text x={90} y={196} textAnchor="middle" className="svg-sub">{t < 2400 ? "parsing claims…" : "4 claims parsed ✓"}</text>
+      <text x={90} y={196} textAnchor="middle" className="svg-sub">{t < 2400 ? T("parsing claims…") : T("4 claims parsed ✓")}</text>
 
       {/* claims extracted one by one */}
-      {TRAJ_CLAIMS.map((c, i) => (
+      {TD(TRAJ_CLAIMS).map((c, i) => (
         <g key={c} className="lv-chip" style={rise(eph(t, 400 + i * 450, 850 + i * 450))}>
           <rect x={26} y={218 + i * 40} width={140} height={30} rx={8} />
           <text x={96} y={238 + i * 40} textAnchor="middle" className="svg-mono small">{c}</text>
@@ -271,9 +273,9 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
 
       {/* probe tree */}
       {[
-        { y: 64, label: "Q1 · claim-1 probe", sub: "verify claim 01" },
-        { y: 148, label: "Q2 · depth probe", sub: "depth on claim 01" },
-        { y: 232, label: "Q3 · pressure question", sub: "claim 01 under stress" },
+        { y: 64, label: T("Q1 · claim-1 probe"), sub: T("verify claim 01") },
+        { y: 148, label: T("Q2 · depth probe"), sub: T("depth on claim 01") },
+        { y: 232, label: T("Q3 · pressure question"), sub: T("claim 01 under stress") },
       ].map((n, i) => {
         const grow = eph(t, 1600 + i * 380, 2400 + i * 380);
         return (
@@ -297,12 +299,12 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
       {/* live answer being routed */}
       <g className="lv-box hot" style={{ opacity: t > 3200 ? 1 : 0 }}>
         <rect x={186} y={318} width={424} height={54} rx={10} />
-        <text x={200} y={338} className="svg-sub">LIVE ANSWER · MATCHING THE NEXT VALID PROBE</text>
+        <text x={200} y={338} className="svg-sub">{T("LIVE ANSWER · MATCHING THE NEXT VALID PROBE")}</text>
         <text x={200} y={358} className="svg-mono small">{ans}{t > 3400 && t < 5400 ? caret(t) : ""}</text>
       </g>
 
       {/* similarity-scored routing edges */}
-      {TRAJ_ROUTES.map((r, i) => {
+      {TD(TRAJ_ROUTES).map((r, i) => {
         const p = eph(t, 4600 + i * 150, 6300);
         const val = r.score * p;
         const chosen = i === 0 && t > 6600;
@@ -332,11 +334,11 @@ export function TrajectoryGraphic({ a }: { a: boolean }) {
       {/* frontier expands after routing */}
       <g className="lv-chip win" style={rise(eph(t, 7400, 7900))}>
         <rect x={466} y={262} width={162} height={34} rx={9} />
-        <text x={547} y={284} textAnchor="middle" className="svg-mono tinytext">next: Q4 · failover probe</text>
+        <text x={547} y={284} textAnchor="middle" className="svg-mono tinytext">{T("next: Q4 · failover probe")}</text>
       </g>
 
       <text x={26} y={402} className="svg-note">
-        The strongest valid branch becomes the next probe; deeper findings extend the future path.
+        {T("The strongest valid branch becomes the next probe; deeper findings extend the future path.")}
       </text>
     </svg>
   );
@@ -353,34 +355,34 @@ export function FastLaneGraphic({ a }: { a: boolean }) {
   const packetP = eph(t, 4200, 5200);
   const promoteP = eph(t, 5400, 6600);
   const fastNodes = [
-    { label: "MODEL ROUTER", sub: "fast model", x: 138 },
-    { label: "TURN GUARD", sub: "state + policy", x: 254 },
-    { label: "NEXT QUESTION", sub: "ready now", x: 370 },
-    { label: "VOICE OUT", sub: "cache → TTS", x: 486 },
+    { label: T("MODEL ROUTER"), sub: T("fast model"), x: 138 },
+    { label: T("TURN GUARD"), sub: T("state + policy"), x: 254 },
+    { label: T("NEXT QUESTION"), sub: T("ready now"), x: 370 },
+    { label: T("VOICE OUT"), sub: T("cache → TTS"), x: 486 },
   ];
   const agentNodes = [
-    { label: "CONCEPT", x: 132, y: 196, at: 1100 },
-    { label: "WEAKNESS", x: 228, y: 196, at: 1380 },
-    { label: "DISCREPANCY", x: 132, y: 242, at: 1660 },
-    { label: "REASONING", x: 228, y: 242, at: 1940 },
+    { label: T("CONCEPT"), x: 132, y: 196, at: 1100 },
+    { label: T("WEAKNESS"), x: 228, y: 196, at: 1380 },
+    { label: T("DISCREPANCY"), x: 132, y: 242, at: 1660 },
+    { label: T("REASONING"), x: 228, y: 242, at: 1940 },
   ];
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={22} y={26} className="lv-phase small">ONE ANSWER · TWO COORDINATED PATHS</text>
+      <text x={22} y={26} className="lv-phase small">{T("ONE ANSWER · TWO COORDINATED PATHS")}</text>
       <g className="lv-chip win">
         <rect x={474} y={10} width={144} height={28} rx={8} />
-        <text x={546} y={28} textAnchor="middle" className="svg-mono tinytext">REPLY PATH · ~900 ms</text>
+        <text x={546} y={28} textAnchor="middle" className="svg-mono tinytext">{T("REPLY PATH · ~900 ms")}</text>
       </g>
 
       <g className="lv-node is-live">
         <rect x={22} y={70} width={96} height={62} rx={10} />
-        <text x={70} y={92} textAnchor="middle" className="svg-sub">CURRENT TURN</text>
-        <text x={70} y={110} textAnchor="middle" className="svg-mono tinytext">answer + state</text>
-        <text x={70} y={126} textAnchor="middle" className="tick ok">committed ✓</text>
+        <text x={70} y={92} textAnchor="middle" className="svg-sub">{T("CURRENT TURN")}</text>
+        <text x={70} y={110} textAnchor="middle" className="svg-mono tinytext">{T("answer + state")}</text>
+        <text x={70} y={126} textAnchor="middle" className="tick ok">{T("committed ✓")}</text>
       </g>
 
-      <text x={138} y={56} className="svg-sub">FOREGROUND · RETURN A SAFE NEXT QUESTION NOW</text>
+      <text x={138} y={56} className="svg-sub">{T("FOREGROUND · RETURN A SAFE NEXT QUESTION NOW")}</text>
       {fastNodes.map((node, index) => {
         const live = fastP >= index / fastNodes.length;
         const previousX = index === 0 ? 118 : fastNodes[index - 1].x + 104;
@@ -399,7 +401,7 @@ export function FastLaneGraphic({ a }: { a: boolean }) {
         <circle cx={q(118 + fastP * 472)} cy={101} r={4.5} className="lv-pulse" />
       )}
 
-      <text x={132} y={172} className="svg-sub">BACKGROUND · AGENT GRAPH REASONS DEEPER AND PREPARES A FUTURE PROBE</text>
+      <text x={132} y={172} className="svg-sub">{T("BACKGROUND · AGENT GRAPH REASONS DEEPER AND PREPARES A FUTURE PROBE")}</text>
       {agentNodes.map((node, index) => {
         const live = t > node.at && t < 4300;
         const firing = t >= node.at && t < node.at + 520;
@@ -428,29 +430,29 @@ export function FastLaneGraphic({ a }: { a: boolean }) {
 
       <g className="lv-core" style={{ opacity: deepP > 0.45 ? 1 : 0.58 }}>
         <circle cx={354} cy={233} r={37} className="lv-corering" />
-        <text x={354} y={229} textAnchor="middle" className="svg-label small">FUSE</text>
-        <text x={354} y={247} textAnchor="middle" className="svg-sub">rank signals</text>
+        <text x={354} y={229} textAnchor="middle" className="svg-label small">{T("FUSE")}</text>
+        <text x={354} y={247} textAnchor="middle" className="svg-sub">{T("rank signals")}</text>
       </g>
 
       <g className={`lv-node ${packetP > 0 && promoteP === 0 ? "is-live" : ""}`}>
         <rect x={398} y={194} width={94} height={78} rx={10} />
-        <text x={445} y={216} textAnchor="middle" className="svg-label small">Q PACKET</text>
-        <text x={445} y={236} textAnchor="middle" className="svg-mono tinytext">probe + link</text>
-        <text x={445} y={256} textAnchor="middle" className="svg-sub">guarded ✓</text>
+        <text x={445} y={216} textAnchor="middle" className="svg-label small">{T("Q PACKET")}</text>
+        <text x={445} y={236} textAnchor="middle" className="svg-mono tinytext">{T("probe + link")}</text>
+        <text x={445} y={256} textAnchor="middle" className="svg-sub">{T("guarded ✓")}</text>
       </g>
       <path d="M 388 233 L 398 233" className="lv-edge win" style={{ opacity: packetP }} />
 
       <g className="lv-box hot">
-        <rect x={512} y={178} width={108} height={132} rx={11} />
-        <text x={566} y={199} textAnchor="middle" className="svg-label small">FUTURE MAP</text>
+        <rect x={496} y={178} width={124} height={132} rx={11} />
+        <text x={558} y={199} textAnchor="middle" className="svg-label small">{T("FUTURE MAP")}</text>
         {[
-          { y: 220, label: "Q5", state: "current" },
-          { y: 254, label: "Q6", state: "ready" },
-          { y: 288, label: "Q7", state: promoteP === 1 ? "promoted" : "analyzing" },
+          { y: 220, label: "Q5", state: T("current") },
+          { y: 254, label: "Q6", state: T("ready") },
+          { y: 288, label: "Q7", state: promoteP === 1 ? T("promoted") : T("analyzing") },
         ].map((node, index) => (
           <g key={node.label} className={`lv-chip ${index === 0 || (index === 2 && promoteP === 1) ? "win" : ""}`}>
-            <rect x={520} y={node.y - 12} width={92} height={24} rx={7} />
-            <text x={528} y={node.y + 3} className="svg-mono tinytext">{node.label}</text>
+            <rect x={504} y={node.y - 12} width={108} height={24} rx={7} />
+            <text x={511} y={node.y + 3} className="svg-mono tinytext">{node.label}</text>
             <text x={606} y={node.y + 3} textAnchor="end" className="svg-sub">{node.state}</text>
           </g>
         ))}
@@ -464,9 +466,9 @@ export function FastLaneGraphic({ a }: { a: boolean }) {
       )}
 
       {[
-        ["MODEL ROUTING", "fast · deep · fallback"],
-        ["QUESTION GUARD", "state · scope · policy"],
-        ["RUNTIME", "cache · token caps · traces"],
+        [T("MODEL ROUTING"), T("fast · deep · fallback")],
+        [T("QUESTION GUARD"), T("state · scope · policy")],
+        [T("RUNTIME"), T("cache · token caps · traces")],
       ].map(([label, value], index) => (
         <g key={label} className="lv-chip">
           <rect x={22 + index * 200} y={348} width={190} height={48} rx={9} />
@@ -474,7 +476,7 @@ export function FastLaneGraphic({ a }: { a: boolean }) {
           <text x={34 + index * 200} y={386} className="svg-mono tinytext">{value}</text>
         </g>
       ))}
-      <text x={22} y={414} className="svg-note">The foreground question ships now; the validated deep-analysis packet updates a later turn.</text>
+      <text x={22} y={414} className="svg-note">{T("The foreground question ships now; the validated deep-analysis packet updates a later turn.")}</text>
     </svg>
   );
 }
@@ -492,7 +494,7 @@ export function AgentsGraphic({ a }: { a: boolean }) {
   const el = useSim(a);
   const L = 9800;
   const t = el % L;
-  const answer = typed("“we hash sessions across shards, so a dead node only loses its own turns”", t, 200, 1400);
+  const answer = typed(T("“we hash sessions across shards, so a dead node only loses its own turns”"), t, 200, 1400);
   const hub = { x: 108, y: 232 };
   const nodeX = 264;
   const nodeW = 172;
@@ -501,7 +503,7 @@ export function AgentsGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={22} y={20} className="lv-phase small">AGENT GRAPH · FOUR SPECIALISTS FIRE CONCURRENTLY ON ONE ANSWER</text>
+      <text x={22} y={20} className="lv-phase small">{T("AGENT GRAPH · FOUR SPECIALISTS FIRE CONCURRENTLY ON ONE ANSWER")}</text>
       <g className="lv-box hot">
         <rect x={22} y={28} width={596} height={32} rx={9} />
         <text x={34} y={49} className="svg-mono tinytext">{answer}{t < 1500 ? caret(t) : ""}</text>
@@ -511,12 +513,12 @@ export function AgentsGraphic({ a }: { a: boolean }) {
       <path d={`M 108 60 C 108 96 ${hub.x} 140 ${hub.x} ${hub.y - 44}`} className="lv-edge" style={{ opacity: 0.3 + 0.5 * eph(t, 500, 1400) }} />
       <g className="lv-core" style={{ opacity: t > 900 ? 1 : 0.55 }}>
         <circle cx={hub.x} cy={hub.y} r={42} className="lv-corering" />
-        <text x={hub.x} y={hub.y - 6} textAnchor="middle" className="svg-label small">TURN HUB</text>
+        <text x={hub.x} y={hub.y - 6} textAnchor="middle" className="svg-label small">{T("TURN HUB")}</text>
         <text x={hub.x} y={hub.y + 12} textAnchor="middle" className="svg-sub">fan-out</text>
       </g>
 
       {/* hub → agent edges with travelling activation pulses */}
-      {AGENT_GRAPH.map((ag, i) => {
+      {TD(AGENT_GRAPH).map((ag, i) => {
         const y = ys[i] + 30;
         const firing = t >= ag.fire && t < ag.fire + 620;
         const fp = eph(t, ag.fire, ag.fire + 620);
@@ -538,7 +540,7 @@ export function AgentsGraphic({ a }: { a: boolean }) {
             <g className={`lv-node ${working ? "is-live" : ""}`}>
               <rect x={nodeX} y={ys[i]} width={nodeW} height={60} rx={10} />
               <text x={nodeX + 12} y={ys[i] + 19} className="svg-label small">{ag.name}</text>
-              <text x={nodeX + nodeW - 12} y={ys[i] + 19} textAnchor="end" className={complete ? "tick ok" : "svg-sub"}>{complete ? ag.val : working ? "live…" : "queued"}</text>
+              <text x={nodeX + nodeW - 12} y={ys[i] + 19} textAnchor="end" className={complete ? "tick ok" : "svg-sub"}>{complete ? ag.val : working ? T("live…") : T("queued")}</text>
               <text x={nodeX + 12} y={ys[i] + 35} className="svg-sub">{ag.sub}</text>
               <text x={nodeX + 12} y={ys[i] + 51} className="svg-mono tinytext">{finding}{working && t > ag.fire + 500 ? caret(t) : ""}</text>
             </g>
@@ -552,20 +554,20 @@ export function AgentsGraphic({ a }: { a: boolean }) {
       {/* shared interview state: typed findings land as evidence slots */}
       <g className="lv-box">
         <rect x={sinkX} y={112} width={120} height={228} rx={12} />
-        <text x={sinkX + 60} y={134} textAnchor="middle" className="svg-label small">SHARED STATE</text>
-        {AGENT_GRAPH.map((ag, i) => {
+        <text x={sinkX + 60} y={134} textAnchor="middle" className="svg-label small">{T("SHARED STATE")}</text>
+        {TD(AGENT_GRAPH).map((ag, i) => {
           const landed = t >= ag.done + 380;
           return (
             <g key={ag.name} className={`lv-chip ${landed ? "win" : ""}`}>
-              <rect x={sinkX + 10} y={140 + i * 44} width={100} height={30} rx={7} style={{ opacity: landed ? 1 : 0.28 }} />
-              <text x={sinkX + 18} y={153 + i * 44} className="svg-sub" style={{ opacity: landed ? 1 : 0.4 }}>{ag.name}</text>
-              <text x={sinkX + 18} y={166 + i * 44} className="svg-mono tinytext" style={{ opacity: landed ? 1 : 0.35 }}>{landed ? `typed · ${ag.val}` : "waiting"}</text>
+              <rect x={sinkX + 10} y={138 + i * 44} width={104} height={38} rx={7} style={{ opacity: landed ? 1 : 0.28 }} />
+              <text x={sinkX + 18} y={152 + i * 44} className="svg-sub" style={{ opacity: landed ? 1 : 0.4 }}>{ag.name}</text>
+              <text x={sinkX + 18} y={169 + i * 44} className="svg-mono tinytext" style={{ opacity: landed ? 1 : 0.35 }}>{landed ? `${T("typed")} · ${ag.val}` : T("waiting")}</text>
             </g>
           );
         })}
       </g>
 
-      <text x={320} y={400} textAnchor="middle" className="svg-sub">Typed, turn-linked findings merge in shared state and steer the next question.</text>
+      <text x={320} y={400} textAnchor="middle" className="svg-sub">{T("Typed, turn-linked findings merge in shared state and steer the next question.")}</text>
     </svg>
   );
 }
@@ -631,7 +633,7 @@ export function OrchestratorGraphic({ a }: { a: boolean }) {
   const L = 9000;
   const t = el % L;
   const cycle = Math.floor(el / L) % 2; // alternate decisions
-  const landed = ORCH_IN.filter((_, i) => t > 900 + i * 480 + 700).length;
+  const landed = TD(ORCH_IN).filter((_, i) => t > 900 + i * 480 + 700).length;
   const reason =
     cycle === 0
       ? "retrieval depth confirmed → use the prepared follow-up"
@@ -642,8 +644,8 @@ export function OrchestratorGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={320} y={18} textAnchor="middle" className="svg-sub">SPECIALIST AGENTS FIRE IN PARALLEL · ONE GOVERNED DECISION</text>
-      {ORCH_IN.map((s, i) => {
+      <text x={320} y={18} textAnchor="middle" className="svg-sub">{T("SPECIALIST AGENTS FIRE IN PARALLEL · ONE GOVERNED DECISION")}</text>
+      {TD(ORCH_IN).map((s, i) => {
         const y = 48 + i * 62;
         const fireAt = 900 + i * 480;
         const p = ph(t, fireAt, fireAt + 700);
@@ -670,12 +672,12 @@ export function OrchestratorGraphic({ a }: { a: boolean }) {
           const ang = t / 320 + (i * Math.PI * 2) / 3;
           return <circle key={i} cx={q(372 + Math.cos(ang) * 30)} cy={q(192 + Math.sin(ang) * 30)} r={3.4} className="lv-pulse" />;
         })}
-        <text x={372} y={188} textAnchor="middle" className="svg-label">DECIDE</text>
-        <text x={372} y={204} textAnchor="middle" className="svg-sub">{landed < 5 ? `${landed}/5 inputs` : "route ready"}</text>
+        <text x={372} y={188} textAnchor="middle" className="svg-label">{T("DECIDE")}</text>
+        <text x={372} y={204} textAnchor="middle" className="svg-sub">{landed < 5 ? `${landed}/5 inputs` : T("route ready")}</text>
       </g>
 
       {/* decision routes */}
-      {["ASK NEXT", "DEEPER PROBE"].map((d, i) => {
+      {[T("ASK NEXT"), T("DEEPER PROBE")].map((d, i) => {
         const y = i === 0 ? 96 : 288;
         const isChosen = decided && chosen === i;
         const p = eph(t, 6000, 6500);
@@ -687,7 +689,7 @@ export function OrchestratorGraphic({ a }: { a: boolean }) {
             <g className={`lv-node ${isChosen ? "is-live" : ""}`} style={{ opacity: isChosen || !decided ? 1 : 0.35 }}>
               <rect x={520} y={y} width={104} height={44} rx={10} />
               <text x={572} y={y + 19} textAnchor="middle" className="svg-label small">{d}</text>
-              <text x={572} y={y + 35} textAnchor="middle" className="svg-sub">{i === 0 ? "ready question" : "future path"}</text>
+              <text x={572} y={y + 35} textAnchor="middle" className="svg-sub">{i === 0 ? T("ready question") : T("future path")}</text>
             </g>
           </g>
         );
@@ -696,14 +698,14 @@ export function OrchestratorGraphic({ a }: { a: boolean }) {
       {/* live reasoning trace */}
       <g className="lv-box">
         <rect x={186} y={338} width={438} height={56} rx={10} />
-        <text x={200} y={359} className="svg-sub">WHY THIS ROUTE · REVIEWABLE AFTER THE INTERVIEW</text>
+        <text x={200} y={359} className="svg-sub">{T("WHY THIS ROUTE · REVIEWABLE AFTER THE INTERVIEW")}</text>
         <text x={200} y={379} className="svg-mono tinytext">{reasonTxt}{t > 3400 && t < 5800 ? caret(t) : ""}</text>
       </g>
       <text x={30} y={382} className="svg-sub" style={{ opacity: decided ? 1 : 0 }}>
-        decision:{" "}
+        {T("decision:")}{" "}
       </text>
       <text x={30} y={400} className="svg-mono small" style={{ opacity: decided ? 1 : 0 }}>
-        {chosen === 0 ? "ASK NEXT ✓" : "DEEPER PROBE ✓"}
+        {chosen === 0 ? T("ASK NEXT ✓") : T("DEEPER PROBE ✓")}
       </text>
     </svg>
   );
@@ -717,9 +719,9 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
   const t = el % L;
   const SLOW = 4;
   const rows = [
-    { key: "stt", label: "live transcript", ms: 180, start: 600 },
-    { key: "route", label: "question route", ms: 240, start: 600 + 180 * SLOW },
-    { key: "tts", label: "primary speech", ms: 320, start: 600 + 420 * SLOW },
+    { key: "stt", label: T("live transcript"), ms: 180, start: 600 },
+    { key: "route", label: T("question route"), ms: 240, start: 600 + 180 * SLOW },
+    { key: "tts", label: T("primary speech"), ms: 320, start: 600 + 420 * SLOW },
   ];
   const failAt = rows[2].start + 320 * SLOW * 0.35;
   const failed = t > failAt;
@@ -739,17 +741,17 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
 
   const speakStart = doneAt + 500;
   const speaking = t > speakStart && t < speakStart + 2800;
-  const qText = typed("“what happens when a shard dies?”", t, speakStart, speakStart + 2400);
+  const qText = typed(T("“what happens when a shard dies?”"), t, speakStart, speakStart + 2400);
 
   const SCX = 0.55;
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={40} y={44} className="lv-phase small">VOICE DELIVERY · CACHE-FIRST WITH PROVIDER RECOVERY</text>
+      <text x={40} y={44} className="lv-phase small">{T("VOICE DELIVERY · CACHE-FIRST WITH PROVIDER RECOVERY")}</text>
       <g className="lv-chip">
         <rect x={452} y={26} width={158} height={44} rx={10} />
-        <text x={466} y={44} className="svg-sub">MODEL ROUTER</text>
+        <text x={466} y={44} className="svg-sub">{T("MODEL ROUTER")}</text>
         <text x={466} y={62} className="svg-mono tinytext">
-          {t > doneAt ? "fallback delivered" : failed ? "fallback engaged" : total > 0 ? "primary active" : "fallback armed"}
+          {t > doneAt ? T("fallback delivered") : failed ? T("fallback engaged") : total > 0 ? T("primary active") : T("fallback armed")}
         </text>
       </g>
 
@@ -766,7 +768,7 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
               <text x={x0 + r.ms * SCX * prog + 6} y={106 + i * 52} className="svg-mono tinytext">{fmtMs(r.ms * prog)}</text>
             )}
             {isTts && failed && (
-              <text x={x0 + r.ms * SCX * 0.35 + 8} y={106 + i * 52} className="tick bad">✗ timeout → reroute</text>
+              <text x={x0 + r.ms * SCX * 0.35 + 8} y={106 + i * 52} className="tick bad">{T("✗ timeout → reroute")}</text>
             )}
           </g>
         );
@@ -775,10 +777,10 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
       {/* automatic fallback route after the primary provider crosses its cap */}
       {t > fbStart - 200 && (
         <g style={rise(eph(t, fbStart - 200, fbStart + 300))}>
-          <text x={190} y={106 + 3 * 52} textAnchor="end" className="svg-mono small">fallback speech</text>
+          <text x={190} y={106 + 3 * 52} textAnchor="end" className="svg-mono small">{T("fallback speech")}</text>
           <rect x={200 + 420 * SCX} y={92 + 3 * 52} width={fbMs * SCX} height={20} rx={6} className="lv-track" />
           <rect x={200 + 420 * SCX} y={92 + 3 * 52} width={fbMs * SCX * ph(t, fbStart, fbStart + fbMs * SLOW)} height={20} rx={6} className="lv-bar warm" />
-          <text x={196 + 420 * SCX} y={126 + 3 * 52} className="svg-sub">automatic provider recovery</text>
+          <text x={196 + 420 * SCX} y={126 + 3 * 52} className="svg-sub">{T("automatic provider recovery")}</text>
         </g>
       )}
 
@@ -787,15 +789,15 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
         <g className="lv-stamp" style={rise(eph(t, doneAt + 150, doneAt + 550), 6)}>
           <rect x={40} y={244} width={180} height={40} rx={9} />
           <text x={130} y={262} textAnchor="middle" className="svg-label small">
-            WITHIN TURN BUDGET ✓
+            {T("WITHIN TURN BUDGET ✓")}
           </text>
-          <text x={130} y={277} textAnchor="middle" className="svg-sub">fallback recovered the turn</text>
+          <text x={130} y={277} textAnchor="middle" className="svg-sub">{T("fallback recovered the turn")}</text>
         </g>
       )}
 
       {/* prepared-audio cache — likely future questions are synthesized in advance */}
-      <text x={40} y={302} className="svg-sub">PREPARED AUDIO CACHE · CHECKED BEFORE A PROVIDER CALL</text>
-      {["arch probe", "ownership", "failure probe", "stale-state"].map((c2, i) => {
+      <text x={40} y={302} className="svg-sub">{T("PREPARED AUDIO CACHE · CHECKED BEFORE A PROVIDER CALL")}</text>
+      {[T("arch probe"), T("ownership"), T("failure probe"), T("stale-state")].map((c2, i) => {
         const hit = i === 2 && t > rows[1].start + 240 * SLOW;
         return (
           <g key={c2} className={`lv-chip ${hit ? "win" : ""}`}>
@@ -808,11 +810,11 @@ export function VoiceOutGraphic({ a }: { a: boolean }) {
       })}
 
       {/* the voice actually speaks */}
-      <text x={40} y={362} className="svg-sub">VOICE RESPONSE TO CANDIDATE</text>
+      <text x={40} y={362} className="svg-sub">{T("VOICE RESPONSE TO CANDIDATE")}</text>
       <Wave x={200} y={346} w={130} h={26} bars={18} t={t} on={speaking ? 1 : 0.05} />
       <text x={344} y={364} className="svg-mono tinytext">{qText}{speaking ? caret(t) : ""}</text>
       <text x={40} y={400} className="svg-note">
-        Cache hit, primary synthesis, or fallback recovery all return through one guarded voice route.
+        {T("Cache hit, primary synthesis, or fallback recovery all return through one guarded voice route.")}
       </text>
     </svg>
   );
@@ -825,7 +827,7 @@ const MOMENTS = [
   { at: "18:05", quote: "failover recovery" },
   { at: "22:41", quote: "résumé claim challenged" },
   { at: "27:19", quote: "reasoning under pressure" },
-];
+] as const;
 const REPORT_ROWS = [
   ["Distributed-systems depth", "Linked to the answer and its follow-up probe."],
   ["Failure-mode reasoning", "Linked to the failover probe and recovery."],
@@ -841,8 +843,8 @@ export function ReportGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={30} y={40} className="svg-sub">SOURCE MOMENTS · TIMESTAMPS</text>
-      {MOMENTS.map((m, i) => (
+      <text x={30} y={40} className="svg-sub">{T("SOURCE MOMENTS · TIMESTAMPS")}</text>
+      {TD(MOMENTS).map((m, i) => (
         <g key={m.at} className="lv-chip" style={rise(eph(t, 400 + i * 420, 800 + i * 420))}>
           <rect x={26} y={56 + i * 74} width={182} height={56} rx={10} />
           <text x={40} y={78 + i * 74} className="svg-mono tinytext">t = {m.at}</text>
@@ -853,26 +855,26 @@ export function ReportGraphic({ a }: { a: boolean }) {
       {/* report assembling */}
       <g className="lv-box">
         <rect x={252} y={32} width={368} height={356} rx={14} />
-        <text x={276} y={64} className="svg-label big">CANDIDATE EVIDENCE REPORT</text>
-        <text x={276} y={84} className="svg-sub">interview #{count} · timestamp-linked evidence</text>
+        <text x={276} y={64} className="svg-label big">{T("CANDIDATE EVIDENCE REPORT")}</text>
+        <text x={276} y={84} className="svg-sub">{T("interview #")}{count} {T("· timestamp-linked evidence")}</text>
         {/* completion checks — process state rather than invented scoring */}
         {[
-          ["TRACE LINKS", "mapped"],
-          ["SKILL COVERAGE", "mapped"],
-          ["CLAIM STATUS", "checked"],
+          [T("TRACE LINKS"), T("mapped")],
+          [T("SKILL COVERAGE"), T("mapped")],
+          [T("CLAIM STATUS"), T("checked")],
         ].map(([k2, status], i) => {
           const p = eph(t, 1600 + i * 300, 3400 + i * 300);
           const x = 276 + i * 106;
           return (
             <g key={String(k2)}>
               <text x={x} y={103} className="svg-sub">{k2}</text>
-              <text x={x + 96} y={118} textAnchor="end" className="svg-mono tinytext">{p === 1 ? status : "linking"}</text>
+              <text x={x + 96} y={118} textAnchor="end" className="svg-mono tinytext">{p === 1 ? status : T("linking")}</text>
               <rect x={x} y={123} width={96} height={5} rx={2.5} className="lv-track thin" />
               <rect x={x} y={123} width={q(96 * p)} height={5} rx={2.5} className="lv-bar" />
             </g>
           );
         })}
-        {REPORT_ROWS.map((r, i) => {
+        {TD(REPORT_ROWS).map((r, i) => {
           const s = 2300 + i * 1300;
           const p = eph(t, s, s + 500);
           const link = eph(t, s - 350, s + 100);
@@ -905,7 +907,7 @@ export function ReportGraphic({ a }: { a: boolean }) {
           }}
         >
           <rect x={356} y={336} width={208} height={40} rx={9} />
-          <text x={460} y={361} textAnchor="middle" className="svg-label">RECRUITER READY</text>
+          <text x={460} y={361} textAnchor="middle" className="svg-label">{T("RECRUITER READY")}</text>
         </g>
       </g>
     </svg>
@@ -933,13 +935,13 @@ export function EvaluationLoopGraphic({ a }: { a: boolean }) {
 
   return (
     <svg viewBox="0 0 640 420" className="op-svg">
-      <text x={24} y={28} className="lv-phase small">OFFLINE RL OBSERVABILITY + REFINEMENT</text>
-      <text x={616} y={28} textAnchor="end" className="svg-sub">human-gated · never live self-training</text>
+      <text x={24} y={28} className="lv-phase small">{T("OFFLINE RL OBSERVABILITY + REFINEMENT")}</text>
+      <text x={616} y={28} textAnchor="end" className="svg-sub">{T("human-gated · never live self-training")}</text>
 
       <g className={`lv-node ${traceP < 1 ? "is-live" : ""}`}>
         <rect x={24} y={58} width={138} height={116} rx={11} />
-        <text x={93} y={82} textAnchor="middle" className="svg-label small">COMPLETED RUN</text>
-        {["turn traces", "route decisions", "token + latency", "report evidence"].map((label, index) => (
+        <text x={93} y={82} textAnchor="middle" className="svg-label small">{T("COMPLETED RUN")}</text>
+        {[T("turn traces"), T("route decisions"), T("token + latency"), T("report evidence")].map((label, index) => (
           <g key={label}>
             <circle cx={40} cy={105 + index * 18} r={2.7} className="lv-pulse" style={{ opacity: traceP }} />
             <text x={50} y={109 + index * 18} className="svg-mono tinytext">{label}</text>
@@ -952,8 +954,8 @@ export function EvaluationLoopGraphic({ a }: { a: boolean }) {
 
       <g className="lv-box hot">
         <rect x={210} y={58} width={194} height={202} rx={12} />
-        <text x={228} y={82} className="svg-label small">AGENT EVALUATION HARNESS</text>
-        {INTERVIEW_EVALS.map(([label, value], index) => {
+        <text x={228} y={82} className="svg-label small">{T("AGENT EVALUATION HARNESS")}</text>
+        {TD(INTERVIEW_EVALS).map(([label, value], index) => {
           const rowP = eph(t, 2100 + index * 480, 2900 + index * 480);
           return (
             <g key={label} style={{ opacity: 0.28 + rowP * 0.72 }}>
@@ -964,18 +966,18 @@ export function EvaluationLoopGraphic({ a }: { a: boolean }) {
             </g>
           );
         })}
-        <text x={228} y={242} className="svg-sub" style={{ opacity: evalP }}>QUALITY FLAGS</text>
-        <text x={228} y={255} className="svg-mono tinytext" style={{ opacity: evalP }}>difficulty · clarity · bias · tone</text>
+        <text x={228} y={242} className="svg-sub" style={{ opacity: evalP }}>{T("QUALITY FLAGS")}</text>
+        <text x={228} y={255} className="svg-mono tinytext" style={{ opacity: evalP }}>{T("difficulty · clarity · bias · tone")}</text>
       </g>
 
       <g className={`lv-node ${candidateP > 0 && regressionP === 0 ? "is-live" : ""}`}>
         <rect x={438} y={58} width={178} height={202} rx={12} />
-        <text x={527} y={82} textAnchor="middle" className="svg-label small">REVISION CANDIDATES</text>
+        <text x={527} y={82} textAnchor="middle" className="svg-label small">{T("REVISION CANDIDATES")}</text>
         {[
-          ["PROMPT", "probe wording v18"],
-          ["ROUTER", "fast/deep threshold"],
-          ["POLICY", "tone + guard rules"],
-          ["CONFIG", "token envelope"],
+          [T("PROMPT"), T("probe wording v18")],
+          [T("ROUTER"), T("fast/deep threshold")],
+          [T("POLICY"), T("tone + guard rules")],
+          [T("CONFIG"), T("token envelope")],
         ].map(([label, value], index) => (
           <g key={label} className={`lv-chip ${candidateP > (index + 1) / 5 ? "win" : ""}`}>
             <rect x={452} y={96 + index * 36} width={150} height={28} rx={7} />
@@ -988,8 +990,8 @@ export function EvaluationLoopGraphic({ a }: { a: boolean }) {
 
       <g className="lv-box">
         <rect x={24} y={292} width={476} height={92} rx={11} />
-        <text x={42} y={316} className="svg-label small">REGRESSION RELEASE GATE</text>
-        {["contract tests", "candidate-safe replay", "latency + token budget", "question-policy checks"].map((label, index) => (
+        <text x={42} y={316} className="svg-label small">{T("REGRESSION RELEASE GATE")}</text>
+        {[T("contract tests"), T("candidate-safe replay"), T("latency + token budget"), T("question-policy checks")].map((label, index) => (
           <g key={label} className={`lv-chip ${regressionP > (index + 1) / 5 ? "win" : ""}`}>
             <rect x={42 + (index % 2) * 216} y={328 + Math.floor(index / 2) * 28} width={202} height={22} rx={6} />
             <text x={52 + (index % 2) * 216} y={343 + Math.floor(index / 2) * 28} className="svg-mono tinytext">
@@ -1001,13 +1003,13 @@ export function EvaluationLoopGraphic({ a }: { a: boolean }) {
 
       <g className={`lv-stamp ${releaseP > 0 ? "big" : ""}`} style={rise(releaseP, 7)}>
         <rect x={520} y={292} width={96} height={92} rx={11} />
-        <text x={568} y={321} textAnchor="middle" className="svg-sub">HUMAN-GATED</text>
-        <text x={568} y={344} textAnchor="middle" className="svg-label small">VERSION</text>
-        <text x={568} y={363} textAnchor="middle" className="tick ok">v-next ✓</text>
+        <text x={568} y={321} textAnchor="middle" className="svg-sub">{T("HUMAN-GATED")}</text>
+        <text x={568} y={344} textAnchor="middle" className="svg-label small">{T("VERSION")}</text>
+        <text x={568} y={363} textAnchor="middle" className="tick ok">{T("v-next ✓")}</text>
       </g>
 
       <path d="M 568 292 C 568 270 527 270 527 260" className="lv-edge" style={{ opacity: releaseP * 0.55 }} />
-      <text x={24} y={408} className="svg-note">Trace → evaluate → refine → replay → approve. Behavior remains inspectable across versions.</text>
+      <text x={24} y={408} className="svg-note">{T("Trace → evaluate → refine → replay → approve. Behavior remains inspectable across versions.")}</text>
     </svg>
   );
 }
@@ -1139,20 +1141,20 @@ export function AntigravityChapter() {
     <ChapterShell
       id="antigravity"
       accent="#7ee0ff"
-      kicker="PROJECT 01 · FLAGSHIP"
-      title="Antigravity"
-      subtitle="Production-grade interview software built on a multi-agent decision engine: it automates technical interviews, adapts the question path in real time, and produces evidence-linked recruiter intelligence."
-      steps={STEPS}
+      kicker={T("PROJECT 01 · FLAGSHIP")}
+      title={T("Antigravity")}
+      subtitle={T("Production-grade interview software built on a multi-agent decision engine: it automates technical interviews, adapts the question path in real time, and produces evidence-linked recruiter intelligence.")}
+      steps={TD(STEPS)}
       stepMs={11600}
       footer={
         <div className="chapter-cta" id="antigravity-demo">
-          <p className="cta-lead">This system is real and running. Don&apos;t take the replay&apos;s word for it —</p>
+          <p className="cta-lead">{T("This system is real and running. Don&apos;t take the replay&apos;s word for it —")}</p>
           <div className="cta-row">
             <a className="btn btn-primary" href="https://antigravity-gz2r.vercel.app" target="_blank" rel="noreferrer">
-              ▶ Watch a real interview replay
+              {T("▶ Watch a real interview replay")}
             </a>
             <a className="btn" href="https://github.com/Yashwant-Bhyri" target="_blank" rel="noreferrer">
-              Open the code
+              {T("Open the code")}
             </a>
           </div>
         </div>
