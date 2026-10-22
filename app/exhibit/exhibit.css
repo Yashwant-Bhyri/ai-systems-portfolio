@@ -1,0 +1,187 @@
+/* Exhibit wings: one pinned stage per wing, rooms advance with scroll, one strip for transport.
+   Lives inside the portfolio's dark observatory; Developer mode lowers the lights and adds instruments. */
+.ex-wing {
+  --ex-void: #050608;
+  --ex-panel: #0b0e13;
+  --ex-panel-2: #11151c;
+  --ex-ink: #f2f4ee;
+  --ex-ink-2: #aab3bd;
+  --ex-ink-3: #6f7a87;
+  --ex-line: rgba(230, 237, 244, 0.09);
+  --ex-line-2: rgba(230, 237, 244, 0.18);
+  --ex-amber: #ffc267;
+  --ex-rose: #f3a0bc;
+  --ex-cyan: #62e9ff;
+  --ex-lime: #b8ff63;
+  --ex-red: #ff8176;
+  --ex-blue: #78a8ff;
+  --ex-green: #8fe3a8;
+  --ex-ink-rgb: 242, 244, 238;
+  --ex-amber-rgb: 255, 194, 103;
+  --ex-rose-rgb: 243, 160, 188;
+  --ex-cyan-rgb: 98, 233, 255;
+  --ex-red-rgb: 255, 129, 118;
+  --ex-green-rgb: 143, 227, 168;
+  --ex-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ex-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --ex-out: cubic-bezier(.16, 1, .3, 1);
+  --ex-io: cubic-bezier(.65, 0, .35, 1);
+  position: relative;
+  height: calc(var(--ex-rooms, 6) * 100svh);
+  background:
+    radial-gradient(ellipse 70% 55% at 58% 46%, rgba(var(--ex-acc-rgb), 0.055), transparent 70%),
+    var(--ex-void);
+  color: var(--ex-ink);
+  font-family: var(--ex-sans);
+}
+.ex-accent-amber { --ex-acc: var(--ex-amber); --ex-acc-rgb: var(--ex-amber-rgb); }
+.ex-accent-rose { --ex-acc: var(--ex-rose); --ex-acc-rgb: var(--ex-rose-rgb); }
+
+/* Developer: the lab at night. Deeper black, a measurement grid, instrument corners. */
+:root[data-ex-mode="dev"] .ex-wing {
+  --ex-void: #020304;
+  --ex-ink-3: #7c8794;
+  background:
+    linear-gradient(var(--ex-line) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(90deg, var(--ex-line) 1px, transparent 1px) 0 0 / 48px 48px,
+    radial-gradient(ellipse 60% 50% at 58% 46%, rgba(var(--ex-acc-rgb), 0.07), transparent 70%),
+    var(--ex-void);
+}
+
+.ex-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: calc(76px + 22px) max(28px, calc((100vw - 1320px) / 2)) 14px;
+  overflow: hidden;
+}
+
+.ex-stage { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+:root[data-ex-mode="dev"] .ex-stage::before,
+:root[data-ex-mode="dev"] .ex-stage::after {
+  content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none;
+  border-color: rgba(var(--ex-acc-rgb), 0.55); border-style: solid;
+}
+:root[data-ex-mode="dev"] .ex-stage::before { left: -12px; top: -10px; border-width: 1px 0 0 1px; }
+:root[data-ex-mode="dev"] .ex-stage::after { right: -12px; bottom: -6px; border-width: 0 1px 1px 0; }
+
+.ex-head { max-width: min(70%, 900px); min-width: 0; animation: ex-rise .8s var(--ex-out) both; }
+.ex-kicker {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font: 500 12px/1.2 var(--ex-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ex-ink-3);
+}
+.ex-kicker .ex-num { color: var(--ex-acc); }
+.ex-kicker i { width: 18px; height: 1px; background: var(--ex-line-2); }
+.ex-title {
+  margin: 10px 0 0;
+  font: 500 clamp(30px, 3.3vw, 52px)/1.02 var(--ex-sans);
+  letter-spacing: -0.038em;
+  text-wrap: balance;
+  color: var(--ex-ink);
+}
+.ex-title em { font-style: normal; color: var(--ex-acc); }
+
+.ex-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; min-width: 0; }
+.ex-metric {
+  flex: none; text-align: right; display: grid; gap: 4px; padding-bottom: 4px;
+  animation: ex-rise .9s .1s var(--ex-out) both;
+}
+.ex-metric b { font: 500 clamp(26px, 2.8vw, 44px)/1 var(--ex-mono); letter-spacing: -0.03em; color: var(--ex-acc); font-variant-numeric: tabular-nums; }
+.ex-metric b small { font-size: .5em; color: var(--ex-ink-3); letter-spacing: 0; margin-left: .25em; }
+.ex-metric span { font: 500 12px/1.3 var(--ex-mono); color: var(--ex-ink-3); letter-spacing: .04em; text-transform: uppercase; }
+
+.ex-scene { position: relative; min-height: 0; margin-top: 16px; animation: ex-in .9s var(--ex-out) both; }
+
+@keyframes ex-in { from { opacity: 0; transform: translateY(14px) scale(.985); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes ex-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* ---------- strip ---------- */
+.ex-strip { display: flex; align-items: center; gap: 12px; padding-top: 10px; border-top: 1px solid var(--ex-line); min-width: 0; }
+.ex-play {
+  flex: none; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--ex-line-2);
+  background: transparent; color: var(--ex-ink); display: grid; place-items: center; cursor: pointer;
+}
+.ex-play svg { width: 14px; height: 14px; fill: currentColor; }
+.ex-play:hover { border-color: var(--ex-acc); color: var(--ex-acc); }
+.ex-segs { display: flex; gap: 4px; flex: 1; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.ex-segs li { flex-basis: 0; min-width: 0; }
+.ex-segs button {
+  position: relative; display: block; width: 100%; height: 34px; padding: 0; overflow: hidden; cursor: pointer;
+  border: 0; border-radius: 6px; background: var(--ex-panel); color: var(--ex-ink-3); text-align: left;
+  font: 500 12px/34px var(--ex-sans);
+}
+.ex-segs button:hover { color: var(--ex-ink-2); }
+.ex-segs button.is-on { color: var(--ex-ink); background: var(--ex-panel-2); }
+.ex-segs button.is-done { color: var(--ex-ink-2); }
+.ex-seg-fill { position: absolute; inset: 0; background: rgba(var(--ex-acc-rgb), 0.16); transform-origin: left; transform: scaleX(0); }
+.ex-segs button.is-on .ex-seg-fill { box-shadow: inset -2px 0 0 var(--ex-acc); }
+.ex-seg-name { position: relative; display: block; padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex-segs i { position: absolute; bottom: 4px; width: 1px; height: 5px; background: var(--ex-ink-3); opacity: .55; }
+.ex-time { flex: none; min-width: 13ch; text-align: right; font: 500 12px var(--ex-mono); color: var(--ex-ink-3); font-variant-numeric: tabular-nums; }
+.ex-play:focus-visible, .ex-segs button:focus-visible, .ex-mode button:focus-visible { outline: 2px solid var(--ex-acc, #ffc267); outline-offset: 2px; }
+
+/* ---------- mode switch ---------- */
+.ex-mode { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid rgba(230, 237, 244, 0.18); border-radius: 999px; flex: none; }
+.ex-mode button {
+  border: 0; border-radius: 999px; padding: 6px 12px; background: transparent; cursor: pointer;
+  font: 500 12px var(--ex-sans, "Geist", system-ui, sans-serif); color: #8d97a3;
+}
+.ex-mode button[aria-pressed="true"] { background: #f2f4ee; color: #050608; }
+.ex-mode.is-compact button { padding: 5px 10px; }
+
+/* ---------- fit host for forked scenes ---------- */
+.ex-fit { position: absolute; inset: 0; overflow: hidden; }
+.ex-fit-inner { position: absolute; left: 50%; top: 0; transform-origin: top center; }
+
+/* ---------- shared scene vocabulary ---------- */
+.ex-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ex-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ex-l { font: 500 17px var(--ex-sans); fill: var(--ex-ink-2); }
+.ex-l-strong { font: 500 19px var(--ex-sans); fill: var(--ex-ink); }
+.ex-m { font: 500 15px var(--ex-mono); fill: var(--ex-ink-3); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.ex-m-ink { font: 500 16px var(--ex-mono); fill: var(--ex-ink-2); font-variant-numeric: tabular-nums; }
+.ex-num-xl { font: 500 54px var(--ex-mono); fill: var(--ex-ink); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.ex-num-l { font: 500 34px var(--ex-mono); fill: var(--ex-ink); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ex-dev-only { display: none; }
+:root[data-ex-mode="dev"] .ex-dev-only { display: inline; }
+:root[data-ex-mode="dev"] .ex-light-only { display: none; }
+
+@media (max-width: 860px) {
+  .ex-sticky { padding: calc(64px + 14px) 16px 10px; }
+  .ex-head { max-width: 100%; }
+  .ex-top { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .ex-metric { text-align: left; }
+  .ex-segs button .ex-seg-name { display: none; }
+  .ex-segs button.is-on .ex-seg-name { display: block; }
+  .ex-time { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ex-head, .ex-metric, .ex-scene { animation: none; }
+}
+
+/* ---------- policy wing surfaces ---------- */
+.pw-surface { position: absolute; inset: 0; }
+.pw-surface text { user-select: none; }
+.ex-ann { font: 500 14px var(--ex-mono); fill: var(--ex-ink-3); letter-spacing: .03em; }
+.ex-ann-acc { font: 500 14px var(--ex-mono); fill: var(--ex-acc); letter-spacing: .03em; }
+.ex-eq { font: 400 17px var(--ex-mono); fill: var(--ex-ink-2); }
+.ex-node { font: 500 15px var(--ex-sans); fill: var(--ex-ink-2); }
+
+/* header actions: résumé, depth switch, language, on one line */
+.ex-header-actions { justify-self: end; display: flex; align-items: center; gap: 10px; }
+.ex-header-actions .vx-header-lang { margin-left: 0; }
+@media (max-width: 1180px) { .ex-header-actions .ex-mode { display: none; } }
+
+/* one snap point per room, so the page's mandatory snapping lands on whole rooms */
+.ex-snaps { position: absolute; inset: 0; pointer-events: none; }
+.ex-snaps span { position: absolute; left: 0; width: 1px; height: 100svh; scroll-snap-align: start; scroll-snap-stop: always; }
+
+.ex-strip .ex-mode { display: none; }
+@media (max-width: 1180px) { .ex-strip .ex-mode { display: inline-flex; } }
+
+/* the floating contact pill steps aside inside a wing; the strip and header already offer it */
+.vx-contact-dock { transition: opacity .35s var(--ex-out, ease), transform .35s var(--ex-out, ease); }
+:root[data-ex-wing] .vx-contact-dock { opacity: 0; pointer-events: none; transform: translateY(-8px); }

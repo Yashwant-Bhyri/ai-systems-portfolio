@@ -27,6 +27,9 @@ import { LangSwitch } from "./i18n/lang-switch";
 import { COMPUTE_PROJECTS, INFERENCE_STEPS, TRAINING_STEPS, INFERENCE_PROOF, TRAINING_PROOF } from "./compute-projects";
 import { InferenceOverview, TrainingOverview, InferenceVisual, TrainingVisual, ComputeProjectPreview } from "./compute-visuals";
 import { ComputeStudy } from "./compute-study";
+import { ModeProvider, ModeSwitch } from "./exhibit/shell";
+import { PolicyWing } from "./exhibit/policy";
+import { RuntimeWing } from "./exhibit/runtime";
 
 const assetPath = (path: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 
@@ -2309,7 +2312,7 @@ export function PortfolioV2() {
   const t = useT();
   useExperienceMotion(shellRef, reducedMotion);
   return (
-    <>
+    <ModeProvider>
       <a className="vx-skip-link" href="#profile">Skip to portfolio content</a>
       <main ref={shellRef} className="vx-shell">
         <div className="vx-progress" aria-hidden="true"><i /></div>
@@ -2317,8 +2320,11 @@ export function PortfolioV2() {
         <header className="vx-header">
           <a href="#top" className="vx-brand" aria-label="Yashwant Bhyri, portfolio home"><span>YB</span><div><strong>Yashwant Bhyri</strong><small>{t.brand.subtitle}</small></div></a>
           <nav aria-label="Portfolio navigation"><a href="#profile">{t.nav.profile}</a><a href="#projects">{t.nav.projects}</a><a href="#antigravity">{t.nav.antigravity}</a><a href="#filmora">{t.nav.filmora}</a><a href="#mindscape">{t.nav.mindscape}</a><a href="#inference">Inference</a><a href="#post-training">Post-training</a><a href="#research">{t.nav.research}</a><a href="#contact">{t.nav.contact}</a></nav>
-          <a className="vx-header-resume" href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">{t.resume}</a>
-          <LangSwitch />
+          <div className="ex-header-actions">
+            <a className="vx-header-resume" href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">{t.resume}</a>
+            <ModeSwitch compact />
+            <LangSwitch />
+          </div>
         </header>
         <Hero reducedMotion={reducedMotion} />
         <ProfileSection />
@@ -2326,14 +2332,12 @@ export function PortfolioV2() {
         <AntigravityChapter />
         <FilmoraChapter />
         <MindScapeChapter />
-        <InferenceChapter />
-        <ComputeStudy domain="inference" />
-        <TrainingChapter />
-        <ComputeStudy domain="training" />
+        <RuntimeWing />
+        <PolicyWing />
         <ResearchSection />
         <ContactSection />
         <ContactDock />
       </main>
-    </>
+    </ModeProvider>
   );
 }
