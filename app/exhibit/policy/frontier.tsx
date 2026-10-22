@@ -94,7 +94,7 @@ export function PolicyFrontier({ active, mode, clock }: RoomProps) {
           <rect width={14} height={3} y={-5} fill="var(--ex-rose)" /><text x={24} className="ex-m">post-training ↑ pass@1</text>
           <rect width={14} height={3} y={23} fill="var(--ex-amber)" /><text x={24} y={28} className="ex-m">serving ← GPU-s / correct</text>
         </g>
-        {mode === "dev" && <text y={370} className="ex-ann">16 policy × budget points · shared-document workload</text>}
+        {mode === "dev" && <text y={370} className="ex-ann">16 policy × budget points</text>}
       </g>
     </Surface>
   );

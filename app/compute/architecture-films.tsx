@@ -6,7 +6,7 @@ export function InferenceArchitectureFilm({t}:{t:number}) {
   const decode=t>3300,replace=t>6500,step=Math.floor(t/650)%8;
   return <>
     <Text x={30} y={30} kind="strong">Many requests. Shared computation. Separate state.</Text>
-    <Text x={1110} y={30} anchor="end" kind="small">illustrative serving cycle</Text>
+    <Text x={1110} y={30} anchor="end" kind="small">continuous serving cycle</Text>
     <Text x={30} y={75} kind="small">CONCURRENT PROMPTS</Text>
     {[0,1,2].map(i=>{const y=113+i*58,c=PALETTE[i];return <g key={i}>
       <circle cx={39} cy={y} r={4} fill={c}/><Text x={54} y={y-12} kind="small" color={c}>{i===2&&replace?"request D":"request "+String.fromCharCode(65+i)}</Text>

@@ -31,7 +31,7 @@ function checkpoint(key: string, name: string, short: string, policy: number, bu
 }
 
 export const CK = {
-  base: checkpoint("base", "Qwen3-4B base", "base", 0, 1),
+  base: checkpoint("base", "Base checkpoint", "base", 0, 1),
   sft: checkpoint("sft", "SFT · LoRA", "SFT", 1, 1),
   rl: checkpoint("rl", "GRPO", "GRPO", 2, 1),
   rl4: checkpoint("rl4", "GRPO · 4× thinking", "4× think", 2, 4),

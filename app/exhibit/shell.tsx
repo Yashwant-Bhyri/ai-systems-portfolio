@@ -212,6 +212,18 @@ export function Wing({
     return () => cancelAnimationFrame(raf);
   }, [playing, inView, room, index, n, goTo]);
 
+  // Verification hook: dispatch `ex:seek` with { wing, ms } to freeze a room at an exact moment.
+  useEffect(() => {
+    const onSeek = (e: Event) => {
+      const d = (e as CustomEvent<{ wing: string; ms: number }>).detail;
+      if (d?.wing !== id) return;
+      time.current = d.ms;
+      setPlaying(false);
+    };
+    addEventListener("ex:seek", onSeek);
+    return () => removeEventListener("ex:seek", onSeek);
+  }, [id]);
+
   // The page's floating contact pill steps aside while a wing holds the screen.
   useEffect(() => {
     if (!inView) return;
@@ -294,7 +306,7 @@ export function Wing({
           </button>
           <ol className="ex-segs">
             {list.map((r, k) => (
-              <li key={r.id} style={{ flexGrow: 1 }}>
+              <li key={r.id} style={{ flexGrow: 1 }} data-duration={r.duration}>
                 <button
                   type="button"
                   className={k === index ? "is-on" : k < index ? "is-done" : ""}

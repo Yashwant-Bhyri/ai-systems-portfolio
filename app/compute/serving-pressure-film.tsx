@@ -152,7 +152,7 @@ export function ServingPressureFilm({ onInspectTrace }: { onInspectTrace: (selec
     return () => { observer.disconnect(); scroll?.removeEventListener("scroll", update); };
   }, [frame.focus, settled, detail, pages, budget]);
   return <section className="sp-film" ref={ref} data-focus={frame.focus} aria-label="A live answer under incoming load" onKeyDown={(event) => { if (event.key === "Escape" && detail) { event.stopPropagation(); releaseInspection(); } }}>
-    <header className="sp-header"><div><span>Four requests · one device per lane · illustrative</span><h3>{title}</h3></div><time>{number(frame.serviceMs)}<small> ms · shared clock</small></time></header>
+    <header className="sp-header"><div><span>Four requests · one device per lane</span><h3>{title}</h3></div><time>{number(frame.serviceMs)}<small> ms · shared clock</small></time></header>
     <div className="sp-stage" ref={stage}>
       <div className="sp-diagram"><p className="sp-pan">Scroll to inspect the execution lanes →</p><div className="sp-scroll" role="region" tabIndex={0} aria-label="Paired serving machines and token delivery" onFocusCapture={player.pause}>
         <svg className="sp-plot" viewBox="0 0 840 610" role="group" aria-label="Two scheduling rules, the same four requests and output lengths">

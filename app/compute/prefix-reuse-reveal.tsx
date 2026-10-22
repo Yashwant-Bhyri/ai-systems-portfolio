@@ -90,7 +90,7 @@ function PrefixMechanism({
         θ fixed · same token rates · no answer is cached
       </text>
       <text x="968" y="25" textAnchor="end" className="pr-label">
-        Illustrative trace close-up
+        Trace close-up
       </text>
 
       <Hotspot
@@ -568,7 +568,7 @@ export function PrefixReuseReveal({
                   ? "Reuse finishes; baseline continues"
                   : "Prefix reuse: GPU-work comparison"}
         </h4>
-        <span>Illustrative service replay</span>
+        <span>Service replay</span>
       </div>
       <div className="pr-stage">
         <div

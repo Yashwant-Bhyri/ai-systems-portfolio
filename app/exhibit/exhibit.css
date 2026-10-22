@@ -185,3 +185,10 @@
 /* the floating contact pill steps aside inside a wing; the strip and header already offer it */
 .vx-contact-dock { transition: opacity .35s var(--ex-out, ease), transform .35s var(--ex-out, ease); }
 :root[data-ex-wing] .vx-contact-dock { opacity: 0; pointer-events: none; transform: translateY(-8px); }
+
+/* Phone: the figure keeps a readable size and pans sideways inside the stage; the page never does. */
+@media (max-width: 760px) {
+  .ex-scene { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
+  .ex-scene > .pw-surface, .ex-scene > .rw-host, .ex-scene > .rw-system { width: 940px; right: auto; }
+  .ex-scene::after { content: "swipe the figure →"; position: sticky; left: 0; bottom: 0; display: block; font: 500 11px var(--ex-mono); color: var(--ex-ink-3); letter-spacing: .06em; padding-top: 4px; }
+}

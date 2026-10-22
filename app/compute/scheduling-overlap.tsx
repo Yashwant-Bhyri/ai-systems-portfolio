@@ -596,7 +596,7 @@ export function SchedulingOverlap({
           <h3>CPU/GPU scheduling overlap</h3>
           <p>{HEADINGS[frame.beat]}</p>
         </div>
-        <span>Two fixed streams · illustrative timing</span>
+        <span>Two fixed streams · event timing</span>
       </header>
       <div
         className="so-controls"

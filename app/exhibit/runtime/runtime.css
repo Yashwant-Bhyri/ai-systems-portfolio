@@ -16,5 +16,5 @@
   [class$="-direction"], [class$="-rounds"], [class$="-header"]
 ) { display: none !important; }
 /* Developer: keep the instruments, drop only what the strip already does. */
-:root[data-ex-mode="dev"] .rw-host :is([class$="-transport"]) { display: none !important; }
+:root[data-ex-mode="dev"] .rw-host :is([class$="-transport"], [class$="-moments"], [class$="-invariants"]) { display: none !important; }
 .rw-host :is([class$="-scroll-hint"], [class$="-mobile-nav"], .cx-pan-hint) { display: none !important; }
