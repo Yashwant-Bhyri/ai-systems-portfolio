@@ -21,15 +21,23 @@ const CacheRouting = lazy(() =>
     default: module.CacheRouting,
   })),
 );
+const SchedulingOverlap = lazy(() =>
+  import("./scheduling-overlap").then((module) => ({
+    default: module.SchedulingOverlap,
+  })),
+);
 
 export function ServingUnderLoad() {
   const [view, setView] = useState<"pressure" | "loop" | "continuity">(
     "pressure",
   );
   const [opened, setOpened] = useState(false);
-  const [explorer, setExplorer] = useState<"map" | "draft" | "cache">("draft");
+  const [explorer, setExplorer] = useState<
+    "map" | "draft" | "cache" | "overlap"
+  >("draft");
   const [draftOpened, setDraftOpened] = useState(false);
   const [cacheOpened, setCacheOpened] = useState(false);
+  const [overlapOpened, setOverlapOpened] = useState(false);
   const [inspection, setInspection] = useState<{
     initial?: StreamInspectorInitial;
     revision: number;
@@ -74,7 +82,7 @@ export function ServingUnderLoad() {
           }}
         >
           <strong>Explore the serving system</strong>
-          <small>Cache routing, drafting & system map</small>
+          <small>Routing, verification & execution</small>
         </button>
         <button
           ref={continuityButton}
@@ -120,6 +128,16 @@ export function ServingUnderLoad() {
           </button>
           <button
             type="button"
+            aria-pressed={explorer === "overlap"}
+            onClick={() => {
+              setOverlapOpened(true);
+              setExplorer("overlap");
+            }}
+          >
+            CPU/GPU scheduling overlap
+          </button>
+          <button
+            type="button"
             aria-pressed={explorer === "map"}
             onClick={() => setExplorer("map")}
           >
@@ -154,9 +172,29 @@ export function ServingUnderLoad() {
             </Suspense>
           </div>
         )}
+        {overlapOpened && (
+          <div hidden={explorer !== "overlap"}>
+            <Suspense
+              fallback={
+                <p className="ip-loading" role="status">
+                  Opening CPU/GPU scheduling…
+                </p>
+              }
+            >
+              <SchedulingOverlap
+                active={view === "loop" && explorer === "overlap"}
+                onBack={() => setExplorer("map")}
+              />
+            </Suspense>
+          </div>
+        )}
         <div hidden={explorer !== "map"}>
           <ServingLoadOverview
             active={view === "loop" && explorer === "map"}
+            onOpenOverlap={() => {
+              setOverlapOpened(true);
+              setExplorer("overlap");
+            }}
             onOpenContinuity={() => openContinuity(true)}
             onOpenDraft={() => {
               setDraftOpened(true);

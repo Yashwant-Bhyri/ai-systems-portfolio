@@ -1,5 +1,9 @@
 # Inference review: ideas, decisions, and delivery
 
+## October 23: selective external visualization references
+
+Captured all three references: QwenGyre, the local NetSphere Brain Scan clip, and **DeepSeek DeepInfer** (the user's explicit correction of DeepInfra). The objective is presentation and operational explanation, not importing experimental achievements. The NetSphere search is closed as requested; use the inspected clip's synchronized views. DeepInfer's architecture, chart and public documentation now inform bounded original directions rather than a replacement static diagram. Full source boundaries, keep/reject decisions, a CPU/GPU-overlap storyboard and later component applications are in `visual-reference-direction-20261023.md`. This pass changes documentation only and preserves the saved application checkpoint.
+
 ## October 23: connect mechanisms to delivery
 
 The remaining overview chapters now carry the user's component-specific direction: exact memory ownership links route selection to another request's admission; a verified prefix links proposals to committed output; and actual latency intervals link completion to qualified delivery. Each keeps persistent identities and a visible counterexample. The presentation gains deliberate holds without inventing additional service time. The final target controls expose new information without changing the underlying traces or requiring a larger dashboard.

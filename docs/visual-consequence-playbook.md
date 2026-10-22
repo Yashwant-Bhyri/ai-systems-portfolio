@@ -1,5 +1,15 @@
 # Visual consequence playbook
 
+## October 23: extract visual relationships, not reference skins
+
+- **One datum can have several useful views.** An output position, its internal operation and its plotted consequence should share selection and reveal progress. Three independently animated panels do not create that connection.
+- **Depth must encode something.** A relief plot is worthwhile when height clarifies a real field; a small arithmetic example does not need invented layers or a decorative landscape.
+- **Overlap is not deletion.** If CPU preparation overlaps GPU work, retain both operations and distinguish saved elapsed time from unchanged busy computation.
+- **An operating point includes a tradeoff.** Show what happens to individual delivery when aggregate capacity rises. Label evaluated points, concurrency and the relevant latency definition.
+- **Keep reference research bounded.** Preserve the mechanism and its explanatory insight, not the source's typography, marketing layout or benchmark values. Once a supplied clip is sufficient and the user closes source hunting, stop searching.
+
+Research, corrected DeepInfer identity and original component briefs: `visual-reference-direction-20261023.md`. These directions are not yet implemented.
+
 ## October 23: preserve time, identity and qualification
 
 - **A hold is presentation time, not extra work.** Map one presentation cursor to an immutable event trace. Export both coordinates. A longer explanatory pause must not increase service latency or GPU cost.

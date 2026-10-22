@@ -149,11 +149,13 @@ export function ServingLoadOverview({
   onOpenContinuity,
   onOpenDraft,
   onOpenCache,
+  onOpenOverlap,
   active: isActive = true,
 }: {
   onOpenContinuity: () => void;
   onOpenDraft: () => void;
   onOpenCache: () => void;
+  onOpenOverlap?: () => void;
   active?: boolean;
 }) {
   const root = useRef<HTMLElement>(null);
@@ -691,6 +693,18 @@ export function ServingLoadOverview({
         ) : null}
       </div>
       <div className="slo-context-controls">
+        {frame.beat === "execution" && onOpenOverlap && (
+          <button
+            type="button"
+            className="slo-deep-action"
+            onClick={() => {
+              clock.pause();
+              onOpenOverlap();
+            }}
+          >
+            Compare CPU/GPU scheduling overlap ↗
+          </button>
+        )}
         {frame.beat === "verification" && (
           <button
             type="button"

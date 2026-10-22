@@ -1,5 +1,9 @@
 # Portfolio laboratory handoff — September 24, 2026
 
+## October 23 reference direction and user correction
+
+Read `visual-reference-direction-20261023.md`. The user meant **DeepSeek DeepInfer**, not DeepInfra, and explicitly asked to stop chasing NetSphere source: use the supplied local Brain Scan video. Research is now distilled into original, component-specific directions: linked representations, a bounded CPU/GPU-overlap scene, conditional verification, a serving tradeoff frontier, and later trajectory-to-training visualization. No application code, metrics or current clock changed in this research pass. Do not mistake proposals for delivered work or restart the reference hunt. Preserve the verified checkpoint below; whole-inference integration and acceptance still precede broader post-training work.
+
 ## October 23 latest override: locality through qualified delivery
 
 Read `serving-continuity-delivery-checkpoint-20261023.md` first. Locality, draft verification and Delivery criteria now have dedicated scenes; the obsolete overview renderer is removed. C's route exposes D's page shortfall, draft acceptance preserves exact committed output, and a separately labeled five-request worked example distinguishes completion from latency/validity-qualified delivery. The authored clock is now **128 seconds mapped to the unchanged 94-second trace**. Presentation holds are not added service time. JSON v2 preserves both coordinates and independent fixtures.
