@@ -1,0 +1,102 @@
+.sh-diagram {
+  display: block;
+  width: 100%;
+  min-width: 1000px;
+  max-width: 1000px;
+  margin-inline: auto;
+  fill: #dce9f0;
+  background: #0b1922;
+}
+.sh-diagram text {
+  font-family: var(--font-geist-sans), sans-serif;
+}
+.sh-subtitle {
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.sh-label {
+  font-size: 15px;
+  font-weight: 500;
+}
+.sh-small {
+  font-size: 12px;
+  fill: #c0d1de;
+}
+.sh-number {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.sh-value {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.sh-title {
+  font-size: 21px;
+  letter-spacing: -0.02em;
+}
+.sh-metric {
+  font-size: 43px;
+  font-weight: 450;
+  font-variant-numeric: tabular-nums;
+}
+.sh-unit {
+  font-size: 18px;
+}
+.sh-stat {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.sh-weight {
+  cursor: pointer;
+}
+.sh-weight:hover rect {
+  stroke-width: 2;
+}
+.sh-weight:focus-visible {
+  outline: 2px solid #c7a6ff;
+  outline-offset: 3px;
+}
+.slo-hardware-notes {
+  border-top: 1px solid #314957;
+  padding: 12px 26px;
+  color: #bfd0dc;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.slo-hardware-notes summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.slo-hardware-notes p {
+  max-width: 90ch;
+}
+.slo-hardware-notes a {
+  color: #c7a6ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.slo-hardware-notes summary:focus-visible {
+  outline: 2px solid #c7a6ff;
+  outline-offset: 3px;
+}
+.slo-mobile-pan {
+  display: none;
+}
+@media (max-width: 800px) {
+  .slo-mobile-pan {
+    display: flex;
+    gap: 8px;
+    padding: 8px 14px;
+  }
+  .slo-mobile-pan button {
+    min-height: 44px;
+    padding: 8px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sh-diagram * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

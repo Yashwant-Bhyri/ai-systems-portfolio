@@ -1,0 +1,59 @@
+.sp-film { border: 1px solid #304653; background: #0b151e; color: #deebf5; scroll-margin-top: 90px; }
+.sp-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 22px 26px; border-bottom: 1px solid #304653; }
+.sp-header span { color: #b5c5d3; font-size: 11px; }
+.sp-header h3 { font-size: clamp(20px,2.1vw,28px); line-height: 1.3; font-weight: 500; letter-spacing: -.025em; margin: 10px 0 0; }
+.sp-header time { color: #e5dcf5; font-size: 26px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sp-header time small { display: block; font-size: 10px; text-align: right; margin-top: 5px; color: #b4c6d6; }
+@media (min-width: 1201px) { .sp-header time { margin-right: 88px; } }
+.sp-stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: center; }
+.sp-result-links { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.sp-diagram { min-width: 0; }
+.sp-scroll { overflow-x: auto; scrollbar-width: thin; }
+.sp-plot { width: 100%; min-width: 840px; display: block; }
+.sp-lane-title { font: 500 20px var(--font-geist-sans),sans-serif; }
+.sp-label { font: 12px var(--font-geist-sans),sans-serif; fill: #d4e2ed; }
+.sp-small { font: 10.5px var(--font-geist-mono),monospace; }
+.sp-small:not([fill]) { fill: #bccdda; }
+.sp-chip-text { font: 10px var(--font-geist-mono),monospace; fill: #d2e2eb; }
+.sp-lane > g > rect, .sp-lane > g > path, .sp-lane > g > g, .sp-lane > path { transition: opacity 450ms cubic-bezier(.22,1,.36,1); }
+.sp-lane[data-quiet="true"] > g > rect, .sp-lane[data-quiet="true"] > g > path, .sp-lane[data-quiet="true"] > g > g, .sp-lane[data-quiet="true"] > path { opacity: .5; }
+.sp-hit { fill: transparent; stroke: transparent; }
+.sp-inspect { cursor: pointer; outline: none; }
+.sp-inspect:focus-visible .sp-hit, .sp-inspect:hover .sp-hit { stroke: #a98ccf; fill: #c7a6ff08; }
+.sp-consequence { margin: 22px 20px 22px 10px; border: 1px solid #65547b; border-radius: 6px; padding: 22px 18px; background: #191d2b; min-height: 358px; }
+.sp-result-label { font-size: 11px; color: #c8bad9; }
+.sp-consequence h4 { margin: 14px 0 24px; font-size: 21px; font-weight: 450; line-height: 1.3; letter-spacing: -.015em; }
+.sp-result-bars > div { position: relative; padding-bottom: 15px; margin-bottom: 23px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.sp-result-bars span { font-size: 12px; }
+.sp-result-bars strong { font-size: 26px; font-weight: 450; font-variant-numeric: tabular-nums; }
+.sp-result-bars small { font-size: 12px; }
+.sp-result-bars i { position: absolute; height: 4px; bottom: 0; left: 0; }
+.sp-result-bars [data-active="true"] i { height: 7px; }
+.sp-payoff { font-size: 24px; letter-spacing: -.02em; margin: 28px 0 13px; line-height: 1.3; }
+.sp-reason { font-size: 12px; color: #c3cfdd; line-height: 1.7; }
+.sp-live-answer > div { padding-block: 13px; border-bottom: 1px solid #3d4152; }
+.sp-live-answer span { display: block; font-size: 11px; color: #c5d2df; }
+.sp-live-answer strong { display: block; font-size: 32px; font-weight: 450; margin: 5px 0; font-variant-numeric: tabular-nums; }
+.sp-live-answer small { font-size: 12px; }
+.sp-two-effects { margin-top: 22px; }
+.vx-shell .sp-two-effects button { display: flex; justify-content: space-between; width: 100%; background: none; border: 0; padding: 10px 0; text-align: left; color: #c3d2df; font-size: 11px; cursor: pointer; }
+.vx-shell .sp-two-effects button[aria-pressed="true"] { color: #dfc7ff; }
+.sp-controls { display: flex; flex-wrap: wrap; gap: 16px 30px; margin: 0 26px; padding: 15px 0; border-block: 1px solid #304653; }
+.sp-controls label { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: #bcccda; font-size: 11px; }
+.sp-controls select { background: #14212d; border: 1px solid #4d6275; color: #e4eaf4; padding: 8px; font-size: 11px; }
+.sp-transport { display: flex; align-items: center; gap: 16px; padding: 18px 26px; }
+.sp-transport input { min-width: 0; flex: 1; accent-color: #c7a6ff; }
+.sp-transport time { font: 11px var(--font-geist-mono),monospace; white-space: nowrap; }
+.vx-shell .sp-transport button, .vx-shell .sp-detail button { color: #d6dfeb; background: #112332; border: 1px solid #496075; padding: 9px 12px; cursor: pointer; font-size: 11px; }
+.sp-moments { display: flex; flex-wrap: wrap; gap: 8px 20px; padding: 4px 26px 22px; }
+.vx-shell .sp-moments button, .vx-shell .sp-footer button { background: none; border: 0; padding: 6px 0; font-size: 11px; color: #c5d5e3; cursor: pointer; }
+.sp-footer { border-top: 1px solid #304653; padding: 15px 26px; display: flex; gap: 10px 24px; justify-content: space-between; flex-wrap: wrap; align-items: center; }
+.sp-footer > span { color: #afc4d4; font-size: 10px; }
+.vx-shell .sp-footer button { color: #dfc7ff; }
+.sp-detail p { font-size: 12px; color: #c3d0dd; line-height: 1.8; }
+.sp-pan { display: none; color: #bfd0dd; font-size: 11px; padding: 0 18px; }
+.sp-film button:focus-visible, .sp-film select:focus-visible, .sp-film input:focus-visible, .sp-scroll:focus-visible { outline: 2px solid #ffc267; outline-offset: 3px; }
+.sp-film button:disabled { opacity: .6; cursor: default; }
+@media (max-width: 1200px) { .sp-stage { grid-template-columns: 1fr; } .sp-consequence { margin: 16px 24px; min-height: 0; } .sp-pan { display: block; } .sp-result-bars, .sp-live-answer { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; } .sp-result-links { display: none; } }
+@media (max-width: 600px) { .sp-header { align-items: flex-start; padding: 18px; gap: 12px; } .sp-header h3 { font-size: 21px; } .sp-header time { font-size: 20px; } .sp-header time small { white-space: normal; max-width: 75px; } .sp-consequence { margin: 16px; } .sp-controls { margin-inline: 18px; } .sp-transport { padding-inline: 18px; gap: 9px; } .sp-transport > button:last-child { display: none; } .sp-controls label { display: grid; gap: 8px; } .sp-moments { padding-inline: 18px; gap: 6px 17px; } }
+@media (prefers-reduced-motion: reduce) { .sp-lane > g > rect, .sp-lane > g > path, .sp-lane > g > g, .sp-lane > path { transition: none; } }

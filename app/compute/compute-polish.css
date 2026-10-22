@@ -1,0 +1,105 @@
+/* Restore the established contribution material; extend its signal to intent. */
+.vx-shell :is(.cx-film-drilldowns, .cx-overview-details) button {
+  transition:
+    background 180ms ease-out,
+    color 180ms ease-out,
+    box-shadow 180ms ease-out,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vx-shell
+  :is(.cx-film-drilldowns, .cx-overview-details)
+  button:is(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--active-accent) 11%, #0d131a);
+  box-shadow: inset 0 -2px var(--active-accent);
+  transform: translateY(-2px);
+}
+.vx-shell
+  :is(.cx-film-drilldowns, .cx-overview-details)
+  button:is(:hover, :focus-visible)
+  strong {
+  color: var(--active-accent);
+}
+.vx-shell .cx-overview-details button {
+  padding-inline: 12px;
+}
+.cx-scientific-claim {
+  position: relative;
+  padding: 12px 16px;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--active-accent) 28%, #293440);
+  background: color-mix(in srgb, var(--active-accent) 4%, #0a1119);
+}
+.cx-scientific-claim::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -25%;
+  width: 20%;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in srgb, var(--active-accent) 15%, transparent),
+    transparent
+  );
+  transform: skewX(-20deg);
+  animation: cx-objective-scan 8s ease-in-out infinite;
+  z-index: -1;
+}
+.cx-scientific-claim > span {
+  font-weight: 600;
+}
+.vx-conclusion-signal-rail {
+  position: relative;
+}
+.vx-shell .vx-signal-rail-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  min-height: 32px;
+  padding: 4px 8px;
+  background: none;
+  color: var(--active-accent);
+  border: 1px solid var(--vx-line);
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  cursor: pointer;
+}
+.vx-conclusion-signal-rail > span {
+  padding-right: 135px;
+}
+/* The rail owns its clock even when chapter auto-advance is held. */
+.vx-walkthrough
+  .vx-conclusion-signal-rail
+  .vx-signal-ticker[data-running="true"]
+  .vx-signal-ticker-track {
+  animation-play-state: running !important;
+}
+.vx-signal-ticker[data-running="false"] .vx-signal-ticker-track {
+  animation-play-state: paused !important;
+}
+@keyframes cx-objective-scan {
+  0%,
+  14% {
+    transform: translateX(0) skewX(-20deg);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  60%,
+  100% {
+    transform: translateX(750%) skewX(-20deg);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cx-scientific-claim::before {
+    animation: none;
+  }
+  .vx-shell :is(.cx-film-drilldowns, .cx-overview-details) button {
+    transition: none;
+    transform: none;
+  }
+}

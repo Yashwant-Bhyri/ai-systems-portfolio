@@ -1,0 +1,77 @@
+.sd-diagram {
+  display: block;
+  width: 100%;
+  min-width: 1000px;
+  max-width: 1000px;
+  margin-inline: auto;
+  background: #0b1922;
+  fill: #dce9f0;
+}
+.sd-diagram text {
+  font-family: var(--font-geist-sans), sans-serif;
+}
+.sd-title {
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.sd-label {
+  font-size: 15px;
+  font-weight: 500;
+}
+.sd-small {
+  font-size: 12px;
+}
+.sd-small:not([fill]) {
+  fill: #bfd0dc;
+}
+.sd-value {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.sd-card-title {
+  font-size: 17px;
+  font-weight: 500;
+}
+.sd-metric {
+  font-size: 47px;
+  font-variant-numeric: tabular-nums;
+}
+.sd-unit {
+  font-size: 24px;
+}
+.sd-note {
+  font-size: 11px;
+  fill: #c6d3df;
+}
+.sd-hit {
+  fill: transparent;
+  stroke: transparent;
+  pointer-events: all;
+}
+.sd-leader {
+  pointer-events: none;
+}
+.slo-root .sd-diagram .sd-request {
+  outline: none;
+  cursor: pointer;
+}
+.slo-root .sd-diagram .sd-request:focus-visible {
+  outline: none;
+}
+.sd-request:hover > .sd-hit {
+  fill: #c7a6ff08;
+}
+.sd-request[aria-pressed="true"] > .sd-hit {
+  stroke: #7b719e;
+}
+.sd-request:focus-visible > .sd-hit {
+  stroke: #c7a6ff;
+  stroke-width: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sd-diagram * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -1,0 +1,77 @@
+.sc-diagram {
+  display: block;
+  width: 100%;
+  min-width: 1000px;
+  max-width: 1000px;
+  margin-inline: auto;
+  background: #0b1922;
+  fill: #dce9f0;
+}
+.sc-diagram text {
+  font-family: var(--font-geist-sans), sans-serif;
+}
+.sc-title {
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.sc-label {
+  font-size: 15px;
+  font-weight: 500;
+}
+.sc-small {
+  font-size: 12px;
+}
+.sc-small:not([fill]),
+.sc-index {
+  fill: #bfd0dc;
+}
+.sc-index {
+  font-size: 10px;
+}
+.sc-value {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.sc-token {
+  font-size: 25px;
+  font-weight: 500;
+}
+.sc-card-title {
+  font-size: 18px;
+  font-weight: 500;
+}
+.sc-metric {
+  font-size: 47px;
+  font-variant-numeric: tabular-nums;
+}
+.sc-unit {
+  font-size: 24px;
+}
+.sc-note {
+  font-size: 11px;
+  fill: #c6d3df;
+}
+.sc-leader {
+  pointer-events: none;
+}
+.slo-root .sc-diagram .sc-replica {
+  cursor: pointer;
+  outline: none;
+}
+.sc-replica:hover > .sc-replica-hit {
+  stroke: #c7a6ff;
+}
+.slo-root .sc-diagram .sc-replica:focus-visible {
+  outline: none;
+}
+.sc-replica:focus-visible > .sc-replica-hit {
+  stroke: #c7a6ff;
+  stroke-width: 2.5;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sc-diagram * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

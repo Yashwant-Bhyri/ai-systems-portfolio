@@ -1,0 +1,131 @@
+/* The parent supplies the film clock. SVG geometry is reconstructed from progress. */
+.xd-origin {
+  isolation: isolate;
+}
+
+.xd-title {
+  fill: #e6f0f8;
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 22px;
+  font-weight: 450;
+}
+
+.xd-title-compact {
+  font-size: 19px;
+}
+
+.xd-subtitle,
+.xd-equation,
+.xd-id,
+.xd-exemplar-label {
+  fill: #c3d4e1;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.xd-equation {
+  fill: #d4e5f2;
+  font-size: 13px;
+}
+
+.xd-id,
+.xd-exemplar-label {
+  font-size: 10px;
+}
+
+.xd-key {
+  font-size: 11px;
+}
+
+.xd-send-line,
+.xd-bundle-line,
+.xd-branch,
+.xd-ingress {
+  fill: none;
+  stroke: #7599b3;
+  stroke-width: 1.2;
+}
+
+.xd-send-arrow {
+  fill: none;
+  stroke: #9cc5f5;
+  stroke-width: 1.5;
+}
+
+.xd-request,
+.xd-bundle-packet {
+  fill: #d6e8f6;
+}
+
+.xd-tile {
+  fill: #102434;
+  stroke: #5b778b;
+  stroke-width: 1;
+}
+
+.xd-field {
+  fill: none;
+  stroke: #5b778b;
+  stroke-width: 1;
+}
+
+.xd-tile-first,
+.xd-exemplar {
+  fill: #132c3e;
+  stroke: #9cc5f5;
+  stroke-width: 1.2;
+}
+
+.xd-other-agent {
+  fill: #a9bfd0;
+}
+
+.xd-mark {
+  fill: #234053;
+  stroke: #7596a9;
+  stroke-width: 0.9;
+}
+
+.xd-mark-first {
+  fill: #17354a;
+  stroke: #b9dcfb;
+  stroke-width: 1.5;
+}
+
+.xd-mark-dots {
+  fill: #bdd9ea;
+}
+
+.xd-ingress {
+  stroke: #afd0e8;
+  stroke-width: 1.8;
+}
+
+.xd-branch {
+  stroke-width: 1;
+}
+
+.xd-agent {
+  fill: #a9c9e2;
+}
+
+.xd-agent-first {
+  fill: #e3f2ff;
+}
+
+.xd-first-ring {
+  fill: none;
+  stroke: #91c5f0;
+  stroke-width: 1.3;
+  opacity: 0.86;
+}
+
+/* Scrubbing is exact; there are no autonomous CSS or JS animations to disable. */
+@media (prefers-reduced-motion: reduce) {
+  .xd-origin,
+  .xd-origin * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

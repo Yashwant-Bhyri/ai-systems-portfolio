@@ -1,0 +1,227 @@
+.em-machine {
+  min-width: 0;
+}
+.em-svg {
+  display: block;
+  width: 100%;
+  min-width: 730px;
+  overflow: visible;
+}
+.em-lane-name {
+  font:
+    500 17px var(--font-geist),
+    sans-serif;
+  letter-spacing: -0.02em;
+}
+.em-mono {
+  font:
+    12px var(--font-geist-mono),
+    monospace;
+  font-variant-numeric: tabular-nums;
+}
+.em-small {
+  font:
+    10.5px var(--font-geist-mono),
+    monospace;
+}
+.em-small:not([fill]) {
+  fill: #b0c1d0;
+}
+.em-hit {
+  fill: transparent;
+  stroke: transparent;
+  transition:
+    fill 180ms ease-out,
+    stroke 180ms ease-out;
+}
+.em-lens {
+  cursor: pointer;
+  outline: none;
+}
+.em-lens:hover > .em-hit,
+.em-lens:focus-visible > .em-hit,
+.em-lens[data-selected="true"] > .em-hit {
+  fill: #b9d9ed;
+  fill-opacity: 0.035;
+  stroke: #88a7bb;
+  stroke-opacity: 0.5;
+}
+.em-lens:focus-visible > .em-hit {
+  stroke: #ffc267;
+  stroke-width: 2;
+  stroke-opacity: 1;
+}
+.em-inspection {
+  margin: 0 28px 15px;
+  border-top: 1px solid #30414e;
+}
+.em-inspection nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 12px 0 10px;
+}
+.vx-shell .em-inspection button {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 5px 0;
+  color: #b0c1d0;
+  font:
+    11px/1.5 var(--font-geist-mono),
+    monospace;
+  cursor: pointer;
+}
+.vx-shell .em-inspection button:hover,
+.vx-shell .em-inspection button[aria-pressed="true"] {
+  color: #ffc267;
+  border-bottom-color: #ffc267;
+}
+.em-detail {
+  min-height: 88px;
+  max-width: 88ch;
+}
+.em-detail strong {
+  color: #d7e5ed;
+  font:
+    450 14px/1.5 var(--font-geist),
+    sans-serif;
+}
+.em-detail p {
+  color: #aebfcf;
+  margin: 5px 0 0;
+  font:
+    12px/1.65 var(--font-geist),
+    sans-serif;
+}
+.es-film .es-stage {
+  min-height: 600px;
+}
+.es-film .es-scenes {
+  position: relative;
+  overflow-x: auto;
+  min-height: 570px;
+}
+.es-film .es-scene[data-active="false"] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  top: 0;
+  left: 0;
+}
+.es-work-equation {
+  fill: #d7e5ed;
+  font:
+    450 26px var(--font-geist),
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.es-film .es-scene[data-active="true"] {
+  align-self: center;
+}
+.em-lens {
+  transition: opacity 240ms ease-out;
+}
+.em-machine[data-focus="memory"] .em-lens:not([data-part="memory"]),
+.em-machine[data-focus="compute"] .em-lens:not([data-part="compute"]),
+.em-machine[data-focus="output"] .em-lens:not([data-part="output"]),
+.em-machine[data-focus="time"] .em-lens:not([data-part="time"]) {
+  opacity: 0.58;
+}
+.em-math-disclosure {
+  margin-top: 12px;
+}
+.em-math-disclosure summary {
+  cursor: pointer;
+  color: #ffd89b;
+  font:
+    12px/1.6 var(--font-geist),
+    sans-serif;
+  padding: 10px 0;
+}
+.em-math-disclosure summary span {
+  margin-left: 14px;
+  color: #aebfcf;
+}
+.em-math-disclosure summary:focus-visible {
+  outline: 2px solid #ffc267;
+  outline-offset: 4px;
+}
+.em-arithmetic {
+  border-top: 1px solid #30414e;
+  padding-top: 12px;
+}
+.em-arithmetic svg {
+  display: block;
+  width: 100%;
+  min-width: 710px;
+}
+.em-arithmetic-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+}
+.em-arithmetic-controls label {
+  color: #b0c1d0;
+  font-size: 12px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+.em-arithmetic-controls input {
+  accent-color: #ffc267;
+}
+.vx-shell .em-arithmetic-controls button {
+  border: 1px solid #455969;
+  background: transparent;
+  color: #b0c1d0;
+  padding: 7px 12px;
+  font:
+    12px var(--font-geist-mono),
+    monospace;
+  cursor: pointer;
+}
+.vx-shell .em-arithmetic-controls button[aria-pressed="true"] {
+  color: #b8e986;
+  border-color: #9cc17a;
+}
+.em-arithmetic > p {
+  max-width: 78ch;
+  color: #aebfcf;
+  font-size: 11px;
+  line-height: 1.65;
+}
+.em-svg {
+  max-width: 960px;
+  margin-inline: auto;
+}
+@media (max-width: 800px) {
+  .em-svg,
+  .es-film[data-phase="0"] .es-scene[data-active="true"] {
+    width: 780px;
+  }
+  .em-detail {
+    min-height: 92px;
+  }
+}
+@media (max-width: 650px) {
+  .em-inspection {
+    margin-inline: 20px;
+    width: calc(100vw - 90px);
+  }
+  .em-arithmetic {
+    width: 730px;
+  }
+  .em-arithmetic-controls,
+  .em-arithmetic > p {
+    width: calc(100vw - 90px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .em-hit,
+  .em-lens {
+    transition: none;
+  }
+}

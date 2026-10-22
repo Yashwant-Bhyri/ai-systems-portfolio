@@ -1,0 +1,111 @@
+import type { StoryStep, ConclusionMetric } from "./i18n/types";
+
+export const COMPUTE_PROJECTS = [
+  {
+    id: "inference", number: "04", brand: "INFERENCE OPTIMIZATION", accent: "amber",
+    category: "LLM Serving, GPU Acceleration & Runtime Efficiency",
+    badge: "INFERENCE SYSTEMS ENGINEERING · 2026",
+    summary: "Make identical cognition cheaper to execute. A workload-aware serving pipeline connects batching, KV reuse, GPU execution, and controlled cost-per-correct-answer evaluation.",
+    proof: ["same cognition / lower cost", "matched workload protocol", "illustrative mechanisms"],
+    architecture: ["Schedule requests", "Allocate KV pages", "Execute on GPUs", "Profile + stream tokens"],
+  },
+  {
+    id: "post-training", number: "05", brand: "ADVANCED POST-TRAINING", accent: "rose",
+    category: "Reasoning, Alignment & Test-Time Scaling",
+    badge: "REASONING MODEL RESEARCH · 2026",
+    summary: "Improve verified reasoning across actual compute budgets. Follow Qwen3-4B through supervised learning, relative policy optimization, and fixed-checkpoint search, with explicit evidence gates.",
+    proof: ["accuracy / compute curves", "independent verification", "run evidence pending"],
+    architecture: ["Curate reasoning data", "Initialize with SFT", "Optimize the policy", "Verify + evaluate"],
+  },
+] as const;
+
+function step(label: string, title: string, explanation: string, annotation: string, signals: string[], input: string, operation: string, output: string, proof?: string): StoryStep {
+  return { label, title, explanation, annotation, annotationHighlights: signals.filter(s => annotation.includes(s)), signals, input, operation, output, proof, stack: [], maturity: "ILLUSTRATIVE" };
+}
+
+export const INFERENCE_STEPS: readonly StoryStep[] = [
+  step("Request scheduling", "A finished request frees a slot for the next prompt.",
+    "Continuous batching admits work at iteration boundaries. Prefill builds prompt state; decode extends active sequences one token at a time. Watch a short request finish while longer ones keep running.",
+    "Continuous batching fills a released slot at the next iteration; prefill and decode share a bounded token budget.",
+    ["Continuous batching", "vLLM", "Token budgets", "Prefill / decode"], "Queued prompts + active sequences", "Schedule each iteration within the token budget", "A changing batch of runnable requests", "Inspect the queue as sequences finish"),
+  step("Paged KV cache", "A shared prefix can reuse memory without repeating its computation.",
+    "Two requests with a matching prefix can point to the same computed KV pages. Watch references increase when the second request arrives, then decrease when the first exits. Shared pages remain owned until every live reference is released.",
+    "PagedAttention preserves logical token order; prefix caching reuses matching computed blocks and tracks their live references.",
+    ["PagedAttention", "KV cache", "Prefix caching", "Reference counts"], "Two prompts + a matching prefix", "Reuse computed KV blocks and track ownership", "Less duplicate prefill work and safe page reuse", "Compare shared and distinct prefixes"),
+  step("GPU execution", "Transformer work becomes a scheduled stream of GPU kernels.",
+    "Matrix multiplication, attention, normalization, and projection form the execution path. CUDA-level profiling exposes launch gaps and memory traffic; runtime and kernel choices determine how well the GPU stays occupied.",
+    "CUDA kernels execute attention and matrix operations; TensorRT runtime optimization reduces avoidable dispatch and memory overhead.",
+    ["CUDA", "TensorRT", "Kernel optimization", "GPU utilization"], "Token batch + model weights + KV state", "Schedule attention, matrix, and projection kernels", "Logits and updated KV state", "A schematic kernel timeline, not a benchmark"),
+  step("Quantization", "Weight precision changes the memory budget available to serving.",
+    "Lower-bit weights reduce theoretical weight storage and memory traffic. Scales, runtime workspace, KV state, and accuracy constraints still matter. Compare precision modes without treating weight size as total VRAM.",
+    "Quantization compresses weight storage; calibration and evaluation check the quality tradeoff before choosing a serving format.",
+    ["Quantization", "Calibration", "Weight precision", "Memory budgeting"], "Floating-point model weights", "Compare precision, storage, and quality constraints", "A runtime-compatible model representation", "16 / 8 / 4-bit weight-storage comparison"),
+  step("Speculative decode", "Draft tokens advance only after the target model verifies them.",
+    "A lightweight draft proposes several tokens. Target verification accepts a valid prefix; a mismatch discards its suffix and resumes from a corrected token. The benefit depends on acceptance and verification overhead.",
+    "Speculative decoding verifies a draft in one target pass; an accepted prefix commits while a rejected suffix is discarded.",
+    ["Speculative decoding", "Draft model", "Target verification", "Acceptance rate"], "Current prefix + draft proposals", "Verify proposals and resolve the first rejection", "Committed prefix + corrected continuation", "Follow accepted, rejected, and corrected tokens"),
+  step("Model parallelism", "Model work is split across devices with communication in the path.",
+    "Tensor parallelism shards operations inside a layer. Pipeline parallelism places consecutive layer groups on different devices. The topology trades memory capacity against collective traffic and pipeline bubbles.",
+    "Model parallelism spreads weights and execution across GPUs; collectives or stage transfers connect the distributed result.",
+    ["Model parallelism", "Tensor parallelism", "Pipeline parallelism", "Distributed serving"], "Model partitions + scheduled token batches", "Execute shards and exchange intermediate results", "A coordinated multi-GPU forward pass", "Switch tensor and pipeline layouts"),
+  step("Runtime profiling", "Optimization starts at the longest dependency in the trace.",
+    "Separate queue delay, time to first token, inter-token gaps, GPU work, and transfers. A faster kernel alone cannot fix a scheduler bottleneck. The trace connects a visible delay to the operation that caused it.",
+    "GPU profiling aligns host dispatch, kernel execution, and memory traffic so optimization follows the measured critical path.",
+    ["GPU profiling", "Latency analysis", "Throughput", "Memory traffic"], "Request traces + GPU execution events", "Locate gaps and compare a controlled change", "An optimization hypothesis tied to a bottleneck", "Timelines use illustrative relative units"),
+  step("Serving lifecycle", "Every streamed response owns resources until it finishes or cancels.",
+    "Admission, execution, streaming, and cleanup belong to one request lifecycle. A cancellation must stop further work and release KV pages. Runtime efficiency includes backpressure and recovery as well as the happy path.",
+    "Distributed serving connects admission, execution, token streaming, and KV cleanup under one request lifecycle.",
+    ["Distributed serving", "Backpressure", "Token streaming", "KV cleanup"], "Admitted request + capacity budget", "Run, stream, and release resources on exit", "A completed or cancelled request with reclaimed memory", "Compare completion and cancellation"),
+];
+
+export const TRAINING_STEPS: readonly StoryStep[] = [
+  step("Reasoning data", "Training begins with a reasoning trace that can be checked.",
+    "Mathematics, multi-step logic, and repository tasks contribute prompt–trajectory–answer records. This illustration checks and filters synthetic data. The intended evaluation protocol isolates held-out tasks from the optimization loop.",
+    "Synthetic reasoning data links each prompt to a trajectory and a checked answer before it enters supervised training.",
+    ["Synthetic reasoning data", "Data curation", "PyTorch", "Evaluation splits"], "Prompts + candidate reasoning traces", "Check solutions, filter, and separate evaluation data", "Training records with traceable supervision", "Trace examples are illustrative"),
+  step("SFT + LoRA", "A pretrained Qwen3-4B learns the shape of a useful reasoning trace.",
+    "Supervised fine-tuning initializes reasoning behavior. Follow the activation through frozen W and trainable A/B, then watch the loss send gradients back only into the adapters. The toy rank control changes adapter capacity, not the frozen model.",
+    "LoRA adds a trainable low-rank update to frozen Qwen3-4B weights; SFT uses supervised reasoning tokens to initialize the policy.",
+    ["LoRA", "SFT", "Qwen3-4B", "PEFT", "RTX 4090"], "Qwen3-4B Base + curated reasoning records", "Optimize adapter weights on supervised targets", "An SFT-initialized reasoning policy", "W′ = W + scaled B·A"),
+  step("Policy rollouts", "One prompt produces several competing reasoning trajectories.",
+    "Sample a group from the current policy. Each candidate preserves its reasoning path, answer, and verification signal. Candidates for the same prompt form the comparison group used in relative optimization.",
+    "Grouped rollouts expose multiple reasoning paths for the same prompt, allowing verifiers to compare their outcomes.",
+    ["Grouped rollouts", "Transformers", "Reasoning trajectories", "Outcome verification"], "One prompt + current policy", "Sample a group of candidate completions", "Comparable trajectories and outcome signals", "Branching paths make the group visible"),
+  step("GRPO update", "Rewards become advantages relative to the other answers in the group.",
+    "For this illustrative GRPO update, center and scale each reward within its prompt group. Better-than-group trajectories receive positive advantage. A bounded policy update balances improvement and stability.",
+    "GRPO converts group-relative rewards into advantages, using verified trajectory outcomes to refine the reasoning policy.",
+    ["GRPO", "Relative advantages", "Reward modeling", "Policy optimization"], "Grouped trajectories + verified rewards", "Normalize within the group and update the policy", "A policy that favors stronger reasoning outcomes", "Illustrative rewards: 0, 1, 0, 1"),
+  step("Preference alignment", "A chosen and rejected answer form a different learning signal.",
+    "DPO compares preference pairs against a reference policy. It is a separate preference-optimization route, not another name for GRPO and not a mandatory stage after it. The diagram keeps those roles distinct.",
+    "DPO increases the relative preference for a chosen response over a rejected one, anchored to a reference policy.",
+    ["DPO", "Preference pairs", "Reference policy", "Alignment"], "Prompt + chosen/rejected response pair", "Optimize the reference-relative preference objective", "A preference-aligned policy candidate", "Alternative preference-optimization route"),
+  step("Verifier search", "A reasoning branch survives because its result can be verified.",
+    "Explore candidate trajectories under a search budget. Mathematical checks and executable code tests can reject incorrect outcomes. Verifier-guided selection focuses further work on promising branches while retaining the evidence.",
+    "Verifier-guided search tests candidate trajectories and prunes failed branches before selecting an evidence-supported answer.",
+    ["Verifier-guided search", "Executable checks", "Trajectory evaluation", "Branch pruning"], "Candidate reasoning branches", "Check outcomes, prune failures, and rank survivors", "A selected answer with verification evidence", "Increase the budget to inspect more branches"),
+  step("Test-time scaling", "Inference spends extra compute on a fixed model's reasoning process.",
+    "More candidate sampling and verification can improve selection without changing model weights. The compute budget limits explored paths. Additional search is a cost-quality tradeoff, not a guarantee of correctness.",
+    "Test-time compute scaling allocates more sampling and verification to a fixed policy without another weight update.",
+    ["Test-time compute scaling", "Sampling budgets", "Fixed policy", "Verifier selection"], "Fixed policy + a difficult reasoning task", "Allocate candidate generation and verification budget", "An answer selected under an explicit compute limit", "Compare 2, 4, and 8 candidate budgets"),
+  step("Evaluation", "A capability claim needs a complete, inspectable evaluation record.",
+    "Compare checkpoints on frozen held-out tasks across actual test-time GPU budgets. Earlier author-reported gains remain unverified until the baseline, split, sample size, uncertainty, matched compute, independent evaluator, and raw artifacts are available.",
+    "Evaluation harnesses pair held-out outcomes with actual GPU cost; independent verification and uncertainty must accompany every result.",
+    ["Evaluation harnesses", "Held-out accuracy", "GPU cost", "Independent verification"], "Frozen tasks + checkpoints + measured budgets", "Verify outcomes and audit the complete run record", "A result eligible for release only after evidence checks", "Run artifacts and evaluation context pending"),
+];
+
+export const INFERENCE_PROOF: readonly ConclusionMetric[] = [
+  {label:"SYSTEM", value:"A prompt-to-token serving pipeline", detail:"Scheduling, KV memory, kernels, precision, speculation, and distributed execution."},
+  {label:"CONTRIBUTION", value:"Runtime and GPU optimization", detail:"Connected memory management, batching, profiling, and parallel serving workflows."},
+  {label:"MEMORY", value:"Paged KV state + lower-bit weights", detail:"Sequence allocation and model precision address different parts of the memory budget."},
+  {label:"EXECUTION", value:"CUDA · TensorRT · vLLM", detail:"Kernel-level work and inference runtime optimization across the serving path."},
+  {label:"OBJECTIVE", value:"GPU-seconds per valid correct answer", detail:"Make identical cognition cheaper under a matched workload and a correctness non-regression gate. Measurement pending."},
+  {label:"LIFECYCLE", value:"Stream, finish, reclaim", detail:"Resource ownership remains visible through completion and cancellation."},
+];
+export const TRAINING_PROOF: readonly ConclusionMetric[] = [
+  {label:"FOUNDATION", value:"Qwen3-4B Base → reasoning policy", detail:"Supervised initialization, LoRA/PEFT, and iterative preference optimization."},
+  {label:"CONTRIBUTION", value:"A training-to-inference improvement loop", detail:"SFT, GRPO-style updates, preference learning, verified trajectories, and test-time compute."},
+  {label:"OBJECTIVE", value:"Verified accuracy across compute budgets", detail:"Evaluate the complete cost–accuracy curve, not only a single pass@1 score."},
+  {label:"METRIC", value:"TTC-AUC · evaluation plan", detail:"Area under verified accuracy versus actual GPU cost, with a frozen integration rule and common measured range."},
+  {label:"INTEGRITY", value:"Holdout isolation + independent verification", detail:"Reward-hacking audit, negative-flip analysis, and confirmatory replication are release gates."},
+  {label:"EVIDENCE", value:"Run artifacts pending", detail:"Earlier author-reported percentage gains are not published proof. Baselines, uncertainty, compute matching, and raw results must be attached."},
+];
