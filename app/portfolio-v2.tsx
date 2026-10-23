@@ -24,9 +24,8 @@ import {
 } from "./live-visuals";
 import { useT } from "./i18n";
 import { LangSwitch } from "./i18n/lang-switch";
-import { COMPUTE_PROJECTS, INFERENCE_STEPS, TRAINING_STEPS, INFERENCE_PROOF, TRAINING_PROOF } from "./compute-projects";
-import { InferenceOverview, TrainingOverview, InferenceVisual, TrainingVisual, ComputeProjectPreview } from "./compute-visuals";
-import { ComputeStudy } from "./compute-study";
+import { COMPUTE_PROJECTS } from "./compute-projects";
+import { ComputeProjectPreview } from "./compute-visuals";
 import { ModeProvider, ModeSwitch } from "./exhibit/shell";
 import { PolicyWing } from "./exhibit/policy";
 import { RuntimeWing } from "./exhibit/runtime";
@@ -1827,16 +1826,14 @@ function FlagshipChapter({
   const moveToMicroscope = useChapterHandoff({
     overviewRef,
     microscopeRef,
-    // These richer films remain inspectable; only an explicit drilldown moves on.
-    overviewComplete: id === "inference" || id === "post-training" ? false : overviewController.complete,
+    overviewComplete: overviewController.complete,
     reducedMotion,
   });
 
   const selectArchitectureNode = useCallback((index: number) => {
     controller.choose(index);
-    if ((id === "inference" || id === "post-training") && controller.autoplayEnabled) controller.toggle();
     moveToMicroscope();
-  }, [controller, id, moveToMicroscope]);
+  }, [controller, moveToMicroscope]);
 
   return (
     <>
@@ -1849,7 +1846,6 @@ function FlagshipChapter({
       >
         <div className="vx-section-shell">
           <CaseHeading number={number} brand={brand} category={category} title={title} copy={copy} accent={accent} />
-          {(id === "inference" || id === "post-training") && <p className="cx-scientific-claim"><span>RESEARCH OBJECTIVE</span>{id === "inference" ? "The model is unchanged. The cognition request is unchanged. The execution becomes more efficient." : "Improve verified held-out accuracy across actual test-time compute budgets."}<a href={`#${id}-study`}>Explore the result figures ↗</a></p>}
           <div className="vx-overview-shell">
             <div className="vx-overview-top">
               <span>HIGH-LEVEL ARCHITECTURE</span>
@@ -1862,7 +1858,7 @@ function FlagshipChapter({
             />
           </div>
           <button type="button" className="vx-architecture-handoff" onClick={moveToMicroscope}>
-            <span>{id === "inference" || id === "post-training" ? "Inspect the mechanisms" : "Architecture complete"}</span>
+            <span>Architecture complete</span>
             <strong>Continue into the component microscope</strong>
             <i>↓</i>
           </button>
@@ -1976,28 +1972,6 @@ function MindScapeChapter() {
       <div className="vx-safety-note"><span>SYNTHETIC CLINICAL WORKFLOW</span><small>Research and decision support only: not autonomous diagnosis, medical advice, emergency dispatch, or production clinical software.</small></div>
     </FlagshipChapter>
   );
-}
-
-function InferenceChapter() {
-  return <FlagshipChapter
-    id="inference" number="04" brand="INFERENCE OPTIMIZATION ENGINE"
-    category="LLM SERVING · GPU ACCELERATION · RUNTIME EFFICIENCY · 2026"
-    title="From queued prompt to streamed token, every layer of execution matters."
-    copy="I engineered ⟪LLM inference pipelines⟫ across KV-cache optimization, dynamic batching, memory management, quantization, GPU profiling, and kernel-level optimization. The work connects ⟪CUDA, TensorRT, and vLLM⟫ with distributed model serving, focusing on latency, throughput, and GPU memory efficiency."
-    accent="amber" steps={INFERENCE_STEPS} Overview={InferenceOverview} Visual={InferenceVisual}
-    architecturePath={[0,1,2,5,7]} proof={INFERENCE_PROOF}
-  ><small className="cx-evidence-note">Operational graphics are illustrative replays of the mechanisms. Timelines and memory layouts are schematic, not live telemetry or measured benchmark results.</small></FlagshipChapter>;
-}
-
-function TrainingChapter() {
-  return <FlagshipChapter
-    id="post-training" number="05" brand="ADVANCED POST-TRAINING"
-    category="ALIGNMENT · RL OPTIMIZATION · TEST-TIME SCALING · 2026"
-    title="A foundation model learns to reason, then spends compute checking its work."
-    copy="I developed a ⟪Qwen3-4B reasoning-model post-training pipeline⟫ using supervised reasoning fine-tuning and reinforcement-based preference optimization. The iterative loop combines ⟪SFT, GRPO-style policy updates, verifier-guided trajectories, and test-time compute scaling⟫ for mathematics, multi-step logic, and long-horizon software engineering."
-    accent="rose" steps={TRAINING_STEPS} Overview={TrainingOverview} Visual={TrainingVisual}
-    architecturePath={[0,1,3,5,7]} proof={TRAINING_PROOF}
-  ><small className="cx-evidence-note">Operational traces are illustrative. Earlier author-reported gains are withheld as headline proof until their baseline, held-out evaluation, uncertainty, compute matching, and artifacts are attached. <a href="#post-training-study">Inspect the evidence requirements ↗</a></small></FlagshipChapter>;
 }
 
 type ResearchItem = (typeof RESEARCH)[number];

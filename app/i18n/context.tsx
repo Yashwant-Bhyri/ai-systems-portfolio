@@ -25,14 +25,25 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(readStoredLang);
+  // Server and first client render agree on English; the saved choice applies right after hydration.
+  const [lang, setLangState] = useState<Lang>("en");
+  const [restored, setRestored] = useState(false);
 
   useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      setLangState(readStoredLang());
+      setRestored(true);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  useEffect(() => {
+    if (!restored) return;
     document.documentElement.lang = lang;
     if (typeof window !== "undefined") {
       window.localStorage.setItem(STORAGE_KEY, lang);
     }
-  }, [lang]);
+  }, [lang, restored]);
 
   const setLang = useCallback((next: Lang) => setLangState(next), []);
   const toggleLang = useCallback(() => setLangState((prev) => (prev === "en" ? "zh" : "en")), []);

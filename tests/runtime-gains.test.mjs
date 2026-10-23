@@ -113,11 +113,11 @@ test("runtime finale rejects reordered or non-matched comparisons", () => {
 });
 test("runtime finale replaces the generic film, has a shared duration and accessible moments", () => {
   const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
-  const parent = read("../app/compute/lab-story.tsx"),
+  const parent = read("../app/exhibit/runtime/index.tsx"),
     scene = read("../app/compute/runtime-gains-reveal.tsx"),
     css = read("../app/compute/runtime-gains-reveal.css");
   assert.match(parent, /const RuntimeGainsReveal = lazy/);
-  assert.match(parent, /EXECUTION_DURATION,\s*RUNTIME_GAINS_DURATION/);
+  assert.match(parent, /duration: RUNTIME_GAINS_DURATION/);
   assert.doesNotMatch(parent, /<InferenceFilm/);
   assert.match(scene, /Scrub runtime gains film/);
   assert.match(scene, /data-rg-target/);

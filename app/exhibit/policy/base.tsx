@@ -1,14 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { useTr } from "../i18n";
 import { attrs, ease, fitCanvas, fmt, lerp, prog, readTokens, useSceneFrame, type Tokens } from "../engine";
 import type { RoomProps } from "../shell";
 import { CK, FAMILY_NAMES } from "./data";
-import { Surface, TaskField, VB, tileXY, type FieldHandle } from "./parts";
+import { Surface, TALL_W, TaskField, VB, tileXY, type FieldHandle } from "./parts";
 
 /* P1 · the base checkpoint attempts all 96 tasks once. */
 
-const F = { x: 40, y: 72, cell: 40, gap: 8 };
+const WIDE = {
+  vb: VB,
+  f: { x: 40, y: 72, cell: 40, gap: 8 },
+  score: { x: 900, y: 72, slash: 250, col: 380, col2: 520, big: 108 },
+  fam: { x: 900, y: 250, row: 64, step: 19.4, w: 15, end: 620 },
+  bar: { x: 40, base: 650, step: 7.9, w: 5.6, h: 150, label: 474, end: 800 },
+  dev: { stats: [40, 678], note: [900, 520] },
+};
+const TALL = {
+  vb: { w: TALL_W, h: 1000 },
+  f: { x: 52, y: 76, cell: 26, gap: 5 },
+  score: { x: 24, y: 370, slash: 170, col: 290, col2: 450, big: 92 },
+  fam: { x: 24, y: 570, row: 64, step: 17, w: 13, end: 568 },
+  bar: { x: 24, base: 948, step: 5.6, w: 4, h: 130, label: 780, end: 562 },
+  dev: { stats: [24, 980], note: [24, 540] },
+};
 const ATTEMPT = 520, STAGGER = 46, START = 700;
 const doneAt = (i: number) => START + i * STAGGER + ATTEMPT;
 const ck = CK.base;
@@ -17,7 +33,10 @@ const order = ck.tokens.map((n, i) => [n, i] as const).sort((a, b) => b[0] - a[0
 const maxTok = Math.max(...ck.tokens);
 const p50 = [...ck.tokens].sort((a, b) => a - b)[48], p90 = [...ck.tokens].sort((a, b) => a - b)[86];
 
-export function PolicyBase({ active, mode, clock }: RoomProps) {
+export function PolicyBase({ active, mode, clock, tall }: RoomProps) {
+  const L = tall ? TALL : WIDE;
+  const F = L.f;
+  const tr = useTr();
   const canvas = useRef<HTMLCanvasElement>(null);
   const field = useRef<FieldHandle>(null);
   const vals = useRef<Record<string, SVGTextElement | null>>({});
@@ -28,7 +47,7 @@ export function PolicyBase({ active, mode, clock }: RoomProps) {
     const el = canvas.current;
     if (!el) return;
     const T = (tok.current ??= readTokens(el));
-    const ctx = fitCanvas(el, VB.w, VB.h);
+    const ctx = fitCanvas(el, L.vb.w, L.vb.h);
     // each attempt streams its tokens across the tile, then resolves
     for (let i = 0; i < 96; i++) {
       const s = START + i * STAGGER, p = prog(t, s, s + ATTEMPT);
@@ -57,46 +76,46 @@ export function PolicyBase({ active, mode, clock }: RoomProps) {
     // token barcode: every task's length, sorted, coloured by outcome
     const bp = ease.out(prog(t, doneAt(95) + 300, doneAt(95) + 1500));
     order.forEach(([n, i], k) => {
-      const h = (n / maxTok) * 150 * bp;
+      const h = (n / maxTok) * L.bar.h * bp;
       ctx.fillStyle = ck.solved[i] ? `rgba(${T.roseRgb},0.85)` : `rgba(${T.inkRgb},0.28)`;
-      ctx.fillRect(F.x + k * 7.9, 650 - h, 5.6, h);
+      ctx.fillRect(L.bar.x + k * L.bar.step, L.bar.base - h, L.bar.w, h);
     });
-  }, []);
+  }, [L, F]);
   useSceneFrame(active, clock.readTime, draw);
   useEffect(() => { tok.current = null; }, [mode]);
 
   return (
-    <Surface ref={canvas} label="The base checkpoint attempts 96 tasks; 28 are solved">
-      <text x={F.x} y={F.y - 40} className="ex-m">EVAL · 96 HELD-OUT TASKS · ONE SAMPLE EACH</text>
+    <Surface ref={canvas} vb={L.vb} label="The base checkpoint attempts 96 tasks; 28 are solved">
+      <text x={F.x} y={F.y - 40} className="ex-m">{tr(tall ? "EVAL · 96 TASKS · PASS@1" : "EVAL · 96 HELD-OUT TASKS · ONE SAMPLE EACH")}</text>
       <TaskField ref={field} x={F.x} y={F.y} cell={F.cell} gap={F.gap} />
-      <g transform="translate(900 72)">
-        <text className="ex-m">SOLVED</text>
-        <text ref={(e) => { vals.current.solved = e; }} y={92} className="ex-num-xl" style={{ fontSize: 108 }} />
-        <text x={250} y={92} className="ex-num-l" style={{ fill: "var(--ex-ink-3)" }}>/ 96</text>
-        <text x={380} className="ex-m">PASS@1</text>
-        <text ref={(e) => { vals.current.pass = e; }} x={380} y={58} className="ex-num-l" style={{ fill: "var(--ex-rose)" }} />
-        <text x={380} y={100} className="ex-m">GPU-S / TASK</text>
-        <text ref={(e) => { vals.current.cost = e; }} x={380} y={132} className="ex-num-l" style={{ fontSize: 26 }} />
-        <text x={520} y={100} className="ex-m">TOKENS</text>
-        <text ref={(e) => { vals.current.tok = e; }} x={520} y={132} className="ex-num-l" style={{ fontSize: 26 }} />
+      <g transform={`translate(${L.score.x} ${L.score.y})`}>
+        <text className="ex-m">{tr("SOLVED")}</text>
+        <text ref={(e) => { vals.current.solved = e; }} y={92} className="ex-num-xl" style={{ fontSize: L.score.big }} />
+        <text x={L.score.slash} y={92} className="ex-num-l" style={{ fill: "var(--ex-ink-3)" }}>/ 96</text>
+        <text x={L.score.col} className="ex-m">PASS@1</text>
+        <text ref={(e) => { vals.current.pass = e; }} x={L.score.col} y={58} className="ex-num-l" style={{ fill: "var(--ex-rose)" }} />
+        <text x={L.score.col} y={100} className="ex-m">{tr("GPU-S / TASK")}</text>
+        <text ref={(e) => { vals.current.cost = e; }} x={L.score.col} y={132} className="ex-num-l" style={{ fontSize: 26 }} />
+        <text x={L.score.col2} y={100} className="ex-m">{tr("TOKENS")}</text>
+        <text ref={(e) => { vals.current.tok = e; }} x={L.score.col2} y={132} className="ex-num-l" style={{ fontSize: 26 }} />
       </g>
-      <g transform="translate(900 250)">
+      <g transform={`translate(${L.fam.x} ${L.fam.y})`}>
         {FAMILY_NAMES.map((f, b) => (
-          <g key={f} transform={`translate(0 ${b * 64})`}>
-            <text className="ex-m">{f.toUpperCase()}</text>
-            <text x={620} className="ex-m-ink" textAnchor="end">{perFamily[b]} / 32</text>
+          <g key={f} transform={`translate(0 ${b * L.fam.row})`}>
+            <text className="ex-m">{tr(f.toUpperCase())}</text>
+            <text x={L.fam.end} className="ex-m-ink" textAnchor="end">{perFamily[b]} / 32</text>
             {Array.from({ length: 32 }, (_, c) => (
-              <rect key={c} ref={(e) => { fam.current[b * 32 + c] = e; }} x={c * 19.4} y={14} width={15} height={20} rx={2.5} />
+              <rect key={c} ref={(e) => { fam.current[b * 32 + c] = e; }} x={c * L.fam.step} y={14} width={L.fam.w} height={20} rx={2.5} />
             ))}
           </g>
         ))}
       </g>
-      <text x={F.x} y={474} className="ex-m">TOKENS PER ATTEMPT · SORTED · SOLVED IN ROSE</text>
-      <path d={`M${F.x} 651H${F.x + 760}`} stroke="var(--ex-line-2)" />
+      <text x={L.bar.x} y={L.bar.label} className="ex-m">{tr("TOKENS PER ATTEMPT · SORTED · SOLVED IN ROSE")}</text>
+      <path d={`M${L.bar.x} ${L.bar.base + 1}H${L.bar.end}`} stroke="var(--ex-line-2)" />
       {mode === "dev" && (
         <g>
-          <text x={F.x} y={678} className="ex-ann">p50 {p50.toLocaleString("en-US")} · p90 {p90.toLocaleString("en-US")} · max {maxTok.toLocaleString("en-US")} tokens · greedy · 1× budget</text>
-          <text x={900} y={520} className="ex-ann">pass@1 = solved / 96 · held-out from every training stage</text>
+          <text x={L.dev.stats[0]} y={L.dev.stats[1]} className="ex-ann">p50 {p50.toLocaleString("en-US")} · p90 {p90.toLocaleString("en-US")} · max {maxTok.toLocaleString("en-US")} tokens{tall ? "" : " · greedy · 1× budget"}</text>
+          <text x={L.dev.note[0]} y={L.dev.note[1]} className="ex-ann">{tr("pass@1 = solved / 96 · held-out from every training stage")}</text>
         </g>
       )}
     </Surface>

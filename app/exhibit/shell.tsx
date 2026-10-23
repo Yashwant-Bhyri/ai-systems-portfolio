@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from "react";
 import "./exhibit.css";
+import { useLang, useTr } from "./i18n";
 
 /* ---------------- viewing mode ---------------- */
 
@@ -62,13 +63,14 @@ export const useMode = () => useContext(ModeContext).mode;
 
 export function ModeSwitch({ compact = false }: { compact?: boolean }) {
   const { mode, setMode } = useContext(ModeContext);
+  const tr = useTr();
   return (
-    <div className={`ex-mode ${compact ? "is-compact" : ""}`} role="group" aria-label="Viewing depth">
+    <div className={`ex-mode ${compact ? "is-compact" : ""}`} role="group" aria-label={tr("Viewing depth")}>
       <button type="button" aria-pressed={mode === "light"} onClick={() => setMode("light")}>
-        Light
+        {tr("Light")}
       </button>
       <button type="button" aria-pressed={mode === "dev"} onClick={() => setMode("dev")}>
-        Developer
+        {tr("Developer")}
       </button>
     </div>
   );
@@ -84,7 +86,20 @@ export type RoomClock = {
   toggle: () => void;
 };
 
-export type RoomProps = { active: boolean; mode: Mode; clock: RoomClock };
+export type RoomProps = { active: boolean; mode: Mode; clock: RoomClock; tall: boolean; lang: "en" | "zh" };
+
+/** Phones get portrait compositions; every room reads this instead of its own media query. */
+export function useTall() {
+  const [tall, setTall] = useState(false);
+  useEffect(() => {
+    const media = matchMedia("(max-width: 760px)");
+    const update = () => setTall(media.matches);
+    const raf = requestAnimationFrame(update);
+    media.addEventListener("change", update);
+    return () => { cancelAnimationFrame(raf); media.removeEventListener("change", update); };
+  }, []);
+  return tall;
+}
 
 export type Room = {
   id: string;
@@ -100,6 +115,10 @@ export type Room = {
   beats?: readonly number[];
   /** Rooms marked false appear only in Developer mode. */
   light?: boolean;
+  /** Chinese copy for the room chrome. */
+  zh?: { label?: string; kicker?: string; title?: ReactNode; metricLabel?: string };
+  /** Developer instruments: the room's raw record, shown under the stage. */
+  dev?: { rows: readonly (readonly [string, string])[]; source?: string };
   Scene: (props: RoomProps) => ReactNode;
 };
 
@@ -119,6 +138,9 @@ export function Wing({
   rooms: readonly Room[];
 }) {
   const mode = useMode();
+  const lang = useLang();
+  const tr = useTr();
+  const tall = useTall();
   const list = useMemo(() => rooms.filter((r) => mode === "dev" || r.light !== false), [rooms, mode]);
   const n = list.length;
   const section = useRef<HTMLElement>(null);
@@ -261,6 +283,7 @@ export function Wing({
   const toggle = useCallback(() => setPlaying((p) => !p), []);
   const clock = useMemo<RoomClock>(() => ({ readTime, playing, reduced, seek, toggle }), [readTime, playing, reduced, seek, toggle]);
   const Scene = room.Scene;
+  const zh = lang === "zh" ? room.zh : undefined;
 
   return (
     <section
@@ -268,7 +291,7 @@ export function Wing({
       id={id}
       className={`ex-wing ex-accent-${accent}`}
       style={{ "--ex-rooms": n } as CSSProperties}
-      aria-label={`${number} ${name}`}
+      aria-label={`${number} ${tr(name)}`}
     >
       <div className="ex-snaps" aria-hidden="true">
         {list.map((r, k) => <span key={r.id} style={{ top: `${k * 100}svh` }} />)}
@@ -279,25 +302,33 @@ export function Wing({
             <header className="ex-head" key={`h-${room.id}`}>
               <div className="ex-kicker">
                 <span className="ex-num">{number}</span>
-                <span>{name}</span>
+                <span>{tr(name)}</span>
                 <i aria-hidden="true" />
-                <span>{room.kicker}</span>
+                <span>{zh?.kicker ?? room.kicker}</span>
               </div>
-              <h2 className="ex-title">{room.title}</h2>
+              <h2 className="ex-title">{zh?.title ?? room.title}</h2>
             </header>
             {room.metric && (
               <div className="ex-metric" key={`m-${room.id}`}>
                 <b>{room.metric.value}</b>
-                <span>{room.metric.label}</span>
+                <span>{zh?.metricLabel ?? room.metric.label}</span>
               </div>
             )}
           </div>
-          <div className="ex-scene" key={room.id}>
-            <Scene active={inView} mode={mode} clock={clock} />
+          <div className="ex-scene" key={`${room.id}-${tall ? "t" : "w"}`}>
+            <Scene active={inView} mode={mode} clock={clock} tall={tall} lang={lang} />
           </div>
+          {mode === "dev" && room.dev && (
+            <dl className="ex-instruments" key={`d-${room.id}`}>
+              {room.dev.rows.map(([k, v]) => (
+                <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
+              ))}
+              {room.dev.source && <div className="ex-source"><dt>{tr("source")}</dt><dd>{room.dev.source}</dd></div>}
+            </dl>
+          )}
         </div>
-        <nav className="ex-strip" aria-label={`${name} rooms`}>
-          <button type="button" className="ex-play" onClick={toggle} aria-label={playing ? "Pause tour" : "Play tour"}>
+        <nav className="ex-strip" aria-label={`${tr(name)} · ${tr("rooms")}`}>
+          <button type="button" className="ex-play" onClick={toggle} aria-label={tr(playing ? "Pause tour" : "Play tour")}>
             {playing ? (
               <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1" /><rect x="9.5" y="2.5" width="3" height="11" rx="1" /></svg>
             ) : (
@@ -314,7 +345,7 @@ export function Wing({
                   onClick={() => goTo(k)}
                 >
                   <span className="ex-seg-fill" ref={(el) => { fills.current[k] = el; }} />
-                  <span className="ex-seg-name">{r.label}</span>
+                  <span className="ex-seg-name">{(lang === "zh" && r.zh?.label) || r.label}</span>
                   {r.beats?.map((b) => (
                     <i key={b} style={{ left: `${(b / r.duration) * 100}%` }} aria-hidden="true" />
                   ))}
@@ -335,6 +366,12 @@ export function Wing({
  * so a forked scene never pushes its payoff below the fold.
  */
 export function Fit({ width = 1240, max = 1.25, children }: { width?: number; max?: number; children: ReactNode }) {
+  const tall = useTall();
+  if (tall) return <div className="ex-fit is-tall">{children}</div>;
+  return <FitScaled width={width} max={max}>{children}</FitScaled>;
+}
+
+function FitScaled({ width, max, children }: { width: number; max: number; children: ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [{ scale, top }, setFit] = useState({ scale: 1, top: 0 });

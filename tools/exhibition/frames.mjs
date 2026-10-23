@@ -3,7 +3,7 @@ import { chromium } from '/Users/yash/antigravity/node_modules/playwright/index.
 const [, , wing = 'post-training', mode = 'light', w = '1440', h = '900', fr = '0.97', label = 'f', rooms = ''] = process.argv;
 const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: +w, height: +h } }); const p = await ctx.newPage();
 const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 200)));
-await p.addInitScript((m) => { try { localStorage.setItem('ex-mode', m); } catch {} }, mode);
+await p.addInitScript(([m, l]) => { try { localStorage.setItem('ex-mode', m); if (l) localStorage.setItem('portfolio-lang', l); } catch {} }, [mode, process.env.LANG_ZH ? 'zh' : '']);
 await p.goto('http://localhost:3290/', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1500);
 const n = await p.evaluate((id) => document.querySelectorAll(`#${id} .ex-segs li`).length, wing);
 const list = rooms ? rooms.split(',').map(Number) : [...Array(n).keys()];

@@ -186,9 +186,29 @@
 .vx-contact-dock { transition: opacity .35s var(--ex-out, ease), transform .35s var(--ex-out, ease); }
 :root[data-ex-wing] .vx-contact-dock { opacity: 0; pointer-events: none; transform: translateY(-8px); }
 
-/* Phone: the figure keeps a readable size and pans sideways inside the stage; the page never does. */
+/* Developer instruments: the room's raw record under the stage */
+.ex-instruments { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 10px 0 0; padding: 9px 12px; border: 1px solid var(--ex-line); border-radius: 8px; background: rgba(var(--ex-acc-rgb), 0.03); animation: ex-rise .7s .2s var(--ex-out) both; }
+.ex-instruments div { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.ex-instruments dt { font: 500 11px var(--ex-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--ex-ink-3); }
+.ex-instruments dd { margin: 0; font: 500 13px var(--ex-mono); color: var(--ex-ink); font-variant-numeric: tabular-nums; }
+.ex-instruments .ex-source { margin-left: auto; }
+.ex-instruments .ex-source dd { color: var(--ex-acc); }
+:root[data-ex-mode="dev"] .ex-stage { grid-template-rows: auto minmax(0, 1fr) auto; }
+
+/* Phones: portrait compositions; a scene taller than the stage scrolls inside it, never the page sideways. */
+.ex-fit.is-tall { position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; }
 @media (max-width: 760px) {
-  .ex-scene { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
-  .ex-scene > .pw-surface, .ex-scene > .rw-host, .ex-scene > .rw-system { width: 940px; right: auto; }
-  .ex-scene::after { content: "swipe the figure →"; position: sticky; left: 0; bottom: 0; display: block; font: 500 11px var(--ex-mono); color: var(--ex-ink-3); letter-spacing: .06em; padding-top: 4px; }
+  .ex-title { font-size: clamp(24px, 7vw, 32px); }
+  .ex-instruments { max-height: 84px; overflow-y: auto; }
 }
+
+/* portrait boards: same drawing vocabulary, larger type, scrolling inside the stage */
+.pw-surface.is-tall { position: relative; width: 100%; height: auto; }
+.ex-scene:has(> .pw-surface.is-tall) { overflow-y: auto; overscroll-behavior: contain; }
+.pw-surface.is-tall .ex-m { font-size: 19px; }
+.pw-surface.is-tall .ex-ann, .pw-surface.is-tall .ex-ann-acc { font-size: 17px; }
+.pw-surface.is-tall .ex-l, .pw-surface.is-tall .ex-node { font-size: 20px; }
+.pw-surface.is-tall .ex-l-strong { font-size: 22px; }
+.pw-surface.is-tall .ex-m-ink { font-size: 20px; }
+.pw-surface.is-tall .ex-num-l { font-size: 36px; }
+.pw-surface.is-tall .ex-eq { font-size: 18px; }

@@ -3,15 +3,19 @@
 import { forwardRef, useImperativeHandle, useRef, type ReactNode } from "react";
 import { attrs, type Tokens } from "../engine";
 import { FAMILY_NAMES } from "./data";
+import { useTr } from "../i18n";
 
 export const VB = { w: 1600, h: 720 };
+/** Phone compositions are drawn on a narrower board and scroll vertically inside the stage. */
+export const TALL_W = 600;
 
 /** The stage drawing surface: a canvas for mass, an SVG for vectors and labels, sharing one viewBox. */
-export const Surface = forwardRef<HTMLCanvasElement, { children?: ReactNode; label: string }>(function Surface({ children, label }, ref) {
+export const Surface = forwardRef<HTMLCanvasElement, { children?: ReactNode; label: string; vb?: { w: number; h: number } }>(function Surface({ children, label, vb = VB }, ref) {
+  const tall = vb.w < VB.w;
   return (
-    <div className="pw-surface">
+    <div className={`pw-surface ${tall ? "is-tall" : ""}`} style={tall ? { aspectRatio: `${vb.w} / ${vb.h}` } : undefined}>
       <canvas ref={ref} className="ex-canvas" aria-hidden="true" />
-      <svg className="ex-svg" viewBox={`0 0 ${VB.w} ${VB.h}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={label}>
+      <svg className="ex-svg" viewBox={`0 0 ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={label}>
         {children}
       </svg>
     </div>
@@ -37,6 +41,7 @@ export const TaskField = forwardRef<FieldHandle, { x: number; y: number; cell?: 
   function TaskField({ x, y, cell = 26, gap = 6, labels = true }, ref) {
     const tiles = useRef<(SVGRectElement | null)[]>([]);
     const rings = useRef<(SVGRectElement | null)[]>([]);
+    const tr = useTr();
     useImperativeHandle(ref, () => ({
       center: (i) => {
         const [tx, ty] = tileXY(i, x, y, cell, gap);
@@ -58,7 +63,7 @@ export const TaskField = forwardRef<FieldHandle, { x: number; y: number; cell?: 
     return (
       <g>
         {labels && FAMILY_NAMES.map((f, b) => (
-          <text key={f} x={x} y={y + b * (2 * (cell + gap) + 30) - 9} className="ex-m">{f.toUpperCase()}</text>
+          <text key={f} x={x} y={y + b * (2 * (cell + gap) + 30) - 9} className="ex-m">{tr(f.toUpperCase())}</text>
         ))}
         {Array.from({ length: 96 }, (_, i) => {
           const [tx, ty] = tileXY(i, x, y, cell, gap);
