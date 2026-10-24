@@ -26,3 +26,18 @@
 :is(.vx-case-inference, .vx-case-post-training) .cx-scene-options > span { visibility: hidden; }
 /* The cursor host must not break the scene's flex column. */
 .cx-scene > .gc-host { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; }
+/* No expand button in the compute microscope: the graphic already fills its window. */
+:is(.vx-case-inference, .vx-case-post-training) .cx-replay-controls > button:first-child { display: none; }
+
+/* Top bar: the definition, then a still row of keywords lit one at a time. */
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-top { display: none; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console { grid-template-rows: auto auto; padding-top: 2px; }
+.vx-keyword-strip { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 4px 0 0; padding: 0; list-style: none; }
+.vx-keyword-strip li { position: relative; color: #6f7c89; font: 500 11px/1.6 var(--font-geist-mono), monospace; letter-spacing: .04em; transition: color .5s; }
+.vx-keyword-strip li::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px; background: var(--active-accent); transform: scaleX(0); transform-origin: left; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.vx-keyword-strip li[data-lit="true"] { color: var(--active-accent); }
+.vx-keyword-strip li[data-lit="true"]::after { transform: scaleX(1); }
+/* With the header gone, the grid is console · graphic · rail. */
+:is(.vx-case-inference, .vx-case-post-training) .vx-operational-stage { grid-template-rows: auto minmax(0, 1fr) auto; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-proof-chip { border: 0; background: none; padding-left: 0; color: #9fadba; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-visual-window { border-color: transparent; background: none; }

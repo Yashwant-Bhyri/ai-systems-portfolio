@@ -9,13 +9,13 @@ function Spot({id,focus,children}:{id:string;focus?:string;children:ReactNode}) 
   const state=!focus?"":id.split(" ").includes(focus)?" is-lit":" is-matte";
   return <g className={`cx-spot${state}`} data-spot={id}>{children}</g>;
 }
-function FocusFrame({frame,label}:{frame?:Frame;label?:string}) {
-  if(!frame)return <g className="cx-focus-frame" opacity={0}/>;
-  const {x,y,w,h}=frame,k=12;
-  return <g className="cx-focus-frame">
-    <rect className="cx-focus-glow" x={x} y={y} width={w} height={h} rx={10}/>
-    <path className="cx-focus-ticks" d={`M${x} ${y+k}V${y}H${x+k}M${x+w-k} ${y}H${x+w}V${y+k}M${x+w} ${y+h-k}V${y+h}H${x+w-k}M${x+k} ${y+h}H${x}V${y+h-k}`}/>
-    {label&&<text className="cx-focus-label" x={x} y={y-8}>{label}</text>}
+function FocusFrame({frame,id}:{frame?:Frame;id:string}) {
+  // A pool of light that drifts to the lit component: no frame, no corners, just illumination.
+  const f=frame??{x:570,y:200,w:0,h:0};
+  return <g className="cx-focus-frame" opacity={frame?1:0}>
+    <defs><radialGradient id={id}><stop offset="0" stopColor="var(--active-accent)" stopOpacity=".16"/><stop offset=".55" stopColor="var(--active-accent)" stopOpacity=".05"/><stop offset="1" stopColor="var(--active-accent)" stopOpacity="0"/></radialGradient></defs>
+    <rect className="cx-focus-pool" x={f.x-f.w*.18} y={f.y-f.h*.22} width={f.w*1.36} height={f.h*1.44} fill={`url(#${id})`}/>
+    <rect className="cx-focus-floor" x={f.x+f.w*.08} y={f.y+f.h+6} width={f.w*.84} height={1.5} rx={1}/>
   </g>;
 }
 export const INFERENCE_FRAMES:Record<string,Frame>={
@@ -71,7 +71,7 @@ export function InferenceArchitectureFilm({t,focus}:{t:number;focus?:string}) {
     <Text x={564} y={284} kind="small">read history ↔ append new KV</Text>
     </Spot>
     <Spot id="profile" focus={focus}><Line d="M985 290V347H558" dash color={C.amber}/><Text x={768} y={339} kind="small">profile → adjust the next iteration</Text></Spot>
-    <FocusFrame frame={focus?INFERENCE_FRAMES[focus]:undefined}/>
+    <FocusFrame id="cx-pool-inference" frame={focus?INFERENCE_FRAMES[focus]:undefined}/>
   </>;
 }
 
@@ -126,7 +126,7 @@ export function TrainingArchitectureFilm({t,focus}:{t:number;focus?:string}) {
     <Text x={955} y={300} kind="small" anchor="middle" color={C.cyan}>more search, no weight update</Text>
     </Spot>
     <Spot id="evaluate" focus={focus}><Line d="M28 350H1111"/><Text x={28} y={373} kind="small">DPO: a separate preference-pair route</Text><Text x={1110} y={373} anchor="end" kind="small">held-out evaluation checks both loops</Text></Spot>
-    <FocusFrame frame={focus?TRAINING_FRAMES[focus]:undefined}/>
+    <FocusFrame id="cx-pool-training" frame={focus?TRAINING_FRAMES[focus]:undefined}/>
   </>;
 }
 

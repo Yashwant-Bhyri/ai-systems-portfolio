@@ -154,3 +154,4 @@ aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 .df-call { font: 500 20px var(--font-geist-mono), monospace; fill: var(--active-accent, #ffc267); }
 .df-caption { margin: 0 0 0 7.5%; color: #e6ebf0; font: 450 18px/1.4 var(--font-geist-sans), sans-serif; letter-spacing: -.01em; min-height: 1.4em; }
 @media (max-width: 760px) { .df-caption { margin-left: 4%; font-size: 15px; } .df-film { overflow-x: auto; } .df-svg { min-width: 680px; } }
+.gc-cursor[data-side="left"] .gc-tag { left: auto; right: 8px; }

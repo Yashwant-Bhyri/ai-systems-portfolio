@@ -126,6 +126,7 @@ export function GhostCursor({
           const x = r.left - o.left + r.width * fx, y = r.top - o.top + r.height * 0.55;
           const dist = Math.hypot(x - at.x, y - at.y), ms = Math.max(380, Math.min(1100, dist * 1.25));
           c.dataset.state = "move";
+          c.dataset.side = x > el.clientWidth - 170 ? "left" : "right";
           place(x, y, ms);
           at = { x, y };
           await sleep(ms + 60, token);

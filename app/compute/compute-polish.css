@@ -108,8 +108,8 @@
 .cx-spot { transition: opacity .8s cubic-bezier(.2,.7,.2,1), filter .8s cubic-bezier(.2,.7,.2,1); }
 .cx-spot.is-matte { opacity: .2; filter: grayscale(1) blur(.6px); }
 .cx-focus-frame rect, .cx-focus-frame path { transition: x .8s cubic-bezier(.65,0,.35,1), y .8s cubic-bezier(.65,0,.35,1), width .8s cubic-bezier(.65,0,.35,1), height .8s cubic-bezier(.65,0,.35,1), d .8s cubic-bezier(.65,0,.35,1), opacity .5s; }
-.cx-focus-glow { fill: color-mix(in srgb, var(--active-accent) 6%, transparent); stroke: color-mix(in srgb, var(--active-accent) 30%, transparent); stroke-dasharray: 2 6; }
-.cx-focus-ticks { fill: none; stroke: var(--active-accent); stroke-width: 2; stroke-linecap: round; }
+.cx-focus-pool { mix-blend-mode: screen; pointer-events: none; }
+.cx-focus-floor { fill: var(--active-accent); opacity: .55; filter: drop-shadow(0 0 6px var(--active-accent)); }
 .cx-arch-caption { min-height: 44px; padding-bottom: 6px; }
 .cx-arch-caption p { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; margin: 0; animation: cx-arch-in .7s cubic-bezier(.2,.7,.2,1) both; }
 .cx-arch-caption b { color: var(--active-accent); font: 500 12px/1 var(--font-geist-mono), monospace; letter-spacing: .04em; }

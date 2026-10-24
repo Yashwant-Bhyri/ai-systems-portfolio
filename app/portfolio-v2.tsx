@@ -1456,7 +1456,26 @@ function HighlightedStageAnnotation({
   return <>{segments}</>;
 }
 
-function StageSignalConsole({ step, active }: { step: StoryStep; active: boolean }) {
+/* Compute chapters: the step's keywords sit still and light one at a time, so the
+   definition above stays the thing being read. No hashes, no separators, no loop. */
+function KeywordStrip({ items, active }: { items: readonly string[]; active: boolean }) {
+  const reducedMotion = useReducedMotion();
+  const [lit, setLit] = useState(0);
+  useEffect(() => {
+    if (!active || reducedMotion || items.length < 2) return;
+    const timer = window.setInterval(() => setLit((i) => (i + 1) % items.length), 1900);
+    return () => window.clearInterval(timer);
+  }, [active, reducedMotion, items.length]);
+  return (
+    <ul className="vx-keyword-strip" aria-label="Technologies in this component">
+      {items.map((item, i) => (
+        <li key={item} data-lit={i === lit}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+function StageSignalConsole({ step, active, calm = false }: { step: StoryStep; active: boolean; calm?: boolean }) {
   const reducedMotion = useReducedMotion();
   const [cursor, setCursor] = useState(reducedMotion ? step.annotation.length : 0);
   const tickerItems = useMemo(() => Array.from(new Set([...step.signals, ...step.stack])).map((label) => ({ label })), [step.signals, step.stack]);
@@ -1491,12 +1510,16 @@ function StageSignalConsole({ step, active }: { step: StoryStep; active: boolean
         </span>
         <b className="vx-stage-annotation-ghost" aria-hidden="true">{step.annotation}</b>
       </div>
-      <SignalTicker
-        items={tickerItems}
-        label={`${step.label} technologies and engineering capabilities`}
-        active={active}
-        reducedMotion={reducedMotion}
-      />
+      {calm ? (
+        <KeywordStrip items={tickerItems.map((item) => item.label)} active={active} />
+      ) : (
+        <SignalTicker
+          items={tickerItems}
+          label={`${step.label} technologies and engineering capabilities`}
+          active={active}
+          reducedMotion={reducedMotion}
+        />
+      )}
     </section>
   );
 }
@@ -1677,6 +1700,7 @@ function SystemWalkthrough({
             key={`${name}-${step.label}`}
             step={step}
             active={controller.playing}
+            calm={accent === "amber" || accent === "rose"}
           />
         ) : null}
         <div className="vx-visual-window">

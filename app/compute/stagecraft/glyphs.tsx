@@ -197,46 +197,52 @@ export function GlyphFlash() {
 }
 
 export function GlyphBatching() {
+  const L = [118, 48, 76], X = 92, W = 132;
   return <svg viewBox={VB}>
-    <text x={14} y={18} className="g-t">static</text>
-    {[0, 1, 2].map(r => <g key={r}><rect x={60} y={8 + r * 14} width={[150, 60, 96][r]} height={10} rx={2} className="g-b" /><rect x={60 + [150, 60, 96][r]} y={8 + r * 14} width={160 - [150, 60, 96][r]} height={10} rx={2} className="g-r" opacity={.25} /></g>)}
-    <text x={14} y={72} className="g-t">continuous</text>
-    {[0, 1, 2].map(r => <g key={r}><rect x={60} y={62 + r * 14} width={[150, 60, 96][r]} height={10} rx={2} className="g-g" /><rect x={62 + [150, 60, 96][r]} y={62 + r * 14} width={156 - [150, 60, 96][r]} height={10} rx={2} className="g-a" opacity={.85}>
-      <animate attributeName="width" values={`0;${156 - [150, 60, 96][r]};${156 - [150, 60, 96][r]}`} keyTimes="0;.5;1" dur={D(3.4)} repeatCount="indefinite" /></rect></g>)}
+    <text x={14} y={22} className="g-t">static</text>
+    {[0, 1, 2].map(r => <g key={r}><rect x={X} y={12 + r * 14} width={L[r]} height={10} rx={2} className="g-b" /><rect x={X + L[r]} y={12 + r * 14} width={W - L[r]} height={10} rx={2} className="g-r" opacity={.25} /></g>)}
+    <text x={14} y={76} className="g-t">continuous</text>
+    {[0, 1, 2].map(r => <g key={r}><rect x={X} y={66 + r * 14} width={L[r]} height={10} rx={2} className="g-g" /><rect x={X + L[r] + 2} y={66 + r * 14} width={W - L[r] - 2} height={10} rx={2} className="g-a" opacity={.85}>
+      <animate attributeName="width" values={`0;${W - L[r] - 2};${W - L[r] - 2}`} keyTimes="0;.5;1" dur={D(3.4)} repeatCount="indefinite" /></rect></g>)}
   </svg>;
 }
 
 export function GlyphQuant() {
+  const S = 15; // px per GB; BF16 bar ends at 60 + 121, labels start at 190
   return <svg viewBox={VB}>
     {[["BF16", 8.04, "g-m"], ["FP8", 4.02, "g-c"], ["INT4", 2.01, "g-a"]].map(([l, gb, c], k) => <g key={String(l)}>
-      <text x={14} y={30 + k * 30} className="g-t">{l}</text>
-      <rect x={60} y={20 + k * 30} width={Number(gb) * 20} height={14} rx={2} className={String(c)}>
-        <animate attributeName="width" values={`${8.04 * 20};${Number(gb) * 20};${Number(gb) * 20}`} keyTimes="0;.4;1" dur={D(3.6)} repeatCount="indefinite" />
+      <text x={14} y={30 + k * 28} className="g-t">{l}</text>
+      <rect x={60} y={20 + k * 28} width={Number(gb) * S} height={13} rx={2} className={String(c)}>
+        <animate attributeName="width" values={`${8.04 * S};${Number(gb) * S};${Number(gb) * S}`} keyTimes="0;.4;1" dur={D(3.6)} repeatCount="indefinite" />
       </rect>
-      <text x={226} y={31 + k * 30} className="g-t" textAnchor="end">{Number(gb).toFixed(2)} GB</text>
+      <text x={226} y={30 + k * 28} className="g-t" textAnchor="end">{Number(gb).toFixed(2)} GB</text>
     </g>)}
-    <text x={14} y={112} className="g-t">Qwen3-4B weights read per token</text>
+    <text x={14} y={110} className="g-t">Qwen3-4B weights read per token</text>
   </svg>;
 }
 
 export function GlyphObserve() {
-  const spark = (seed: number) => Array.from({ length: 16 }, (_, i) => `${i ? "L" : "M"}${i * 6} ${14 - Math.abs(Math.sin(i * 1.7 + seed)) * 12}`).join("");
+  // Each metric owns a quarter: label, value, then its trace underneath — nothing crosses a number.
+  const spark = (seed: number) => Array.from({ length: 18 }, (_, i) => `${i ? "L" : "M"}${i * 5.4} ${10 - Math.abs(Math.sin(i * 1.7 + seed)) * 9}`).join("");
   return <svg viewBox={VB}>
-    {[["TTFT", "105 ms"], ["TPOT", "10.3 ms"], ["KV util", "82%"], ["prefix hit", "93.8%"]].map(([k, v], i) => <g key={k} transform={`translate(${14 + (i % 2) * 112} ${14 + Math.floor(i / 2) * 50})`}>
-      <text y={8} className="g-t">{k}</text><text y={34} className="g-n" style={{ fontSize: 15 }}>{v}</text>
-      <path d={spark(i)} transform="translate(56 18)" className="g-line g-a-s" />
+    {[["TTFT", "105 ms"], ["TPOT", "10.3 ms"], ["KV util", "82%"], ["prefix hit", "93.8%"]].map(([k, v], i) => <g key={k} transform={`translate(${14 + (i % 2) * 114} ${8 + Math.floor(i / 2) * 56})`}>
+      <text y={10} className="g-t">{k}</text>
+      <text y={30} className="g-n" style={{ fontSize: 14 }}>{v}</text>
+      <path d={spark(i)} transform="translate(0 36)" className="g-line g-a-s" strokeDasharray="120" strokeDashoffset="120">
+        <animate attributeName="stroke-dashoffset" values="120;0;0" keyTimes="0;.6;1" dur={D(3.2)} begin={D(i * .3)} repeatCount="indefinite" />
+      </path>
     </g>)}
   </svg>;
 }
 
 export function GlyphEngines() {
   return <svg viewBox={VB}>
-    {[["vLLM", "paged KV"], ["TensorRT-LLM", "compiled FP8"], ["SGLang", "radix prefix"]].map(([n, d], i) => <g key={n}>
-      <rect x={14 + i * 72} y={18} width={64} height={64} rx={6} className="g-box">
+    {[["vLLM", "paged KV"], ["TRT-LLM", "FP8 engine"], ["SGLang", "radix tree"]].map(([n, d], i) => <g key={n}>
+      <rect x={10 + i * 75} y={18} width={69} height={62} rx={6} className="g-box">
         <animate attributeName="stroke-opacity" values={["1;.25;.25;1", ".25;1;.25;.25", ".25;.25;1;.25"][i]} dur={D(4.5)} calcMode="discrete" repeatCount="indefinite" />
       </rect>
-      <text x={46 + i * 72} y={46} className="g-t g-hi" textAnchor="middle">{n.length > 6 ? "TRT-LLM" : n}</text>
-      <text x={46 + i * 72} y={64} className="g-t" textAnchor="middle">{d}</text>
+      <text x={44.5 + i * 75} y={46} className="g-t g-hi" textAnchor="middle">{n}</text>
+      <text x={44.5 + i * 75} y={64} className="g-t" textAnchor="middle" style={{ fontSize: 8.5 }}>{d}</text>
     </g>)}
     <text x={14} y={108} className="g-t">one OpenAI-compatible API</text>
   </svg>;
