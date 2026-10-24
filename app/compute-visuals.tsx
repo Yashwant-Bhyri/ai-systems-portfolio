@@ -9,6 +9,7 @@ import { DURATION } from "./compute/simulation";
 import "./compute-scenes.css";
 import "./compute/stagecraft/stagecraft.css";
 import "./compute/stagecraft/microscope.css";
+import "./compute/stagecraft/quiet.css";
 import { GhostCursor, type CursorStep } from "./compute/stagecraft/ghost-cursor";
 import { useTr } from "./exhibit/i18n";
 import "./compute/compute-polish.css";

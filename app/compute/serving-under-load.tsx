@@ -8,6 +8,7 @@ import { RetainedLabPanel } from "./retained-lab-panel";
 import "./serving-under-load.css";
 import "./stagecraft/stagecraft.css";
 import "./stagecraft/plates.css";
+import "./stagecraft/quiet.css";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { DraftFilm } from "./stagecraft/draft-film";
 import {

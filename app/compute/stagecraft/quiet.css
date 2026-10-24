@@ -1,0 +1,27 @@
+/* Quiet: components that repeated what the stage already says are removed or
+   reduced to one line. Compute chapters only. */
+
+/* Overview: the thesis is a line, not a box; the architecture header is a kicker. */
+:is(.vx-case-inference, .vx-case-post-training) .cx-scientific-claim { border: 0 !important; background: none !important; padding-left: 0 !important; padding-right: 0 !important; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-overview-top strong,
+:is(.vx-case-inference, .vx-case-post-training) .vx-overview-top i { display: none; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-overview-shell { border-color: rgba(255,255,255,.05) !important; background: none !important; }
+/* The five cards are the way in; the extra three links below them repeat the microscope menu. */
+:is(.vx-case-inference, .vx-case-post-training) .cx-overview-details { display: none; }
+
+/* Laboratory film: one way back to the figures (the reel), no duplicate record drawer. */
+.ls-records { display: none !important; }
+.ls-topline > span { display: none; }
+.ls-undo { display: none !important; }
+.ls-causal-chain { display: none !important; }
+.ls-play-state, .ls-footer-actions > button { display: none !important; }
+.ls-footer { border-top-color: rgba(255,255,255,.05) !important; background: none !important; }
+
+/* Part 2 film: the evidence footnote lives in the record. */
+.sp-footer > span { visibility: hidden; }
+
+/* Test-time chapter: one header. The chapter title stays; the inner title and lock chip go. */
+.ls-theater[data-feature="scaling"] .ls-figure-label, .tt-heading { display: none !important; }
+/* Chapter headings read as kicker + title; the explanatory sentence goes. */
+.ls-training .ls-story-heading p { display: none; }
+.tt-boundary { display: none !important; }
