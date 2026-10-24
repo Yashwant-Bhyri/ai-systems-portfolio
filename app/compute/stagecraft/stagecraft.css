@@ -155,3 +155,41 @@ aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 .df-caption { margin: 0 0 0 7.5%; color: #e6ebf0; font: 450 18px/1.4 var(--font-geist-sans), sans-serif; letter-spacing: -.01em; min-height: 1.4em; }
 @media (max-width: 760px) { .df-caption { margin-left: 4%; font-size: 15px; } .df-film { overflow-x: auto; } .df-svg { min-width: 680px; } }
 .gc-cursor[data-side="left"] .gc-tag { left: auto; right: 8px; }
+
+/* ── Policy × runtime stage ───────────────────────────────────────────── */
+.prs { position: relative; padding: 18px 22px 10px; }
+.prs-lenses { display: flex; gap: 26px; padding: 0 0 6px 2px; }
+.vx-shell .prs-lenses button { position: relative; display: inline-flex; align-items: center; gap: 9px; padding: 8px 0 10px; background: none; border: 0; color: #7d8a97; font: 500 14px/1.2 var(--font-geist-sans), sans-serif; cursor: pointer; transition: color .4s; }
+.prs-lenses button i { width: 8px; height: 8px; border-radius: 50%; opacity: .5; }
+.vx-shell .prs-lenses button[aria-pressed="true"] { color: #f1f4f7; }
+.prs-lenses button[aria-pressed="true"] i { opacity: 1; box-shadow: 0 0 10px currentColor; }
+.prs-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; background: rgba(255,255,255,.08); }
+.prs-fill span { position: absolute; inset: 0; background: var(--active-accent); transform-origin: left; transform: scaleX(0); }
+.prs-svg { display: block; width: 100%; height: auto; }
+.prs-axis { fill: none; stroke: rgba(230,237,244,.18); }
+.prs-grid { stroke: rgba(230,237,244,.06); }
+.prs-tick { fill: #67737f; font: 12px var(--font-geist-mono), monospace; }
+.prs-axis-label { fill: #8995a2; font: 500 12px var(--font-geist-mono), monospace; letter-spacing: .06em; }
+.prs-quad { fill: rgba(255,255,255,.015); stroke: rgba(230,237,244,.12); stroke-dasharray: 3 6; }
+.prs-corner circle { fill: #0b0f14; stroke: #5d6976; stroke-width: 1.5; transition: stroke .5s; }
+.prs-corner text { fill: #5f6b77; font: 12px var(--font-geist-mono), monospace; transition: fill .5s; }
+.prs-corner[data-on="true"] circle { stroke: #c9d2db; }
+.prs-corner[data-on="true"] text { fill: #b8c3ce; }
+.prs-seg { fill: none; stroke-width: 3; stroke-linecap: round; }
+.prs-hop-name { fill: #dfe5eb; font: 500 14px var(--font-geist-sans), sans-serif; }
+.prs-hop-delta { font: 500 15px var(--font-geist-mono), monospace; }
+.prs-total { fill: none; stroke: #f7f1de; stroke-width: 2; stroke-dasharray: 2 5; }
+.prs-total-tag { fill: #f7f1de; font: 11px var(--font-geist-mono), monospace; letter-spacing: .08em; text-transform: uppercase; }
+.prs-halo { fill: none; stroke-width: 1.4; opacity: .45; }
+.prs-dot { filter: drop-shadow(0 0 8px rgba(255,255,255,.35)); }
+.prs-kicker { fill: #8995a2; font: 500 12px var(--font-geist-mono), monospace; letter-spacing: .08em; }
+.prs-hero { fill: #f7f1de; font: 500 54px var(--font-geist-mono), monospace; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.prs-hero-delta { fill: var(--active-accent); font: 500 20px var(--font-geist-mono), monospace; }
+.prs-sub { fill: #8d99a6; font: 13px var(--font-geist-mono), monospace; }
+.prs-row-step { fill: #66727e; font: 12px var(--font-geist-mono), monospace; }
+.prs-row-name { fill: #e8edf2; font: 500 16px var(--font-geist-sans), sans-serif; }
+.prs-row-delta { fill: #93a0ad; font: 13px var(--font-geist-mono), monospace; }
+.prs-note { fill: #7d8996; font: 13px var(--font-geist-sans), sans-serif; font-style: italic; }
+.prs [ref] { transition: opacity .4s; }
+.prs-foot { display: flex; justify-content: flex-end; padding: 2px 4px 6px; opacity: .6; }
+@media (max-width: 760px) { .prs { padding: 12px 4px; overflow-x: auto; } .prs-svg { min-width: 720px; } .prs-lenses { gap: 16px; overflow-x: auto; } }

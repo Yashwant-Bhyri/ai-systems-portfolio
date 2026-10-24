@@ -40,6 +40,7 @@ import "./stagecraft/plates.css";
 import "./stagecraft/film-spot.css";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
+import { PolicyRuntimeStage } from "./stagecraft/policy-runtime";
 import {
   GlyphAudit,
   GlyphCapability,
@@ -55,11 +56,6 @@ import {
 const ServingUnderLoad = lazy(() =>
   import("./serving-under-load").then((module) => ({
     default: module.ServingUnderLoad,
-  })),
-);
-const CompositionExplorer = lazy(() =>
-  import("./composition-explorer").then((module) => ({
-    default: module.CompositionExplorer,
   })),
 );
 const RequestReplayExplorer = lazy(() =>
@@ -79,11 +75,6 @@ const InferenceFigureTour = lazy(() =>
 );
 
 /* The cursor performs each figure's own controls, so nobody has to discover them. */
-const COMPOSITION_DEMO: readonly CursorStep[] = [
-  { target: ".cxp-lenses button:nth-child(2)", label: "Training only", hold: 6200 },
-  { target: ".cxp-lenses button:nth-child(3)", label: "Both together", hold: 7000 },
-  { target: ".cxp-lenses button:nth-child(1)", label: "Serving only", hold: 6200 },
-];
 const REPLAY_DEMO: readonly CursorStep[] = [
   { target: ".rr-request-slider input", action: "range", value: 7, label: "Request 7 · shared prefix", hold: 3600 },
   { target: ".rr-measure-chapters button:nth-child(2)", label: "Input only", hold: 3200 },
@@ -365,8 +356,7 @@ export function ComputeLabStudy({
       null,
     );
   const exhibitRef = useRef<HTMLElement>(null);
-  const compositionHost = useRef<HTMLDivElement>(null),
-    replayHost = useRef<HTMLDivElement>(null),
+  const replayHost = useRef<HTMLDivElement>(null),
     latencyHost = useRef<HTMLDivElement>(null);
   const tourRef = useRef<InferenceTourHandle>(null);
   const [figureRevisions, setFigureRevisions] = useState([0, 0, 0]);
@@ -765,23 +755,12 @@ export function ComputeLabStudy({
                         </p>
                       }
                     >
-                      <div ref={compositionHost} className="gc-host">
-                      <GhostCursor root={compositionHost} script={COMPOSITION_DEMO} enabled={mode === "explore" && view === 0} />
-                      <CompositionExplorer
-                        key={`composition-${workload}-${budget}-${figureRevisions[0]}`}
+                      <PolicyRuntimeStage
                         points={points}
-                        selected={selected}
-                        onSelect={playback.select}
-                        initial={
-                          figureHandoff?.selection.view === 0
-                            ? figureHandoff.selection.state
-                            : undefined
-                        }
                         evidence={(selectedRun, pause) => (
                           <LabEvidence run={selectedRun} onInspect={pause} />
                         )}
                       />
-                      </div>
                     </Suspense>
                   </RetainedLabPanel>
                   <RetainedLabPanel
