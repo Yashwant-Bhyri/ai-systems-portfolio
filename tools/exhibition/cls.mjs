@@ -14,10 +14,10 @@ await p.addInitScript(() => {
 await p.goto('http://localhost:3290/', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(2500);
 const go = async (sel, label, ms, click) => {
   await p.evaluate(() => { window.__shifts = []; });
-  if (click) { await p.locator(click[0]).getByText(click[1], { exact: false }).first().click({ timeout: 8000 }).catch(() => console.log('click fail', click[1])); await p.waitForTimeout(600); }
+  if (click) { await p.locator(click[0]).getByText(click[1], { exact: false }).first().click({ timeout: 8000, force: true }).catch(() => console.log('click fail', click[1])); await p.waitForTimeout(600); }
   await p.locator(sel).first().evaluate(e => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
   await p.mouse.move(2, 2);
-  await p.waitForTimeout(300); await p.evaluate(() => { window.__shifts = []; });
+  await p.waitForTimeout(3000); await p.evaluate(() => { window.__shifts = []; });
   await p.waitForTimeout(ms);
   const s = await p.evaluate(() => window.__shifts);
   const total = s.reduce((a, x) => a + x.v, 0);

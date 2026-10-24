@@ -48,3 +48,7 @@
 
 /* Scheduling: the timeline starts at the top instead of floating mid-panel. */
 .sq-stage { align-items: start !important; }
+
+/* Film headings change with each moment; reserve two lines so the stage below never jumps. */
+:is(.bo-heading, .sq-heading, .rg-heading, .es-direction, .sp-header) h3 { min-height: 2.5em; }
+@media (min-width: 761px) { :is(.bo-heading, .sq-heading, .rg-heading, .sp-header) h3 { min-height: 1.25em; } }

@@ -15,7 +15,6 @@ function FocusFrame({frame,id}:{frame?:Frame;id:string}) {
   return <g className="cx-focus-frame" opacity={frame?1:0}>
     <defs><radialGradient id={id}><stop offset="0" stopColor="var(--active-accent)" stopOpacity=".16"/><stop offset=".55" stopColor="var(--active-accent)" stopOpacity=".05"/><stop offset="1" stopColor="var(--active-accent)" stopOpacity="0"/></radialGradient></defs>
     <rect className="cx-focus-pool" x={f.x-f.w*.18} y={f.y-f.h*.22} width={f.w*1.36} height={f.h*1.44} fill={`url(#${id})`}/>
-    <rect className="cx-focus-floor" x={f.x+f.w*.08} y={f.y+f.h+6} width={f.w*.84} height={1.5} rx={1}/>
   </g>;
 }
 export const INFERENCE_FRAMES:Record<string,Frame>={

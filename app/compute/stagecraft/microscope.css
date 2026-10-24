@@ -46,3 +46,11 @@
 :is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console { height: 92px; min-height: 92px; align-content: start; overflow: hidden; }
 :is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console .vx-stage-annotation { min-height: 2.9em; }
 .vx-keyword-strip { min-height: 1.6em; flex-wrap: nowrap; overflow: hidden; }
+@media (max-width: 760px) {
+  :is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console { height: 168px; min-height: 168px; }
+  .vx-keyword-strip { flex-wrap: wrap; }
+}
+@media (max-width: 760px) {
+  :is(.vx-case-inference, .vx-case-post-training) .vx-story-copy { min-height: 215px; }
+  :is(.vx-case-inference, .vx-case-post-training) .vx-visual-window { min-height: 600px; }
+}

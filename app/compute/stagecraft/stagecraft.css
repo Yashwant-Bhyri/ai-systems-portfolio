@@ -198,3 +198,7 @@ aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 /* Every chapter keeps the same frame: same rows above, same heading, a theater floor. */
 .ls-training .ls-theater { min-height: 920px; }
 .ls-training .ar-heading h3, .ls-training .ar-heading p { display: none; }
+
+/* Phones: the portfolio intends no page snapping below 900px, but a later global
+   rule re-enabled mandatory snapping; on tall sections that re-snaps and jumps. */
+@media (max-width: 900px) { html { scroll-snap-type: none !important; } }

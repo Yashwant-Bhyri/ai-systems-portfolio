@@ -131,3 +131,10 @@
 @keyframes cx-arch-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { .cx-arch-caption p, .cx-film-drilldowns button[aria-pressed="true"]::after { animation: none; } }
 .cx-arch-caption b i { display: inline; width: auto; height: auto; border-radius: 0; background: none; }
+/* The caption keeps one height on every stage so the diagram below never moves. */
+.cx-arch-caption { min-height: 48px; align-items: flex-start; }
+@media (max-width: 760px) {
+  .cx-arch-caption { min-height: 128px; }
+  .cx-arch-caption p { align-content: flex-start; }
+  .cx-arch-metric { margin-left: 0; }
+}
