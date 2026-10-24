@@ -594,7 +594,7 @@ export function LabStory({
         </aside>
       </div>
       {((training && index !== 1) || active) && (
-        <div className="ls-inspector" data-pinned={!!pinned}>
+        <div className="ls-inspector" data-pinned={!!pinned} data-idle={!active}>
           <div className="ls-inspector-marker" aria-hidden="true">
             {pinned ? "⌖" : active ? "↗" : "◎"}
           </div>

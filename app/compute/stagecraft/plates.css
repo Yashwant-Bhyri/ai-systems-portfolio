@@ -1,7 +1,7 @@
 /* Plates: every consequence card becomes an unboxed museum plate.
    No tinted panel, no frame; one hairline, one hero value, quiet support. */
 
-:is(.bo-consequence, .sp-consequence, .ll-result, .rr-result, .cxp-readout, .rg-consequence, .pr-focus-card, .sc-consequence, .xs-consequence, .dv-card, .cr-card) {
+:is(.sq-ledger, .bo-consequence, .sp-consequence, .ll-result, .rr-result, .cxp-readout, .rg-consequence, .pr-focus-card, .sc-consequence, .xs-consequence, .dv-card, .cr-card) {
   background:
     radial-gradient(140% 70% at 0% 0%, color-mix(in srgb, var(--active-accent, #ffc267) 5%, transparent), transparent 62%) !important;
   border: 0 !important;
@@ -53,3 +53,12 @@
 @media (prefers-reduced-motion: reduce) { :is(.rr-delta, .ll-delta)[data-hero="true"] { animation: none; -webkit-text-fill-color: #dcc1ff; background: none; } }
 .rr-result:has(.rr-delta[data-hero="true"]) .rr-values strong { opacity: .62; transform: scale(.82); transform-origin: right center; transition: opacity .6s, transform .6s; }
 .ll-result:has(.ll-delta[data-hero="true"]) .ll-values strong { opacity: .62; }
+
+/* Scheduling ledger: the removed idle time is the hero once it is earned. */
+.sq-ledger-result strong { font-variant-numeric: tabular-nums; }
+.sq-ledger-result:is([data-reveal="true"], :not([data-reveal])) strong {
+  background: linear-gradient(105deg, currentColor 0 40%, #fff 48%, currentColor 56% 100%) 0 0 / 260% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: cx-shine 4.8s cubic-bezier(.4,0,.2,1) infinite;
+}
+.sq-ledger-result strong small { -webkit-text-fill-color: #b9a9c9; }

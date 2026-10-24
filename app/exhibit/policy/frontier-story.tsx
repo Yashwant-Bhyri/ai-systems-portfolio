@@ -104,8 +104,8 @@ export function PolicyFrontierStory({ active, clock, tall }: RoomProps) {
         const [x, y, anchor] = tagPos(i);
         return (
           <g key={`tag-${pt.key}`} ref={(e) => { tags.current[i] = e; }} opacity={0}>
-            <text x={x} y={y} textAnchor={anchor} className="ex-ann-acc" style={{ fontSize: tall ? 18 : 15 }}>{HOPS[i - 1].verb}</text>
-            <text x={x} y={y + 22} textAnchor={anchor} className="ex-m-ink" style={{ fontSize: tall ? 20 : 17 }}>{HOPS[i - 1].gain}</text>
+            <text x={x} y={y} textAnchor={anchor} className="ex-ann-acc" style={{ fontSize: tall ? 18 : 15 }}>{tr(HOPS[i - 1].verb)}</text>
+            <text x={x} y={y + 22} textAnchor={anchor} className="ex-m-ink" style={{ fontSize: tall ? 20 : 17 }}>{tr(HOPS[i - 1].gain)}</text>
           </g>
         );
       })}
@@ -115,9 +115,9 @@ export function PolicyFrontierStory({ active, clock, tall }: RoomProps) {
         {HOPS.map((h, k) => (
           <g key={h.verb} ref={(e) => { rows.current[k] = e; }} transform={`translate(0 ${k * L.ledger.row})`} opacity={0}>
             <text className="ex-ann" style={{ fontSize: tall ? 17 : 13 }}>{String(k + 1).padStart(2, "0")}</text>
-            <text x={38} className="ex-ann-acc" style={{ fontSize: tall ? 18 : 14, fill: k === 4 ? "var(--ex-amber)" : "var(--ex-rose)" }}>{h.verb}</text>
+            <text x={38} className="ex-ann-acc" style={{ fontSize: tall ? 18 : 14, fill: k === 4 ? "var(--ex-amber)" : "var(--ex-rose)" }}>{tr(h.verb)}</text>
             <text x={38} y={30} className="ex-node" style={{ fontSize: tall ? 21 : 18, fill: "var(--ex-ink)" }}>{tr(h.did)}</text>
-            <text x={38} y={58} className="ex-m" style={{ fontSize: tall ? 18 : 14 }}><tspan fill="var(--ex-ink)">{h.gain}</tspan>{"  ·  "}{h.cost}</text>
+            <text x={38} y={58} className="ex-m" style={{ fontSize: tall ? 18 : 14 }}><tspan fill="var(--ex-ink)">{tr(h.gain)}</tspan>{"  ·  "}{h.cost}</text>
           </g>
         ))}
       </g>

@@ -37,6 +37,7 @@ import "../compute-study.css";
 import "./inference-program.css";
 import "./stagecraft/stagecraft.css";
 import "./stagecraft/plates.css";
+import "./stagecraft/film-spot.css";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 import {

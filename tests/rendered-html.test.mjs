@@ -109,8 +109,8 @@ test("renders both compute projects as complete, navigable flagship chapters", a
   assert.match(html, /Illustrative replay/);
   assert.match(html, /GPU-seconds per valid correct answer/);
   assert.match(html, /TTC-AUC/);
-  assert.match(html, /Illustrative experiment/);
-  assert.match(html, /Illustrative, not measured results/);
+  assert.match(html, /Go deeper/);
+  assert.match(html, /Illustrative, not measured/);
   assert.match(html, /What made the same answer cheaper/);
   assert.match(html, /What did the model learn/);
   assert.match(html, /Watch the experiment/);

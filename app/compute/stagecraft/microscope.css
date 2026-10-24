@@ -1,0 +1,28 @@
+/* Component microscope, compute chapters only: fewer frames, one sentence, one graphic.
+   The other chapters keep their established treatment. */
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console {
+  border: 0; background: none; box-shadow: none; padding: 4px 0 6px; margin: 2px 0 6px;
+  grid-template-rows: auto auto 26px;
+}
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console::before,
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console::after,
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-diagonal-sweep { display: none; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-micro-row { display: none; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console .vx-signal-ticker,
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console [class*="ticker"] { opacity: .55; }
+
+/* The three-box input → operation → output rail becomes one quiet line. */
+:is(.vx-case-inference, .vx-case-post-training) .vx-io-rail { min-height: 0; margin-top: 10px; grid-template-columns: auto 22px auto 22px auto; justify-content: start; gap: 10px; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-io-rail > div { min-height: 0; padding: 0; border: 0; background: none; gap: 3px; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-io-rail span { font-size: 9px; opacity: .8; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-io-rail strong { color: #9fadba; font-weight: 450; font-size: 12px; }
+
+/* The story column: kicker, title, proof. The paragraph goes. */
+:is(.vx-case-inference, .vx-case-post-training) .vx-story-copy > p { display: none; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-story-copy h3 { font-size: clamp(30px, 2.5vw, 42px); }
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-top em { display: none; }
+
+/* The scene: no evidence tag; options read as a switch, not a toolbar. */
+:is(.vx-case-inference, .vx-case-post-training) .cx-scene-options > span { visibility: hidden; }
+/* The cursor host must not break the scene's flex column. */
+.cx-scene > .gc-host { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; }

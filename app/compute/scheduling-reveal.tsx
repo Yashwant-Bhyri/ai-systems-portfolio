@@ -127,6 +127,7 @@ export function SchedulingReveal({
       className="sq-film"
       aria-label="Directed scheduling experiment"
       data-playing={playing}
+      data-beat={pinned !== null ? "pinned" : frame.beat}
       data-focus={frame.focus}
       onKeyDown={(e) => {
         if (e.key === "Escape") setPinned(null);

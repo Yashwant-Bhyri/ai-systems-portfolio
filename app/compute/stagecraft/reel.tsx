@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from "react";
+import { useTr } from "../../exhibit/i18n";
 
 /**
  * The exploration reel: every deeper investigation stays visible as a moving
@@ -44,6 +45,7 @@ export function ExplorationReel({
   const [narrow, setNarrow] = useState(false);
   const [width, setWidth] = useState(0);
   const open = hover ?? index;
+  const tr = useTr();
 
   useEffect(() => {
     const m = matchMedia("(prefers-reduced-motion: reduce)"), n = matchMedia("(max-width: 760px)");
@@ -84,9 +86,9 @@ export function ExplorationReel({
   return (
     <div ref={root} className="rl-reel" data-auto={auto}>
       <header className="rl-head">
-        <span>{label}</span>
+        <span>{tr(label)}</span>
         <i aria-hidden="true">{String(open + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}</i>
-        {note && <small>{note}</small>}
+        {note && <small>{tr(note)}</small>}
       </header>
       <div ref={row} className="rl-row" onPointerLeave={() => setHover(null)}>
         {items.map((item, i) => {
@@ -105,14 +107,14 @@ export function ExplorationReel({
               onClick={() => { setIndex(i); item.onOpen?.(); }}
               aria-label={`${item.title}${item.value ? `, ${item.value} ${item.unit ?? ""}` : ""}${item.onOpen ? ". Open on the stage" : ""}`}
             >
-              <span className="rl-num">{String(i + 1).padStart(2, "0")}{item.current && <b>on stage</b>}</span>
+              <span className="rl-num">{String(i + 1).padStart(2, "0")}{item.current && <b>{tr("on stage")}</b>}</span>
               <span className="rl-glyph" aria-hidden="true"><item.Glyph /></span>
-              <strong className="rl-title">{item.title}</strong>
+              <strong className="rl-title">{tr(item.title)}</strong>
               <span className="rl-detail" aria-hidden={!lit}>
-                {item.term && <em className="rl-term">{item.term}</em>}
-                {item.value && <span className="rl-value"><mark>{item.value}</mark>{item.unit && <small>{item.unit}</small>}</span>}
+                {item.term && <em className="rl-term">{tr(item.term)}</em>}
+                {item.value && <span className="rl-value"><mark>{item.value}</mark>{item.unit && <small>{tr(item.unit)}</small>}</span>}
                 {item.chips && <span className="rl-chips">{item.chips.map((c) => <i key={c}>{c}</i>)}</span>}
-                {item.onOpen && !item.current && <span className="rl-open">Open on stage ↗</span>}
+                {item.onOpen && !item.current && <span className="rl-open">{tr("Open on stage ↗")}</span>}
               </span>
             </button>
           );

@@ -7,6 +7,10 @@ import { TRAINING_SCENES } from "./compute/training-scenes";
 import { InferenceArchitectureFilm, TrainingArchitectureFilm, ComputeMiniGraphic } from "./compute/architecture-films";
 import { DURATION } from "./compute/simulation";
 import "./compute-scenes.css";
+import "./compute/stagecraft/stagecraft.css";
+import "./compute/stagecraft/microscope.css";
+import { GhostCursor, type CursorStep } from "./compute/stagecraft/ghost-cursor";
+import { useTr } from "./exhibit/i18n";
 import "./compute/compute-polish.css";
 
 function usePresence() {
@@ -85,6 +89,11 @@ const BEATS:Record<string,readonly [string,string,string]>={
   "training-7":["Match tasks","Audit run records","Check release gate"],
 };
 const BEAT_TIMES=[0,3600,8200];
+/* Flip the mechanism's own switch mid-film, at the same moment, so the A/B difference shows itself. */
+const FLIP:readonly CursorStep[]=[
+  {target:".cx-scene-options [role=group] button:nth-child(2)",label:"Flip the mechanism",hold:3600},
+  {target:".cx-scene-options [role=group] button:nth-child(1)",label:"And back",hold:4200},
+];
 type PlaybackProps={active:number;playing?:boolean;onInspect?:()=>void;onPlay?:()=>void};
 function ComputeScene({domain,active,onInspect}:PlaybackProps&{domain:"inference"|"training"}) {
   const key=`${domain}-${active}`,options=OPTIONS[key],beats=BEATS[key];
@@ -103,11 +112,12 @@ function ComputeScene({domain,active,onInspect}:PlaybackProps&{domain:"inference
   const beat=time<3600?0:time<7600?1:2;
   const inspect=(at:number)=>{setManual(at);setPaused(true);onInspect?.();};
   const restart=()=>{setManual(null);setPaused(false);clock.seek(0);onInspect?.();};
+  const sceneRef=useRef<HTMLDivElement>(null);
   const toggle=()=>{onInspect?.();if(paused||manual!==null){clock.seek(time);setManual(null);setPaused(false);}else setPaused(true);};
   const expand=()=>{onInspect?.();setExpanded(true);};
   const closeFocus=()=>{dialogRef.current?.close();setExpanded(false);};
   const content=(focus=false)=><>
-    <div className="cx-scene-options"><span><i/>{domain==="training"&&active===7?"Illustrative / evidence pending":"Illustrative replay"}</span><div role="group" aria-label={options.label}>{options.items.map((item,i)=><button key={item} type="button" aria-pressed={option===i} onClick={()=>{setOption(i);restart();}}>{item}</button>)}</div></div>
+    <div className="cx-scene-options"><span><i/>{domain==="training"&&active===7?"Illustrative / evidence pending":"Illustrative replay"}</span><div role="group" aria-label={options.label}>{options.items.map((item,i)=><button key={item} type="button" aria-pressed={option===i} onClick={e=>{setOption(i);if(e.isTrusted)restart();}}>{item}</button>)}</div></div>
     <div className="cx-beat-rail" role="group" aria-label="Operation story beats">{beats.map((label,i)=><button key={label} aria-pressed={beat===i} onClick={()=>inspect(BEAT_TIMES[i])}><i>{i+1}</i><span>{label}</span><b style={{transform:`scaleX(${i<beat?1:i>beat?0:Math.min(1,(time-(i===2?7600:BEAT_TIMES[i]))/(i===2?2800:3600))})`}}/></button>)}</div>
     <p className="cx-pan-hint">Scroll the diagram sideways to follow the full path →</p>
     <div className="cx-canvas-scroll" tabIndex={0} role="region" aria-label={`${steps[active].label} diagram. Scroll horizontally on narrow screens.`}>
@@ -125,7 +135,7 @@ function ComputeScene({domain,active,onInspect}:PlaybackProps&{domain:"inference
     </div>
   </>;
   return <>
-    <div ref={ref} className="cx-scene" data-scene={key} data-playing={running}>{content()}</div>
+    <div ref={ref} className="cx-scene" data-scene={key} data-playing={running}><div ref={sceneRef} className="gc-host">{content()}<GhostCursor root={sceneRef} script={FLIP} startDelay={3800} loop={false}/></div></div>
     {expanded&&<dialog ref={dialogRef} className="cx-focus-dialog" aria-label={`${steps[active].label} — focus view`} onCancel={()=>setExpanded(false)} onClose={()=>setExpanded(false)}><div className="cx-scene">{content(true)}</div></dialog>}
   </>;
 }
@@ -150,11 +160,11 @@ const TRAINING_NODES:readonly ArchNode[]=[
 function ComputeOverview({domain,active,onSelect}:{domain:"inference"|"training";active:number;onSelect:(n:number)=>void}) {
   const {ref,onScreen}=usePresence(),[paused,setPaused]=useState(false),clock=useReplayClock(onScreen&&!paused),inference=domain==="inference",nodes=inference?INFERENCE_NODES:TRAINING_NODES;
   const [hover,setHover]=useState<number|null>(null);
-  const id=useId();
+  const id=useId(),tr=useTr();
   const litIndex=hover??nodes.findIndex(n=>n.step===active),lit=nodes[litIndex];
   return <div ref={ref} className="cx-overview" data-lit={lit?.spot} role="group" aria-label={`${inference?"Inference Optimization":"Advanced Post-Training"} high-level architecture`}>
     <div className="cx-film-toolbar cx-arch-caption">
-      {lit?<p key={lit.spot} aria-live="polite"><b>{String(litIndex+1).padStart(2,"0")}<i>/ 0{nodes.length}</i></b><strong>{lit.term}</strong><span className="cx-arch-chips">{lit.chips.map(c=><em key={c}>{c}</em>)}</span><span className="cx-arch-metric"><mark>{lit.value}</mark><small>{lit.unit}</small></span></p>:<p/>}
+      {lit?<p key={lit.spot} aria-live="polite"><b>{String(litIndex+1).padStart(2,"0")}<i>/ 0{nodes.length}</i></b><strong>{tr(lit.term)}</strong><span className="cx-arch-chips">{lit.chips.map(c=><em key={c}>{tr(c)}</em>)}</span><span className="cx-arch-metric"><mark>{lit.value}</mark><small>{tr(lit.unit)}</small></span></p>:<p/>}
       <button type="button" onClick={()=>setPaused(p=>!p)} disabled={clock.reduced} aria-label={paused?"Play architecture animation":"Pause architecture animation"}>{paused?"▶":"Ⅱ"}</button>
     </div>
     <p className="cx-pan-hint">Scroll sideways to trace the complete architecture →</p>

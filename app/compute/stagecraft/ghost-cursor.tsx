@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useTr } from "../../exhibit/i18n";
 
 /**
  * A scripted cursor that performs a component's own controls, so a visitor sees
@@ -59,6 +60,7 @@ export function GhostCursor({
   const [reduced, setReduced] = useState(false);
   const [run, setRun] = useState(0);
   const [tag, setTag] = useState<string | null>(null);
+  const tr = useTr();
 
   useEffect(() => {
     const m = matchMedia("(prefers-reduced-motion: reduce)");
@@ -151,11 +153,11 @@ export function GhostCursor({
       <div ref={cursor} className="gc-cursor" data-live={live} aria-hidden="true" style={{ ["--gc-accent" as string]: accent }}>
         <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 2.5l15 9.2-6.6 1.4 3.9 7.6-2.6 1.3-3.9-7.6L4.9 19z" /></svg>
         <i className="gc-ring" />
-        {tag && <span className="gc-tag">{tag}</span>}
+        {tag && <span className="gc-tag">{tr(tag)}</span>}
       </div>
       {taken && !reduced && (
         <button type="button" className="gc-replay" onClick={() => { setTaken(false); setRun((n) => n + 1); }}>
-          ↺ Show me
+          {tr("↺ Show me")}
         </button>
       )}
     </>

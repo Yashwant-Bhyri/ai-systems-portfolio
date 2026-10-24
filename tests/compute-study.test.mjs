@@ -87,8 +87,9 @@ test("six linked result views declare their synthetic evidence boundary", async 
     "Regression audit",
   ])
     assert.ok(source.includes(name));
-  assert.match(source, /Illustrative experiment/);
-  assert.match(source, /Illustrative, not measured results/);
+  // The page carries no disclaimer banner; the boundary lives in the scenario record.
+  assert.match(source, /ExplorationReel/);
+  assert.match(source, /Illustrative, not measured/);
   assert.match(source, /Real Qwen3-4B runs/);
   assert.match(source, /No physical GPU or LLM run/);
   assert.match(source, /onInspect=\{playback.pause\}/);
