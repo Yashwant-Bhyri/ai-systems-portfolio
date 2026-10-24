@@ -1,12 +1,37 @@
+import type { ReactNode } from "react";
 import { C, PALETTE, Text, Line, Flight, Flux, Matrix } from "./primitives";
 import { loop, ph, ep, q, mix } from "./simulation";
 
 /** A serving fabric, not a row of software-feature cards. */
-export function InferenceArchitectureFilm({t}:{t:number}) {
+/** One region is lit at a time; the rest goes matte so the eye has a single place to land. */
+type Frame={x:number;y:number;w:number;h:number};
+function Spot({id,focus,children}:{id:string;focus?:string;children:ReactNode}) {
+  const state=!focus?"":id.split(" ").includes(focus)?" is-lit":" is-matte";
+  return <g className={`cx-spot${state}`} data-spot={id}>{children}</g>;
+}
+function FocusFrame({frame,label}:{frame?:Frame;label?:string}) {
+  if(!frame)return <g className="cx-focus-frame" opacity={0}/>;
+  const {x,y,w,h}=frame,k=12;
+  return <g className="cx-focus-frame">
+    <rect className="cx-focus-glow" x={x} y={y} width={w} height={h} rx={10}/>
+    <path className="cx-focus-ticks" d={`M${x} ${y+k}V${y}H${x+k}M${x+w-k} ${y}H${x+w}V${y+k}M${x+w} ${y+h-k}V${y+h}H${x+w-k}M${x+k} ${y+h}H${x}V${y+h-k}`}/>
+    {label&&<text className="cx-focus-label" x={x} y={y-8}>{label}</text>}
+  </g>;
+}
+export const INFERENCE_FRAMES:Record<string,Frame>={
+  schedule:{x:12,y:58,w:392,h:250},reuse:{x:222,y:250,w:552,h:106},accelerate:{x:498,y:104,w:146,h:132},
+  distribute:{x:470,y:50,w:366,h:200},serve:{x:878,y:58,w:246,h:176},
+};
+export const TRAINING_FRAMES:Record<string,Frame>={
+  curate:{x:20,y:84,w:124,h:146},initialize:{x:202,y:80,w:202,h:182},optimize:{x:392,y:82,w:266,h:256},
+  search:{x:716,y:84,w:394,h:226},evaluate:{x:18,y:338,w:1100,h:46},
+};
+
+export function InferenceArchitectureFilm({t,focus}:{t:number;focus?:string}) {
   const decode=t>3300,replace=t>6500,step=Math.floor(t/650)%8;
   return <>
     <Text x={30} y={30} kind="strong">Many requests. Shared computation. Separate state.</Text>
-    <Text x={1110} y={30} anchor="end" kind="small">illustrative serving cycle</Text>
+    <Spot id="schedule" focus={focus}>
     <Text x={30} y={75} kind="small">CONCURRENT PROMPTS</Text>
     {[0,1,2].map(i=>{const y=113+i*58,c=PALETTE[i];return <g key={i}>
       <circle cx={39} cy={y} r={4} fill={c}/><Text x={54} y={y-12} kind="small" color={c}>{i===2&&replace?"request D":"request "+String.fromCharCode(65+i)}</Text>
@@ -19,18 +44,24 @@ export function InferenceArchitectureFilm({t}:{t:number}) {
     {[0,1,2].map(i=><g key={i}><rect x={268} y={117+i*29} width={118} height={25} rx={3} fill={PALETTE[i]} fillOpacity={.1} stroke={PALETTE[i]} strokeOpacity={.55}/>{Array.from({length:5},(_,j)=><rect key={j} x={278+j*20} y={124+i*29} width={13} height={11} rx={2} fill={PALETTE[i]} fillOpacity={.3+.5*loop(t,1700,-j*260)}/>)}</g>)}
     <Text x={326} y={236} kind="small" anchor="middle">{replace?"C exits → D enters":decode?"decode, one token each":"prefill prompt chunks"}</Text>
     <Flux from={[387,161]} to={[467,161]} t={t} color={C.amber} count={4} period={1000}/>
+    </Spot>
+    <Spot id="distribute accelerate" focus={focus}>
     {/* Two devices are one model partition, not two unrelated feature boxes. */}
     <path d="M479 72H811L826 87V241H479Z" fill="#0b151c" stroke="#4c5251"/>
     <path d="M479 72L494 58H826V226L811 241M811 72V241M479 72L494 58" fill="none" stroke="#37424b"/>
     <Text x={494} y={96} kind="small">MODEL PARTITION / COORDINATED GPUS</Text>
-    {[0,1].map(g=><g key={g}><rect x={505+g*151} y={113} width={130} height={91} rx={4} fill="#111e25" stroke={g?C.cyan:C.amber} strokeOpacity={.65}/><Matrix x={516+g*151} y={124} cols={8} rows={5} size={10} gap={5} t={t-g*300} mode="wave" color={g?C.cyan:C.amber}/><Text x={568+g*151} y={225} anchor="middle" kind="small">{g?"shard 1":"shard 0"}</Text></g>)}
-    <Flux from={[635,160]} to={[656,160]} t={t} color={C.ink} count={1} period={600}/>
+    </Spot>
+    {[0,1].map(g=><Spot key={g} id={g?"distribute":"distribute accelerate"} focus={focus}><g><rect x={505+g*151} y={113} width={130} height={91} rx={4} fill="#111e25" stroke={g?C.cyan:C.amber} strokeOpacity={.65}/><Matrix x={516+g*151} y={124} cols={8} rows={5} size={10} gap={5} t={t-g*300} mode="wave" color={g?C.cyan:C.amber}/><Text x={568+g*151} y={225} anchor="middle" kind="small">{g?"shard 1":"shard 0"}</Text></g></Spot>)}
+    <Spot id="distribute" focus={focus}><Flux from={[635,160]} to={[656,160]} t={t} color={C.ink} count={1} period={600}/></Spot>
+    <Spot id="serve" focus={focus}>
     <Flux from={[826,161]} to={[892,161]} t={t} color={C.green} period={900}/>
     <Text x={906} y={75} kind="small">INDEPENDENT TOKEN STREAMS</Text>
     {[0,1,2].map(i=><g key={i}><Line d={`M888 161Q899 ${114+i*57} 915 ${114+i*57}`} color={PALETTE[i]}/>
       {Array.from({length:7},(_,j)=>{const p=loop(t,3600,-j*460-i*100);return <rect key={j} x={q(916+p*188)} y={105+i*57} width={16} height={19} rx={3} fill={PALETTE[i]} fillOpacity={decode?.2+.8*Math.sin(p*Math.PI):.13}/>;})}
       <Text x={915} y={145+i*57} kind="small">{i===2&&replace?"D · new request":String.fromCharCode(65+i)+" · "+(decode?"streaming":"waiting for prefill")}</Text>
     </g>)}
+    </Spot>
+    <Spot id="reuse" focus={focus}>
     {/* KV is a working memory beside execution, with a return path. */}
     <Line d="M521 241V271H454" color={C.cyan}/><Line d="M454 301H763V241" color={C.cyan}/>
     <Flux from={[520,271]} to={[459,271]} t={t} color={C.cyan} count={2}/><Flux from={[565,301]} to={[762,301]} t={t} color={C.cyan}/>
@@ -38,28 +69,34 @@ export function InferenceArchitectureFilm({t}:{t:number}) {
     {[0,1,2,3,4,5].map(i=><g key={i}><rect x={235+i*35} y={290} width={29} height={28} rx={3} fill={i<2?C.cyan:PALETTE[(i-2)%3]} fillOpacity={.18} stroke={i<2?C.cyan:PALETTE[(i-2)%3]}/><Text x={249+i*35} y={309} kind="small" anchor="middle" color={i<2?C.cyan:C.ink}>{i<2?"×2":"×1"}</Text></g>)}
     <Text x={235} y={345} kind="small" color={C.cyan}>shared prefix, private continuation</Text>
     <Text x={564} y={284} kind="small">read history ↔ append new KV</Text>
-    <Line d="M985 290V347H558" dash color={C.amber}/><Text x={768} y={339} kind="small">profile → adjust the next iteration</Text>
+    </Spot>
+    <Spot id="profile" focus={focus}><Line d="M985 290V347H558" dash color={C.amber}/><Text x={768} y={339} kind="small">profile → adjust the next iteration</Text></Spot>
+    <FocusFrame frame={focus?INFERENCE_FRAMES[focus]:undefined}/>
   </>;
 }
 
 /** The geometry distinguishes parameter learning from inference-time search. */
-export function TrainingArchitectureFilm({t}:{t:number}) {
+export function TrainingArchitectureFilm({t,focus}:{t:number;focus?:string}) {
   const learn=ph(t,1800,5700),search=ph(t,5900,9600),back=t>3500&&t<6100;
   return <>
     <Text x={28} y={30} kind="strong">First change the policy. Then give it more room to think.</Text>
-    <Text x={1110} y={30} anchor="end" kind="small">two different compute loops</Text>
     <path d="M698 61V319" stroke="#4a4751" strokeDasharray="3 6"/>
     <Text x={28} y={66} kind="small" color={C.rose}>LEARNING / PARAMETERS CHANGE</Text>
     <Text x={733} y={66} kind="small" color={C.cyan}>INFERENCE / PARAMETERS FIXED</Text>
+    <Spot id="curate" focus={focus}>
     {/* Actual trace pages travel through the data gate into the model. */}
     {[0,1,2].map(i=><g key={i} transform={`translate(${33+i*9} ${110-i*10})`}><path d="M0 0H73L84 11V84H0Z" fill="#111722" stroke={i===2?C.rose:"#4c4758"}/>{[0,1,2,3].map(j=><path key={j} d={`M12 ${22+j*13}H${58-(j%2)*14}`} stroke={i===2?C.rose:C.muted} strokeWidth={2} strokeOpacity={.25+.6*loop(t,2600,-j*250)}/>)}</g>)}
     <Text x={29} y={218} kind="small">verified reasoning</Text>
     <Flux from={[137,146]} to={[207,146]} t={t} color={C.rose} count={3}/>
+    </Spot>
+    <Spot id="initialize" focus={focus}>
     {/* Frozen dense core with a small separately trainable adapter surface. */}
     <rect x={211} y={88} width={184} height={144} rx={8} fill="#0e1720" stroke={C.rose} strokeOpacity={.65}/>
     <Matrix x={229} y={110} cols={8} rows={6} size={10} gap={4} color={C.muted}/>
     <Matrix x={353} y={110} cols={2} rows={6} size={10} gap={4} color={C.rose} mode={back?"update":"fixed"} t={t}/>
     <Text x={229} y={217} kind="small">Qwen3-4B</Text><Text x={383} y={250} kind="small" anchor="end" color={C.rose}>LoRA / SFT → policy</Text>
+    </Spot>
+    <Spot id="optimize" focus={focus}>
     {/* One policy samples a fan of reasoning paths, whose rewards return. */}
     {[0,1,2,3].map(i=>{const y=100+i*45;return <g key={i}>
       <path d={`M395 160C428 160 436 ${y} 455 ${y}H565`} stroke={PALETTE[i]} strokeOpacity={.3} fill="none"/>
@@ -71,6 +108,8 @@ export function TrainingArchitectureFilm({t}:{t:number}) {
     <path d="M612 166H648V302H301V232" fill="none" stroke={C.rose} strokeOpacity={.7}/>
     <Flux from={[601,302]} to={[333,302]} t={t} color={C.rose} count={4} active={back}/>
     <Text x={373} y={327} kind="small" color={C.rose}>relative advantage → adapter update</Text>
+    </Spot>
+    <Spot id="search" focus={focus}>
     {/* The checkpoint crosses a boundary; only candidate search moves beyond it. */}
     <Flight t={t} start={5400} end={6600} from={[648,165]} to={[743,165]} label="θ*" color={C.cyan} w={35}/>
     <Line d="M651 165H738" color={C.cyan}/>
@@ -85,7 +124,9 @@ export function TrainingArchitectureFilm({t}:{t:number}) {
     <path d="M1036 139H1099V190H1036Z" stroke={C.green} fill="#101d1b" fillOpacity={search}/><path d="M1054 163L1065 173L1083 151" stroke={C.green} strokeWidth={3} fill="none" opacity={search}/>
     <Text x={955} y={279} kind="small" anchor="middle">expand → verify → select</Text>
     <Text x={955} y={300} kind="small" anchor="middle" color={C.cyan}>more search, no weight update</Text>
-    <Line d="M28 350H1111"/><Text x={28} y={373} kind="small">DPO: a separate preference-pair route</Text><Text x={1110} y={373} anchor="end" kind="small">held-out evaluation checks both loops</Text>
+    </Spot>
+    <Spot id="evaluate" focus={focus}><Line d="M28 350H1111"/><Text x={28} y={373} kind="small">DPO: a separate preference-pair route</Text><Text x={1110} y={373} anchor="end" kind="small">held-out evaluation checks both loops</Text></Spot>
+    <FocusFrame frame={focus?TRAINING_FRAMES[focus]:undefined}/>
   </>;
 }
 

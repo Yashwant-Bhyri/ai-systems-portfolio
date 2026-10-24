@@ -1783,6 +1783,8 @@ function CaseHeading({
   );
 }
 
+const ARCH_STEP_MS = 3600;
+
 function FlagshipChapter({
   id,
   number,
@@ -1815,8 +1817,11 @@ function FlagshipChapter({
   const reducedMotion = useReducedMotion();
   const overviewRef = useRef<HTMLElement>(null);
   const microscopeRef = useRef<HTMLElement>(null);
-  const overviewController = useAutoplaySequence(architecturePath.length, 2200, overviewRef, reducedMotion, {
+  const compute = id === "inference" || id === "post-training";
+  // Compute chapters walk the architecture one lit component at a time, on a loop.
+  const overviewController = useAutoplaySequence(architecturePath.length, compute ? ARCH_STEP_MS : 2200, overviewRef, reducedMotion, {
     observeSelector: ".vx-overview-shell",
+    loop: compute,
   });
   const controller = useAutoplaySequence(steps.length + 1, 11800, microscopeRef, reducedMotion, {
     observeSelector: ".vx-walkthrough",

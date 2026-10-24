@@ -10,6 +10,7 @@ import {
   BASELINE_MOMENTS,
 } from "./baseline-study";
 import { useFilmTime } from "./use-film-time";
+import { spotCls, type Lit } from "./stagecraft/spot";
 import "./baseline-reveal.css";
 
 const RED = "#ff9185",
@@ -34,16 +35,27 @@ const HEADINGS = [
   "Three places to change execution",
 ];
 
+/* What stays lit at each moment; the rest of the machine goes matte. */
+const LIT: readonly Lit[] = [
+  null,
+  ["q-6", "w-blocked", "tl", "seg-0", "card"],
+  ["q-6", "w-r7", "tl", "seg-1", "card"],
+  ["w-r7", "tl", "seg-2", "card", "done"],
+  ["tl", "seg-0", "seg-1", "seg-2", "card"],
+];
+
 function Worker({
   worker,
   task,
   time,
   blocked,
+  lit,
 }: {
   worker: number;
   task?: LabTask;
   time: number;
   blocked: boolean;
+  lit: Lit;
 }) {
   const y = 80 + worker * 132;
   const pre = task ? clamp01((time - task.start) / task.prefill) : 0;
@@ -52,7 +64,7 @@ function Worker({
   const highlight = task?.id === 6;
   const color = blocked ? RED : highlight ? AMBER : BLUE;
   return (
-    <g className="bo-worker" data-active={!!task}>
+    <g className={spotCls(`w w-${worker}${blocked ? " w-blocked" : ""}${task?.id === 6 ? " w-r7" : ""}`, lit, "bo-worker")} data-active={!!task}>
       <path
         d={`M251 ${y + 21}v-15h298v15M251 ${y + 83}v15h298v-15`}
         stroke={color}
@@ -180,6 +192,7 @@ export function BaselineReveal({
   const totals = [q.queueSeconds, q.prefill, q.decode];
   const partial = [frame.wait, frame.prefill, frame.decode];
   const color = COLORS[Math.max(0, selected)];
+  const lit = LIT[frame.beat];
   useEffect(() => {
     const root = stage.current;
     if (!root || selected < 0) return;
@@ -289,6 +302,7 @@ export function BaselineReveal({
                 cy = 83 + Math.floor(i / 2) * 56;
               return (
                 <g key={task.id}>
+                  <g className={spotCls(`q q-${i}`, lit)}>
                   <rect
                     x={cx - 10}
                     y={cy - 8}
@@ -319,6 +333,8 @@ export function BaselineReveal({
                           ? "Queued"
                           : `${n(task.arrival)} s`}
                   </text>
+                  </g>
+                  <g className={spotCls("done", lit)}>
                   <circle
                     cx={632 + (i % 2) * 49}
                     cy={99 + Math.floor(i / 2) * 56}
@@ -335,6 +351,7 @@ export function BaselineReveal({
                   >
                     {done ? "✓" : i + 1}
                   </text>
+                  </g>
                 </g>
               );
             })}
@@ -344,6 +361,7 @@ export function BaselineReveal({
                 worker={worker}
                 task={frame.state.active.find((task) => task.worker === worker)}
                 time={frame.time}
+                lit={lit}
                 blocked={study.gaps.some(
                   (g) =>
                     g.worker === worker &&
@@ -353,6 +371,7 @@ export function BaselineReveal({
               />
             ))}
             <path d="M32 322H722" stroke="#304452" />
+            <g className={spotCls("tl", lit)}>
             <text x="40" y="347" fill={AMBER} className="bo-section">
               Request 7
             </text>
@@ -370,8 +389,9 @@ export function BaselineReveal({
                       ? "Waiting for a worker"
                       : "Not arrived"}
             </text>
+            </g>
             {totals.map((total, i) => (
-              <g key={i}>
+              <g key={i} className={spotCls(`seg-${i}`, lit)}>
                 <rect
                   x={x(starts[i])}
                   y="382"
@@ -430,7 +450,7 @@ export function BaselineReveal({
           </svg>
         </div>
         <aside
-          className="bo-consequence"
+          className={spotCls("card", lit, "bo-consequence")}
           aria-label="Selected request consequence"
           style={
             {
@@ -605,7 +625,7 @@ export function BaselineReveal({
           </svg>
         )}
       </div>
-      <div className="bo-targets" aria-label="Optimization targets">
+      <div hidden className="bo-targets" aria-label="Optimization targets">
         {[
           { name: "Worker scheduling", change: "Reduce waiting", chapter: 1 },
           {

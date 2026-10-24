@@ -1,0 +1,55 @@
+/* Plates: every consequence card becomes an unboxed museum plate.
+   No tinted panel, no frame; one hairline, one hero value, quiet support. */
+
+:is(.bo-consequence, .sp-consequence, .ll-result, .rr-result, .cxp-readout, .rg-consequence, .pr-focus-card, .sc-consequence, .xs-consequence, .dv-card, .cr-card) {
+  background:
+    radial-gradient(140% 70% at 0% 0%, color-mix(in srgb, var(--active-accent, #ffc267) 5%, transparent), transparent 62%) !important;
+  border: 0 !important;
+  border-left: 1px solid color-mix(in srgb, var(--active-accent, #ffc267) 32%, rgba(255,255,255,.08)) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.pr-focus-card[data-earned="true"] {
+  border-left-color: color-mix(in srgb, var(--active-accent, #ffc267) 70%, transparent) !important;
+}
+
+/* Headings inside plates read as a caption, not a paragraph. */
+:is(.bo-consequence, .rg-consequence, .rr-result, .sp-consequence, .ll-result) h4 {
+  font-weight: 450 !important; letter-spacing: -.015em !important; text-wrap: balance;
+}
+:is(.bo-consequence, .rg-consequence, .rr-result, .sp-consequence, .ll-result, .cxp-readout) p {
+  color: #93a1af !important; font-size: 12px !important; line-height: 1.55 !important;
+}
+
+/* Composition: the highlighted dimension is the hero, the other one recedes. */
+.cxp-metrics button[data-highlight="false"] { opacity: .42; transform: scale(.94); transform-origin: left center; transition: opacity .5s, transform .5s; }
+.cxp-metrics button[data-highlight="true"] { opacity: 1; transform: none; transition: opacity .5s, transform .5s; }
+.cxp-metrics button { background: none !important; border-color: transparent !important; }
+.cxp-cohort { display: none; }
+.cxp-mechanism[data-active="false"] { opacity: .45; }
+
+/* Primary measures get the shine; their units stay small and quiet. */
+:is(.bo-measure strong, .cxp-metrics button[data-highlight="true"] .cxp-delta[data-visible="true"]) {
+  background: linear-gradient(105deg, currentColor 0 40%, #fff 48%, currentColor 56% 100%) 0 0 / 260% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: cx-shine 4.8s cubic-bezier(.4,0,.2,1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.bo-measure strong, .cxp-metrics button[data-highlight="true"] .cxp-delta[data-visible="true"]) { animation: none; -webkit-text-fill-color: currentColor; background: none; }
+}
+
+/* The delta is the hero of a settled comparison. */
+:is(.rr-delta, .ll-delta)[data-hero="true"] {
+  margin: 18px 0 10px !important; color: #dcc1ff !important;
+  font: 500 clamp(26px, 2.4vw, 34px)/1.12 var(--font-geist-sans), sans-serif !important; letter-spacing: -.025em !important;
+}
+:is(.rr-delta, .ll-delta)[data-hero="true"] > :not(small) { display: inline; }
+:is(.rr-delta, .ll-delta)[data-hero="true"] {
+  background: linear-gradient(105deg, #dcc1ff 0 40%, #fff 48%, #dcc1ff 56% 100%) 0 0 / 260% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: cx-shine 4.8s cubic-bezier(.4,0,.2,1) infinite;
+}
+.rr-delta[data-hero="true"] small { display: block; margin-top: 6px; font: 400 12px/1.3 var(--font-geist-mono), monospace; -webkit-text-fill-color: #a99bc0; letter-spacing: .02em; }
+@media (prefers-reduced-motion: reduce) { :is(.rr-delta, .ll-delta)[data-hero="true"] { animation: none; -webkit-text-fill-color: #dcc1ff; background: none; } }
+.rr-result:has(.rr-delta[data-hero="true"]) .rr-values strong { opacity: .62; transform: scale(.82); transform-origin: right center; transition: opacity .6s, transform .6s; }
+.ll-result:has(.ll-delta[data-hero="true"]) .ll-values strong { opacity: .62; }

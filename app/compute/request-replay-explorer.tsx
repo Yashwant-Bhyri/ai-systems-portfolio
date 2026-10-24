@@ -616,7 +616,7 @@ export function RequestReplayExplorer({
               </div>
             ))}
           </div>
-          <p data-rr-target className="rr-delta">
+          <p data-rr-target className="rr-delta" data-hero={settled && Math.abs(delta) >= 1e-8}>
             {!settled
               ? firstFinished
                 ? aDuration === bDuration

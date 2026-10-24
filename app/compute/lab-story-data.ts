@@ -103,6 +103,16 @@ export const TRAINING_STORY = [
     inspect:
       "Equal nominal allowances are not equal GPU costs. The efficiency policy uses a lower declared work multiplier. Inspect actual cost and paired negative flips rather than treating token length as intelligence.",
   },
+  {
+    name: "The frontier",
+    verb: "FRONTIER",
+    title: "Training moves it up. Serving moves it left.",
+    detail:
+      "Five moves, each with what was done and what it bought: 28 → 82 solved, then 43.69 → 14.94 GPU-seconds per correct answer.",
+    mechanism: "Policy × runtime",
+    inspect:
+      "Accuracy against GPU-seconds per correct answer on the shared-document workload. Each post-training move changes the policy; the final move changes only the serving runtime.",
+  },
 ] as const;
 export function inferenceStoryRuns(workload: Workload) {
   return [

@@ -32,6 +32,10 @@ import { RUNTIME_GAINS_DURATION } from "./runtime-gains-study";
 import { PrefixReuseReveal } from "./prefix-reuse-reveal";
 import { PREFIX_DURATION } from "./prefix-study-math";
 import { EXECUTION_FILM_DURATION as EXECUTION_DURATION } from "./execution-direction";
+import { ExhibitScene } from "./stagecraft/exhibit-host";
+import { PolicyGrpo } from "../exhibit/policy/grpo";
+import { PolicyLean } from "../exhibit/policy/lean";
+import { PolicyFrontierStory, FRONTIER_STORY_MS } from "../exhibit/policy/frontier-story";
 import "./lab-story.css";
 
 const SchedulingReveal = lazy(() =>
@@ -41,6 +45,8 @@ const SchedulingReveal = lazy(() =>
 );
 const BaselineReveal = lazy(() => import("./baseline-reveal").then(module => ({ default: module.BaselineReveal })));
 const RuntimeGainsReveal = lazy(() => import("./runtime-gains-reveal").then(module => ({ default: module.RuntimeGainsReveal })));
+
+const ROOM_CHAPTERS = new Set([2, 4, 5]);
 
 export function LabStory({
   training,
@@ -56,12 +62,12 @@ export function LabStory({
   const [undo, setUndo] = useState(false),
     [budget, setBudget] = useState(4),
     [workload, setWorkload] = useState<Workload>("shared-prefix");
-  const { ref, ...playback } = useStudyPlayback(5, 0, {
+  const { ref, ...playback } = useStudyPlayback(training ? 6 : 5, 0, {
     held: !!hover || !!pinned || undo,
     finite: true,
     interval: 12000,
     durations: training
-      ? [10000, ADAPTER_DURATION, 12000, 21000, 12000]
+      ? [10000, ADAPTER_DURATION, 13500, 21000, 8000, FRONTIER_STORY_MS]
       : [
           BASELINE_DURATION,
           SCHEDULING_DURATION,
@@ -77,9 +83,11 @@ export function LabStory({
   );
   const step = playback.step,
     index = undo ? (!training && step === 4 ? 0 : Math.max(0, step - 1)) : step;
-  const run = runs[index],
-    previous = runs[Math.max(0, index - 1)],
+  const runIndex = Math.min(index, runs.length - 1);
+  const run = runs[runIndex],
+    previous = runs[Math.max(0, runIndex - 1)],
     baseline = runs[0];
+  const room = training && ROOM_CHAPTERS.has(index);
   const story =
     training && step === 3
       ? {
@@ -101,11 +109,12 @@ export function LabStory({
     setHover(null);
     setPinned(null);
   };
+  // Choosing a chapter plays it: an exhibit never waits on a second click.
   const select = (n: number) => {
     clear();
     setUndo(false);
     playback.select(n);
-    playback.pause();
+    if (!playback.reduced) playback.resume();
   };
   const pause = () => {
     clear();
@@ -265,7 +274,7 @@ export function LabStory({
       <div
         className="ls-theater"
         data-feature={
-          training && index === 1 ? "adapter" : index === 3
+          room ? "room" : training && index === 1 ? "adapter" : index === 3
             ? training
               ? "scaling"
               : "execution"
@@ -345,6 +354,17 @@ export function LabStory({
                     onSeek={playback.seek}
                     onToggle={toggleStory}
                   />
+                ) : room ? (
+                  <ExhibitScene
+                    Scene={index === 2 ? PolicyGrpo : index === 4 ? PolicyLean : PolicyFrontierStory}
+                    label={steps[index].name}
+                    readTime={playback.readTime}
+                    playing={playback.running}
+                    reduced={playback.reduced || undo}
+                    duration={playback.duration}
+                    onSeek={playback.seek}
+                    onToggle={toggleStory}
+                  />
                 ) : training && index === 1 ? (
                   <AdapterReveal playing={playback.running} reduced={playback.reduced || undo} readTime={playback.readTime} onSeek={playback.seek} onToggle={toggleStory} />
                 ) : training && index === 3 ? (
@@ -385,7 +405,7 @@ export function LabStory({
               </FilmTransition>
             </Suspense>
           </div>
-          {training && index !== 1 && (
+          {training && index !== 1 && !room && (
             <div className="ls-causal-chain" aria-label="Cause and effect">
               <button
                 type="button"
@@ -471,7 +491,7 @@ export function LabStory({
                   {run.meanCost.toFixed(2)} <small>GPU-s</small>
                 </strong>
               </div>
-              <AccuracyCostTrail runs={runs} index={index} inspect={inspect} />
+              <AccuracyCostTrail runs={runs} index={runIndex} inspect={inspect} />
               <div className="ls-cohort-heading">
                 <span>PAIRED OUTCOMES</span>
                 <small>

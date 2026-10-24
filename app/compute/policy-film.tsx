@@ -18,34 +18,34 @@ const BLUE = "#78a8ff",
   GREY = "#8a9eb2";
 const BEHAVIOR = [
   {
-    action: "A shortcut can omit a condition",
-    before: "120 × 0.8",
-    after: "96 ≠ final total",
-    note: "The discount is calculated, but shipping is missing.",
+    action: "A shortcut skips the edge case",
+    before: "return xs[0]",
+    after: "IndexError on []",
+    note: "Two tests pass; the empty-list test crashes.",
   },
   {
-    action: "Learn a complete solution structure",
-    before: "Read → discount → shipping",
-    after: "120 × 0.8 + 12 = 108",
-    note: "Supervision teaches the sequence; the adapter is the parameter update.",
+    action: "Learn the complete fix",
+    before: "guard → return",
+    after: "if not xs: return None",
+    note: "Supervision teaches the structure; the adapter is the parameter update.",
   },
   {
     action: "Prefer the verified attempt",
-    before: "96 ×   ·   108 ✓",
-    after: "Reinforce the checked solution",
-    note: "A fluent incomplete solution earns no correctness reward.",
+    before: "2 / 3 ×   ·   3 / 3 ✓",
+    after: "Reinforce the patch that passes",
+    note: "A fluent patch that fails a test earns no reward.",
   },
   {
     action: "Use more attempts, not new weights",
-    before: "Attempt 1: misses shipping",
-    after: "Attempt 3: includes both terms",
-    note: "At 1× or 2× this teaching search misses the valid route. At 4× it reaches it.",
+    before: "Attempt 1: no guard",
+    after: "Attempt 3: guard + return",
+    note: "At 1× or 2× this search misses the guard. At 4× it finds it.",
   },
   {
-    action: "Keep the proof, remove the detour",
-    before: "Two correct paths: long / direct",
-    after: "120 × 0.8 + 12 = 108 ✓",
-    note: "Efficiency rewards must preserve the checks that make an answer valid.",
+    action: "Keep the test, drop the detour",
+    before: "Two passing patches: long / direct",
+    after: "if not xs: return None ✓",
+    note: "Efficiency rewards keep the checks that make a patch valid.",
   },
 ];
 
@@ -68,15 +68,15 @@ function PolicyInPractice({
       <div className="cf-user-question">
         <span>USER</span>
         <div>
-          <p>“£120, 20% off, then £12 shipping. Total?”</p>
+          <p>“firstItem([]) crashes. Fix it.”</p>
           <small>
             {step === 0
-              ? "A plausible shortcut misses a condition"
+              ? "A plausible patch misses the empty list"
               : step === 1
-                ? "A demonstration teaches every required operation"
+                ? "A demonstration teaches the guard"
                 : step === 2
-                  ? "Verification distinguishes the two attempts"
-                  : "Retain the proof, avoid the unnecessary detour"}
+                  ? "Unit tests separate the two attempts"
+                  : "Keep the guard, drop the detour"}
           </small>
         </div>
       </div>
@@ -86,8 +86,8 @@ function PolicyInPractice({
         role="img"
         aria-label={
           trained
-            ? "The valid route includes both discount and shipping, producing 108 instead of 96."
-            : "The base illustration stops at 96 and misses shipping."
+            ? "The verified patch guards the empty list and passes all three tests."
+            : "The base patch returns xs[0] and crashes on an empty list."
         }
       >
         {[0, 1].map((row) => {
@@ -113,7 +113,7 @@ function PolicyInPractice({
                   1 - (row ? clamp01((p - 0.25) / 0.7) : clamp01(p / 0.48))
                 }
               />
-              {["£120", "× 0.8", row ? "+ £12" : "stop"].map((text, i) => (
+              {(row ? ["read xs", "guard []", "return xs[0]"] : ["read xs", "return xs[0]", "stop"]).map((text, i) => (
                 <g
                   key={i}
                   style={{ opacity: p > i * 0.16 + row * 0.14 ? 1 : 0.26 }}
@@ -144,7 +144,7 @@ function PolicyInPractice({
                 fontSize="20"
                 opacity={p > 0.7 ? 1 : 0.15}
               >
-                {row ? "108 ✓" : "96 ×"}
+                {row ? "3/3 ✓" : "2/3 ×"}
               </text>
             </g>
           );
@@ -154,10 +154,10 @@ function PolicyInPractice({
         <i />
         <p>
           {valid
-            ? "Both conditions are satisfied. The check accepts the answer."
+            ? "All three tests pass. The verifier accepts the patch."
             : trained
-              ? "Follow the route before judging the final number."
-              : "A fluent answer can still omit part of the question."}
+              ? "Run the tests before judging the patch."
+              : "A fluent patch can still crash on the edge case."}
         </p>
       </div>
       <div className="cf-request-invariant">

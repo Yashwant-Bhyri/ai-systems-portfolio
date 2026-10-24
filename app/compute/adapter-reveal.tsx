@@ -143,7 +143,7 @@ export function AdapterReveal({
     ),
     `L${376 + direction.position * 43} ${lossY(f.loss)}`,
   ].join(" ");
-  const prompt = "£120, 20% off, then £12 shipping. Total?";
+  const prompt = "firstItem([]) crashes. Fix it.";
   return (
     <section
       className="ar-root"
@@ -514,7 +514,7 @@ export function AdapterReveal({
             <h4>Supervise the complete answer</h4>
             <p>Each next token is learned from the demonstrated prefix.</p>
             <div className="ar-token-sequence">
-              {["120 × 0.8 = 96", "+ 12 = 108", "Total: £108"].map(
+              {["def first_item(xs):", "if not xs: return None", "return xs[0]"].map(
                 (group, i) => (
                   <div
                     key={group}
@@ -527,9 +527,9 @@ export function AdapterReveal({
                     <span>
                       {
                         [
-                          "Apply discount",
-                          "Include shipping",
-                          "Answer the question",
+                          "Read the signature",
+                          "Guard the empty list",
+                          "Return the first item",
                         ][i]
                       }
                     </span>
@@ -563,9 +563,9 @@ export function AdapterReveal({
                 ),
               }}
             >
-              <strong>£96 → £108</strong>
+              <strong>2/3 → 3/3 tests</strong>
               <span>
-                The demonstration includes shipping.
+                The demonstration includes the guard.
                 <br />
                 LoRA supplies a parameter-efficient way to learn it.
               </span>

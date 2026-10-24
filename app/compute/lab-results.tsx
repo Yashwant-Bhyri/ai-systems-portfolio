@@ -35,6 +35,20 @@ import { RetainedLabPanel } from "./retained-lab-panel";
 import type { InferenceTourHandle } from "./inference-figure-tour";
 import "../compute-study.css";
 import "./inference-program.css";
+import "./stagecraft/stagecraft.css";
+import "./stagecraft/plates.css";
+import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
+import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
+import {
+  GlyphAudit,
+  GlyphCapability,
+  GlyphComposition,
+  GlyphCurves,
+  GlyphExperiment,
+  GlyphFigureStory,
+  GlyphLatency,
+  GlyphReplay,
+} from "./stagecraft/glyphs";
 
 const ServingUnderLoad = lazy(() =>
   import("./serving-under-load").then((module) => ({
@@ -61,6 +75,30 @@ const InferenceFigureTour = lazy(() =>
     default: module.InferenceFigureTour,
   })),
 );
+
+/* The cursor performs each figure's own controls, so nobody has to discover them. */
+const COMPOSITION_DEMO: readonly CursorStep[] = [
+  { target: ".cxp-lenses button:nth-child(2)", label: "Training only", hold: 6200 },
+  { target: ".cxp-lenses button:nth-child(3)", label: "Both together", hold: 7000 },
+  { target: ".cxp-lenses button:nth-child(1)", label: "Serving only", hold: 6200 },
+];
+const REPLAY_DEMO: readonly CursorStep[] = [
+  { target: ".rr-request-slider input", action: "range", value: 7, label: "Request 7 · shared prefix", hold: 3600 },
+  { target: ".rr-measure-chapters button:nth-child(2)", label: "Input only", hold: 3200 },
+  { target: ".rr-measure-chapters button:nth-child(3)", label: "Answer only", hold: 3200 },
+  { target: ".rr-measure-chapters button:nth-child(4)", label: "Wait + execute", hold: 3400 },
+  { target: ".rr-measure-chapters button:nth-child(1)", label: "Total GPU work", hold: 1600 },
+  { target: ".rr-request-slider input", action: "range", value: 1, label: "Request 1 · cold read", hold: 3400 },
+  { target: ".rr-request-slider input", action: "range", value: 61, label: "Request 61", hold: 3400 },
+];
+const LATENCY_DEMO: readonly CursorStep[] = [
+  { target: ".ll-moments button:nth-child(4)", label: "Rank every response", hold: 4200 },
+  { target: ".ll-percentiles button:nth-child(1)", label: "p50", hold: 2600 },
+  { target: ".ll-percentiles button:nth-child(2)", label: "p95", hold: 2600 },
+  { target: ".ll-percentiles button:nth-child(3)", label: "p99", hold: 2600 },
+  { target: ".ll-inspect-request input", action: "range", value: 92, label: "One request, both runs", hold: 3600 },
+  { target: ".ll-moments button:nth-child(5)", label: "p95 comparison", hold: 4200 },
+];
 
 const INFERENCE_VIEWS = [
   { name: "Policy × runtime", detail: "Compare cost & accuracy", symbol: "↖" },
@@ -325,6 +363,9 @@ export function ComputeLabStudy({
       null,
     );
   const exhibitRef = useRef<HTMLElement>(null);
+  const compositionHost = useRef<HTMLDivElement>(null),
+    replayHost = useRef<HTMLDivElement>(null),
+    latencyHost = useRef<HTMLDivElement>(null);
   const tourRef = useRef<InferenceTourHandle>(null);
   const [figureRevisions, setFigureRevisions] = useState([0, 0, 0]);
   const [tourVisited, setTourVisited] = useState(false);
@@ -379,6 +420,45 @@ export function ComputeLabStudy({
     ],
   ][view];
   const caption = training ? trainingCaption : inferenceCaption;
+  // Whatever the reel opens lands on the stage, and the stage comes into view.
+  const toStage = () =>
+    requestAnimationFrame(() =>
+      document
+        .getElementById(`${domain}-cost-lab`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  const openView = (i: number) => {
+    setView(i);
+    setFigureHandoff(null);
+    playback.select(selected);
+    setMode("explore");
+    toStage();
+  };
+  const openStory = () => {
+    setTourVisited(true);
+    setMode("present");
+    requestAnimationFrame(() => tourRef.current?.resume());
+    toStage();
+  };
+  const openFilm = () => {
+    setMode("watch");
+    toStage();
+  };
+  const reelItems: ReelItem[] = training
+    ? [
+        { key: "film", title: "The experiment", term: "SFT → GRPO → 4× thought → lean", value: "28 → 82", unit: "of 96 solved", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch" },
+        { key: "map", title: "Capability map", term: "every task, every checkpoint", value: "+54", unit: "tasks, net of 5 regressions", Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thought", value: "88", unit: "of 96 at 8×", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "audit", title: "Regression audit", term: "gains beside negative flips", value: "59 / 5", unit: "gained / regressed", Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "story", title: "Figure story", term: "the figures, narrated", value: "90", unit: "seconds", Glyph: GlyphFigureStory, onOpen: () => { setMode("present"); toStage(); }, current: mode === "present" },
+      ]
+    : [
+        { key: "film", title: "The experiment", term: "schedule → reuse → execute", value: "36.61 → 19.29", unit: "GPU-s / correct", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch" },
+        { key: "composition", title: "Policy × runtime", term: "training ↑ · serving ←", value: "−47%", unit: "GPU-s / correct · same 67 correct", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "replay", title: "Execution replay", term: "pick any of 96 requests", value: "23.75 → 11.55", unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "latency", title: "Queue & latency", term: "p50 · p95 · p99", value: "1,081 → 445", unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "story", title: "Figure story", term: "five figures, one route", value: "113", unit: "seconds", Glyph: GlyphFigureStory, onOpen: openStory, current: mode === "present" },
+      ];
   return (
     <section
       ref={ref}
@@ -421,12 +501,6 @@ export function ComputeLabStudy({
                 : "Isolate the execution gain, expose the queue, and test whether model and runtime gains compose."}
           </p>
         </div>
-        <span
-          className="rs-lab-disclaimer"
-          title="Illustrative, not measured results"
-        >
-          Illustrative experiment
-        </span>
       </header>
       {!training && (
         <div
@@ -464,6 +538,7 @@ export function ComputeLabStudy({
         }
       >
         <div
+          hidden
           className="rs-mode-switch"
           role="group"
           aria-label={`${training ? "Training" : "Inference"} laboratory mode`}
@@ -578,7 +653,7 @@ export function ComputeLabStudy({
           label="Explore the figures"
         >
           <>
-            <div className={!training ? "rs-explore-tools" : undefined}>
+            <div hidden className={!training ? "rs-explore-tools" : undefined}>
               <div className="rs-film-invite">
                 {training && (
                   <p>
@@ -688,6 +763,8 @@ export function ComputeLabStudy({
                         </p>
                       }
                     >
+                      <div ref={compositionHost} className="gc-host">
+                      <GhostCursor root={compositionHost} script={COMPOSITION_DEMO} enabled={mode === "explore" && view === 0} />
                       <CompositionExplorer
                         key={`composition-${workload}-${budget}-${figureRevisions[0]}`}
                         points={points}
@@ -702,6 +779,7 @@ export function ComputeLabStudy({
                           <LabEvidence run={selectedRun} onInspect={pause} />
                         )}
                       />
+                      </div>
                     </Suspense>
                   </RetainedLabPanel>
                   <RetainedLabPanel
@@ -716,6 +794,8 @@ export function ComputeLabStudy({
                         </p>
                       }
                     >
+                      <div ref={replayHost} className="gc-host">
+                      <GhostCursor root={replayHost} script={REPLAY_DEMO} enabled={mode === "explore" && view === 1} />
                       <RequestReplayExplorer
                         key={`${base.policyIndex}-${budget}-${workload}-${figureRevisions[1]}`}
                         baseline={base}
@@ -732,6 +812,7 @@ export function ComputeLabStudy({
                           <LabEvidence run={selectedRun} onInspect={pause} />
                         )}
                       />
+                      </div>
                     </Suspense>
                   </RetainedLabPanel>
                   <RetainedLabPanel
@@ -746,6 +827,8 @@ export function ComputeLabStudy({
                         </p>
                       }
                     >
+                      <div ref={latencyHost} className="gc-host">
+                      <GhostCursor root={latencyHost} script={LATENCY_DEMO} enabled={mode === "explore" && view === 2} startDelay={2400} />
                       <LoadLatencyExplorer
                         key={`${base.policyIndex}-${budget}-${workload}-${figureRevisions[2]}`}
                         baseline={base}
@@ -763,6 +846,7 @@ export function ComputeLabStudy({
                           <LabEvidence run={selectedRun} onInspect={pause} />
                         )}
                       />
+                      </div>
                     </Suspense>
                   </RetainedLabPanel>
                 </>
@@ -921,6 +1005,11 @@ export function ComputeLabStudy({
             </article>
           </>
         </RetainedLabPanel>
+        <ExplorationReel
+          label={training ? "Go deeper" : "Go deeper · same intelligence, cheaper execution"}
+          note="Hover to hold · click to put it on the stage"
+          items={reelItems}
+        />
         <details className="rs-project-contract">
           <summary>
             {training
