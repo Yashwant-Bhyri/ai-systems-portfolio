@@ -430,7 +430,7 @@ function ContinuityPlot({
       <path d={`M${timeX} 99V592`} stroke="#dce8ef" strokeWidth="1.4" opacity=".77" pointerEvents="none" />
       <circle cx={timeX} cy="606" r="3" fill="#dce8ef" />
       <text x="807" y="670" textAnchor="end" className="sc-axis-label">
-        service time (illustrative ms)
+        service time (ms)
       </text>
     </svg>
   );

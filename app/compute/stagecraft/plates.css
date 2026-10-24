@@ -62,3 +62,9 @@
   animation: cx-shine 4.8s cubic-bezier(.4,0,.2,1) infinite;
 }
 .sq-ledger-result strong small { -webkit-text-fill-color: #b9a9c9; }
+
+/* SVG-drawn consequence cards (serving scenes): the violet panel becomes a faint plate. */
+svg rect[fill="#1c2037"][stroke="#776b9d"], svg rect[fill="#201f36"][stroke="#746b96"] {
+  fill: rgba(255,255,255,.018); stroke: none;
+}
+.so-scroll, .so-diagram { border-color: transparent !important; background: none !important; }
