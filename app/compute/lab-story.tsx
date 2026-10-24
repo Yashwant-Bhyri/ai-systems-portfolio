@@ -155,7 +155,7 @@ export function LabStory({
         }
       }}
     >
-      <div className="ls-topline" hidden={!training || index === 1}>
+      <div className="ls-topline" hidden={!training}>
         {training && (
           <span>
             <i aria-hidden="true" /> A GUIDED EXPERIMENT{" "}
@@ -168,7 +168,7 @@ export function LabStory({
           role="group"
           aria-label={training ? "Story thought allowance" : "Story workload"}
           className="ls-switches"
-          hidden={training && step === 3}
+          style={training && step === 3 ? { visibility: "hidden" } : undefined}
         >
           {training
             ? BUDGETS.map((b) => (
@@ -233,7 +233,7 @@ export function LabStory({
         ))}
         {!training && <label className="ls-workload">Workload<select aria-label="Story workload" value={workload} onChange={event => { setWorkload(event.target.value as typeof workload); select(step); }}><option value="interactive">Different documents</option><option value="shared-prefix">Shared document</option></select></label>}
       </nav>
-      {training && (index !== 1 || undo) && (
+      {training && (
         <header className="ls-story-heading">
           <div>
             <span className="ls-eyebrow">
@@ -626,7 +626,7 @@ export function LabStory({
           ) : null}
         </div>
       )}
-      {training && index !== 1 && (
+      {training && (
         <footer className="ls-footer">
           <div className="ls-transport">
             <button

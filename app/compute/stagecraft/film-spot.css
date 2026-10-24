@@ -11,11 +11,11 @@
 
 /* 2 · Worker scheduling: one request, then one lane, then the ledger. */
 .sq-film :is(.sq-arrival, .sq-worker-lane, .sq-ledger, .sq-request-detail) { transition: opacity .7s, filter .7s; }
-.sq-film:is([data-beat="1"], [data-beat="2"]) .sq-arrival[aria-pressed="false"] { opacity: .26; filter: grayscale(1); }
-.sq-film:is([data-beat="0"], [data-beat="1"]) .sq-ledger { opacity: .3; filter: grayscale(1) blur(.4px); }
-.sq-film[data-beat="3"] .sq-arrival { opacity: .26; filter: grayscale(1); }
+.sq-film:is([data-beat="1"], [data-beat="2"]) .sq-arrival[aria-pressed="false"] { opacity: .42; filter: saturate(.2); }
+.sq-film:is([data-beat="0"], [data-beat="1"]) .sq-ledger { opacity: .45; filter: saturate(.2); }
+.sq-film[data-beat="3"] .sq-arrival { opacity: .42; filter: saturate(.2); }
 .sq-film[data-focus="baseline"] .sq-worker-lane[data-lane="optimized"],
-.sq-film[data-focus="optimized"] .sq-worker-lane[data-lane="baseline"] { opacity: .22; filter: grayscale(1) blur(.5px); }
+.sq-film[data-focus="optimized"] .sq-worker-lane[data-lane="baseline"] { opacity: .42; filter: saturate(.2); }
 
 @media (prefers-reduced-motion: reduce) {
   .sq-film :is(.sq-arrival, .sq-worker-lane, .sq-ledger) { transition: none; }
@@ -45,3 +45,6 @@
 .pf-behavior > span, .pf-behavior small { display: none !important; }
 .pf-behavior p { color: #8d9aa8 !important; font-size: 12px !important; }
 .pf-behavior strong { color: var(--active-accent); font-weight: 500; }
+
+/* Scheduling: the timeline starts at the top instead of floating mid-panel. */
+.sq-stage { align-items: start !important; }

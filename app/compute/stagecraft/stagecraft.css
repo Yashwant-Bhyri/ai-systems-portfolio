@@ -8,7 +8,8 @@
   transform: translate3d(-40px, -40px, 0); transition-property: transform, opacity;
   transition-timing-function: cubic-bezier(.65, 0, .35, 1); opacity: 0;
 }
-.gc-cursor[data-live="true"] { opacity: 1; }
+.gc-cursor[data-live="true"][data-shown="1"] { opacity: 1; }
+.gc-cursor { transition-property: transform, opacity; }
 .gc-cursor svg { display: block; filter: drop-shadow(0 2px 6px rgba(0,0,0,.55)); }
 .gc-cursor path { fill: #f4f6f8; stroke: #0b0f14; stroke-width: 1.3; stroke-linejoin: round; }
 .gc-ring {
@@ -55,13 +56,12 @@
 .rl-tile[data-current] { box-shadow: inset 0 2px 0 var(--active-accent), inset 0 0 0 1px rgba(255,255,255,.06); }
 .rl-num { display: flex; gap: 8px; color: #73808d; font: 10px/1 var(--font-geist-mono), monospace; letter-spacing: .06em; }
 .rl-num b { color: var(--active-accent); font-weight: 500; text-transform: uppercase; letter-spacing: .08em; }
-.rl-glyph { display: block; width: 100%; flex: 0 0 auto; height: 112px; margin: 8px 0 6px; transition: height .7s cubic-bezier(.65,0,.35,1); }
-.rl-tile[data-lit="true"] .rl-glyph { height: 124px; }
+.rl-glyph { display: block; width: 100%; flex: 0 0 auto; height: 120px; margin: 8px 0 6px; }
 .rl-glyph svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .rl-title { display: block; color: #e9edf2; font: 500 13px/1.25 var(--font-geist-sans), sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.rl-tile[data-lit="true"] .rl-title { font-size: 16px; }
+.rl-title { font-size: 15px; }
 .rl-detail {
-  display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-top: 5px; max-width: 100%;
+  display: flex; align-items: baseline; flex-wrap: nowrap; gap: 4px 12px; margin-top: 5px; max-width: 100%; overflow: hidden;
   opacity: 0; transform: translateY(6px); transition: opacity .45s .15s, transform .45s .15s; white-space: nowrap;
 }
 .rl-tile[data-lit="true"] .rl-detail { opacity: 1; transform: none; }
@@ -70,7 +70,7 @@
 .rl-value mark { background: none; color: var(--active-accent); font: 500 17px/1 var(--font-geist-mono), monospace; letter-spacing: -.02em; }
 .rl-value small { color: #8794a1; font: 10px/1.2 var(--font-geist-mono), monospace; }
 .rl-chips { display: none; }
-.rl-open { margin-left: auto; color: var(--active-accent); font: 500 10px/1 var(--font-geist-mono), monospace; letter-spacing: .04em; }
+.rl-open { position: absolute; top: 12px; right: 12px; color: var(--active-accent); font: 500 10px/1 var(--font-geist-mono), monospace; letter-spacing: .04em; }
 .rl-cursor { opacity: 0; transition-duration: .7s; }
 .rl-reel[data-auto="true"] .rl-cursor { opacity: 1; }
 .rl-reel[data-auto="true"] .rl-cursor .gc-ring { animation: rl-press 2.9s cubic-bezier(.2,.7,.2,1) infinite; }
@@ -127,7 +127,7 @@
 .rs-mode-switch[hidden], .rs-explore-tools[hidden], .sul-nav[hidden], .sul-explorer-nav[hidden] { display: none !important; }
 
 /* ── Spotlight inside film scenes: softer than the architecture walk ───── */
-.cx-spot.is-matte.is-soft { opacity: .26; filter: grayscale(1) blur(.5px); }
+.cx-spot.is-matte.is-soft { opacity: .42; filter: saturate(.2) brightness(.85); }
 aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 .bo-targets[hidden] { display: none !important; }
 
@@ -193,3 +193,8 @@ aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 .prs [ref] { transition: opacity .4s; }
 .prs-foot { display: flex; justify-content: flex-end; padding: 2px 4px 6px; opacity: .6; }
 @media (max-width: 760px) { .prs { padding: 12px 4px; overflow-x: auto; } .prs-svg { min-width: 720px; } .prs-lenses { gap: 16px; overflow-x: auto; } }
+
+/* Post-training film: rows above the chapter bar keep their space when a chapter hides them. */
+/* Every chapter keeps the same frame: same rows above, same heading, a theater floor. */
+.ls-training .ls-theater { min-height: 920px; }
+.ls-training .ar-heading h3, .ls-training .ar-heading p { display: none; }

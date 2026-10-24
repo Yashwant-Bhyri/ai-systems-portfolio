@@ -69,8 +69,11 @@ export function PolicyRuntimeStage({ points, evidence }: { points: CompositionRu
     const a = points[L.from], cost = (r: LabRun) => r.correctCost ?? 0;
     const p1 = ease.io(prog(lt, T.h1[0], T.h1[1])), p2 = ease.io(prog(lt, T.h2[0], T.h2[1]));
     const m = H[0].after, b = H[1].after;
-    const cx = p2 > 0 ? lerp(X(cost(m)), X(cost(b)), p2) : lerp(X(cost(a)), X(cost(m)), p1);
-    const cy = p2 > 0 ? lerp(Y(m.accuracy), Y(b.accuracy), p2) : lerp(Y(a.accuracy), Y(m.accuracy), p1);
+    // Every lens ends at post-trained · optimized; the next lens glides back from there, never jumps.
+    const back = ease.io(prog(lt, 0, T.h1[0] - 150)), end = points[3];
+    const sx = lerp(X(cost(end)), X(cost(a)), back), sy = lerp(Y(end.accuracy), Y(a.accuracy), back);
+    const cx = p2 > 0 ? lerp(X(cost(m)), X(cost(b)), p2) : p1 > 0 ? lerp(X(cost(a)), X(cost(m)), p1) : sx;
+    const cy = p2 > 0 ? lerp(Y(m.accuracy), Y(b.accuracy), p2) : p1 > 0 ? lerp(Y(a.accuracy), Y(m.accuracy), p1) : sy;
     const tone = (h: Hop) => (h.metric === "cost" ? COLOR.serve : COLOR.train);
     const live = p2 > 0 ? H[1] : H[0];
     attrs(dot.current, { cx, cy, fill: lt > T.total ? COLOR.both : tone(live) });
@@ -94,6 +97,8 @@ export function PolicyRuntimeStage({ points, evidence }: { points: CompositionRu
     if (sub.current) sub.current.textContent = accuracyLens ? `${costNow.toFixed(2)} GPU-s / correct` : `${accNow.toFixed(1)}% pass@1`;
     if (heroDelta.current) heroDelta.current.textContent = accuracyLens ? `+${(b.accuracy - a.accuracy).toFixed(1)} pp` : `−${(cost(a) - cost(b)).toFixed(2)}  ·  −${(100 * (1 - cost(b) / cost(a))).toFixed(0)}%`;
     attrs(heroDelta.current, { opacity: tp });
+    const fadeIn = ease.out(prog(lt, 0, 600));
+    attrs(hero.current, { opacity: fadeIn }); attrs(sub.current, { opacity: fadeIn });
     if (fill.current) fill.current.style.transform = `scaleX(${lt / LENS_MS})`;
   }, [hops, points, X, Y]);
 

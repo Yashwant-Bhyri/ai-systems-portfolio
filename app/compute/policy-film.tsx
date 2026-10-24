@@ -550,7 +550,7 @@ function SearchFilm({
                 ? "Outside the selected allowance, this candidate is not explored."
                 : pass
                   ? "A verifier-accepted route in this conceptual example. Acceptance does not remove the cost of rejected candidates."
-                  : "This candidate does not pass the illustrative verifier. Its generation and checking still consume resources.",
+                  : "This candidate does not pass the verifier. Its generation and checking still consume resources.",
             }}
           >
             <path

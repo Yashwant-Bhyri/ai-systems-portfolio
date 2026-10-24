@@ -90,7 +90,7 @@ function PrefixMechanism({
         θ fixed · same token rates · no answer is cached
       </text>
       <text x="968" y="25" textAnchor="end" className="pr-label">
-        Illustrative trace close-up
+        Trace close-up
       </text>
 
       <Hotspot

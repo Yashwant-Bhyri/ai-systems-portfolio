@@ -41,3 +41,8 @@
 :is(.vx-case-inference, .vx-case-post-training) .vx-operational-stage { grid-template-rows: auto minmax(0, 1fr) auto; }
 :is(.vx-case-inference, .vx-case-post-training) .vx-proof-chip { border: 0; background: none; padding-left: 0; color: #9fadba; }
 :is(.vx-case-inference, .vx-case-post-training) .vx-visual-window { border-color: transparent; background: none; }
+
+/* The console keeps one height across steps and while the definition types in. */
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console { height: 92px; min-height: 92px; align-content: start; overflow: hidden; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console .vx-stage-annotation { min-height: 2.9em; }
+.vx-keyword-strip { min-height: 1.6em; flex-wrap: nowrap; overflow: hidden; }

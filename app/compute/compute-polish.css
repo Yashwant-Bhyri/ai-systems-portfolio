@@ -106,7 +106,8 @@
 
 /* ── Architecture walk: one lit component, the rest matte ───────────────── */
 .cx-spot { transition: opacity .8s cubic-bezier(.2,.7,.2,1), filter .8s cubic-bezier(.2,.7,.2,1); }
-.cx-spot.is-matte { opacity: .2; filter: grayscale(1) blur(.6px); }
+/* Context stays readable: dimmer and cooler, never gone. */
+.cx-spot.is-matte { opacity: .55; filter: saturate(.25) brightness(.8); }
 .cx-focus-frame rect, .cx-focus-frame path { transition: x .8s cubic-bezier(.65,0,.35,1), y .8s cubic-bezier(.65,0,.35,1), width .8s cubic-bezier(.65,0,.35,1), height .8s cubic-bezier(.65,0,.35,1), d .8s cubic-bezier(.65,0,.35,1), opacity .5s; }
 .cx-focus-pool { mix-blend-mode: screen; pointer-events: none; }
 .cx-focus-floor { fill: var(--active-accent); opacity: .55; filter: drop-shadow(0 0 6px var(--active-accent)); }

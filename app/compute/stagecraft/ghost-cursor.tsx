@@ -116,9 +116,14 @@ export function GhostCursor({
     if (!c || !el) return;
     let at = { x: el.clientWidth * 0.62, y: el.clientHeight * 0.55 };
     place(at.x, at.y, 0);
+    c.dataset.shown = "0";
     (async () => {
       await sleep(startDelay, token);
       do {
+        // Appear where the first target is, never as an idle arrow mid-diagram.
+        const first = el.querySelector<HTMLElement>(script[0]?.target ?? "");
+        if (first) { const r = first.getBoundingClientRect(), o = el.getBoundingClientRect(); at = { x: r.left - o.left + r.width * 0.5 + 60, y: r.top - o.top + r.height * 0.55 + 40 }; place(at.x, at.y, 0); }
+        c.dataset.shown = "1";
         for (const step of script) {
           if (token.dead) return;
           const target = el.querySelector<HTMLElement>(step.target);
@@ -150,10 +155,11 @@ export function GhostCursor({
           await sleep(step.hold ?? 1800, token);
         }
         setTag(null);
+        c.dataset.shown = "0";
         await sleep(restDelay, token);
       } while (loop && !token.dead);
     })();
-    return () => { token.dead = true; };
+    return () => { token.dead = true; c.dataset.shown = "0"; };
   }, [live, script, startDelay, loop, restDelay, place, root, run]);
 
   return (
