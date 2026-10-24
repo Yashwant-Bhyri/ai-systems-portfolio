@@ -41,6 +41,7 @@
 .cf-visual-stack[data-lens="mechanism"] .cf-practical, .cf-visual-stack[data-lens="practice"] .cf-technical { filter: blur(8px) grayscale(1) brightness(.75); }
 .ls-inspector[data-idle="true"] { display: none; }
 .pf-behavior { background: none !important; border: 0 !important; padding-top: 6px !important; }
-.pf-behavior > span, .pf-behavior small { display: none; }
+.pf-behavior { display: block !important; }
+.pf-behavior > span, .pf-behavior small { display: none !important; }
 .pf-behavior p { color: #8d9aa8 !important; font-size: 12px !important; }
 .pf-behavior strong { color: var(--active-accent); font-weight: 500; }

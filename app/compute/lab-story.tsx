@@ -160,7 +160,7 @@ export function LabStory({
           <span>
             <i aria-hidden="true" /> A GUIDED EXPERIMENT{" "}
             <small>
-              5 chapters · {training ? "~90 seconds" : "~100 seconds"}
+              {training ? "6 chapters · ~105 seconds" : "5 chapters · ~100 seconds"}
             </small>
           </span>
         )}

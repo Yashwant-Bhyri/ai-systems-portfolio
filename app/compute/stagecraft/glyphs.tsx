@@ -16,7 +16,9 @@ export function GlyphExperiment() {
       <animate attributeName="opacity" values="1;1;.12;.12;1" keyTimes={`0;${.18 + i * .16};${.26 + i * .16};.92;1`} dur={D(5.4)} repeatCount="indefinite" />
     </rect>)}
     <rect x={14} y={36} width={96} height={16} rx={3} className="g-g" />
-    {["wait", "reread", "slow rates"].map((l, i) => <text key={l} x={226 - [0, 46, 108][i] - [46, 62, 22][i] / 2} y={72} className="g-t" textAnchor="middle">{l}</text>)}
+    <rect x={14} y={66} width={8} height={8} rx={1.5} className="g-r" /><text x={26} y={74} className="g-t">wait</text>
+    <rect x={66} y={66} width={8} height={8} rx={1.5} className="g-a" /><text x={78} y={74} className="g-t">reread</text>
+    <rect x={132} y={66} width={8} height={8} rx={1.5} className="g-c" /><text x={144} y={74} className="g-t">slow rates</text>
     <text x={14} y={102} className="g-t">same answers · less work each</text>
   </svg>;
 }

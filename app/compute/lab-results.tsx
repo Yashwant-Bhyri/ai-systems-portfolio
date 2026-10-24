@@ -47,6 +47,7 @@ import {
   GlyphCurves,
   GlyphExperiment,
   GlyphFigureStory,
+  GlyphFrontier,
   GlyphLatency,
   GlyphReplay,
 } from "./stagecraft/glyphs";
@@ -447,7 +448,7 @@ export function ComputeLabStudy({
   };
   const reelItems: ReelItem[] = training
     ? [
-        { key: "film", title: "The experiment", term: "SFT → GRPO → 4× thought → lean", value: "28 → 82", unit: "of 96 solved", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch" },
+        { key: "film", title: "The experiment", term: "SFT → GRPO → 4× thought → lean", value: "28 → 82", unit: "of 96 solved", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch" },
         { key: "map", title: "Capability map", term: "every task, every checkpoint", value: "+54", unit: "tasks, net of 5 regressions", Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thought", value: "88", unit: "of 96 at 8×", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "audit", title: "Regression audit", term: "gains beside negative flips", value: "59 / 5", unit: "gained / regressed", Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
