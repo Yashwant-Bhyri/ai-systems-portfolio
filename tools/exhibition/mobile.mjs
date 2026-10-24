@@ -1,7 +1,7 @@
 import { chromium } from '/Users/yash/antigravity/node_modules/playwright/index.mjs';
 const [, , out, json] = process.argv; const steps = JSON.parse(json);
 const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 160)));
+await ctx.addInitScript((l) => { if (l) localStorage.setItem('portfolio-lang', 'zh'); }, process.env.LANG_ZH || ''); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 160)));
 await p.goto('http://localhost:3290/', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(2500);
 for (const [op, a, c] of steps) {
   if (op === 'into') await p.locator(a).first().evaluate(e => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
