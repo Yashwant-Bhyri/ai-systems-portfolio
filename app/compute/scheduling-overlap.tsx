@@ -726,7 +726,7 @@ export function SchedulingOverlap({
               : HEADINGS[frame.beat]}
           </p>
         </div>
-        <span>Two fixed streams · illustrative timing</span>
+        <span>Two fixed streams</span>
       </header>
       <div
         className="so-controls"

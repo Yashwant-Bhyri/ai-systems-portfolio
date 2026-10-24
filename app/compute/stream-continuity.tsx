@@ -621,7 +621,7 @@ export function StreamContinuity({ initial }: { initial?: StreamInspectorInitial
       }}>
       <div className="sc-topline">
         <span>Four requests · one execution device</span>
-        <span>Illustrative serving loop</span>
+        <span>Serving loop</span>
       </div>
       <header className="sc-header">
         <div>

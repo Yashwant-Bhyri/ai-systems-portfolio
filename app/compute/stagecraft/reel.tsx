@@ -59,6 +59,11 @@ export function ExplorationReel({
     return () => { m.removeEventListener("change", u); n.removeEventListener("change", u); io?.disconnect(); ro?.disconnect(); };
   }, []);
 
+  // Silhouettes only animate while the reel is on screen.
+  useEffect(() => {
+    row.current?.querySelectorAll("svg").forEach((svg) => (inView && !reduced ? svg.unpauseAnimations() : svg.pauseAnimations()));
+  }, [inView, reduced]);
+
   const auto = inView && hover === null && !reduced;
   useEffect(() => {
     if (!auto) return;

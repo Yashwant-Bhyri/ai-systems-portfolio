@@ -568,7 +568,7 @@ export function PrefixReuseReveal({
                   ? "Reuse finishes; baseline continues"
                   : "Prefix reuse: GPU-work comparison"}
         </h4>
-        <span>Illustrative service replay</span>
+        <span>Service replay</span>
       </div>
       <div className="pr-stage">
         <div

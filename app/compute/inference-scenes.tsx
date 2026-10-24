@@ -24,7 +24,7 @@ export function Scheduling({t,option}:SceneProps) {
     </g>;})}
     <Meter x={28} y={283} w={110} value={continuous?1:(t>=6500?1/3:t>=3200?2/3:1)} label={`${continuous?3:t>=6500?1:t>=3200?2:3}/3 slots occupied`} color={continuous?C.amber:C.muted}/>
     <Text x={209} y={333} kind="accent">{next?"E replaces B; A continues without restarting.":replaced?"D replaces C at the next scheduling boundary.":t>=3200?"C is complete. Fixed batching leaves its slot empty.":"Different response lengths share one execution step."}</Text>
-    <Caption title={continuous?"Finished sequences leave. New work enters.":"The longest sequence holds the fixed batch open."} detail="Same illustrative requests; switch the scheduler to see the idle-slot tradeoff."/>
+    <Caption title={continuous?"Finished sequences leave. New work enters.":"The longest sequence holds the fixed batch open."} detail="Same requests; switch the scheduler to see the idle-slot tradeoff."/>
   </>;
 }
 
@@ -66,7 +66,7 @@ export function Kernels({t,option}:SceneProps) {
     <Text x={562} y={101} kind="small">OUTPUT TILE</Text><Matrix x={562} y={125} cols={6} rows={6} size={17} gap={5} color={C.cyan} progress={p}/>
     <Text x={624} y={281} anchor="middle" kind="small">C ← A × B + C</Text>
     {["load","matmul","activation","write"].map((s,i)=>{const x=28+i*(fused?151:174),w=fused?150:131;return <g key={s}><rect x={x} y={315} width={w} height={24} fill={step>=i?C.amber:"#24313d"} fillOpacity={step>=i?.18:.5}/><Text x={x+w/2} y={331} anchor="middle" kind="small">{s}</Text>{!fused&&i<3&&<Text x={x+w+20} y={331} anchor="middle" kind="small" color={C.red}>gap</Text>}</g>;})}
-    <Caption title={fused?"Reuse intermediates. Avoid extra trips to device memory.":"An occupied GPU depends on movement as well as math."} detail="Illustrative tiling and fusion; dimensions and timing do not model a specific kernel."/>
+    <Caption title={fused?"Reuse intermediates. Avoid extra trips to device memory.":"An occupied GPU depends on movement as well as math."} detail="Tiling and fusion; dimensions and timing do not model a specific kernel."/>
   </>;
 }
 
@@ -119,7 +119,7 @@ export function Parallelism({t,option}:SceneProps) {
   </>;
   const combine=ep(t,4100,7100);
   return <>
-    <Header title="TENSOR PARALLELISM / ONE LAYER, FOUR SHARDS" right="illustrative row-parallel layer"/>
+    <Header title="TENSOR PARALLELISM / ONE LAYER, FOUR SHARDS" right="row-parallel layer"/>
     {[0,1,2,3].map(i=><g key={i}>
       <Panel x={28+i*170} y={69} w={151} h={155} label={`GPU ${i} · W${i}`} color={PALETTE[i]}><Matrix x={48+i*170} y={112} cols={6} rows={4} size={14} gap={4} color={PALETTE[i]} t={t} mode="wave"/><Text x={103+i*170} y={204} anchor="middle" kind="small">partial y{i}</Text></Panel>
       <Flight t={t} start={3000+i*160} end={6000+i*160} from={[103+i*170,225]} via={[103+i*170,281]} to={[318+i*28,288]} label={`y${i}`} color={PALETTE[i]} w={28}/>

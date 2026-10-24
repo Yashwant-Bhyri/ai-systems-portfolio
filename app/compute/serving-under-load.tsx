@@ -9,6 +9,7 @@ import "./serving-under-load.css";
 import "./stagecraft/stagecraft.css";
 import "./stagecraft/plates.css";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
+import { DraftFilm } from "./stagecraft/draft-film";
 import {
   GlyphAutoscale, GlyphBatching, GlyphCacheRoute, GlyphChunked, GlyphContinuity, GlyphDraft,
   GlyphEngines, GlyphFlash, GlyphKVSizing, GlyphObserve, GlyphOverlap, GlyphPaged, GlyphQuant,
@@ -270,6 +271,7 @@ export function ServingUnderLoad() {
               </p>
             }
           >
+            <DraftFilm active={view === "loop" && explorer === "draft"} />
             <DraftVerification
               active={view === "loop" && explorer === "draft"}
             />

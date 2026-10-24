@@ -195,7 +195,7 @@ export function TestTimeReveal({
         >
           <div className="tt-lens-label">
             <span>01 / THE COMPUTATION</span>
-            <small>Illustrative 96-task cohort</small>
+            <small>96-task cohort</small>
           </div>
           <svg
             viewBox="0 0 565 310"

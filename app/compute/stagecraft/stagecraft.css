@@ -142,3 +142,15 @@ aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 .ls-theater[data-feature="room"] > .ls-outcomes, .ls-theater[data-feature="room"] .ls-scroll-hint, .ls-theater[data-feature="room"] .ls-figure-label { display: none !important; }
 .ls-theater[data-feature="room"] .ls-scene-scroll { overflow: visible; }
 .ls-training .ls-chapters { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+/* ── Draft film (speculative decoding opener) ─────────────────────────── */
+.df-film { position: relative; padding: 8px 0 18px; border-bottom: 1px solid var(--vx-line, rgba(255,255,255,.08)); margin-bottom: 18px; }
+.df-svg { display: block; width: 100%; height: auto; }
+.df-word { font: 400 44px var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif; fill: #f2f4ee; letter-spacing: -.01em; white-space: pre; }
+.df-small { font: 400 15px var(--font-geist-mono), monospace; fill: #8a96a3; letter-spacing: .02em; }
+.df-kicker { font: 500 13px var(--font-geist-mono), monospace; fill: var(--active-accent, #ffc267); letter-spacing: .08em; }
+.df-label { font: 500 16px var(--font-geist-sans), sans-serif; fill: #c9d2db; }
+.df-mark { font: 500 26px var(--font-geist-sans), sans-serif; }
+.df-call { font: 500 20px var(--font-geist-mono), monospace; fill: var(--active-accent, #ffc267); }
+.df-caption { margin: 0 0 0 7.5%; color: #e6ebf0; font: 450 18px/1.4 var(--font-geist-sans), sans-serif; letter-spacing: -.01em; min-height: 1.4em; }
+@media (max-width: 760px) { .df-caption { margin-left: 4%; font-size: 15px; } .df-film { overflow-x: auto; } .df-svg { min-width: 680px; } }

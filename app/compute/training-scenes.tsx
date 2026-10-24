@@ -17,7 +17,7 @@ export function DataCuration({t,option}:SceneProps) {
     {records.map((_,i)=>{const at=i*1900;return <g key={i}><Flight t={t} start={at} end={at+700} from={[220,104+i*51]} to={[285,185]} label={`#${i+1}`} color={C.rose}/><Flight t={t} start={at+1000} end={at+1600} from={[441,185]} via={[470,220]} to={i===1||i===2?[371,312]:[490,i===0?114:179]} label={i===1?"duplicate":i===2?"invalid":`#${i+1}`} color={i===1||i===2?C.red:C.green} w={i===1||i===2?76:42}/></g>;})}
     <Text x={289} y={336} kind="small" color={C.red}>reject / quarantine</Text>
     <Line d="M474 226H692" dash/><Panel x={490} y={247} w={201} h={80} label="HELD-OUT TASKS" color={C.blue}><Text x={504} y={291} kind="small">isolated before training</Text><Text x={504} y={312} kind="small" color={C.blue}>never enters the optimizer</Text></Panel>
-    <Caption title="Verification routes useful examples into supervision." detail="Illustrative records. Invalid and duplicate traces do not become learning targets."/>
+    <Caption title="Verification routes useful examples into supervision." detail="Invalid and duplicate traces do not become learning targets."/>
   </>;
 }
 
@@ -100,7 +100,7 @@ export function DPO({t,option}:SceneProps) {
     </g>;})}
     <Text x={306} y={283} kind="small">log πθ(y|x) − log πref(y|x)</Text>
     <Text x={28} y={325} kind="small">L = −log σ(β · preference margin)</Text><Text x={689} y={328} kind="accent" anchor="end">toy loss {loss.toFixed(3)}</Text>
-    <Caption title="Separate the reference-relative scores of the preference pair." detail="Illustrative β = 1. The fixed reference anchors the comparison; labels define preference."/>
+    <Caption title="Separate the reference-relative scores of the preference pair." detail="β = 1. The fixed reference anchors the comparison; labels define preference."/>
   </>;
 }
 
@@ -122,7 +122,7 @@ export function Search({t,option}:SceneProps) {
     <Panel x={568} y={165} w={124} h={79} label={s.winner!==null?"VERIFIED":"FRONTIER"} color={s.winner!==null?C.green:C.muted}><Text x={630} y={213} kind="small" anchor="middle">{s.winner!==null?`path ${s.winner+1}`:s.exhausted?"no solution":"searching"}</Text></Panel>
     <Meter x={568} y={285} w={124} value={s.checked/budget} color={s.exhausted&&!s.passing.length?C.red:C.rose}/>
     <Text x={568} y={317} kind="small">{s.exhausted?"budget exhausted":`${Math.round(progress*100)}% replay`}</Text>
-    <Caption title={s.exhausted&&!s.passing.length?"A small budget can end without a verified answer.":"Verification stops weak paths before they consume more search."} detail="Illustrative frontier; additional checks cost compute and do not guarantee success."/>
+    <Caption title={s.exhausted&&!s.passing.length?"A small budget can end without a verified answer.":"Verification stops weak paths before they consume more search."} detail="Frontier; additional checks cost compute and do not guarantee success."/>
   </>;
 }
 

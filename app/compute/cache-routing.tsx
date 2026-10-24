@@ -754,7 +754,7 @@ export function CacheRouting({ active = true }: { active?: boolean }) {
               : titles[frame.beat]}
           </p>
         </div>
-        <span>Illustrative event trace · alternative placements</span>
+        <span>Event trace · alternative placements</span>
       </header>
       <div className="cr-controls">
         <div role="group" aria-label="Prefix on replica A">

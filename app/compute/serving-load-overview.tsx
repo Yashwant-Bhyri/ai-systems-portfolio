@@ -253,7 +253,7 @@ export function ServingLoadOverview({
     >
       <div className="slo-topline">
         <span>PART 2 · NEW A/B/C/D WORKLOAD</span>
-        <strong>Illustrative serving schematic</strong>
+        <strong>Serving schematic</strong>
       </div>
       <div className="slo-header">
         <div>
