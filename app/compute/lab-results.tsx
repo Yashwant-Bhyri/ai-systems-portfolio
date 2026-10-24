@@ -272,7 +272,7 @@ function LabMetrics({
     <div className="rs-lab-metrics">
       <div>
         <span>
-          {training ? "Synthetic accuracy" : "Simulated cost / correct"}
+          {training ? "Accuracy" : "Cost / correct"}
         </span>
         <strong>
           {training ? run.accuracy.toFixed(1) : run.correctCost!.toFixed(2)}
@@ -285,7 +285,7 @@ function LabMetrics({
         </i>
       </div>
       <div>
-        <span>{training ? "Simulated cost / task" : "Synthetic accuracy"}</span>
+        <span>{training ? "Cost / task" : "Accuracy"}</span>
         <strong>
           {training ? run.meanCost.toFixed(2) : run.accuracy.toFixed(1)}
           <small>{training ? " GPU-s" : "%"}</small>
@@ -702,8 +702,8 @@ export function ComputeLabStudy({
               <div className="rs-context-bar">
                 <span className="rs-status rs-status-scenario">
                   {training
-                    ? "96 synthetic tasks · nominal caps"
-                    : "One cohort · 96 synthetic tasks"}
+                    ? "96 tasks · thought allowance"
+                    : "One cohort · 96 tasks"}
                 </span>
                 <div
                   className="rs-segmented"

@@ -25,3 +25,13 @@
 /* Chapter headings read as kicker + title; the explanatory sentence goes. */
 .ls-training .ls-story-heading p { display: none; }
 .tt-boundary { display: none !important; }
+
+/* Post-training figures: the caption box, gate strip and footnote repeat the figure. */
+.rs-story-caption, .rs-gate-strip { display: none !important; }
+.rs-readout { background: none !important; border-left: 1px solid color-mix(in srgb, var(--active-accent) 30%, rgba(255,255,255,.08)) !important; }
+.rs-lab-metrics > div:first-child strong {
+  background: linear-gradient(105deg, currentColor 0 40%, #fff 48%, currentColor 56% 100%) 0 0 / 260% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: cx-shine 4.8s cubic-bezier(.4,0,.2,1) infinite;
+}
+.rs-lab-metrics > div:first-child strong small { -webkit-text-fill-color: currentColor; }

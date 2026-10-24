@@ -81,7 +81,7 @@ export function CapabilityShiftPlot({
         simulated tasks, not a real benchmark item.
       </title>
       <text x="36" y="28" className="rs-figure-label">
-        SYNTHETIC COHORT · EACH SQUARE IS ONE TASK · SELECT A SQUARE
+        EACH SQUARE IS ONE TASK · SELECT ONE
       </text>
       <text x="390" y="65" textAnchor="middle" className="rs-axis">
         Base checkpoint
@@ -280,7 +280,7 @@ export function LabScalingPlot({
         one, two, four and eight times thought allowances.
       </title>
       <text x="86" y="28" className="rs-figure-label">
-        SYNTHETIC TEST-TIME SCALING · GPU COSTS ARE MODELLED, NOT MEASURED
+        TEST-TIME SCALING · FOUR CHECKPOINTS × FOUR ALLOWANCES
       </text>
       {[0, 20, 40, 60, 80, 100].map((v) => (
         <g key={v}>
@@ -391,11 +391,7 @@ export function LabScalingPlot({
         />
       </g>
       <text x="570" y="368" textAnchor="middle" className="rs-axis">
-        Simulated GPU-seconds per task
-      </text>
-      <text x="570" y="389" textAnchor="middle" className="rs-tick">
-        Nominal caps are not cost multipliers. Every position uses simulated
-        work.
+        GPU-seconds per task
       </text>
     </svg>
   );

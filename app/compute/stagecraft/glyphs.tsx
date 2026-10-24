@@ -24,14 +24,19 @@ export function GlyphExperiment() {
 }
 
 export function GlyphComposition() {
+  // The four conditions as a quadrilateral; training lifts (rose), serving shifts left (amber).
   return <svg viewBox={VB}>
-    <path d="M24 16V100H226" className="g-axis" />
-    <circle cx={190} cy={78} r={5} className="g-m" />
-    <circle cx={190} cy={40} r={5} className="g-r"><animate attributeName="opacity" values=".2;1;1;1" keyTimes="0;.25;.6;1" dur={D(4.2)} repeatCount="indefinite" /></circle>
-    <circle cx={190} cy={40} r={5} className="g-g"><animate attributeName="cx" values="190;190;96;96" keyTimes="0;.45;.75;1" dur={D(4.2)} repeatCount="indefinite" /></circle>
-    <path d="M190 72V48" className="g-line g-r-s" strokeDasharray="3 4" />
-    <path d="M182 40H104" className="g-line g-g-s" strokeDasharray="3 4"><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.45;.75;1" dur={D(4.2)} repeatCount="indefinite" /></path>
-    <text x={30} y={26} className="g-t">accuracy ↑</text><text x={226} y={114} className="g-t" textAnchor="end">← GPU-s / correct</text>
+    <path d="M24 12V104H226" className="g-axis" />
+    <path d="M190 84L70 84L106 34L198 34Z" className="g-line" strokeDasharray="2 5" />
+    <circle cx={190} cy={84} r={4} className="g-m" /><circle cx={70} cy={84} r={3} className="g-m" /><circle cx={198} cy={34} r={3} className="g-m" /><circle cx={106} cy={34} r={3} className="g-m" />
+    <path d="M190 84L198 34" className="g-line g-r-s" strokeWidth={2} strokeDasharray="60" strokeDashoffset="60">
+      <animate attributeName="stroke-dashoffset" values="60;0;0;0" keyTimes="0;.3;.9;1" dur={D(5)} repeatCount="indefinite" />
+    </path>
+    <path d="M198 34L106 34" className="g-line g-a-s" strokeWidth={2} strokeDasharray="100" strokeDashoffset="100">
+      <animate attributeName="stroke-dashoffset" values="100;100;0;0" keyTimes="0;.35;.7;1" dur={D(5)} repeatCount="indefinite" />
+    </path>
+    <circle r={5} className="g-ink"><animateMotion path="M190 84L198 34L106 34" keyPoints="0;0.35;1;1" keyTimes="0;.3;.7;1" calcMode="linear" dur={D(5)} repeatCount="indefinite" /></circle>
+    <text x={30} y={22} className="g-t">pass@1 ↑</text><text x={226} y={116} className="g-t" textAnchor="end">← GPU-s / correct</text>
   </svg>;
 }
 
