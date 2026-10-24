@@ -44,6 +44,8 @@ export function PolicyRuntimeStage({ points, evidence }: { points: CompositionRu
   const [lens, setLens] = useState(0);
   const [inView, setInView] = useState(false);
   const lensRef = useRef(0);
+  // A lens click rewinds the running clock; the frame loop applies it on its next tick.
+  const jump = useRef<number | null>(null);
 
   const dot = useRef<SVGCircleElement>(null), halo = useRef<SVGCircleElement>(null);
   const seg = useRef<(SVGPathElement | null)[]>([]), segTag = useRef<(SVGGElement | null)[]>([]);
@@ -101,12 +103,15 @@ export function PolicyRuntimeStage({ points, evidence }: { points: CompositionRu
     if (!inView) { draw(offset.current); return; }
     let raf = 0;
     start.current = performance.now() - offset.current;
-    const tick = (now: number) => { offset.current = (now - start.current) % TOTAL; draw(offset.current); raf = requestAnimationFrame(tick); };
+    const tick = (now: number) => {
+      if (jump.current !== null) { start.current = now - jump.current; jump.current = null; }
+      offset.current = (now - start.current) % TOTAL; draw(offset.current); raf = requestAnimationFrame(tick);
+    };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [inView, draw]);
 
-  const choose = (i: number) => { offset.current = i * LENS_MS + 1; start.current = performance.now() - offset.current; draw(offset.current); };
+  const choose = (i: number) => { jump.current = i * LENS_MS + 1; offset.current = jump.current; draw(offset.current); };
   const L = LENSES[lens], H = hops[lens];
   const corners = points.map((p, i) => ({ x: X(p.correctCost), y: Y(p.accuracy), i }));
   const accuracyLens = L.id === "policy";

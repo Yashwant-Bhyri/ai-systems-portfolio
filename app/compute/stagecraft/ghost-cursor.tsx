@@ -12,9 +12,9 @@ import { useTr } from "../../exhibit/i18n";
 export type CursorStep = {
   /** CSS selector inside the root. */
   target: string;
-  action?: "click" | "hover" | "range";
-  /** For "range": the value to set. */
-  value?: number;
+  action?: "click" | "hover" | "range" | "select";
+  /** For "range": the value to set; for "select": the option value. */
+  value?: number | string;
   /** Milliseconds to stay after acting. */
   hold?: number;
   /** A two-to-four word tag shown beside the cursor. */
@@ -28,6 +28,12 @@ const sleep = (ms: number, token: { dead: boolean }) =>
     const id = window.setTimeout(resolve, ms);
     if (token.dead) { window.clearTimeout(id); resolve(); }
   });
+
+function setSelect(select: HTMLSelectElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+  setter?.call(select, value);
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+}
 
 function setRange(input: HTMLInputElement, value: number) {
   const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
@@ -121,7 +127,7 @@ export function GhostCursor({
           let fx = step.fx ?? 0.5;
           if (step.action === "range" && target instanceof HTMLInputElement && step.value !== undefined) {
             const min = Number(target.min || 0), max = Number(target.max || 100);
-            fx = (step.value - min) / (max - min || 1);
+            fx = (Number(step.value) - min) / (max - min || 1);
           }
           const x = r.left - o.left + r.width * fx, y = r.top - o.top + r.height * 0.55;
           const dist = Math.hypot(x - at.x, y - at.y), ms = Math.max(380, Math.min(1100, dist * 1.25));
@@ -136,7 +142,8 @@ export function GhostCursor({
             c.dataset.state = "press";
             await sleep(170, token);
             if (token.dead) return;
-            if (step.action === "range" && target instanceof HTMLInputElement && step.value !== undefined) setRange(target, step.value);
+            if (step.action === "range" && target instanceof HTMLInputElement && step.value !== undefined) setRange(target, Number(step.value));
+            else if (step.action === "select" && target instanceof HTMLSelectElement && step.value !== undefined) setSelect(target, String(step.value));
             else target.click();
             c.dataset.state = "release";
           }

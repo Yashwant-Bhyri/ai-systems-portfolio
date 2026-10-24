@@ -11,6 +11,29 @@ import "./stagecraft/plates.css";
 import "./stagecraft/quiet.css";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { DraftFilm } from "./stagecraft/draft-film";
+import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
+
+/* Each investigation's own switches, performed: the counterexample is one click away, so show it. */
+const DEMOS: Record<string, readonly CursorStep[]> = {
+  pressure: [
+    { target: ".sp-controls label:nth-of-type(2) select", action: "select", value: "12", label: "Smaller KV pool", hold: 7000 },
+    { target: ".sp-controls label:nth-of-type(2) select", action: "select", value: "24", label: "Back to 24 pages", hold: 6000 },
+  ],
+  draft: [
+    { target: "[aria-label='Draft agreement'] button:nth-of-type(2)", label: "Every guess right", hold: 6500 },
+    { target: "[aria-label='Draft agreement'] button:nth-of-type(3)", label: "Every guess wrong", hold: 6500 },
+    { target: "[aria-label='Draft agreement'] button:nth-of-type(1)", label: "Partial match", hold: 5000 },
+  ],
+  cache: [
+    { target: "[aria-label='Prefix on replica A'] button:nth-of-type(2)", label: "Prefix evicted", hold: 7000 },
+    { target: "[aria-label='Prefix on replica A'] button:nth-of-type(1)", label: "Prefix ready", hold: 6000 },
+  ],
+  overlap: [
+    { target: ".so-controls button:nth-of-type(2)", label: "Slower CPU", hold: 7000 },
+    { target: ".so-controls button:nth-of-type(3)", label: "No CPU overhead", hold: 7000 },
+    { target: ".so-controls button:nth-of-type(1)", label: "Balanced host", hold: 5000 },
+  ],
+};
 import {
   GlyphAutoscale, GlyphBatching, GlyphCacheRoute, GlyphChunked, GlyphContinuity, GlyphDraft,
   GlyphEngines, GlyphFlash, GlyphKVSizing, GlyphObserve, GlyphOverlap, GlyphPaged, GlyphQuant,
@@ -65,6 +88,8 @@ export function ServingUnderLoad() {
     revision: number;
   }>({ revision: 0 });
   const root = useRef<HTMLDivElement>(null);
+  const pressureHost = useRef<HTMLDivElement>(null), draftHost = useRef<HTMLDivElement>(null),
+    cacheHost = useRef<HTMLDivElement>(null), overlapHost = useRef<HTMLDivElement>(null);
   const continuityButton = useRef<HTMLButtonElement>(null);
   const returnButton = useRef<HTMLButtonElement>(null);
   const [origin, setOrigin] = useState<{
@@ -195,9 +220,12 @@ export function ServingUnderLoad() {
         id={`${id}-pressure`}
         label="Prefill and decode scheduling"
       >
-        <ServingPressureFilm
-          onInspectTrace={(initial) => openContinuity(true, initial)}
-        />
+        <div ref={pressureHost} className="gc-host">
+          <GhostCursor root={pressureHost} script={DEMOS.pressure} enabled={view === "pressure"} startDelay={9000} />
+          <ServingPressureFilm
+            onInspectTrace={(initial) => openContinuity(true, initial)}
+          />
+        </div>
       </RetainedLabPanel>
       <RetainedLabPanel
         active={view === "loop"}
@@ -273,9 +301,12 @@ export function ServingUnderLoad() {
             }
           >
             <DraftFilm active={view === "loop" && explorer === "draft"} />
-            <DraftVerification
-              active={view === "loop" && explorer === "draft"}
-            />
+            <div ref={draftHost} className="gc-host">
+              <GhostCursor root={draftHost} script={DEMOS.draft} enabled={view === "loop" && explorer === "draft"} startDelay={6000} />
+              <DraftVerification
+                active={view === "loop" && explorer === "draft"}
+              />
+            </div>
           </Suspense>
         </RetainedLabPanel>
         <RetainedLabPanel
@@ -290,7 +321,10 @@ export function ServingUnderLoad() {
               </p>
             }
           >
-            <CacheRouting active={view === "loop" && explorer === "cache"} />
+            <div ref={cacheHost} className="gc-host">
+              <GhostCursor root={cacheHost} script={DEMOS.cache} enabled={view === "loop" && explorer === "cache"} startDelay={9000} />
+              <CacheRouting active={view === "loop" && explorer === "cache"} />
+            </div>
           </Suspense>
         </RetainedLabPanel>
         <RetainedLabPanel
@@ -305,9 +339,12 @@ export function ServingUnderLoad() {
               </p>
             }
           >
-            <SchedulingOverlap
-              active={view === "loop" && explorer === "overlap"}
-            />
+            <div ref={overlapHost} className="gc-host">
+              <GhostCursor root={overlapHost} script={DEMOS.overlap} enabled={view === "loop" && explorer === "overlap"} startDelay={9000} />
+              <SchedulingOverlap
+                active={view === "loop" && explorer === "overlap"}
+              />
+            </div>
           </Suspense>
         </RetainedLabPanel>
         <RetainedLabPanel
