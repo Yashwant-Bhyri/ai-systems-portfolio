@@ -1,0 +1,144 @@
+.sul-root {
+  min-width: 0;
+  scroll-margin-top: 96px;
+}
+.sul-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin-bottom: 18px;
+}
+.vx-shell .sul-nav button {
+  border: 1px solid #415c6d;
+  border-radius: 3px;
+  padding: 9px 12px;
+  color: #cbdae4;
+  background: #101e28;
+  font:
+    12px/1.4 var(--font-geist-sans),
+    sans-serif;
+  cursor: pointer;
+}
+.vx-shell .sul-nav button[aria-pressed="true"] {
+  color: #ffe0b0;
+  border-color: #c7a56d;
+  background: #26271f;
+}
+.sul-nav button:focus-visible {
+  outline: 2px solid #ffc267;
+  outline-offset: 3px;
+}
+.sul-nav > span {
+  color: #c0cfda;
+  font:
+    11px/1.5 var(--font-geist-mono),
+    monospace;
+}
+
+.sul-explorer-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.sul-explorer-nav > span {
+  font-size: 11px;
+  color: #c1d1de;
+  margin-right: 8px;
+}
+.vx-shell .sul-explorer-nav button {
+  background: #112430;
+  border: 1px solid #486174;
+  border-radius: 3px;
+  color: #cddce7;
+  padding: 7px 10px;
+  font:
+    12px/1.45 var(--font-geist-sans),
+    sans-serif;
+  cursor: pointer;
+  transition:
+    color 160ms,
+    border-color 160ms,
+    background-color 160ms;
+}
+.vx-shell .sul-explorer-nav button:hover {
+  border-color: #b7a0e0;
+  color: #eee6ff;
+}
+.vx-shell .sul-explorer-nav button[aria-pressed="true"] {
+  background: #2b2841;
+  border-color: #b59cdb;
+  color: #e0d1fa;
+}
+.sul-explorer-nav button:focus-visible {
+  outline: 2px solid #c7a6ff;
+  outline-offset: 3px;
+}
+.sul-explorer-nav strong {
+  display: block;
+  font: inherit;
+}
+.sul-explorer-nav small {
+  display: block;
+  font-size: 11px;
+  color: #b8c9da;
+  margin-top: 4px;
+}
+.vx-shell .sul-explorer-nav button {
+  text-align: left;
+}
+.sul-return-path {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0 0 15px;
+}
+.vx-shell .sul-return-path button {
+  background: transparent;
+  border: 0;
+  padding: 7px 0;
+  color: #decaff;
+  font:
+    13px/1.4 var(--font-geist-sans),
+    sans-serif;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.sul-return-path button:focus-visible {
+  outline: 2px solid #c7a6ff;
+  outline-offset: 3px;
+}
+.sul-return-path span {
+  font-size: 11px;
+  color: #bdccda;
+}
+@media (max-width: 600px) {
+  .sul-nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 6px;
+  }
+  .vx-shell .sul-nav button {
+    padding: 8px;
+    text-align: left;
+  }
+  .sul-explorer-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 6px;
+  }
+  .sul-explorer-nav > span {
+    grid-column: 1 / -1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sul-explorer-nav * {
+    transition: none !important;
+  }
+}

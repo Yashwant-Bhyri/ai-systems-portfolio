@@ -1,0 +1,510 @@
+.ls-theater[data-feature="adapter"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ls-theater[data-feature="adapter"] > .ls-outcomes,
+.ls-theater[data-feature="adapter"] .ls-scroll-hint,
+.ls-theater[data-feature="adapter"] .ls-figure-label {
+  display: none;
+}
+.ls-theater[data-feature="adapter"] .ls-scene-scroll {
+  overflow: clip;
+}
+.ar-root {
+  color: #e6edf2;
+  background: #0b1721;
+}
+.ar-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 24px;
+  padding: 20px 24px 14px;
+}
+.vx-shell .ar-heading h3 {
+  font-size: clamp(21px, 2vw, 27px);
+  margin: 0 0 7px;
+  letter-spacing: -0.025em;
+}
+.ar-heading p {
+  margin: 0;
+  font-size: 13px;
+  color: #b8c8d6;
+}
+.ar-heading > span {
+  font-size: 12px;
+  text-align: right;
+  color: #f3a0bc;
+  flex-shrink: 0;
+}
+.ar-heading small {
+  display: block;
+  margin-top: 6px;
+  color: #a6bbce;
+  font-size: 10px;
+}
+.ar-moments {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-block: 1px solid #344554;
+}
+.vx-shell .ar-moments button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #b8c8d6;
+  min-height: 51px;
+  padding: 9px 13px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  text-align: left;
+  font:
+    12px/1.4 var(--font-geist-sans, system-ui),
+    sans-serif;
+  cursor: pointer;
+}
+.ar-moments button span {
+  color: #a6bbce;
+  font:
+    10px var(--font-geist-mono, monospace),
+    monospace;
+}
+.vx-shell .ar-moments button[aria-current="step"] {
+  background: #f3a0bc13;
+  color: #ffc5da;
+  box-shadow: inset 0 -2px #f3a0bc;
+}
+.ar-inspect {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 24px 0;
+  height: 48px;
+  font-size: 12px;
+}
+.ar-inspect > span {
+  color: #b7cad9;
+  margin-right: 9px;
+}
+.vx-shell .ar-inspect button {
+  border: 1px solid #496074;
+  background: transparent;
+  color: #c2d1df;
+  min-width: 35px;
+  min-height: 32px;
+  cursor: pointer;
+}
+.vx-shell .ar-inspect button[aria-pressed="true"] {
+  border-color: #f3a0bc;
+  color: #ffd2e1;
+  background: #f3a0bc15;
+}
+.ar-inspect small {
+  margin-left: auto;
+  color: #a6bbce;
+  font-size: 11px;
+}
+.ar-root[data-beat="4"] :is(.ar-inspect, .ar-pan) {
+  visibility: hidden;
+}
+.ar-stage {
+  position: relative;
+  display: grid;
+  isolation: isolate;
+}
+.ar-math {
+  grid-area: 1 / 1;
+  min-width: 0;
+  align-self: center;
+}
+.ar-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #5a6175 #0b1721;
+}
+.ar-diagram {
+  display: block;
+  width: 100%;
+  min-width: 860px;
+  max-height: 480px;
+}
+.ar-diagram text {
+  font-family: var(--font-geist-sans, system-ui), sans-serif;
+}
+.ar-section {
+  fill: #dce7f0;
+  font-size: 16px;
+  font-weight: 550;
+}
+.ar-label {
+  fill: #cbd8e2;
+  font-size: 14px;
+}
+.ar-small,
+.ar-key text {
+  fill: #b2c4d4;
+  font-size: 11px;
+  font-family: var(--font-geist-mono, monospace), monospace !important;
+}
+.ar-key text {
+  font-size: 12px;
+}
+.ar-op {
+  fill: #abc0d3;
+  font-size: 27px;
+}
+.ar-formula {
+  fill: #f3a0bc;
+  font-size: 21px;
+}
+.ar-value {
+  fill: #e6edf2;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+.ar-example {
+  grid-area: 1 / 1;
+  min-width: 0;
+  padding: 26px;
+  display: grid;
+  grid-template-columns: 0.72fr 1.55fr;
+  align-content: center;
+  gap: 24px 34px;
+}
+.ar-example-context {
+  border-right: 1px solid #344554;
+  padding-right: 28px;
+}
+.ar-example-context > span {
+  font-size: 12px;
+  color: #b7cad9;
+}
+.ar-example-context p {
+  font-size: clamp(20px, 2.3vw, 29px);
+  line-height: 1.3;
+  margin: 16px 0;
+  text-wrap: balance;
+}
+.ar-example-context small {
+  font-size: 12px;
+  color: #aabfd1;
+  line-height: 1.6;
+}
+.vx-shell .ar-demonstration h4 {
+  font-size: 20px;
+  margin: 0 0 6px;
+}
+.ar-demonstration > p {
+  margin: 0;
+  font-size: 13px;
+  color: #b7cad9;
+}
+.ar-token-sequence {
+  display: flex;
+  gap: 13px;
+  margin: 25px 0 18px;
+}
+.ar-token-sequence > div {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 14px;
+  position: relative;
+}
+.ar-token-sequence span {
+  font-size: 11px;
+  color: #b7cad9;
+  display: block;
+  margin-bottom: 9px;
+}
+.ar-token-sequence strong {
+  display: block;
+  font-size: clamp(15px, 1.6vw, 21px);
+  color: #9eb0c1;
+  white-space: nowrap;
+}
+.ar-token-sequence [data-reached="true"] strong {
+  color: #ffd0e0;
+}
+.ar-token-sequence [data-current="true"] strong {
+  color: #f4f7f9;
+}
+.ar-token-sequence i {
+  position: absolute;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #f3a0bc;
+  transform-origin: left;
+}
+.ar-supervision-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #f3a0bc;
+}
+.ar-supervision-link span {
+  font-size: 11px;
+}
+.ar-supervision-link svg {
+  width: 55px;
+  flex-shrink: 0;
+}
+.ar-supervision-link code {
+  font-size: 12px;
+}
+.ar-example-consequence {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-top: 28px;
+}
+.ar-example-consequence strong {
+  color: #b8e986;
+  white-space: nowrap;
+  font-size: 29px;
+  font-weight: 500;
+}
+.ar-example-consequence span {
+  font-size: 12px;
+  color: #c4d5e0;
+  line-height: 1.6;
+}
+.ar-example-boundary {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 20px;
+  border-top: 1px solid #344554;
+  padding-top: 18px;
+  color: #aabfd1;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.ar-example-boundary b {
+  flex-shrink: 0;
+  color: #f3a0bc;
+  font-weight: 500;
+}
+.ar-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  border-top: 1px solid #344554;
+  padding: 15px 24px;
+  min-height: 57px;
+}
+.ar-caption strong {
+  font-size: 17px;
+  font-weight: 500;
+}
+.ar-caption span {
+  font:
+    11px var(--font-geist-mono, monospace),
+    monospace;
+  color: #b6c7d5;
+}
+.ar-transport {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 0 24px 10px;
+}
+.vx-shell .ar-transport button,
+.vx-shell .ar-pan button {
+  background: transparent;
+  color: #f3a0bc;
+  border: 1px solid #5b5062;
+  padding: 7px 12px;
+  cursor: pointer;
+  min-height: 36px;
+  font-size: 12px;
+}
+.ar-transport input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  accent-color: #f3a0bc;
+}
+.ar-transport time {
+  font:
+    11px var(--font-geist-mono, monospace),
+    monospace;
+  color: #b6c7d5;
+  white-space: nowrap;
+}
+.ar-method {
+  padding: 0 24px 14px;
+  color: #b6c7d5;
+  font-size: 11px;
+}
+.ar-method summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.ar-method p {
+  font-size: 12px;
+  line-height: 1.65;
+  max-width: 100ch;
+}
+.vx-shell .ar-method button {
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid #5b5062;
+  color: #f3a0bc;
+  font-size: 12px;
+  cursor: pointer;
+}
+.ar-root :is(button, input, summary, [tabindex]):focus-visible {
+  outline: 2px solid #f3a0bc;
+  outline-offset: 3px;
+}
+.ar-root button:hover {
+  color: #fff0f6;
+}
+.ar-root button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.ar-root [hidden] {
+  display: none !important;
+}
+.ar-pan {
+  display: none;
+}
+@media (max-width: 850px) {
+  .ar-root:not([data-beat="4"]) .ar-example {
+    position: absolute;
+    inset: 0;
+  }
+  .ar-root[data-beat="4"] .ar-math {
+    position: absolute;
+    inset: 0;
+  }
+  .ar-root[data-beat="4"] :is(.ar-inspect, .ar-pan) {
+    display: none;
+  }
+  .ar-heading {
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+  }
+  .ar-heading > span {
+    text-align: left;
+  }
+  .ar-heading small {
+    display: inline;
+    margin-left: 10px;
+  }
+  .ar-moments {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .ar-inspect {
+    padding-inline: 18px;
+    flex-wrap: wrap;
+    height: auto;
+  }
+  .ar-inspect small {
+    width: 100%;
+    margin-left: 0;
+  }
+  .ar-pan {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px 0;
+    font-size: 11px;
+    color: #b6c7d5;
+  }
+  .ar-caption {
+    align-items: start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ar-example {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 20px;
+  }
+  .ar-example-context {
+    border-right: 0;
+    border-bottom: 1px solid #344554;
+    padding: 0 0 14px;
+  }
+  .ar-example-consequence {
+    flex-direction: column;
+    align-items: start;
+    gap: 8px;
+    padding-top: 16px;
+  }
+}
+@media (max-width: 560px) {
+  .ar-inspect {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .ar-inspect > span,
+  .ar-inspect small {
+    grid-column: 1 / -1;
+  }
+  .vx-shell .ar-inspect button {
+    min-width: 0;
+  }
+  .ar-math {
+    align-self: start;
+  }
+  .ar-example {
+    grid-template-columns: 1fr;
+    align-content: start;
+    gap: 20px;
+  }
+  .ar-example-context {
+    border-right: 0;
+    border-bottom: 1px solid #344554;
+    padding: 0 0 14px;
+  }
+  .ar-example-context p {
+    font-size: 22px;
+    margin: 8px 0;
+  }
+  .ar-example-context small {
+    font-size: 11px;
+  }
+  .ar-token-sequence {
+    gap: 9px;
+  }
+  .ar-token-sequence strong {
+    font-size: 14px;
+  }
+  .ar-token-sequence span {
+    font-size: 10px;
+  }
+  .ar-supervision-link {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .ar-supervision-link svg {
+    width: 27px;
+  }
+  .ar-supervision-link code {
+    font-size: 11px;
+  }
+  .ar-example-boundary {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .ar-transport {
+    padding-inline: 15px;
+    gap: 9px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ar-root *,
+  .ar-root *::before,
+  .ar-root *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,5 +1,17 @@
 # Inference review: ideas, decisions, and delivery
 
+## October 24: composition motion follows the actual intervention
+
+The user's “not just changing visualizations” feedback now has a clock-driven response: origin → traced mechanism → arrived endpoint → exact graph/card delta → reading hold. The four actual result coordinates remain fixed. Intermediate progress survives tour-to-inspector handoff, manual shortcuts settle immediately and Continue resumes. Screenshot review fixed colliding labels in the no-prefix case; that case also explains why prefill is not avoided. The redundant final detour line was removed. Verification and recoverable baseline: `composition-playback-checkpoint-20261024.md`. This does not silently claim new runtime or training results or complete the post-training milestone.
+
+## October 24: self-navigation now preserves the investigation
+
+The user's demand for a self-navigable laboratory now includes continuity: leaving a scene must not erase the chosen request, chapter or metric. Visited experiments and figures retain those selections; inactive effects stop. Overview close-ups return to the named chapter, its cursor and the opening control's focus. The full serving overview is the first exploration choice, with three distinct deep investigations visible beside it. Figure-story inspection can deliberately replace an explorer's initial state without making ordinary navigation reset it. Reduced-motion manual selections and mobile navigation were explicitly checked. See `inference-navigation-checkpoint-20261024.md`; inference acceptance and post-training work remain open.
+
+## October 24: first reference adaptation implemented
+
+DeepInfer informs the original CPU/GPU-overlap investigation, while Brain Scan informs linked selection across preparation, device work and output. One event model drives every view; actual interval leaders connect to the consequence. The 28-second scene teaches before revealing its result, holds early completion, and exposes zero benefit and a slower-first-output counterexample. Screenshot review fixed collisions and a premature final-result reveal. Existing cohort results are unchanged. See `scheduling-overlap-checkpoint-20261024.md` for checks, recovery and remaining work. QwenGyre and the frontier suggestions are not silently treated as implemented.
+
 ## October 23: selective external visualization references
 
 Captured all three references: QwenGyre, the local NetSphere Brain Scan clip, and **DeepSeek DeepInfer** (the user's explicit correction of DeepInfra). The objective is presentation and operational explanation, not importing experimental achievements. The NetSphere search is closed as requested; use the inspected clip's synchronized views. DeepInfer's architecture, chart and public documentation now inform bounded original directions rather than a replacement static diagram. Full source boundaries, keep/reject decisions, a CPU/GPU-overlap storyboard and later component applications are in `visual-reference-direction-20261023.md`. This pass changes documentation only and preserves the saved application checkpoint.

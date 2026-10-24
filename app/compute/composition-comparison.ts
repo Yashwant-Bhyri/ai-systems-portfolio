@@ -13,6 +13,38 @@ export function compositionPhase(time: number) {
   return Math.max(0, Math.min(4, Math.floor(time / COMPOSITION_HOLD_MS)));
 }
 
+/** Authored presentation only: intermediate cursor locations are not additional runs. */
+export function compositionMotion(time: number) {
+  if (!Number.isFinite(time))
+    throw new RangeError("Composition time must be finite");
+  const cursor = Math.max(0, Math.min(COMPOSITION_FILM_MS, time));
+  const phase = compositionPhase(cursor);
+  const local = cursor - phase * COMPOSITION_HOLD_MS;
+  const ramp = (start: number, end: number) =>
+    Math.max(0, Math.min(1, (local - start) / (end - start)));
+  const intervention = phase === 1 || phase === 2;
+  const traceProgress = intervention ? 1 - (1 - ramp(350, 1450)) ** 5 : 1;
+  const resultReveal = intervention
+    ? ramp(1450, 1800)
+    : phase === 4
+      ? ramp(0, 450)
+      : 0;
+  return {
+    cursor,
+    phase,
+    traceProgress,
+    resultReveal,
+    arrived: traceProgress === 1,
+  };
+}
+
+/** Shortcuts settle a step; scrubbing and narrated handoff retain the exact time. */
+export function compositionMoment(phase: number) {
+  if (!Number.isInteger(phase) || phase < 0 || phase > 4)
+    throw new RangeError("Unknown composition phase");
+  return phase * COMPOSITION_HOLD_MS + 2200;
+}
+
 /** Ordered counterfactuals, not independent percentages that can be summed in any order. */
 export function compositionMechanisms(
   points: CompositionRuns,

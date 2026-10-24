@@ -151,7 +151,14 @@
 .so-step {
   cursor: pointer;
   outline: none;
+}
+.so-step rect,
+.so-step path {
   transition: opacity 180ms ease-out;
+}
+.so-step[data-quiet="true"] rect,
+.so-step[data-quiet="true"] path {
+  opacity: 0.26;
 }
 .so-step:focus-visible .so-step-hit {
   stroke: #fff0c9;

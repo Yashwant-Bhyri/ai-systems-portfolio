@@ -98,7 +98,7 @@ test("opening rejects a changed runtime instead of mislabelling it baseline", ()
 });
 test("opening has its own chapter duration, lazy boundary, named controls and no default cohort sidebar", () => {
   const parent = readFileSync(
-    new URL("../app/exhibit/runtime/index.tsx", import.meta.url),
+    new URL("../app/compute/lab-story.tsx", import.meta.url),
     "utf8",
   );
   const scene = readFileSync(
@@ -109,7 +109,7 @@ test("opening has its own chapter duration, lazy boundary, named controls and no
     new URL("../app/compute/baseline-reveal.css", import.meta.url),
     "utf8",
   );
-  assert.match(parent, /duration: BASELINE_DURATION/);
+  assert.match(parent, /BASELINE_DURATION,\s*SCHEDULING_DURATION/);
   assert.match(parent, /const BaselineReveal = lazy/);
   assert.match(scene, /Scrub baseline introduction/);
   assert.match(scene, /onChapter\(item.chapter\)/);

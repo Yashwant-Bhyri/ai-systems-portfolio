@@ -4,7 +4,7 @@ import type { Workload } from "./lab-simulation";
 
 export type RequestViewState = { time: number; taskId: number; mechanism: "both" | "reuse" | "rates"; metric: RequestMeasure };
 export type LoadViewState = { time: number; percentile: number; selected: number | null };
-export type CompositionViewState = { lens: CompositionLens; metric: "cost" | "accuracy"; phase: number };
+export type CompositionViewState = { lens: CompositionLens; metric: "cost" | "accuracy"; phase: number; time?: number };
 export type DirectedView<T> = { time: number; pause: () => void; inspect: (state: T) => void };
 export type InferenceFigureContext = { workload: Workload; budget: number; policy: 0 | 2 };
 export type InferenceFigureSelection =

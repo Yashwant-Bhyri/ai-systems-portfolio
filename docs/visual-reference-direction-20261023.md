@@ -2,6 +2,8 @@
 
 Research and direction record, October 23, 2026. These are proposed adaptations, not newly implemented scenes or benchmark results.
 
+**October 24 update:** CPU/GPU overlap is now delivered; see `scheduling-overlap-checkpoint-20261024.md` for the final model, timing, verification and boundaries. Other adaptations remain proposals. Research-only statements below describe the historical October 23 pass.
+
 ## User intent and correction
 
 The target is presentation: operational graphics, meaningful motion, readable comparisons and linked inspection. External work should raise the existing standard, not replace the portfolio's identity or send development into another prolonged reference hunt.

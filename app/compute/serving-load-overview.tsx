@@ -54,16 +54,18 @@ function useOverviewClock(
   const [tabVisible, setTabVisible] = useState(true);
   const current = useRef(0);
   const previous = useRef<number | null>(null);
+  const priorMotion = useRef<boolean | null>(null);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
       setReduced(media.matches);
-      if (media.matches) {
+      if (media.matches && priorMotion.current !== true) {
         current.current = OVERVIEW_PLAYBACK_DURATION_MS;
         setTime(current.current);
         setPlaying(false);
       }
+      priorMotion.current = media.matches;
     };
     update();
     media.addEventListener("change", update);
@@ -259,7 +261,7 @@ export function ServingLoadOverview({
           <p>{beat.detail}</p>
         </div>
       </div>
-      <div className="slo-transport" aria-label="Overview playback">
+      <div className="slo-transport" role="group" aria-label="Overview playback">
         <button
           type="button"
           onClick={() => {

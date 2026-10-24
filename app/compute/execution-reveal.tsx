@@ -238,7 +238,7 @@ export function ExecutionReveal({
     >
       <div className="es-invariants">
         <span>Same model · same requests · same outcomes</span>
-        <span>Matched execution</span>
+        <span>Illustrative execution</span>
       </div>
       <div className="es-direction">
         <h3>{TITLES[beat]}</h3>

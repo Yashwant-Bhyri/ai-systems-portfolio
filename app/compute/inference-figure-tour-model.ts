@@ -87,6 +87,7 @@ export function inferenceFigureFrame(
                   ? "accuracy"
                   : "cost",
               phase,
+              time: localTime,
             },
           };
   return { cursor, chapterIndex, chapter, localTime, selection };

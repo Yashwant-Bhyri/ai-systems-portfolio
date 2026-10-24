@@ -73,11 +73,31 @@ test("unverified percentage claims cannot appear as headline or conclusion proof
     ),
   );
 });
-test("the compute chapters mount as exhibit wings", async () => {
-  const page = await readFile(new URL("../app/portfolio-v2.tsx", import.meta.url), "utf8");
-  assert.match(page, /<RuntimeWing \/>/);
-  assert.match(page, /<PolicyWing \/>/);
-  assert.doesNotMatch(page, /ComputeStudy/);
+test("six linked result views declare their synthetic evidence boundary", async () => {
+  const source = await readFile(
+    new URL("../app/compute/lab-results.tsx", import.meta.url),
+    "utf8",
+  );
+  for (const name of [
+    "Policy × runtime",
+    "Execution replay",
+    "Queue & latency",
+    "Capability map",
+    "Compute curves",
+    "Regression audit",
+  ])
+    assert.ok(source.includes(name));
+  assert.match(source, /Illustrative experiment/);
+  assert.match(source, /Illustrative, not measured results/);
+  assert.match(source, /Real Qwen3-4B runs/);
+  assert.match(source, /No physical GPU or LLM run/);
+  assert.match(source, /onInspect=\{playback.pause\}/);
+  assert.match(source, /Download synthetic run JSON/);
+  assert.match(source, /type="range"/);
+  assert.match(
+    JSON.stringify(LAB_ASSUMPTIONS),
+    /not calibrated hardware measurements/,
+  );
 });
 test("MiMo transcription preserves Table 5 values and branching lineage", () => {
   assert.deepEqual(MIMO_BENCHMARKS[0].scores, [32.9, 58.7, 56.4, 68.2]);

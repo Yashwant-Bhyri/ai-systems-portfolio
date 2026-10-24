@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PlaybackClock } from "./playback-clock";
+import { latestPlaybackVisibility } from "./playback-visibility";
 
 /** A slow narrated emphasis pass. Data is always visible, including before hydration. */
 export function useStudyPlayback(
@@ -47,12 +48,18 @@ export function useStudyPlayback(
     const updateTab = () => setTabVisible(!document.hidden);
     updateTab();
     document.addEventListener("visibilitychange", updateTab);
+    let disposed = false;
     const observer = new IntersectionObserver(
-      ([entry]) => setVisible(entry.isIntersecting),
+      (entries) => {
+        if (disposed) return;
+        const next = latestPlaybackVisibility(entries);
+        if (next !== undefined) setVisible(next);
+      },
       { threshold: 0.25 },
     );
     if (ref.current) observer.observe(ref.current);
     return () => {
+      disposed = true;
       media.removeEventListener("change", update);
       document.removeEventListener("visibilitychange", updateTab);
       observer.disconnect();
@@ -118,6 +125,7 @@ export function useStudyPlayback(
     progressOffset: seekState.offset,
     duration: stepDuration,
     running: playing && visible && tabVisible && !reduced && !held && enabled,
+    inViewport: visible,
     reduced,
     select: (value: number) => {
       setStep(value);

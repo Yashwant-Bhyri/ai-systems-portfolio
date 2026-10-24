@@ -721,7 +721,7 @@ export function DraftVerification({ active = true }: { active?: boolean }) {
           <h3>Speculative decoding</h3>
           <p>{heading}</p>
         </div>
-        <span>Greedy trace · one request</span>
+        <span>Illustrative greedy trace · one request</span>
       </header>
       <div className="dv-controls">
         <div role="group" aria-label="Draft agreement">

@@ -64,7 +64,7 @@ export const TRAINING_STORY = [
       "Each square retains the same task identity throughout the story. Outlined squares are incorrect; filled squares are correct. The branching sketch explains a mechanism, not an observed model trace.",
   },
   {
-    name: "Teach the route",
+    name: "SFT + LoRA",
     verb: "SFT",
     title: "Good demonstrations make good paths easier to find.",
     detail:

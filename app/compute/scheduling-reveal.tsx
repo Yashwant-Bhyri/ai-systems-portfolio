@@ -134,7 +134,7 @@ export function SchedulingReveal({
     >
       <div className="sq-invariants">
         <span>Same arrivals · same work · 2 workers each</span>
-        <span>Six requests · two workers</span>
+        <span>Illustrative scheduling</span>
       </div>
       <header className="sq-heading">
         <h3>

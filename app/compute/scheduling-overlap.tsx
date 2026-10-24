@@ -12,6 +12,7 @@ import {
   overlapStudy,
   overlapFrame,
   overlapRecord,
+  preparationOverlap,
   type HostProfile,
   type Interval,
   type OverlapFrame,
@@ -61,10 +62,16 @@ function ScheduleLane({
     ? frame.beat >= 2
     : frame.beat <= 1 || frame.beat === 4;
   const stepOpacity = (i: number) =>
-    selected !== null && selected !== i ? 0.26 : 1;
-  const linkedStep =
-    selected ??
-    (frame.beat === 0 ? 0 : frame.beat === 2 ? current.activeStep : null);
+    selected !== null
+      ? selected !== i
+        ? 0.26
+        : 1
+      : frame.beat === 0 && i !== 0
+        ? 0.38
+        : frame.beat === 2 && optimized && i !== 1 && i !== 2
+          ? 0.38
+          : 1;
+  const linkedStep = selected ?? (frame.beat === 0 ? 0 : null);
   const op = (interval: Interval, row: number, fill: string, label: string) => {
     const width = x(interval.end) - x(interval.start);
     if (width === 0) return null;
@@ -137,10 +144,10 @@ function ScheduleLane({
       {linkedStep !== null &&
         (() => {
           const s = lane.steps[linkedStep];
-          const ox = 233 + linkedStep * 112;
+          const ox = 180 + linkedStep * 112;
           return (
             <path
-              d={`M${x((s.prepare.start + s.prepare.end) / 2)} ${y + 51}V${y + 58}H${x(s.gpu.start)}V${y + 65}M${x(s.gpu.end)} ${y + 91}V${y + 111}H${ox}V${y + 119}`}
+              d={`M${x((s.prepare.start + s.prepare.end) / 2)} ${y + 51}V${y + 58}H${x(s.gpu.start)}V${y + 65}M${x(s.gpu.end)} ${y + 91}V${y + 106}H${ox}V${y + 135}h4`}
               stroke={VIOLET}
               strokeWidth="2"
               fill="none"
@@ -194,7 +201,7 @@ function ScheduleLane({
         return (
           <g
             key={s.index}
-            opacity={stepOpacity(s.index)}
+            data-quiet={stepOpacity(s.index) < 1}
             className="so-step"
             role="button"
             tabIndex={0}
@@ -332,27 +339,40 @@ function Comparison({
   const value =
     selectedA && selectedB
       ? selectedA.deliver.end - selectedB.deliver.end
-      : frame.beat === 1
-        ? gap
-        : study.savedElapsed;
+      : frame.beat === 2
+        ? preparationOverlap(study).duration
+        : frame.beat === 1
+          ? gap
+          : study.savedElapsed;
   const title =
     selected !== null
       ? [`Step ${selected + 1}`, "Same GPU operation"]
       : frame.beat === 0
-        ? ["Prepare. Execute.", "Deliver two tokens."]
+        ? ["Prepare. Execute.", "Deliver two outputs."]
         : frame.beat === 1
           ? gap
             ? ["GPU ready.", "CPU still working."]
             : ["No host delay.", "No gap to remove."]
           : frame.beat === 2
-            ? study.profile === "host-bound"
-              ? ["Overlap host work.", "CPU gaps can remain."]
-              : ["Next step prepared", "before it is needed."]
+            ? study.profile === "negligible"
+              ? ["No CPU overhead.", "Nothing to overlap."]
+              : ["CPU prepares step 3.", "GPU executes step 2."]
             : frame.beat === 3
-              ? ["Same output.", "Earlier completion."]
-              : ["Earlier delivery.", "Same GPU work."];
+              ? [
+                  "Same output.",
+                  study.savedElapsed > 0
+                    ? "Earlier completion."
+                    : "Same completion time.",
+                ]
+              : [
+                  study.savedElapsed > 0
+                    ? "Earlier delivery."
+                    : "Same delivery time.",
+                  "Same GPU work.",
+                ];
   const elapsedA = selectedA?.deliver.end ?? a.finish;
   const elapsedB = selectedB?.deliver.end ?? b.finish;
+  const firstDelay = b.steps[0].deliver.end - a.steps[0].deliver.end;
   const barW = (ms: number) => (ms / study.axisMax) * 155;
   return (
     <g className="so-consequence" data-so-selected={selected ?? "none"}>
@@ -378,19 +398,31 @@ function Comparison({
         x="793"
         y="202"
         className="so-metric"
-        fill={frame.beat === 1 && selected === null ? RED : VIOLET}
+        fill={
+          (frame.beat === 1 && selected === null) || value < 0 ? RED : VIOLET
+        }
       >
-        {frame.beat === 0 && selected === null ? study.inputs.gpu : value}
+        {frame.beat === 0 && selected === null
+          ? study.inputs.gpu
+          : Math.abs(value)}
         <tspan className="so-unit"> ms</tspan>
       </text>
       <text x="793" y="230" className="so-small">
         {selected !== null
-          ? "earlier delivery of this step"
+          ? value > 0
+            ? "earlier delivery of this step"
+            : value < 0
+              ? "later delivery of this step"
+              : "same delivery time"
           : frame.beat === 0
             ? "GPU work per decode step"
             : frame.beat === 1
               ? "between GPU steps 1 and 2"
-              : "earlier final delivery"}
+              : frame.beat === 2
+                ? "simultaneous CPU + GPU"
+                : study.savedElapsed > 0
+                  ? "earlier final delivery"
+                  : "delivery-time difference"}
       </text>
       {frame.beat < 2 && selected === null ? (
         <g>
@@ -437,6 +469,82 @@ function Comparison({
             {frame.beat === 0
               ? "Each step serves both streams."
               : "These operations keep their cost."}
+          </text>
+        </g>
+      ) : frame.beat === 2 && selected === null ? (
+        <g>
+          <text x="793" y="267" className="so-small">
+            Same execution interval
+          </text>
+          {(() => {
+            const window = preparationOverlap(study);
+            const start = Math.min(window.cpu.start, window.gpu.start);
+            const end = Math.max(window.cpu.end, window.gpu.end);
+            const px = (ms: number) =>
+              793 + ((ms - start) / (end - start)) * 167;
+            return (
+              <g>
+                <text x="793" y="297" className="so-small" fill={AMBER}>
+                  CPU · prepare batch 3
+                </text>
+                <rect
+                  x={px(window.cpu.start)}
+                  y="307"
+                  width={px(window.cpu.end) - px(window.cpu.start)}
+                  height="17"
+                  fill={AMBER}
+                  fillOpacity=".7"
+                />
+                <text x="793" y="351" className="so-small" fill={GREEN}>
+                  GPU · execute batch 2
+                </text>
+                <rect
+                  x={px(window.gpu.start)}
+                  y="361"
+                  width={px(window.gpu.end) - px(window.gpu.start)}
+                  height="17"
+                  fill={GREEN}
+                  fillOpacity=".7"
+                />
+                {window.duration > 0 && (
+                  <g>
+                    {[303, 357].map((y) => (
+                      <rect
+                        key={y}
+                        x={px(window.start)}
+                        y={y}
+                        width={px(window.end) - px(window.start)}
+                        height="25"
+                        fill={VIOLET}
+                        fillOpacity=".12"
+                        stroke={VIOLET}
+                      />
+                    ))}
+                    <path
+                      d={`M${px(window.start)} 328v10M${px(window.end)} 328v10`}
+                      stroke={VIOLET}
+                      strokeDasharray="2 3"
+                    />
+                  </g>
+                )}
+                <text x="793" y="400" className="so-small">
+                  {start} ms
+                </text>
+                <text x="960" y="400" textAnchor="end" className="so-small">
+                  {end} ms
+                </text>
+              </g>
+            );
+          })()}
+          <text x="793" y="446" className="so-small">
+            GPU steps stay 8 ms long.
+          </text>
+          <text x="793" y="474" className="so-note">
+            {study.profile === "host-bound"
+              ? "The slower CPU still leaves gaps."
+              : study.profile === "negligible"
+                ? "No preparation work to hide."
+                : "The CPU uses time inside that step."}
           </text>
         </g>
       ) : (
@@ -486,7 +594,7 @@ function Comparison({
           />
           <path
             d={`M${793 + barW(elapsedB)} 367v-6M${793 + barW(elapsedB)} 364H${793 + barW(elapsedA)}v-3`}
-            stroke={VIOLET}
+            stroke={value < 0 ? RED : VIOLET}
             strokeWidth="2"
             fill="none"
           />
@@ -499,9 +607,14 @@ function Comparison({
             <tspan fill="#c6d3df">=</tspan>{" "}
             {selected !== null ? study.inputs.gpu : b.gpuBusy} ms
           </text>
-          <text x="793" y="474" className="so-note">
-            {study.profile === "host-bound"
-              ? "CPU gaps remain visible."
+          <text
+            x="793"
+            y="474"
+            className="so-note"
+            fill={firstDelay > 0 ? RED : undefined}
+          >
+            {firstDelay > 0
+              ? `First output arrives ${firstDelay} ms later.`
               : study.profile === "negligible"
                 ? "No overhead means no saving."
                 : "Work overlaps; it is not removed."}
@@ -557,9 +670,18 @@ export function SchedulingOverlap({
   };
   const x = (ms: number) => 116 + (ms / study.axisMax) * 614;
   const gap = study.baseline.gaps[0];
+  const overlap = preparationOverlap(study);
   const showGap = frame.beat === 1 && gap && selected === null;
-  const showDelta =
-    frame.beat >= 3 && study.savedElapsed > 0 && selected === null;
+  const showDelta = selected !== null || frame.beat >= 3;
+  const deliveryA =
+    selected === null
+      ? study.baseline.finish
+      : study.baseline.steps[selected].deliver.end;
+  const deliveryB =
+    selected === null
+      ? study.overlapped.finish
+      : study.overlapped.steps[selected].deliver.end;
+  const deltaColor = deliveryB > deliveryA ? RED : VIOLET;
   useEffect(() => {
     const el = moments.current;
     if (!el) return;
@@ -594,9 +716,17 @@ export function SchedulingOverlap({
       <header className="so-heading">
         <div>
           <h3>CPU/GPU scheduling overlap</h3>
-          <p>{HEADINGS[frame.beat]}</p>
+          <p>
+            {study.savedElapsed === 0 && frame.beat >= 2
+              ? [
+                  "GPU execution has no host gaps",
+                  "Both schedules finish together",
+                  "Zero overhead, zero scheduling gain",
+                ][frame.beat - 2]
+              : HEADINGS[frame.beat]}
+          </p>
         </div>
-        <span>Two fixed streams · event timing</span>
+        <span>Two fixed streams · illustrative timing</span>
       </header>
       <div
         className="so-controls"
@@ -673,6 +803,9 @@ export function SchedulingOverlap({
           <text x="730" y="25" textAnchor="end" className="so-clock">
             {n(frame.serviceMs)} ms
           </text>
+          <text x="24" y="510" className="so-index">
+            Time (ms)
+          </text>
           {[...Array(Math.floor(study.axisMax / 10) + 1)].map((_, i) => (
             <g key={i}>
               <path
@@ -723,33 +856,63 @@ export function SchedulingOverlap({
               <circle cx="786" cy="202" r="4" fill={RED} />
               <text
                 x={x((gap.start + gap.end) / 2)}
-                y="174"
+                y="143"
                 textAnchor="middle"
-                className="so-value"
+                className="so-small"
                 fill={RED}
               >
                 Δ {gap.end - gap.start} ms
               </text>
             </g>
           )}
+          {frame.beat === 2 && selected === null && overlap.duration > 0 && (
+            <g className="so-consequence-link">
+              <rect
+                x={x(overlap.start)}
+                y="308"
+                width={x(overlap.end) - x(overlap.start)}
+                height="76"
+                fill={VIOLET}
+                fillOpacity=".12"
+                stroke={VIOLET}
+                strokeWidth="2"
+              />
+              <path
+                d={`M${x((overlap.start + overlap.end) / 2)} 384v7H759V202H786`}
+                fill="none"
+                stroke={VIOLET}
+                strokeWidth="2.5"
+              />
+              <circle cx="786" cy="202" r="4" fill={VIOLET} />
+            </g>
+          )}
           {showDelta && (
             <g className="so-consequence-link">
               <path
-                d={`M${x(study.overlapped.finish)} 515v11H${x(study.baseline.finish)}v-11M${x((study.overlapped.finish + study.baseline.finish) / 2)} 526H760V202H786`}
-                stroke={VIOLET}
+                d={`M${x(deliveryA)} 109V515M${x(deliveryB)} 337V515`}
+                fill="none"
+                stroke={deltaColor}
+                strokeOpacity=".65"
+                strokeDasharray="3 5"
+              />
+              <path
+                d={`M${x(deliveryB)} 515v11H${x(deliveryA)}v-11M${x((deliveryA + deliveryB) / 2)} 526H760V202H786`}
+                stroke={deltaColor}
                 strokeWidth="2.5"
                 fill="none"
               />
               <text
-                x={x((study.overlapped.finish + study.baseline.finish) / 2)}
+                x={x((deliveryA + deliveryB) / 2)}
                 y="548"
                 className="so-value"
                 textAnchor="middle"
-                fill={VIOLET}
+                fill={deltaColor}
               >
-                Δ {study.savedElapsed} ms
+                {deliveryA === deliveryB
+                  ? `= ${deliveryA} ms`
+                  : `Δ ${Math.abs(deliveryA - deliveryB)} ms${deliveryB > deliveryA ? " later" : ""}`}
               </text>
-              <circle cx="786" cy="202" r="4" fill={VIOLET} />
+              <circle cx="786" cy="202" r="4" fill={deltaColor} />
             </g>
           )}
           <g transform="translate(24 566)">
@@ -824,7 +987,7 @@ export function SchedulingOverlap({
       <details
         className="so-method"
         onToggle={(e) => {
-          if (e.currentTarget.open) seek(time);
+          if (e.currentTarget.open) film.seek(time);
         }}
       >
         <summary>Inspect timing assumptions and event trace</summary>

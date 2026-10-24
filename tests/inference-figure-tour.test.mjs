@@ -35,6 +35,7 @@ for (const workload of ["interactive", "shared-prefix"]) for (const policy of [0
         assert.deepEqual(loadState(baseline, directed.elapsed), loadState(baseline, inspected.elapsed));
         assert.equal(selection.state.percentile, 95);
       } else {
+        assert.equal(selection.state.time, frame.localTime, "composition inspection preserves sub-phase motion, not just chapter index");
         const result = compositionComparison(points, selection.selected, selection.state.lens);
         if (selection.state.lens === "runtime") {
           assert.equal(result.reference.policyIndex, policy);

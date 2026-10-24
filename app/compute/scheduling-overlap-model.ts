@@ -17,7 +17,7 @@ export type OverlapLane = {
 };
 
 export const OVERLAP_DURATION = 28000;
-export const OVERLAP_MOMENTS = [4500, 8500, 15500, 19500, 28000] as const;
+export const OVERLAP_MOMENTS = [4500, 8500, 11500, 19500, 28000] as const;
 export const OVERLAP_LABELS = [
   "One decode step",
   "CPU-induced waiting",
@@ -123,6 +123,16 @@ export function overlapStudy(profile: HostProfile = "balanced", count = 4) {
 }
 export type OverlapStudy = ReturnType<typeof overlapStudy>;
 
+/** A dependency-safe example: prepare a later batch during the preceding GPU step. */
+export function preparationOverlap(study: OverlapStudy) {
+  const index = Math.min(2, study.count - 1);
+  const cpu = study.overlapped.steps[index].prepare;
+  const gpu = study.overlapped.steps[Math.max(0, index - 1)].gpu;
+  const start = Math.max(cpu.start, gpu.start);
+  const end = Math.max(start, Math.min(cpu.end, gpu.end));
+  return { index, cpu, gpu, start, end, duration: end - start };
+}
+
 function mix(a: number, b: number, t: number) {
   return a + (b - a) * clamp(t, 0, 1);
 }
@@ -139,17 +149,19 @@ export function overlapFrame(presentationMs: number, study: OverlapStudy) {
         ? mix(first, gapEnd, (t - 5000) / 3000)
         : t < 10000
           ? gapEnd
-          : t < 17000
-            ? mix(gapEnd, study.overlapped.finish, (t - 10000) / 7000)
-            : t < 21000
-              ? study.overlapped.finish
-              : t < 25000
-                ? mix(
-                    study.overlapped.finish,
-                    study.baseline.finish,
-                    (t - 21000) / 4000,
-                  )
-                : study.baseline.finish;
+          : t < 12000
+            ? gapEnd
+            : t < 17000
+              ? mix(gapEnd, study.overlapped.finish, (t - 12000) / 5000)
+              : t < 21000
+                ? study.overlapped.finish
+                : t < 25000
+                  ? mix(
+                      study.overlapped.finish,
+                      study.baseline.finish,
+                      (t - 21000) / 4000,
+                    )
+                  : study.baseline.finish;
   const progress = (i: Interval) =>
     duration(i) === 0
       ? Number(serviceMs >= i.end)

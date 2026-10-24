@@ -70,11 +70,74 @@ export function relativePolicy(progress: number, efficiency = false) {
 /** Interpolate the parameters for motion, then recompute the exact product. */
 const MOTION_FRAMES = adapterSnapshots();
 export function adapterFrame(position: number) {
-  const bounded = Math.max(0, Math.min(4, position));
+  const bounded = Math.max(
+    0,
+    Math.min(4, Number.isFinite(position) ? position : 0),
+  );
   const lo = MOTION_FRAMES[Math.floor(bounded)],
     hi = MOTION_FRAMES[Math.ceil(bounded)];
   const mix = bounded - Math.floor(bounded);
   const a = lo.a.map((row, r) => row.map((v, c) => v + (hi.a[r][c] - v) * mix));
   const b = lo.b.map((row, r) => row.map((v, c) => v + (hi.b[r][c] - v) * mix));
-  return { ...lo, a, b, ...adapterForward(a, b), position: bounded };
+  const forward = adapterForward(a, b);
+  const gradB = forward.error.map((e) => forward.z.map((z) => e * z));
+  const gradA = a.map((_, k) =>
+    TOY_X.map(
+      (x) =>
+        dot(
+          b.map((row) => row[k]),
+          forward.error,
+        ) * x,
+    ),
+  );
+  return { ...lo, a, b, ...forward, gradA, gradB, position: bounded };
+}
+
+/** One output identity, shared by the matrix selection and its error plot. */
+export function adapterOutput(position: number, output: number) {
+  if (!Number.isInteger(output) || output < 0 || output >= 6)
+    throw new RangeError("Select one of the six output coordinates");
+  const frame = adapterFrame(position);
+  const base = dot(TOY_W[output], TOY_X);
+  const terms = frame.b[output].map((value, k) => value * frame.z[k]);
+  return {
+    frame,
+    base,
+    terms,
+    adapted: frame.output[output],
+    target: TOY_TARGET[output],
+    beforeError: Math.abs(base - TOY_TARGET[output]),
+    afterError: Math.abs(frame.error[output]),
+  };
+}
+
+export function adapterRecord(
+  position: number,
+  output: number,
+  presentationMs: number,
+) {
+  const selected = adapterOutput(position, output);
+  return {
+    schema: "low-rank-adapter-calculation/v1",
+    evidence:
+      "Exact teaching arithmetic, not a model checkpoint or measured benchmark",
+    presentationMs,
+    optimizerPosition: selected.frame.position,
+    selectedOutput: output + 1,
+    input: TOY_X,
+    target: TOY_TARGET,
+    frozenWeights: TOY_W,
+    rank: 2,
+    learningRate: 0.35,
+    adapterScale: 1,
+    objective: "0.5 * sum(((W + B A) x - target)^2)",
+    current: selected,
+    optimizerSteps: adapterSnapshots(),
+    limits: [
+      "Fractional positions interpolate factors for presentation, not extra optimizer steps.",
+      "Language SFT uses token loss; the demonstrated answer is a separate teaching example.",
+      "The six output coordinates are not model tokens, activations or benchmark scores.",
+      "This calculation does not supply the 96-task cohort results.",
+    ],
+  };
 }

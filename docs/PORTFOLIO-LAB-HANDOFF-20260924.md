@@ -1,5 +1,35 @@
 # Portfolio laboratory handoff — September 24, 2026
 
+## October 25 latest override: SFT / LoRA output investigation
+
+Read `adapter-study-checkpoint-20261025.md`. Post-training → Watch the experiment → SFT + LoRA now has a dedicated 32-second film: zero adapter, first B update, both factors learning, linked output/error inspection, then a separate answer-token demonstration. Exact products, outputs, gradients, loss and JSON share the same factors/clock. The independent cohort no longer occupies this scene's main stage. Keyboard, reverse seeking, return-state preservation, neighboring-chapter/Undo flow and reduced-motion/manual inspection are covered by the new browser verifier. Mobile has content-sized views and explicit diagram-region controls.
+
+The composition checkpoint remains the verified pre-edit backup. New recovery: `adapter-study-verified-20261025.tar.gz` plus manifest. Read its recorded final test counts; do not claim the old unrelated Profile-source assertion is fixed. Continue with a component-specific GRPO/verifier/behavior review, not a copy of the LoRA layout. The rest of post-training and user assessment of integrated inference remain open. No Sol delegation, reference hunting, new benchmark claims or whole-goal completion.
+
+The final browser pass found and fixed a shared visibility-ordering bug: `use-study-playback.ts` previously read the first entry of a batched observer callback. `playback-visibility.ts` now selects the latest observation, including timestamp ties, so onscreen playback resumes after the tested resize/return sequence while hidden work still stops. Three unit tests and rerun whole-inference navigation cover the change. Do not regress to destructuring only `[entry]`.
+
+## October 24 latest override: composition motion and exact inspection
+
+Read `composition-playback-checkpoint-20261024.md` first. Part 1 → Explore the figures → Policy × runtime now traces each intervention before revealing and holding its delta. Standalone and narrated views share exact sub-phase time; Continue resumes, finite completion settles exactly, and manual shortcuts open a readable result. Signed values sit on the graph's brackets. Side labels resolve the different-document overlap; zero prefix benefit receives an explicit explanation. No result data or overall tour duration changed.
+
+Nine composition browser check groups, eight screenshots and two new model tests supplement the prior navigation checks. Full suite is now 356/357 with the same untouched Profile-source assertion failure. Build, TypeScript and scoped lint pass. Recovery is `composition-playback-verified-20261024.tar.gz` plus manifest, preserving the earlier navigation snapshot. Use the owned `navigation-qa` browser; rediscover its CDP port. Keep the whole goal active: integrated inference visual acceptance and broader post-training remain open. Do not indefinitely rebuild this completed local comparison.
+
+## October 24 latest override: navigation and return-state checkpoint
+
+Read `inference-navigation-checkpoint-20261024.md` first. Accepted scenes now retain their state across Part 1/Part 2, watch/explore and figure changes; hidden effects disconnect. Figure-story inspection still initializes the requested moment and resume continues its retained cursor. Part 2 opens the overview first; cache/draft/overlap and token-inspection drilldowns expose a chapter-specific return path that restores the original cursor and keyboard focus. Mobile navigation is more compact. Both custom reduced-motion clocks retain manually chosen positions on returning.
+
+Twelve browser check groups and three reviewed screenshots are reproducible with `scripts/verify-lab-navigation-browser.mjs`. Build, TypeScript and scoped lint pass; the full suite remains 354/355 with the unchanged older Profile-source assertion failure. The external `inference-navigation-verified-20261024.tar.gz` preserves source and evidence; the overlap baseline remains untouched. QA Chrome session is now `navigation-qa`; rediscover its temporary CDP port. Preview remains port 3001; revalidate before using.
+
+**Next: user assessment of the integrated inference journey.** This is a strong review checkpoint, not whole-project acceptance. Post-training remains next. No further reference hunting, Sol delegation or endless extension of one scene. Historical notes below about unmounted panels/default draft exploration are superseded by the retained-panel implementation.
+
+## October 24 latest override: CPU/GPU overlap delivered
+
+Read `scheduling-overlap-checkpoint-20261024.md`. The first selected DeepInfer/Brain Scan adaptation is implemented and browser-verified: a 28-second CPU/GPU overlap investigation with a dependency-safe schedule, linked outputs, actual interval-to-card connectors, slower-CPU and zero-benefit cases, and a first-output regression that is not hidden by earlier final completion. Open Part 2 → Explore the serving system → CPU/GPU scheduling overlap. The overview's Kernel fusion chapter also has a distinct drilldown and retains its cursor on return. Existing cohort results are unchanged.
+
+21 model tests pass. Full suite: **354/355 pass**, with one pre-existing Profile-source assertion failure, byte-identical to the prior baseline. Build, TypeScript, scoped lint, three SSR checks and assertion-based browser replay pass. Eight screenshots plus JSON are captured by `scripts/verify-scheduling-overlap-browser.mjs`; see `scheduling-overlap-verified-20261024.tar.gz` and its manifest in the existing external backup directory.
+
+**Next: bounded whole-inference navigation/return-state/transition review and user acceptance**, not more indefinite overlap detail. Then post-training. Wider reference ideas remain proposals. No Sol delegation. Preview is port 3001; revalidate its listener. Browser QA used the owned `admission-qa` Chrome; rediscover its temporary CDP port, do not hardcode it. Preserve unrelated dirty files, including Profile and its old failing test.
+
 ## October 23 reference direction and user correction
 
 Read `visual-reference-direction-20261023.md`. The user meant **DeepSeek DeepInfer**, not DeepInfra, and explicitly asked to stop chasing NetSphere source: use the supplied local Brain Scan video. Research is now distilled into original, component-specific directions: linked representations, a bounded CPU/GPU-overlap scene, conditional verification, a serving tradeoff frontier, and later trajectory-to-training visualization. No application code, metrics or current clock changed in this research pass. Do not mistake proposals for delivered work or restart the reference hunt. Preserve the verified checkpoint below; whole-inference integration and acceptance still precede broader post-training work.

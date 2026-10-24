@@ -6,6 +6,7 @@ import {
   overlapStudy,
   overlapFrame,
   overlapRecord,
+  preparationOverlap,
 } from "../app/compute/scheduling-overlap-model.ts";
 
 test("balanced overlap removes inter-step waiting, not device arithmetic", () => {
@@ -67,12 +68,18 @@ test("CPU bottleneck retains visible gaps even with overlap", () => {
   const s = overlapStudy("host-bound");
   assert.ok(s.overlapped.gaps.length > 0);
   assert.ok(s.overlapped.gaps.reduce((sum, x) => sum + x.end - x.start, 0) > 0);
+  assert.equal(
+    s.overlapped.steps[0].deliver.end - s.baseline.steps[0].deliver.end,
+    2,
+  );
+  assert.equal(s.savedElapsed, 28);
 });
 
 test("presentation holds do not add service time or completed tokens", () => {
   const s = overlapStudy();
   for (const [a, b] of [
     [8000, 9900],
+    [10000, 11999],
     [17000, 20999],
     [25000, 28000],
   ]) {
@@ -85,6 +92,25 @@ test("presentation holds do not add service time or completed tokens", () => {
   assert.equal(overlapFrame(19500, s).overlapped.completed, 4);
   assert.equal(overlapFrame(19500, s).baseline.completed, 2);
   assert.equal(overlapFrame(19500, s).serviceMs, 37);
+});
+
+test("the linked overlap window is the intersection of actual CPU and GPU work", () => {
+  for (const [profile, expected] of [
+    ["balanced", 3],
+    ["host-bound", 4],
+    ["negligible", 0],
+  ]) {
+    const window = preparationOverlap(overlapStudy(profile));
+    assert.equal(window.duration, expected);
+    assert.equal(window.end - window.start, expected);
+    if (expected) {
+      assert.ok(
+        window.start >= window.cpu.start && window.start >= window.gpu.start,
+      );
+      assert.ok(window.end <= window.cpu.end && window.end <= window.gpu.end);
+    }
+  }
+  assert.equal(preparationOverlap(overlapStudy("balanced", 1)).duration, 0);
 });
 
 test("every profile supports deterministic, monotonic and reversible seeking", () => {

@@ -6,7 +6,7 @@ registerHooks({ resolve(specifier, context, next) {
   return next(specifier, context);
 } });
 const { labComposition } = await import("../app/compute/lab-simulation.ts");
-const { compositionComparison, compositionMechanisms, compositionPhase, COMPOSITION_FILM_MS } = await import("../app/compute/composition-comparison.ts");
+const { compositionComparison, compositionMechanisms, compositionPhase, compositionMotion, compositionMoment, COMPOSITION_FILM_MS } = await import("../app/compute/composition-comparison.ts");
 test("five held composition stages expose each contribution before the final comparison", () => {
   assert.equal(COMPOSITION_FILM_MS, 17500);
   assert.deepEqual([0, 3500, 7000, 10500, 14000, 17500].map(compositionPhase), [0, 1, 2, 3, 4, 4]);
@@ -73,4 +73,40 @@ test("invalid composition selection fails instead of silently comparing unrelate
   assert.throws(() => compositionComparison(labComposition(), -1, "runtime"), RangeError);
   assert.throws(() => compositionComparison(labComposition(), 4, "policy"), RangeError);
   assert.throws(() => compositionComparison(labComposition().slice(0, 3), 0, "combined"), RangeError);
+});
+
+test("each intervention traces first, arrives, reveals the result, then holds", () => {
+  for (const phase of [1, 2]) {
+    const start = phase * 3500;
+    assert.equal(compositionMotion(start).traceProgress, 0);
+    assert.equal(compositionMotion(start + 350).traceProgress, 0);
+    let previous = 0;
+    for (let elapsed = 350; elapsed < 1450; elapsed += 10) {
+      const frame = compositionMotion(start + elapsed);
+      assert.equal(frame.phase, phase);
+      assert.ok(frame.traceProgress >= previous && frame.traceProgress < 1);
+      assert.equal(frame.resultReveal, 0, "result must not precede arrival");
+      previous = frame.traceProgress;
+    }
+    assert.equal(compositionMotion(start + 1450).arrived, true);
+    assert.equal(compositionMotion(start + 1800).resultReveal, 1);
+    assert.equal(compositionMotion(start + 3499).resultReveal, 1);
+    assert.equal(compositionMotion(compositionMoment(phase)).traceProgress, 1);
+    assert.equal(compositionMotion(compositionMoment(phase)).resultReveal, 1);
+  }
+});
+test("composition seeking is finite, reversible and has settled manual shortcuts", () => {
+  for (const t of [0, 4100, 7300, 16500, 7800, 3800, 17500]) {
+    const frame = compositionMotion(t);
+    assert.equal(frame.cursor, t);
+    assert.equal(frame.phase, compositionPhase(t));
+    assert.ok(frame.resultReveal >= 0 && frame.resultReveal <= 1);
+  }
+  assert.equal(compositionMotion(-1).cursor, 0);
+  assert.equal(compositionMotion(1e9).cursor, COMPOSITION_FILM_MS);
+  for (const p of [0,1,2,3,4]) assert.equal(compositionMotion(compositionMoment(p)).phase, p);
+  assert.throws(() => compositionMotion(NaN), RangeError);
+  assert.throws(() => compositionMotion(Infinity), RangeError);
+  assert.throws(() => compositionMoment(5), RangeError);
+  assert.throws(() => compositionMoment(.5), RangeError);
 });

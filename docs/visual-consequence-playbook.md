@@ -1,5 +1,50 @@
 # Visual consequence playbook
 
+## October 25: a weight animation needs an output identity
+
+- Connect one selected output to the parameter row, each low-rank contribution, its output position and its residual error. Shared color alone is not that connection.
+- Show a zero update honestly. Zero-initialized B leaves the adapter inactive; the first A gradient is zero. The second step is a different state, not the same animation repeated.
+- Interpolating parameters requires recomputing their consequences. A visually smooth product with a separately animated loss or stale exported gradient is numerically incoherent.
+- Keep illustrative parameter arithmetic separate from language behavior and benchmark results. A small output vector is neither a token stream nor proof of model quality.
+- Export the calculation currently on screen. An unrelated cohort record is not a substitute for the inspected operation's provenance.
+- A stable desktop comparison need not force a large blank mobile stage. Let narrow layouts follow the active content, keep the chapter rail anchored, and retain a readable diagram instead of shrinking every label.
+- Accessible state must follow visible state during the dissolve. Reduced motion cannot expose an invisible new lens at the boundary timestamp.
+- Verify the adjacent chapter and its reverse comparison too. Hiding redundant chrome must not remove the only Restore control.
+- A visibility callback is a batch, not a single state. Use the latest observation; otherwise a visible film can remain suspended after a resize or return. Test both onscreen and offscreen ordering so fixing resume does not keep hidden work running.
+
+Applied in `adapter-study-checkpoint-20261025.md`. Other post-training scenes remain separate design work.
+
+## October 24: trace the cause before revealing the difference
+
+- Keep experimental points fixed. A moving cursor can explain the intervention between them without inventing intermediate measured conditions.
+- Use one presentation clock for path progress, endpoint emphasis, delta visibility and result connectors. CSS transitions must not chase that clock and briefly display a new number with an old phase's opacity.
+- Do not illuminate the final destination during the first intermediate intervention. Emphasize the actual before/after pair, while retaining readable surrounding conditions.
+- Put the exact signed difference on its bracket, not only in a disconnected card. A zero difference gets equality and a causal explanation, not a positive-gain treatment.
+- Manual chapter choice means “show me this result”; a settled shortcut is more useful than stranding the visitor at the first empty frame. Scrubbing and inspection handoff, however, preserve exact sub-phase progress.
+- Test finite completion as well as playback. A stop timer can cancel the last animation frame just before the endpoint; the rendered result must still settle exactly.
+- Inspect crowded counterexamples. Label placement that works for large gains can collide when two conditions are close or identical.
+
+## October 24: navigation is part of causal continuity
+
+- A return is not a replay. Preserve the visitor's exact request, metric and cursor when they inspect another representation.
+- Distinguish ordinary navigation from deliberate handoff. A narrated moment should initialize its target inspector; merely opening another tab must not reset that inspector.
+- Retain state, not hidden computation. Disconnect inactive effects and verify that hidden clocks stop, including clocks which are not controlled by the shared playback hook.
+- Reconnecting an effect is not a changed accessibility preference. Reduced-motion mode must not overwrite a manually selected position every time a view returns.
+- Name the return destination and restore focus to its origin. A generic Back button with no context weakens the teaching sequence.
+- Let the whole-system overview orient first; make specialized investigations visible choices rather than implicit discoveries.
+- Test journeys as well as scenes: leave, return, change context, inspect, resume, resize. Correct isolated geometry does not establish a coherent experience.
+
+## October 24: explain overlap without inventing less work
+
+- Reveal the overlap window before the final gain. Show which CPU operation runs during which GPU step, on the same time coordinates.
+- Compare time, busy work and allocation separately. An earlier finish does not prove fewer GPU operations.
+- A local regression can coexist with a global gain. Inspect the first output as well as final delivery; the slower-CPU case needs its red delay, not an all-green headline.
+- Every selected difference needs its own connector. Do not keep pointing at the whole-run bracket when a single step is pinned.
+- Counterexamples change the sentence and the mark: equal completion uses equality, not a positive-gain claim beside zero.
+- Quiet surrounding geometry, not its labels. The viewer must retain the system context during a focus pull.
+- Inspect screenshots in addition to testing coordinates. A numerically exact bracket can still run through a step label.
+- Browser checks must run after hot reload settles. Keep discarded overlapping evaluations out of the evidence record; preserve a reproducible final replay.
+
 ## October 23: extract visual relationships, not reference skins
 
 - **One datum can have several useful views.** An output position, its internal operation and its plotted consequence should share selection and reveal progress. Three independently animated panels do not create that connection.
