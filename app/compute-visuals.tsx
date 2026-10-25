@@ -145,7 +145,7 @@ export function TrainingVisual(props:PlaybackProps){return <ComputeScene key={pr
 
 type ArchNode={step:number;spot:string;title:string;sub:string;glyph:string;term:string;chips:readonly string[];value:string;unit:string};
 const INFERENCE_NODES:readonly ArchNode[]=[
-  {step:0,spot:"schedule",title:"Schedule",sub:"Batch + token budget",glyph:"queue",term:"Continuous batching",chips:["admit every iteration","chunked prefill","token budget"],value:"1,081 → 445",unit:"s · p95 latency"},
+  {step:0,spot:"schedule",title:"Schedule",sub:"Batch + token budget",glyph:"queue",term:"Continuous batching",chips:["admit every iteration","chunked prefill","token budget"],value:"1,081 → 1,006",unit:"s · p95 latency, scheduling alone"},
   {step:1,spot:"reuse",title:"Reuse",sub:"Shared prefix + KV pages",glyph:"memory",term:"PagedAttention · prefix cache",chips:["16-token pages","GQA · 8 KV heads","copy-on-write prefix"],value:"7,808",unit:"tokens skipped per hit"},
   {step:2,spot:"accelerate",title:"Accelerate",sub:"CUDA + TensorRT",glyph:"chip",term:"Fused attention kernels",chips:["FlashAttention tiles","CUDA graphs","FP8 weights"],value:"−4.74",unit:"GPU-s per correct answer"},
   {step:5,spot:"distribute",title:"Distribute",sub:"Parallel execution",glyph:"parallel",term:"Tensor parallel × 2",chips:["all-reduce per layer","NVLink","cache-aware routing"],value:"−20",unit:"ms · warm route"},

@@ -68,7 +68,7 @@ function PolicyInPractice({
       <div className="cf-user-question">
         <span>USER</span>
         <div>
-          <p>“firstItem([]) crashes. Fix it.”</p>
+          <p>“first_item([]) crashes. Fix it.”</p>
           <small>
             {step === 0
               ? "A plausible patch misses the empty list"

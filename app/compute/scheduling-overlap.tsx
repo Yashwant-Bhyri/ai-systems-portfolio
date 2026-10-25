@@ -31,8 +31,8 @@ const HEADINGS = [
   "Follow one step from preparation to output",
   "The GPU waits for host-side work",
   "Prepare the next step while the GPU runs",
-  "Finish the same output earlier",
-  "Separate elapsed time from GPU work",
+  "Overlap finishes all 8 tokens sooner: the CPU builds step n+1 while the GPU runs step n",
+  "Same 32 ms of GPU work; only the idle gaps are gone",
 ];
 
 function ScheduleLane({
@@ -128,7 +128,7 @@ function ScheduleLane({
       >
         {current.done
           ? `Output complete · ${lane.finish} ms`
-          : `${current.completed * 2} / 8 output units delivered`}
+          : `${current.completed * 2} / 8 tokens delivered`}
       </text>
       <text x="24" y={y + 40} className="so-label">
         CPU
@@ -424,7 +424,7 @@ function Comparison({
               : frame.beat === 2
                 ? "simultaneous CPU + GPU"
                 : study.savedElapsed > 0
-                  ? "earlier final delivery"
+                  ? "sooner for all 8 tokens"
                   : "delivery-time difference"}
       </text>
       {frame.beat < 2 && selected === null ? (
@@ -718,7 +718,7 @@ export function SchedulingOverlap({
     >
       <header className="so-heading">
         <div>
-          <h3>CPU/GPU scheduling overlap</h3>
+          <h3>{`Four decode steps for users A and B: ${study.baseline.finish} ms serial vs ${study.overlapped.finish} ms overlapped`}</h3>
           <p>
             {study.savedElapsed === 0 && frame.beat >= 2
               ? [
@@ -729,7 +729,6 @@ export function SchedulingOverlap({
               : HEADINGS[frame.beat]}
           </p>
         </div>
-        <span>Two fixed streams</span>
       </header>
       <div
         className="so-controls"
@@ -927,9 +926,6 @@ export function SchedulingOverlap({
             </text>
             <text x="294" className="so-note" fill={RED}>
               Red: GPU waiting for CPU
-            </text>
-            <text x="520" className="so-note">
-              Select a step to follow its output
             </text>
           </g>
         </svg>

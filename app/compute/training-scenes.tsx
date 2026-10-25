@@ -56,7 +56,7 @@ export function Rollouts({t,option}:SceneProps) {
   const code=option===1,paths=code?CODE_PATHS:MATH_PATHS;
   return <>
     <Header title="ONE PROMPT / MULTIPLE REASONING TRAJECTORIES"/>
-    <Panel x={28} y={55} w={664} h={46} color={C.rose}><Text x={44} y={84} kind="strong">{code?"Task: repair firstItem() for an empty input list.":"Solve: 2x + 3 = 11. Check the result."}</Text></Panel>
+    <Panel x={28} y={55} w={664} h={46} color={C.rose}><Text x={44} y={84} kind="strong">{code?"Task: repair first_item() for an empty input list.":"Solve: 2x + 3 = 11. Check the result."}</Text></Panel>
     {paths.map((steps,i)=>{const y=140+i*58,col=PALETTE[i];return <g key={i}>
       <Text x={28} y={y+5} kind="small">τ{i+1}</Text><Line d={`M62 ${y}H587`} color={col} opacity={.3}/>
       {steps.map((s,j)=>{const p=ep(t,600+j*1300+i*220,1500+j*1300+i*220),x=129+j*179;return <g key={s} opacity={p}><Chip x={x} y={y} w={143} h={30} label={s} color={col}/>{j<2&&<Flight t={t} start={1800+j*1300+i*220} end={2250+j*1300+i*220} from={[x+72,y]} to={[x+107,y]} color={col} w={14}/>}</g>;})}

@@ -29,7 +29,7 @@ export const TRAINING_FRAMES:Record<string,Frame>={
 export function InferenceArchitectureFilm({t,focus}:{t:number;focus?:string}) {
   const decode=t>3300,replace=t>6500,step=Math.floor(t/650)%8;
   return <>
-    <Text x={30} y={30} kind="strong">Many requests. Shared computation. Separate state.</Text>
+    <Text x={30} y={30} kind="strong">Three requests share one GPU batch; each keeps its own KV pages.</Text>
     <Spot id="schedule" focus={focus}>
     <Text x={30} y={75} kind="small">CONCURRENT PROMPTS</Text>
     {[0,1,2].map(i=>{const y=113+i*58,c=PALETTE[i];return <g key={i}>

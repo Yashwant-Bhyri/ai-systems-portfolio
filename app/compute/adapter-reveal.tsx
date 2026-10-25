@@ -143,7 +143,7 @@ export function AdapterReveal({
     ),
     `L${376 + direction.position * 43} ${lossY(f.loss)}`,
   ].join(" ");
-  const prompt = "firstItem([]) crashes. Fix it.";
+  const prompt = "first_item([]) crashes. Fix it.";
   return (
     <section
       className="ar-root"
