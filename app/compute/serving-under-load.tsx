@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, Suspense, useId, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
 import { ServingLoadOverview } from "./serving-load-overview";
 import { ServingPressureFilm } from "./serving-pressure-film";
 import type { StreamInspectorInitial } from "./stream-continuity";
@@ -94,6 +94,13 @@ export function ServingUnderLoad() {
   const [draftDetail, setDraftDetail] = useState(false);
   const railSlot = useSlot("inference-serving-rail");
   const labNav = useLabNav();
+  // Deep links (#inference-study/draft) arrive as an event from the laboratory.
+  const railRef = useRef<readonly RailItem[]>([]);
+  useEffect(() => {
+    const open = (e: Event) => railRef.current.find((item) => item.key === (e as CustomEvent<string>).detail)?.onOpen();
+    window.addEventListener("lab:serving-open", open);
+    return () => window.removeEventListener("lab:serving-open", open);
+  }, []);
   const [explorer, setExplorer] = useState<
     "map" | "draft" | "cache" | "overlap"
   >("map");
@@ -177,6 +184,7 @@ export function ServingUnderLoad() {
     { key: "map", title: "Serving system overview", term: "requests A–D on one serving clock", value: "10", unit: "mechanisms on one serving clock", Glyph: GlyphServingMap, onOpen: () => show("loop", "map"), current: view === "loop" && explorer === "map" },
     { key: "glossary", title: "Serving glossary", term: "SSE · KV sizing · PagedAttention · …", value: "9", unit: "serving terms, each linked to the microscope", Glyph: GlyphKVSizing, onOpen: () => show("glossary"), current: view === "glossary" },
   ];
+  useEffect(() => { railRef.current = railItems; });
   return (
     <div className="sul-root" ref={root}>
       <div

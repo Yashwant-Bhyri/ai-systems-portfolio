@@ -512,6 +512,29 @@ export function ComputeLabStudy({
         { key: "replay", title: "Execution replay", term: "any of the 96 requests", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "latency", title: "Queue & latency", term: "arrival → completion, ranked", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ];
+  // Deep links from the project overview: #inference-study/replay opens that module.
+  const railRef = useRef(railItems);
+  useEffect(() => { railRef.current = railItems; });
+  useEffect(() => {
+    const sectionId = training ? "post-training-study" : "inference-study";
+    const SERVING = ["pressure", "draft", "cache", "overlap", "map", "glossary"];
+    const open = () => {
+      const [id, key] = window.location.hash.slice(1).split("/");
+      if (id !== sectionId || !key) return;
+      if (!training && SERVING.includes(key)) {
+        setInferencePart("load");
+        // Part 2 loads lazily; repeat the request until it has mounted (opening is idempotent).
+        [400, 1400, 3000].forEach((ms) => window.setTimeout(() => window.dispatchEvent(new CustomEvent("lab:serving-open", { detail: key })), ms));
+      } else {
+        if (!training) setInferencePart("cheaper");
+        railRef.current.find((item) => item.key === key)?.onOpen();
+      }
+      window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "instant", block: "start" }), 60);
+    };
+    open();
+    window.addEventListener("hashchange", open);
+    return () => window.removeEventListener("hashchange", open);
+  }, [training]);
   // The reel orientations keep the stage at its natural size; "bar" is the one-screen block.
   const block = labNav === "bar";
   const reelItems: readonly ReelItem[] = railItems;
