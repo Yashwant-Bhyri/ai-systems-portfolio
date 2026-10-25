@@ -103,13 +103,16 @@ export function PrefixComparison({
           >{`Request ${study.request.id + 1}, service elapsed ${fmt(frame.seconds)} seconds. Baseline: ${frame.baseline.phase}, ${frame.baseline.outputTokens} output tokens. Reuse: ${frame.optimized.phase}, ${frame.optimized.outputTokens} output tokens. Both have the same ${study.request.tokens}-token output. Illustrative serial service, not queue response time.`}</title>
           {[study.reference, study.request].map((task, row) => {
             const lane = row ? frame.optimized : frame.baseline;
-            const tint = row ? GREEN : contrast ? RED : BLUE;
+            // Baseline stays blue; only its remaining work is marked as waste. Once reuse
+            // has finished, its lane goes matte so the eye follows the baseline still running.
+            const tint = row ? GREEN : BLUE;
             const y = row * 160;
             return (
               <g
                 key={row}
                 transform={`translate(0 ${y})`}
                 className="pr-lane"
+                data-quiet={contrast && row === 1}
                 data-finished={lane.done}
               >
                 <text x="28" y="25" className="pr-pair-title" fill={tint}>

@@ -66,3 +66,9 @@ g[data-so-lane][data-quiet="true"] { opacity: .32; filter: saturate(.25); }
 .cr-replica[data-quiet="true"] { opacity: .32; filter: saturate(.25); }
 .sp-lane { transition: opacity .5s, filter .5s; }
 .sp-lane[data-quiet="true"] { opacity: .45; filter: saturate(.25); }
+.pr-lane { transition: opacity .5s, filter .5s; }
+.pr-lane[data-quiet="true"] { opacity: .42; filter: saturate(.25); }
+/* Execution chapter, first run: the machine being narrated is lit, the other matte. */
+.es-film [data-lane] { transition: opacity .5s, filter .5s; }
+.es-film[data-focus="baseline"] .em-machine [data-lane="optimized"],
+.es-film[data-focus="optimized"] .em-machine [data-lane="reference"] { opacity: .4; filter: saturate(.25); }

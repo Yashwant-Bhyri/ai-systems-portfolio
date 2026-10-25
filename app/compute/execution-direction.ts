@@ -45,7 +45,10 @@ export function executionDirection(time: number) {
           ? focusAt(ms, 57500)
           : ms >= 28500
             ? focusAt(ms, 33500)
-            : focusAt(ms, 18000);
+            : ms >= 18000
+              ? focusAt(ms, 18000)
+              // The first run: narrate the baseline machine, then the optimized one, then both.
+              : ms < 1000 ? "both" : ms < 6500 ? "baseline" : ms < 12000 ? "optimized" : "both";
   return { modelTime, focus, origin: clamp((ms - 44000) / 4500) };
 }
 
