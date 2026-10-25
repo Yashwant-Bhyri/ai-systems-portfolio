@@ -68,3 +68,5 @@
 
 /* The rank scan: a cursor sweeps the ranked responses; the gap between runs fills behind it. */
 .ll-scan-delta { font: 500 15px var(--font-geist-mono), monospace; fill: #dcc4ff; paint-order: stroke; stroke: #0a151d; stroke-width: 4px; }
+.ll-lane { transition: opacity .5s, filter .5s; }
+.ll-lane[data-quiet="true"] { opacity: .3; filter: saturate(.25); }

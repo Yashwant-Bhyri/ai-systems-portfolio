@@ -60,3 +60,7 @@
 .so-root:has(.so-idle-callout) g[data-so-lane="overlapped"] { opacity: .35; transition: opacity .5s; }
 g[data-so-lane] { transition: opacity .5s; }
 @media (prefers-reduced-motion: reduce) { .so-idle-pulse { animation: none; fill-opacity: .6; } }
+/* One lane narrated at a time: the baseline first, then the overlapped schedule; both for the comparison. */
+g[data-so-lane][data-quiet="true"] { opacity: .32; filter: saturate(.25); }
+.cr-replica { transition: opacity .5s, filter .5s; }
+.cr-replica[data-quiet="true"] { opacity: .32; filter: saturate(.25); }

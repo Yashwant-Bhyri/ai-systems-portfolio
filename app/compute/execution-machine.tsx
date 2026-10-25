@@ -737,7 +737,7 @@ export function ExecutionMachine({
                 className="em-mono"
                 fill="#ffb3a9"
               >
-                Δ {number(reference.gpuSeconds - optimized.gpuSeconds, 2)} GPU-s saved per request
+                Δ {number(reference.gpuSeconds - optimized.gpuSeconds, 2)} s earlier · the worker is free for the next request
               </text>
             </g>
           )}

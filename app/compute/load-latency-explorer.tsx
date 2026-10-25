@@ -29,7 +29,8 @@ function QueueFigure({ runs, events, frame }: { runs: LabRun[]; events: ReturnTy
   return <svg viewBox="0 0 840 530" className="ll-plot" role="img" aria-label="Requests wait behind two workers per runtime; the lower plot counts waiting requests on one shared clock">
     {states.map((state, index) => {
       const color = index ? GREEN : BLUE, top = 18 + index * 119;
-      return <g key={index} transform={`translate(0 ${top})`}>
+      const quiet = frame.focus === (index ? "baseline" : "optimized");
+      return <g key={index} transform={`translate(0 ${top})`} className="ll-lane" data-quiet={quiet}>
         <text x="27" y="25" className="ll-lane-title" fill={color}>{index ? "Optimized" : "Baseline"}</text>
         <text x="27" y="46" className="ll-small">{state.arrived.length} arrived</text>
         <text x="168" y="19" className="ll-label">{state.waiting.length} waiting</text>
@@ -58,7 +59,7 @@ function QueueFigure({ runs, events, frame }: { runs: LabRun[]; events: ReturnTy
       {frame.phase === "drain" && <text x="730" y="256" textAnchor="end" className="ll-small" fill={GREEN}>Queue falls as workers start requests</text>}
     </g>}
     {[0, .5, 1].map(fraction => <g key={fraction}><path d={`M80 ${y(maximum * fraction)}H746`} stroke="#314552" strokeDasharray="2 6" /><text x="65" y={y(maximum * fraction) + 4} textAnchor="end" className="ll-small">{number(maximum * fraction, 0)}</text></g>)}
-    {events.map((trace, index) => <path key={index} d={queuePath(trace)} stroke={index ? GREEN : BLUE} strokeWidth="2.2" fill="none" />)}
+    {events.map((trace, index) => <path key={index} d={queuePath(trace)} stroke={index ? GREEN : BLUE} strokeWidth="2.2" fill="none" className="ll-lane" data-quiet={frame.focus === (index ? "baseline" : "optimized")} />)}
     <path d={`M${x(frame.elapsed)} 274V455`} stroke="#dce7f0" strokeOpacity=".4" />
     {states.map((state, index) => <circle key={index} cx={x(frame.elapsed)} cy={y(state.waiting.length)} r="5" fill={index ? GREEN : BLUE} stroke="#0a151e" strokeWidth="2" />)}
     {complete ? <>

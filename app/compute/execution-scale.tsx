@@ -259,19 +259,17 @@ export function WaterfallPayoff({
       <p className="xs-callout">
         {focus === "baseline" ? (
           <>
-            <b>{f(a.finish, 1)} s</b>Baseline finishes the {selected + 1}{" "}
-            requests here.
+            <b>{f(a.finish, 1)} s</b>Baseline finishes {selected === 0 ? "request 1" : `the first ${selected + 1} requests`} here.
           </>
         ) : focus === "optimized" ? (
           <>
-            <b>{f(b.finish, 1)} s</b>Optimized finishes the same {selected + 1}{" "}
-            requests here.
+            <b>{f(b.finish, 1)} s</b>Optimized finishes {selected === 0 ? "the same request" : `the same ${selected + 1} requests`} here.
           </>
         ) : (
           <>
             <b data-result-target="difference"><span className="xs-delta-symbol">Δ</span> {f(Math.abs(saved), 1)} s {Math.abs(saved) < 1e-8 ? "difference" : saved > 0 ? "earlier" : "later"}</b>
             {Math.abs(saved) < 1e-8 ? "Same completion time" :
-              `${f(Math.abs((100 * saved) / a.finish), 1)}% ${saved > 0 ? "less" : "more"} elapsed time`} for the same{" "}{selected + 1} requests
+              `${f(Math.abs((100 * saved) / a.finish), 1)}% ${saved > 0 ? "less" : "more"} elapsed time`} for {selected === 0 ? "the same request" : `the same ${selected + 1} requests`}
           </>
         )}
       </p>

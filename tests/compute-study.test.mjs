@@ -88,7 +88,8 @@ test("six linked result views declare their synthetic evidence boundary", async 
   ])
     assert.ok(source.includes(name));
   // The page carries no disclaimer banner; the boundary lives in the scenario record.
-  assert.match(source, /ExplorationReel/);
+  // Modules are reached from the laboratory's module bar.
+  assert.match(source, /<ModuleBar/);
   assert.match(source, /Illustrative, not measured/);
   assert.match(source, /Real Qwen3-4B runs/);
   assert.match(source, /No physical GPU or LLM run/);

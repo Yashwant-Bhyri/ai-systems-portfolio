@@ -457,7 +457,7 @@ export function CompositionExplorer({
                     >
                       {costDelta === 0
                         ? "No cost change"
-                        : `Δ ${costDelta > 0 ? "−" : "+"}${number(Math.abs(costDelta), 2)} GPU-s / correct`}
+                        : `Δ ${costDelta > 0 ? "−" : "+"}${number(Math.abs(costDelta), 2)} GPU-s per correct answer`}
                     </text>
                     <path
                       d={`M${(x(shownBefore.correctCost!) + x(shownAfter.correctCost!)) / 2} 390v7H718V365`}
@@ -812,7 +812,7 @@ export function CompositionExplorer({
                   style={{ opacity: resultOpacity }}
                 >
                   {item === "cost"
-                    ? `Δ ${number(Math.abs(costDelta), 2)} ${costDelta === 0 ? "difference" : costDelta > 0 ? "less" : "more"}`
+                    ? `Δ ${number(Math.abs(costDelta), 2)} GPU-s ${costDelta === 0 ? "difference" : costDelta > 0 ? "less" : "more"} per correct answer`
                     : accuracyDelta === 0
                       ? "= same accuracy"
                       : `Δ ${accuracyDelta > 0 ? "+" : ""}${number(accuracyDelta)} percentage points`}

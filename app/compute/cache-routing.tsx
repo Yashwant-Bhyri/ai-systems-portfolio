@@ -131,7 +131,8 @@ function RoutingDiagram({
             color = key === "warm" ? VIOLET : BLUE;
           const computing = s.admitted && !s.completed;
           return (
-            <g key={key}>
+            // Replica A's capacity check is narrated alone; B rejoins for the comparison.
+            <g key={key} className="cr-replica" data-quiet={key === "cold" && (frame.beat === 1 || frame.beat === 2)}>
               <text x="28" y={y - 14} className="cr-section" fill={color}>
                 {routeName(key)} ·{" "}
                 {s.completed

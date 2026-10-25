@@ -115,7 +115,7 @@ function ScheduleLane({
     );
   };
   return (
-    <g data-so-lane={optimized ? "overlapped" : "baseline"}>
+    <g data-so-lane={optimized ? "overlapped" : "baseline"} data-quiet={selected === null && (optimized ? frame.beat < 2 : frame.beat === 2)}>
       <text x="24" y={y} className="so-lane-title" fill={color}>
         {optimized ? "Overlapped scheduling" : "Baseline scheduling"}
       </text>
@@ -913,7 +913,7 @@ export function SchedulingOverlap({
               >
                 {deliveryA === deliveryB
                   ? `= ${deliveryA} ms`
-                  : `Δ ${Math.abs(deliveryA - deliveryB)} ms${deliveryB > deliveryA ? " later" : ""}`}
+                  : `Δ ${Math.abs(deliveryA - deliveryB)} ms ${deliveryB > deliveryA ? "later" : "earlier"}`}
               </text>
               <circle cx="786" cy="202" r="4" fill={deltaColor} />
             </g>

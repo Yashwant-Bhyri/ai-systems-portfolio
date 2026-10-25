@@ -54,7 +54,10 @@ export function loadFilmFrame(filmMs: number, lastArrival: number, lastFinish: n
     phase: time < 10000 ? "arrivals" : time < 13500 ? "queue" : time < 22000 ? "drain" : time < 26000 ? "complete" : "latency",
     tail: time >= 26000,
     sort: easedSort,
-    focus: time < 30000 ? "both" : time < 33500 ? "baseline" : time < SCAN.start ? "optimized" : time < SCAN.settle ? "scan" : "difference",
+    // Narrate one queue at a time while both runs move; compare them together at each settle point.
+    focus: time >= 1000 && time < 5500 ? "baseline" : time >= 5500 && time < 10000 ? "optimized"
+      : time >= 13500 && time < 17750 ? "baseline" : time >= 17750 && time < 22000 ? "optimized"
+      : time < 30000 ? "both" : time < 33500 ? "baseline" : time < SCAN.start ? "optimized" : time < SCAN.settle ? "scan" : "difference",
     /** Sweep progress across ranks (0 → 1), then the glide back to the percentile (0 → 1). */
     scan: Math.max(0, Math.min(1, (time - SCAN.start) / (SCAN.end - SCAN.start))),
     settle: Math.max(0, Math.min(1, (time - SCAN.end) / (SCAN.settle - SCAN.end))),

@@ -263,6 +263,11 @@ function LabEvidence({
             These sources inform the experiment design. Their benchmark numbers
             are not copied, perturbed or presented as this lab’s measurements.
           </p>
+          <p className="rs-research-boundary">
+            Real Qwen3-4B runs require checkpoint identities, hardware timings
+            and independently verified evaluation artifacts. Those are not
+            present in this synthetic scenario.
+          </p>
           <nav aria-label="Research references">
             {RESEARCH.map((r) => (
               <a key={r.url} href={r.url} target="_blank" rel="noreferrer">
