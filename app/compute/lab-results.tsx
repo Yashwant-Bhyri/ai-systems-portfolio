@@ -41,6 +41,7 @@ import "./stagecraft/film-spot.css";
 import "./stagecraft/quiet.css";
 import "./stagecraft/explorers.css";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
+import { useTr } from "../exhibit/i18n";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 import {
   GlyphAudit,
@@ -360,6 +361,7 @@ export function ComputeLabStudy({
       null,
     );
   const exhibitRef = useRef<HTMLElement>(null);
+  const tr = useTr();
   const replayHost = useRef<HTMLDivElement>(null),
     latencyHost = useRef<HTMLDivElement>(null);
   const tourRef = useRef<InferenceTourHandle>(null);
@@ -504,7 +506,7 @@ export function ComputeLabStudy({
       </header>
       {!training && (
         <div className="br-fork" role="group" aria-label="Two ways to make inference cheaper">
-          <span className="br-root">Two ways to make<br />inference cheaper</span>
+          <span className="br-root">{tr("Two ways to make inference cheaper")}</span>
           <svg className="br-lines" viewBox="0 0 120 120" preserveAspectRatio="none" aria-hidden="true">
             <path d="M0 60C50 60 60 26 120 26" data-on={inferencePart === "cheaper"} />
             <path d="M0 60C50 60 60 94 120 94" data-on={inferencePart === "load"} />
@@ -523,8 +525,8 @@ export function ComputeLabStudy({
                 onClick={() => setInferencePart(key)}
               >
                 <i>{n}</i>
-                <strong>{title}</strong>
-                <span><b>{value}</b> {unit}</span>
+                <strong>{tr(title)}</strong>
+                <span><b>{value}</b> {tr(unit)}</span>
               </button>
             ))}
           </div>
