@@ -40,7 +40,9 @@ import "./stagecraft/plates.css";
 import "./stagecraft/film-spot.css";
 import "./stagecraft/quiet.css";
 import "./stagecraft/explorers.css";
-import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
+import "./stagecraft/block.css";
+import { ModuleBar, type RailItem } from "./stagecraft/side-rail";
+import { TaskLanding } from "./stagecraft/task-landing";
 import { useTr } from "../exhibit/i18n";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 import {
@@ -49,7 +51,6 @@ import {
   GlyphComposition,
   GlyphCurves,
   GlyphExperiment,
-  GlyphFigureStory,
   GlyphFrontier,
   GlyphLatency,
   GlyphReplay,
@@ -91,12 +92,25 @@ const REPLAY_DEMO: readonly CursorStep[] = [
   { target: ".rr-measure-chapters button:nth-child(1)", label: "Total GPU work", hold: 2400 },
 ]
 const LATENCY_DEMO: readonly CursorStep[] = [
-  // The film plays itself to the ranked distribution; then the cursor walks the percentiles.
-  { target: ".ll-percentiles button:nth-child(1)", label: "p50 · median response", hold: 3200, waitFor: 60000 },
+  // The film plays to its end (ranking, then the rank scan); only then does the cursor walk the percentiles.
+  { target: ".ll-explorer[data-done=\"true\"] .ll-percentiles button:nth-child(1)", label: "p50 · median response", hold: 3200, waitFor: 70000 },
   { target: ".ll-percentiles button:nth-child(2)", label: "p95 · the slow tail", hold: 3600 },
   { target: ".ll-percentiles button:nth-child(3)", label: "p99 · the slowest few", hold: 3600 },
   { target: ".ll-percentiles button:nth-child(2)", label: "Back to p95", hold: 2600 },
 ]
+
+/** Bring the laboratory block flush with the viewport; a no-op when it already is. */
+function alignBlock(inside: Element | null) {
+  const block = inside?.closest(".lab-block") ?? inside;
+  if (!block) return;
+  const top = block.getBoundingClientRect().top;
+  if (Math.abs(top) < 4) return;
+  // Page snapping would fight the glide; lift it until the glide ends.
+  const html = document.documentElement, snap = html.style.scrollSnapType;
+  html.style.scrollSnapType = "none";
+  window.scrollTo({ top: top + window.scrollY, behavior: "smooth" });
+  window.setTimeout(() => { html.style.scrollSnapType = snap; }, 1400);
+}
 
 const INFERENCE_VIEWS = [
   { name: "Policy × runtime", detail: "Compare cost & accuracy", symbol: "↖" },
@@ -106,6 +120,7 @@ const INFERENCE_VIEWS = [
     symbol: "⇉",
   },
   { name: "Queue & latency", detail: "Compare waiting & p95", symbol: "⌁" },
+  { name: "Where the 96 tasks land", detail: "Base vs post-trained", symbol: "⁘" },
 ];
 const TRAINING_VIEWS = [
   { name: "Capability map", detail: "See which tasks change", symbol: "⊞" },
@@ -418,17 +433,10 @@ export function ComputeLabStudy({
     ],
   ][view];
   const caption = training ? trainingCaption : inferenceCaption;
-  // Whatever the reel opens lands on the stage, and the stage comes into view.
+  // The laboratory is one block: whatever the rail opens appears on the stage in place.
+  // Only when the block is not already aligned does the page glide to it.
   const toStage = () =>
-    requestAnimationFrame(() => {
-      const el = document.getElementById(`${domain}-cost-lab`);
-      if (!el) return;
-      // Page snapping would pull this jump back to the section heading; lift it for the glide.
-      const html = document.documentElement, snap = html.style.scrollSnapType;
-      html.style.scrollSnapType = "none";
-      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 82, behavior: "smooth" });
-      window.setTimeout(() => { html.style.scrollSnapType = snap; }, 2200);
-    });
+    requestAnimationFrame(() => alignBlock(document.getElementById(`${domain}-cost-lab`)));
   const openView = (i: number) => {
     setView(i);
     setFigureHandoff(null);
@@ -436,30 +444,25 @@ export function ComputeLabStudy({
     setMode("explore");
     toStage();
   };
-  const openStory = () => {
-    setTourVisited(true);
-    setMode("present");
-    requestAnimationFrame(() => tourRef.current?.resume());
-    toStage();
-  };
   const openFilm = () => {
     setMode("watch");
     toStage();
   };
-  const reelItems: ReelItem[] = training
+  const chapterSlot = <div id={`${domain}-chapters-slot`} className="sr-chapters" />;
+  const solvedGain = simulateLab(2, budget).correct - simulateLab(0, budget).correct;
+  const railItems: RailItem[] = training
     ? [
-        { key: "film", title: "The experiment", term: "SFT → GRPO → 4× thought → lean", value: "28 → 82", unit: "of 96 solved", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch" },
+        { key: "film", title: "The experiment", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "map", title: "Capability map", term: "every task, every checkpoint", value: "+54", unit: "tasks, net of 5 regressions", Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thought", value: "88", unit: "of 96 at 8×", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "audit", title: "Regression audit", term: "gains beside negative flips", value: "59 / 5", unit: "gained / regressed", Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
-        { key: "story", title: "Figure story", term: "the figures, narrated", value: "90", unit: "seconds", Glyph: GlyphFigureStory, onOpen: () => { setMode("present"); toStage(); }, current: mode === "present" },
       ]
     : [
-        { key: "film", title: "The experiment", term: "schedule → reuse → execute", value: "36.61 → 19.29", unit: "GPU-s / correct", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch" },
-        { key: "composition", title: "Policy × runtime", term: "training ↑ · serving ←", value: "−47%", unit: "GPU-s / correct · same 67 correct", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "replay", title: "Execution replay", term: "pick any of 96 requests", value: "23.75 → 11.55", unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
-        { key: "latency", title: "Queue & latency", term: "p50 · p95 · p99", value: "1,081 → 445", unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
-        { key: "story", title: "Figure story", term: "five figures, one route", value: "113", unit: "seconds", Glyph: GlyphFigureStory, onOpen: openStory, current: mode === "present" },
+        { key: "film", title: "The experiment", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "composition", title: "Policy × runtime", term: "training lifts accuracy · serving cuts cost", value: "−47%", unit: "GPU-s per correct answer", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: "tasks solved after SFT + RL", Glyph: GlyphCapability, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
+        { key: "replay", title: "Execution replay", term: "any of the 96 requests", value: "23.75 → 11.55", unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "latency", title: "Queue & latency", term: "arrival → completion, ranked", value: "1,081 → 445", unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ];
   return (
     <section
@@ -467,55 +470,31 @@ export function ComputeLabStudy({
       id={training ? "post-training-study" : "inference-study"}
       data-vx-page
       data-running={playback.running}
-      className={`cs-study rs-laboratory vx-section-shell vx-accent-${training ? "rose" : "amber"}`}
+      className={`cs-study rs-laboratory lab-block vx-section-shell vx-accent-${training ? "rose" : "amber"}`}
       aria-labelledby={`${domain}-study-title`}
     >
-      <nav
-        className="rs-chapter-path"
-        aria-label={`${training ? "Post-training" : "Inference"} chapter pages`}
-      >
-        <a href={training ? "#post-training" : "#inference"}>Architecture</a>
-        <span>→</span>
-        <a
-          href={
-            training ? "#post-training-microscope" : "#inference-microscope"
-          }
+      <div className="lb-head">
+        <nav
+          className="rs-chapter-path"
+          aria-label={`${training ? "Post-training" : "Inference"} chapter pages`}
         >
-          Component microscope
-        </a>
-        <span>→</span>
-        <strong>Results laboratory</strong>
-      </nav>
-      <header className="rs-heading">
-        <div>
-          <h2 id={`${domain}-study-title`}>
-            {training
-              ? "What did the model learn?"
-              : inferencePart === "load"
-                ? "What happens when load arrives?"
-                : "What made the same answer cheaper?"}
-          </h2>
-          <p>
-            {training
-              ? "Trace capability, the value of more thought, and the regressions hidden in a headline score."
-              : inferencePart === "load"
-                ? "Follow admission, memory, token delivery and routing through one serving loop."
-                : "Isolate the execution gain, expose the queue, and test whether model and runtime gains compose."}
-          </p>
-        </div>
-      </header>
-      {!training && (
-        <div className="br-fork" role="group" aria-label="Two ways to make inference cheaper">
-          <span className="br-root">{tr("Two ways to make inference cheaper")}</span>
-          <svg className="br-lines" viewBox="0 0 120 120" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M0 60C50 60 60 26 120 26" data-on={inferencePart === "cheaper"} />
-            <path d="M0 60C50 60 60 94 120 94" data-on={inferencePart === "load"} />
-          </svg>
-          <div className="br-branches">
+          <a href={training ? "#post-training" : "#inference"}>Architecture</a>
+          <span>→</span>
+          <a href={training ? "#post-training-microscope" : "#inference-microscope"}>
+            Component microscope
+          </a>
+          <span>→</span>
+          <strong>Results laboratory</strong>
+        </nav>
+        <h2 id={`${domain}-study-title`}>
+          {training ? tr("What did the model learn?") : tr("Inference optimization")}
+        </h2>
+        {!training && (
+          <div className="br-fork" role="group" aria-label={tr("Two branches of inference optimization")}>
             {([
-              ["cheaper", "01", "Same intelligence, cheaper execution", "36.61 → 19.29", "GPU-s per correct answer"],
-              ["load", "02", "Serving under load", "56 → 10.25", "ms longest gap in a live answer"],
-            ] as const).map(([key, n, title, value, unit]) => (
+              ["cheaper", "01", "Same intelligence, cheaper execution", ["Continuous batching", "Paged KV + prefix reuse", "Fused prefill & decode kernels"]],
+              ["load", "02", "Serving under load", ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"]],
+            ] as const).map(([key, n, title, techniques]) => (
               <button
                 key={key}
                 type="button"
@@ -526,12 +505,21 @@ export function ComputeLabStudy({
               >
                 <i>{n}</i>
                 <strong>{tr(title)}</strong>
-                <span><b>{value}</b> {tr(unit)}</span>
+                <span className="br-techniques">{techniques.map((t) => <em key={t}>{tr(t)}</em>)}</span>
               </button>
             ))}
           </div>
+        )}
+      </div>
+      <div className="lb-body">
+        <div className="lb-bar">
+          {training || inferencePart === "cheaper" ? (
+            <ModuleBar label={training ? "Post-training laboratory" : "Same intelligence, cheaper execution"} items={railItems} />
+          ) : (
+            <div id="inference-serving-rail" className="lb-bar-slot" />
+          )}
         </div>
-      )}
+        <div className="lb-stage">
       <RetainedLabPanel
         active={training || inferencePart === "cheaper"}
         id={`${domain}-cost-lab`}
@@ -579,7 +567,7 @@ export function ComputeLabStudy({
             onFinish={() => {
               if (!training && mode === "watch") {
                 setInferencePart("load");
-                requestAnimationFrame(() => document.getElementById("inference-study")?.querySelector(".br-fork")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+                requestAnimationFrame(() => alignBlock(document.getElementById("inference-study")));
               }
             }}
             evidence={(storyRun, pauseStory) => (
@@ -856,6 +844,13 @@ export function ComputeLabStudy({
                       </div>
                     </Suspense>
                   </RetainedLabPanel>
+                  <RetainedLabPanel
+                    active={view === 3}
+                    id={`${domain}-figure-3`}
+                    label="Where the 96 tasks land"
+                  >
+                    <TaskLanding budget={budget} active={mode === "explore" && view === 3} />
+                  </RetainedLabPanel>
                 </>
               ) : (
                 <>
@@ -1012,29 +1007,6 @@ export function ComputeLabStudy({
             </article>
           </>
         </RetainedLabPanel>
-        <ExplorationReel
-          label={training ? "Go deeper" : "Go deeper · same intelligence, cheaper execution"}
-          note="Hover to hold · click to put it on the stage"
-          items={reelItems}
-        />
-        <details className="rs-project-contract">
-          <summary>
-            {training
-              ? "Scientific contract · TTC-AUC & integrity"
-              : "Scientific contract · GPU-seconds per valid correct answer"}
-            <span>Inspect the measurement boundary ↗</span>
-          </summary>
-          <p>
-            {training
-              ? "North star: improve verified held-out accuracy across actual test-time GPU budgets. TTC-AUC requires a common measured cost range and a declared integration rule. These are synthetic policy curves, not experimental evidence. No held-out feedback, independent verification, reward-hacking audits, negative-flip analysis and confirmatory replication remain requirements for the real study."
-              : "North star: make identical cognition cheaper to execute. Real comparisons must fix checkpoint, prompt, candidates, token budget, verifier, output quality and workload. Charge all allocated GPU work, failures, retries, selection and cache warm-up. Predeclare latency and correctness gates. Synthetic seconds here are not hardware measurements."}
-          </p>
-          <p>
-            Real Qwen3-4B runs require checkpoint identities, hardware timings
-            and independently verified evaluation artifacts. Those are not
-            present in this synthetic scenario.
-          </p>
-        </details>
       </RetainedLabPanel>
       {!training && (
         <RetainedLabPanel
@@ -1053,6 +1025,8 @@ export function ComputeLabStudy({
           </Suspense>
         </RetainedLabPanel>
       )}
+        </div>
+      </div>
     </section>
   );
 }

@@ -9,7 +9,11 @@ import "./serving-under-load.css";
 import "./stagecraft/stagecraft.css";
 import "./stagecraft/plates.css";
 import "./stagecraft/quiet.css";
-import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
+import type { ReelItem } from "./stagecraft/reel";
+import { ModuleBar, type RailItem } from "./stagecraft/side-rail";
+import { GlossaryBoard } from "./stagecraft/glossary-board";
+import { createPortal } from "react-dom";
+import { useSlot } from "./stagecraft/use-slot";
 import { DraftFilm } from "./stagecraft/draft-film";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 
@@ -35,7 +39,7 @@ const DEMOS: Record<string, readonly CursorStep[]> = {
   ],
 };
 import {
-  GlyphAutoscale, GlyphBatching, GlyphCacheRoute, GlyphChunked, GlyphContinuity, GlyphDraft,
+  GlyphAutoscale, GlyphBatching, GlyphCacheRoute, GlyphChunked, GlyphDraft,
   GlyphEngines, GlyphFlash, GlyphKVSizing, GlyphObserve, GlyphOverlap, GlyphPaged, GlyphQuant,
   GlyphSSE, GlyphServingMap,
 } from "./stagecraft/glyphs";
@@ -79,9 +83,11 @@ const SchedulingOverlap = lazy(() =>
 
 export function ServingUnderLoad() {
   const id = useId().replaceAll(":", "");
-  const [view, setView] = useState<"pressure" | "loop" | "continuity">(
+  const [view, setView] = useState<"pressure" | "loop" | "continuity" | "glossary">(
     "pressure",
   );
+  const [draftDetail, setDraftDetail] = useState(false);
+  const railSlot = useSlot("inference-serving-rail");
   const [explorer, setExplorer] = useState<
     "map" | "draft" | "cache" | "overlap"
   >("map");
@@ -151,20 +157,19 @@ export function ServingUnderLoad() {
         });
       });
   };
-  const show = (next: "pressure" | "loop" | "continuity", ex?: typeof explorer) => {
+  const show = (next: "pressure" | "loop" | "continuity" | "glossary", ex?: typeof explorer) => {
     setOrigin(null);
     if (ex) setExplorer(ex);
     if (next === "continuity") openContinuity();
     else setView(next);
-    requestAnimationFrame(() => root.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
-  const investigations: ReelItem[] = [
-    { key: "pressure", title: "Prefill / decode scheduling", term: "chunked prefill keeps streams alive", value: "56 → 10.25", unit: "ms longest token gap", Glyph: GlyphChunked, onOpen: () => show("pressure"), current: view === "pressure" },
-    { key: "map", title: "Serving system overview", term: "A · B · C · D through one loop", value: "11", unit: "mechanisms, one clock", Glyph: GlyphServingMap, onOpen: () => show("loop", "map"), current: view === "loop" && explorer === "map" },
-    { key: "draft", title: "Speculative decoding", term: "draft · verify · commit", value: "12 → 3", unit: "target-model calls", Glyph: GlyphDraft, onOpen: () => show("loop", "draft"), current: view === "loop" && explorer === "draft" },
-    { key: "cache", title: "Cache-aware routing", term: "warm prefix vs memory pressure", value: "−20", unit: "ms TTFT on the warm route", Glyph: GlyphCacheRoute, onOpen: () => show("loop", "cache"), current: view === "loop" && explorer === "cache" },
-    { key: "overlap", title: "CPU / GPU overlap", term: "prepare while the GPU executes", value: "52 → 37", unit: "ms for four decode steps", Glyph: GlyphOverlap, onOpen: () => show("loop", "overlap"), current: view === "loop" && explorer === "overlap" },
-    { key: "continuity", title: "Token continuity", term: "token budget × memory pool", value: "6", unit: "ms gap when admission holds", Glyph: GlyphContinuity, onOpen: () => show("continuity"), current: view === "continuity" },
+  const railItems: RailItem[] = [
+    { key: "pressure", title: "Prefill / decode scheduling", term: "chunked prefill · per-iteration token budget", value: "56 → 10.25 ms", unit: "longest gap in request 1's stream", Glyph: GlyphChunked, onOpen: () => show("pressure"), current: view === "pressure" || view === "continuity" },
+    { key: "draft", title: "Speculative decoding", term: "draft model guesses · target model verifies", value: "12 → 3", unit: "serial target-model calls", Glyph: GlyphDraft, onOpen: () => show("loop", "draft"), current: view === "loop" && explorer === "draft" },
+    { key: "cache", title: "Cache-aware routing", term: "warm prefix vs. memory pressure", value: "−20 ms", unit: "first token on the warm replica", Glyph: GlyphCacheRoute, onOpen: () => show("loop", "cache"), current: view === "loop" && explorer === "cache" },
+    { key: "overlap", title: "CPU / GPU overlap", term: "host prepares step n+1 during step n", value: "52 → 37 ms", unit: "four decode steps, two streams", Glyph: GlyphOverlap, onOpen: () => show("loop", "overlap"), current: view === "loop" && explorer === "overlap" },
+    { key: "map", title: "Serving system overview", term: "requests A–D on one serving clock", value: "11", unit: "mechanisms in one loop", Glyph: GlyphServingMap, onOpen: () => show("loop", "map"), current: view === "loop" && explorer === "map" },
+    { key: "glossary", title: "Serving glossary", term: "SSE · KV sizing · PagedAttention · …", value: "9", unit: "terms, each linked to where it runs", Glyph: GlyphKVSizing, onOpen: () => show("glossary"), current: view === "glossary" },
   ];
   return (
     <div className="sul-root" ref={root}>
@@ -302,11 +307,15 @@ export function ServingUnderLoad() {
               </p>
             }
           >
-            <DraftFilm active={view === "loop" && explorer === "draft"} />
-            <div ref={draftHost} className="gc-host">
-              <GhostCursor root={draftHost} script={DEMOS.draft} enabled={view === "loop" && explorer === "draft"} startDelay={58000} />
+            <div className="df-switch" role="group" aria-label="Speculative decoding view">
+              <button type="button" aria-pressed={!draftDetail} onClick={() => setDraftDetail(false)}>Draft and target, as agents</button>
+              <button type="button" aria-pressed={draftDetail} onClick={() => setDraftDetail(true)}>Round-by-round accounting</button>
+            </div>
+            {!draftDetail && <DraftFilm active={view === "loop" && explorer === "draft" && !draftDetail} />}
+            <div ref={draftHost} className="gc-host" hidden={!draftDetail}>
+              <GhostCursor root={draftHost} script={DEMOS.draft} enabled={view === "loop" && explorer === "draft" && draftDetail} startDelay={9000} />
               <DraftVerification
-                active={view === "loop" && explorer === "draft"}
+                active={view === "loop" && explorer === "draft" && draftDetail}
               />
             </div>
           </Suspense>
@@ -390,13 +399,10 @@ export function ServingUnderLoad() {
           />
         </Suspense>
       </RetainedLabPanel>
-      <ExplorationReel label="Go deeper · serving under load" note="Hover to hold · click to put it on the stage" items={investigations} />
-      <ExplorationReel
-        label="Serving glossary"
-        note="Every term, where it lives in this project"
-        items={GLOSSARY.map((g) => (g.key === "kv" ? { ...g, onOpen: () => show("loop", "cache"), openLabel: "Open the KV capacity study ↗" } : g))}
-        step={2600}
-      />
+      <RetainedLabPanel active={view === "glossary"} id={`${id}-glossary`} label="Serving glossary">
+        <GlossaryBoard items={GLOSSARY.map((g) => (g.key === "kv" ? { ...g, onOpen: () => show("loop", "cache"), openLabel: "Open the KV capacity study ↗" } : g))} />
+      </RetainedLabPanel>
+      {railSlot && createPortal(<ModuleBar label="Serving under load" items={railItems} />, railSlot)}
     </div>
   );
 }

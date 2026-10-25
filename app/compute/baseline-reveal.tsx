@@ -27,12 +27,16 @@ const MOMENTS = [
   "Generating the answer",
   "Locate the three costs",
 ];
-const HEADINGS = [
-  "Follow a request through baseline serving",
-  "A queued request cannot use an idle worker",
-  "The baseline processes every input again",
-  "The worker generates the answer, token by token",
-  "Three places to change execution",
+/* Headings state what happens to request 7, with its own numbers. */
+type Study = ReturnType<typeof baselineStudy>;
+const HEADINGS: readonly ((s: Study) => string)[] = [
+  () => "Baseline serving: 8 requests, 2 workers, one batch barrier",
+  (s) => `Request 7 waits ${n(s.request.queueSeconds)} s while worker ${s.gap.worker + 1} sits idle`,
+  (s) => s.shared
+    ? `Request 7 recomputes all ${n(s.request.inputTokens)} input tokens: ${n(s.request.prefill)} GPU-s`
+    : `Request 7 computes its ${n(s.request.inputTokens)} input tokens: ${n(s.request.prefill)} GPU-s`,
+  (s) => `Request 7 decodes ${n(s.request.tokens)} tokens, one per step: ${n(s.request.decode)} GPU-s`,
+  (s) => `Request 7 = ${n(s.request.queueSeconds)} s waiting + ${n(s.request.gpuSeconds)} GPU-s of work`,
 ];
 
 /* What stays lit at each moment; the rest of the machine goes matte. */
@@ -241,7 +245,7 @@ export function BaselineReveal({
     >
       <header className="bo-heading">
         <div>
-          <h3>{HEADINGS[frame.beat]}</h3>
+          <h3>{HEADINGS[frame.beat](study)}</h3>
           <span>
             First 8 of {study.cohortSize} requests · 2 workers · unchanged model
           </span>
@@ -467,16 +471,16 @@ export function BaselineReveal({
           </span>
           <h4>
             {frame.beat === 0
-              ? "Requests arrive before workers are ready"
+              ? "Two requests run at once; the rest queue"
               : frame.beat === 1
-                ? "A free worker still cannot start request 7"
+                ? `Worker ${study.gap.worker + 1} is free, but the barrier holds request 7 until its pair finishes`
                 : frame.beat === 2
                   ? study.shared
-                    ? "The shared prefix is read again"
-                    : "This request has different input"
+                    ? `${n(q.inputTokens - 384)} of its tokens match request 1's prefix and are recomputed`
+                    : "No earlier request shares this input"
                   : frame.beat === 3
-                    ? "Every output token takes execution time"
-                    : "Waiting and GPU work are different costs"}
+                    ? "Each output token is one decode step on the GPU"
+                    : "Scheduling removes waiting; reuse and kernels remove work"}
           </h4>
           {frame.beat === 0 ? (
             <div className="bo-population">

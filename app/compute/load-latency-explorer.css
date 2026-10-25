@@ -65,3 +65,6 @@
 @media (max-width: 1200px) { .ll-stage { grid-template-columns: 1fr; } .ll-result { margin: 15px 24px 24px; } .ll-values { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; } .ll-leader { display: none; } }
 @media (max-width: 600px) { .ll-tools, .ll-heading, .ll-transport, .ll-moments, .ll-inspect-request, .ll-accounting { padding-inline: 16px; } .ll-heading { align-items: flex-start; gap: 12px; } .ll-heading h3 { font-size: 22px; } .ll-heading time { font-size: 19px; } .ll-heading small { white-space: normal; max-width: 80px; } .ll-result { margin-inline: 16px; } .ll-values { gap: 20px; } .ll-values > div { flex-direction: column; align-items: flex-start; gap: 8px; } .ll-values strong { font-size: 25px; } }
 @media (prefers-reduced-motion: reduce) { .ll-distribution > path, .ll-point > circle { transition: none; } }
+
+/* The rank scan: a cursor sweeps the ranked responses; the gap between runs fills behind it. */
+.ll-scan-delta { font: 500 15px var(--font-geist-mono), monospace; fill: #dcc4ff; paint-order: stroke; stroke: #0a151d; stroke-width: 4px; }

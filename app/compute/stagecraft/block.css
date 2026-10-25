@@ -1,0 +1,193 @@
+/* The results laboratory as one block: one viewport, head + module bar + stage.
+   Nothing the visitor needs sits below the fold or above it. */
+
+.cs-study.lab-block {
+  --lb-header: 78px;
+  box-sizing: border-box;
+  width: min(1420px, calc(100vw - 40px));
+  max-width: none;
+  height: 100svh;
+  min-height: 720px;
+  margin-inline: auto;
+  padding: calc(var(--lb-header) + 10px) 0 10px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  overflow: hidden;
+}
+
+/* ── Head: where you are, the title, the two branches ─────────────────── */
+.lb-head { padding-right: 160px; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; gap: 4px 32px; }
+.lb-head .rs-chapter-path { grid-column: 1 / -1; grid-row: 1; margin: 0; padding: 0; font-size: 10px; }
+.lb-head h2 { grid-column: 1; grid-row: 2; margin: 0; color: #f1f4f7; font: 500 26px/1.1 var(--font-geist-sans), sans-serif; letter-spacing: -.025em; white-space: nowrap; }
+.lb-head .br-fork { grid-column: 2; grid-row: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; }
+.vx-shell .lb-head .br-branch { display: grid; grid-template-columns: minmax(0, 1fr); align-items: baseline; gap: 3px; padding: 7px 14px 8px; }
+.lb-head .br-branch i { display: none; }
+.lb-head .br-branch strong { font-size: 15px; }
+.lb-head .br-techniques { display: block; white-space: nowrap; overflow: hidden; }
+.lb-head .br-techniques em { font: 400 10.5px/1.4 var(--font-geist-sans), sans-serif; font-style: normal; color: inherit; opacity: .72; }
+.lb-head .br-techniques em + em::before { content: "·"; margin: 0 5px; opacity: .55; }
+
+/* ── Body: the module bar, then the stage at full width ───────────────── */
+.lb-body { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.lb-bar { position: relative; min-width: 0; border: 1px solid rgba(230,237,244,.07); border-bottom: 0; background: rgba(8,12,17,.7); }
+.lb-stage { position: relative; min-height: 0; min-width: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent;
+  border: 1px solid rgba(230,237,244,.07); background: rgba(8,12,17,.55); }
+.lb-stage > [role="region"], .lb-stage > div { min-height: 100%; }
+.lb-stage .rs-exhibit, .lb-stage .ls-story { border: 0 !important; }
+
+/* ── Module bar ───────────────────────────────────────────────────────── */
+.mb-bar { display: flex; align-items: stretch; gap: 0; height: 50px; padding: 0 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+  mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+.mb-bar::-webkit-scrollbar { display: none; }
+.mb-item { display: flex; align-items: stretch; flex: 0 0 auto; }
+.vx-shell .mb-tab { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: none; border: 0; cursor: pointer; color: #8793a0; white-space: nowrap;
+  transition: color .3s; }
+.mb-tab:hover { color: #dfe5eb; }
+.mb-tab strong { font: 450 14.5px/1 var(--font-geist-sans), sans-serif; color: inherit; }
+.mb-tab::after { content: ""; position: absolute; left: 16px; right: 16px; bottom: 0; height: 2px; background: var(--active-accent); transform: scaleX(0); transform-origin: left; transition: transform .45s cubic-bezier(.2,.7,.2,1); }
+.mb-item[data-current] .mb-tab { color: #f3f6f8; }
+.mb-item[data-current] .mb-tab::after { transform: scaleX(1); }
+.mb-thumb { display: block; width: 42px; height: 22px; opacity: .45; filter: grayscale(.7); transition: opacity .4s, filter .4s; }
+.mb-item[data-current] .mb-thumb, .mb-tab:hover .mb-thumb { opacity: .95; filter: none; }
+.mb-thumb svg { display: block; width: 100%; height: 100%; }
+.mb-thumb .g-t, .mb-thumb .g-n, .mb-thumb .g-code { display: none; }
+.mb-value { display: inline-flex; align-items: baseline; gap: 6px; animation: mb-in .5s cubic-bezier(.2,.7,.2,1) both; }
+.mb-value mark { background: none; color: var(--active-accent); font: 500 14.5px/1 var(--font-geist-mono), monospace; letter-spacing: -.01em; }
+.mb-value small { color: #8a96a2; font: 400 11px/1 var(--font-geist-mono), monospace; }
+@keyframes mb-in { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: none; } }
+
+/* The film's chapters unfold beside its tab: numbered segments; the open one
+   carries its name and the playback progress. */
+.mb-chapters { display: flex; align-items: center; padding: 0 10px 0 2px; animation: mb-in .5s cubic-bezier(.2,.7,.2,1) both; }
+.mb-chapters:empty { display: none; }
+.mb-chapters .ls-chapters { display: flex !important; align-items: center; gap: 4px; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: visible; }
+.vx-shell .mb-chapters .ls-chapters button { position: relative; display: inline-flex !important; align-items: center; gap: 8px; min-height: 0 !important; height: 30px; padding: 0 11px !important; overflow: hidden;
+  border: 1px solid rgba(230,237,244,.12) !important; border-radius: 15px; background: none !important; color: #7d8996; white-space: nowrap; transition: color .3s, border-color .3s, background .3s; }
+.mb-chapters .ls-chapters button > span { font: 500 11.5px/1 var(--font-geist-mono), monospace !important; opacity: 1 !important; }
+.mb-chapters .ls-chapters button > strong { display: none; font: 450 13px/1 var(--font-geist-sans), sans-serif !important; color: inherit; }
+.mb-chapters .ls-chapters button[data-complete="true"] { color: #aab4be; }
+.vx-shell .mb-chapters .ls-chapters button[aria-current="step"] { color: #f3f6f8; border-color: color-mix(in srgb, var(--active-accent) 55%, transparent) !important;
+  background: color-mix(in srgb, var(--active-accent) 10%, transparent) !important; padding-right: 14px !important; }
+.mb-chapters .ls-chapters button[aria-current="step"] > strong { display: inline; }
+.mb-chapters .ls-chapters button:hover > strong { display: inline; }
+.mb-chapters .ls-chapters .ls-progress { left: 0 !important; right: 0 !important; bottom: 0 !important; height: 2px !important; }
+.mb-chapters .ls-workload { display: inline-flex !important; align-items: center; margin: 0 0 0 10px !important; padding: 0 0 0 12px !important; border-left: 1px solid rgba(230,237,244,.1); font-size: 0 !important; }
+.vx-shell .mb-chapters .ls-workload select { height: 30px; min-height: 0; padding: 0 28px 0 12px; border: 1px solid rgba(230,237,244,.14); border-radius: 15px; background-color: transparent;
+  color: #c9d2db; font: 400 12.5px/1 var(--font-geist-sans), sans-serif; cursor: pointer; }
+
+@media (max-width: 900px) {
+  .cs-study.lab-block { height: auto; min-height: 0; overflow: visible; width: calc(100vw - 24px); }
+  .lb-head { grid-template-columns: 1fr; padding-right: 0; }
+  .lb-head .br-fork { grid-column: 1; grid-row: auto; grid-template-columns: 1fr; }
+  .lb-head h2 { white-space: normal; }
+  .lb-head .br-techniques { white-space: normal; }
+  .lb-bar { position: sticky; top: 64px; z-index: 5; }
+  .lb-stage { overflow: visible; }
+}
+
+/* ══ Module fits: every module reads in the stage without scrolling ═══════
+   Density and layout only; no transforms (Astra's leader lines measure the
+   live geometry). Scoped to wide screens; phones keep the stacked layouts. */
+@media (min-width: 901px) {
+  /* Policy × runtime */
+  .lb-stage .cxp-lenses { flex-wrap: nowrap; gap: 0 28px; padding: 4px 20px 0; }
+  .vx-shell .lb-stage .cxp-lenses button { position: relative; display: flex; align-items: baseline; gap: 9px; padding: 9px 0 10px; }
+  .lb-stage .cxp-lenses strong { font-size: 14px; }
+  .lb-stage .cxp-lenses span { margin: 0; font-size: 11px; opacity: .72; }
+  .lb-stage .cxp-stage { grid-template-columns: minmax(0, 1fr) 300px; align-items: stretch; }
+  .lb-stage .cxp-pan { display: none; }
+  .lb-stage .cxp-scroll { overflow: visible; }
+  .lb-stage .cxp-plot { min-width: 0; height: auto; max-height: calc(100svh - 330px); }
+  .lb-stage .cxp-readout { margin: 10px 14px 10px 4px; padding: 12px 16px; display: flex; flex-direction: column; }
+  .lb-stage .cxp-pair { min-height: 0; margin-bottom: 4px; }
+  .lb-stage .cxp-active-step { min-height: 0; font-size: 13px; margin-bottom: 4px; }
+  .lb-stage .cxp-metrics { grid-template-columns: 1fr; gap: 2px; }
+  .vx-shell .lb-stage .cxp-metrics button { padding: 8px 10px; }
+  .lb-stage .cxp-paired { margin-top: 2px; }
+  .lb-stage .cxp-paired b { font-size: 26px; line-height: 1.2; }
+  .lb-stage .cxp-delta { min-height: 0; margin-top: 4px; }
+  .lb-stage .cxp-mechanisms h3 { margin: 10px 0 4px; }
+  .lb-stage .cxp-cohort { margin: 8px 0 0; font-size: 11px; }
+  .lb-stage .cxp-audit { display: none; }
+  .lb-stage .cxp-evidence { margin-top: auto; padding-top: 8px; }
+  .lb-stage .cxp-result-link { display: block; }
+  .lb-stage .cxp-direction { flex-wrap: nowrap; align-items: center; padding: 6px 16px; gap: 14px; }
+  .lb-stage .cxp-direction .cxp-transport { flex: 1 1 auto; min-width: 280px; }
+  .vx-shell .lb-stage .cxp-direction button { padding: 6px 9px; white-space: nowrap; }
+
+  /* Part 1 film chapters: heading on one line; transport and moments share a row;
+     the method notes stay in the scenario record. */
+  .lb-stage :is(.bo-film, .sq-film, .pr-reveal, .es-film, .rg-film) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: start; }
+  .lb-stage :is(.bo-film, .sq-film, .pr-reveal, .es-film, .rg-film) > * { grid-column: 1 / -1; min-width: 0; }
+  .lb-stage :is(.bo-transport, .sq-transport, .pr-transport, .es-transport, .rg-transport) { grid-column: 1; min-width: 260px; margin: 0; padding: 8px 10px 8px 22px; border-top: 1px solid rgba(230,237,244,.07); }
+  .lb-stage :is(.bo-moments, .sq-moments, .pr-moments, .es-moments, .rg-moments) { grid-column: 2; flex-wrap: nowrap; align-items: center; gap: 4px 16px; margin: 0; padding: 8px 22px 8px 6px; border-top: 1px solid rgba(230,237,244,.07); }
+  .vx-shell .lb-stage :is(.bo-moments, .sq-moments, .pr-moments, .es-moments, .rg-moments) button { white-space: nowrap; }
+  .lb-stage :is(.bo-method, .sq-method, .pr-method, .es-method) { display: none; }
+  .lb-stage :is(.bo-heading, .sq-heading, .rg-heading) { padding: 12px 22px 4px; }
+  .lb-stage :is(.bo-heading, .sq-heading, .rg-heading) h3 { font-size: 23px; min-height: 0; max-width: none; }
+
+  /* Worker scheduling */
+  .lb-stage .sq-invariants { padding: 8px 22px; }
+  .lb-stage .sq-stage { min-height: 0; }
+  .lb-stage .sq-timeline { max-height: calc(100svh - 370px); }
+  .lb-stage .sq-ledger { margin: 8px 18px 8px 8px; padding: 14px 16px 10px; }
+  .lb-stage .sq-ledger header h4 { font-size: 18px; margin-bottom: 3px; }
+  .lb-stage .sq-ledger > svg { margin-top: 8px; max-height: 275px; }
+  .lb-stage .sq-ledger-result { min-height: 0; padding: 6px 0 6px; }
+  .lb-stage .sq-comparison-nav { padding-block: 6px 4px; }
+
+  /* Prefill & decode execution: title and outcome tabs share a row */
+  .lb-stage .es-invariants { padding: 8px 22px; }
+  .lb-stage .es-direction { grid-column: 1; padding: 10px 22px 6px; }
+  .lb-stage .es-direction h3 { font-size: 23px; min-height: 0; max-width: none; }
+  .lb-stage .xs-outcome-nav { grid-column: 2; align-self: center; padding: 8px 22px 4px 0; border: 0; gap: 6px 22px; flex-wrap: nowrap; }
+  .vx-shell .lb-stage .xs-outcome-nav button { white-space: nowrap; }
+  .lb-stage .xs-sequence { border-top: 1px solid #2f4351; }
+  .lb-stage .xs-parameter-slot { min-height: 44px; }
+  .lb-stage .xs-control { padding: 8px 0; }
+
+  /* Execution replay */
+  .lb-stage .rr-tools { padding: 6px 20px !important; }
+  .vx-shell .lb-stage .rr-tools button, .lb-stage .rr-tools select { padding-block: 6px; }
+  .vx-shell .lb-stage .rr-measure-chapters button { display: flex; align-items: baseline; gap: 8px; padding: 9px 20px !important; }
+  .lb-stage .rr-measure-chapters :is(strong, span) { margin-top: 0 !important; line-height: 1.3; white-space: nowrap; }
+  .lb-stage .rr-measure-chapters strong { font-size: 13.5px; }
+  .lb-stage .rr-measure-chapters span { display: none; }
+  .lb-stage .rr-cohort { padding: 6px 20px 4px !important; }
+  .lb-stage .rr-cohort > div:first-child { margin-bottom: 2px !important; }
+  .lb-stage .rr-cohort-plot { min-width: 0; max-height: 84px; }
+  .lb-stage .rr-request-slider { margin-top: 4px; }
+  .lb-stage .rr-heading { padding: 8px 22px 0 !important; }
+  .lb-stage .rr-heading h3 { font-size: 21px; flex-basis: auto; }
+  .lb-stage .rr-plot { min-width: 0; max-height: calc(100svh - 592px) !important; }
+  .lb-stage .rr-result { margin: 8px 18px 8px 6px !important; padding: 12px 16px !important; }
+  .lb-stage .rr-result h4 { min-height: 0; margin: 8px 0 !important; font-size: 17px; }
+  .lb-stage .rr-values > div { margin-bottom: 10px; padding-bottom: 8px; }
+  .lb-stage .rr-delta { margin: 10px 0 8px; }
+  .lb-stage .rr-transport { padding: 6px 20px !important; }
+  .lb-stage .rr-accounting { display: none; }
+
+  /* Queue & latency: tools and heading share a row; transport, moments and the
+     request slider share one row. */
+  .lb-stage .ll-explorer { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .lb-stage .ll-explorer > * { grid-column: 1 / -1; min-width: 0; }
+  .lb-stage .ll-tools { padding: 6px 20px !important; }
+  .lb-stage .ll-heading { padding: 8px 22px 0 !important; }
+  .lb-stage .ll-heading h3 { font-size: 21px; max-width: none; }
+  .lb-stage .ll-heading time { font-size: 19px; }
+  .lb-stage .ll-heading small { margin-top: 2px; }
+  .lb-stage .ll-stage { min-height: 0; }
+  .lb-stage .ll-plot { min-width: 0; max-height: calc(100svh - 330px); }
+  .lb-stage .ll-result { margin: 4px 18px 8px 6px; padding: 12px 16px; }
+  .lb-stage .ll-result h4 { min-height: 0; margin: 6px 0 10px; font-size: 17px; }
+  .lb-stage .ll-values > div { margin-bottom: 8px !important; padding-bottom: 8px !important; }
+  .lb-stage .ll-delta { margin: 8px 0 6px; min-height: 0 !important; }
+  .lb-stage .ll-percentiles { margin-top: 10px !important; }
+  .lb-stage .ll-evidence { margin-top: 10px !important; }
+  .lb-stage .ll-transport { grid-column: 1; padding: 6px 10px 6px 20px; }
+  .lb-stage .ll-moments { grid-column: 2; flex-wrap: nowrap; gap: 4px 16px; padding: 6px 20px 6px 6px; border-top: 1px solid #304453; border-bottom: 1px solid #304453; }
+  .vx-shell .lb-stage .ll-moments button { white-space: nowrap; min-height: 30px; padding-block: 4px; }
+  .vx-shell .lb-stage .ll-transport button { min-height: 30px; padding: 4px 10px; }
+  .lb-stage .ll-inspect-request, .lb-stage .ll-accounting, .lb-stage .ll-intervention { display: none; }
+}

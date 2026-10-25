@@ -1,6 +1,8 @@
 "use client";
 
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { useSlot } from "./stagecraft/use-slot";
 import {
   BUDGETS,
   compareTasks,
@@ -80,6 +82,8 @@ export function LabStory({
         ],
   });
   const steps = training ? TRAINING_STORY : INFERENCE_STORY;
+  const slotId = training ? "training-chapters-slot" : "inference-chapters-slot";
+  const slot = useSlot(slotId);
   // When the last chapter ends, hand over to whatever comes next (the second branch).
   const finishedRef = useRef(onFinish);
   useEffect(() => { finishedRef.current = onFinish; });
@@ -147,6 +151,41 @@ export function LabStory({
     else if (!isWatching) playback.resume();
     else playback.pause();
   };
+  // The chapter list lives in the laboratory's side rail when the rail is present.
+  const chaptersNav = (
+    <nav
+          className="ls-chapters"
+          aria-label={
+            training ? "Learning story chapters" : "Execution story chapters"
+          }
+        >
+          {steps.map((s, i) => (
+            <button
+              key={s.verb}
+              type="button"
+              aria-current={step === i ? "step" : undefined}
+              aria-label={`Chapter ${i + 1}: ${s.name}`}
+              onClick={() => select(i)}
+              data-complete={i < step}
+            >
+              <span>{String(i + 1).padStart(2, "0")}</span>
+              <strong>{s.name}</strong>
+              {step === i && (
+                <i
+                  key={playback.progressKey}
+                  className="ls-progress"
+                  aria-hidden="true"
+                  style={{
+                    animationDuration: `${playback.duration}ms`,
+                    animationDelay: `${-playback.progressOffset}ms`,
+                  }}
+                />
+              )}
+            </button>
+          ))}
+          {!training && <label className="ls-workload" title="Workload">Workload<select aria-label="Story workload" value={workload} onChange={event => { setWorkload(event.target.value as typeof workload); select(step); }}><option value="interactive">Different documents</option><option value="shared-prefix">One shared document</option></select></label>}
+        </nav>
+  );
   return (
     <article
       ref={ref}
@@ -212,38 +251,7 @@ export function LabStory({
               ))}
         </div>
       </div>
-      <nav
-        className="ls-chapters"
-        aria-label={
-          training ? "Learning story chapters" : "Execution story chapters"
-        }
-      >
-        {steps.map((s, i) => (
-          <button
-            key={s.verb}
-            type="button"
-            aria-current={step === i ? "step" : undefined}
-            aria-label={`Chapter ${i + 1}: ${s.name}`}
-            onClick={() => select(i)}
-            data-complete={i < step}
-          >
-            <span>{String(i + 1).padStart(2, "0")}</span>
-            <strong>{s.name}</strong>
-            {step === i && (
-              <i
-                key={playback.progressKey}
-                className="ls-progress"
-                aria-hidden="true"
-                style={{
-                  animationDuration: `${playback.duration}ms`,
-                  animationDelay: `${-playback.progressOffset}ms`,
-                }}
-              />
-            )}
-          </button>
-        ))}
-        {!training && <label className="ls-workload">Workload<select aria-label="Story workload" value={workload} onChange={event => { setWorkload(event.target.value as typeof workload); select(step); }}><option value="interactive">Different documents</option><option value="shared-prefix">Shared document</option></select></label>}
-      </nav>
+      {slot ? createPortal(chaptersNav, slot) : chaptersNav}
       {training && (
         <header className="ls-story-heading">
           <div>
