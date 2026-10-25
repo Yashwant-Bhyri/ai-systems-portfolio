@@ -92,5 +92,7 @@
   .cs-study.lab-flow { width: calc(100vw - 24px); padding-top: 84px; }
   .lab-flow-side .lf-body { grid-template-columns: 1fr; }
   .lab-flow-side .lf-nav, .lab-flow-top .lf-nav, .lab-flow-dock .lf-nav { position: relative; top: auto; bottom: auto; height: auto; }
-  .lnv-switch { left: 8px; right: 8px; bottom: 8px; overflow-x: auto; }
+  .lnv-switch { display: none; }
+  .lf-stage .ls-workload-switch { position: static; margin: 8px 12px 0; }
+  .lf-chapters { overflow-x: auto; scrollbar-width: none; }
 }

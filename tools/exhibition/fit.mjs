@@ -16,11 +16,11 @@ const report = async (sec, label, wait = 6000) => {
 const rail = (sec, text) => p.locator(`#${sec} .lb-bar button`).filter({ hasText: text }).first().click({ timeout: 8000 }).catch(() => console.log('rail click fail', text));
 await go('inference-study'); await p.waitForTimeout(800); await rail('inference-study', 'The experiment'); await p.waitForTimeout(500);
 if (want('p1')) for (const ch of ['Baseline serving', 'Worker scheduling', 'KV prefix reuse', 'Prefill & decode execution', 'Combined runtime gains']) { await rail('inference-study', ch); await report('inference-study', ch); }
-if (want('p1m')) for (const m of ['Policy × runtime', 'Where the 96 tasks land', 'Execution replay', 'Queue & latency']) { await rail('inference-study', m); await report('inference-study', m); }
+if (want('p1m')) for (const m of ['Policy × runtime', 'Execution replay', 'Queue & latency']) { await rail('inference-study', m); await report('inference-study', m); }
 if (want('p2')) { await p.locator('#inference-study .br-branch').nth(1).click(); await p.waitForTimeout(800); }
 if (want('p2')) for (const m of ['Prefill / decode scheduling', 'Speculative decoding', 'Cache-aware routing', 'CPU / GPU overlap', 'Serving system overview', 'Serving glossary']) { await rail('inference-study', m); await report('inference-study', m); }
 await go('post-training-study'); await p.waitForTimeout(800); await rail('post-training-study', 'The experiment'); await p.waitForTimeout(500);
 if (want('pt')) for (const ch of ['The starting point', 'SFT + LoRA', 'Learn from outcomes', 'Give it more thought', 'Make thought count', 'The frontier']) { await rail('post-training-study', ch); await report('post-training-study', ch); }
-if (want('ptm')) for (const m of ['Capability map', 'Compute curves', 'Regression audit']) { await rail('post-training-study', m); await report('post-training-study', m); }
+if (want('ptm')) for (const m of ['Capability map', 'Compute curves', 'Where the 96 tasks land', 'Elastic RL on 64 GPUs', 'Regression audit']) { await rail('post-training-study', m); await report('post-training-study', m); }
 console.log('errors', errs.length ? [...new Set(errs)] : 'none');
 await b.close();
