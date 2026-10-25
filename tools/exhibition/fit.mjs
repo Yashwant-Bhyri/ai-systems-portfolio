@@ -4,7 +4,7 @@ const [, , port = '3290', vw = '1440', vh = '900', shots = '1', only = 'all'] = 
 const want = (g) => only === 'all' || only.split(',').includes(g);
 const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: +vw, height: +vh } })).newPage();
 const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 160)));
-await p.goto(`http://localhost:${port}/`, { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1500);
+await p.goto(`http://localhost:${port}/?labnav=bar`, { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1500);
 const go = (id) => p.evaluate((id) => { const el = document.getElementById(id); window.scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: 'instant' }); }, id);
 const report = async (sec, label, wait = 6000) => {
   await p.waitForTimeout(wait);

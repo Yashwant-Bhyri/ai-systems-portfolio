@@ -3,7 +3,7 @@ import { chromium } from '/Users/yash/antigravity/node_modules/playwright/index.
 const [, , sec = 'inference-study', tag = 'p'] = process.argv;
 const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 160)));
-await p.goto('http://localhost:3290/', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1500);
+await p.goto('http://localhost:3290/?labnav=bar', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1500);
 const top = await p.evaluate((id) => { const el = document.getElementById(id); return el.getBoundingClientRect().top + scrollY; }, sec);
 const h = await p.evaluate((id) => document.getElementById(id).scrollHeight, sec);
 for (let i = 0, y = top; y < top + h && i < 6; i++, y += 780) {

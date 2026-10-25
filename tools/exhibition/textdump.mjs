@@ -15,7 +15,7 @@ const MODS = [
 const b = await chromium.launch();
 for (const [sec, branch, label, times] of MODS) {
   const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
-  await p.goto('http://localhost:3290/', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1000);
+  await p.goto('http://localhost:3290/?labnav=bar', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1000);
   await p.evaluate((id) => { const el = document.getElementById(id); window.scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: 'instant' }); }, sec);
   await p.waitForTimeout(500);
   if (branch) { await p.locator(`#${sec} .br-branch`).nth(1).click(); await p.waitForTimeout(600); }

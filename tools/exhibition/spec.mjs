@@ -1,7 +1,7 @@
 import { chromium } from '/Users/yash/antigravity/node_modules/playwright/index.mjs';
 const [, , vw = '1440', vh = '900', wait = '6000'] = process.argv;
 const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: +vw, height: +vh } })).newPage();
-await p.goto('http://localhost:3290/', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1200);
+await p.goto('http://localhost:3290/?labnav=bar', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1200);
 await p.evaluate(() => { const el = document.getElementById('inference-study'); window.scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: 'instant' }); });
 await p.waitForTimeout(500);
 await p.locator('#inference-study .br-branch').nth(1).click(); await p.waitForTimeout(600);

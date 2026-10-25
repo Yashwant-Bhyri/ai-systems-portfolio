@@ -157,10 +157,9 @@ svg rect[fill="#1c2037"][stroke="#776b9d"], svg rect[fill="#201f36"][stroke="#74
    A brighter, wider sweep of light, a short glow as it passes, and two stars that
    glint in turn. Only settled, favorable results carry it; baselines, losses and
    running counters stay plain. Units stay quiet; only the number carries the light. */
-.bo-measure strong, .bo-measure strong::after { animation: none !important; background: none !important; -webkit-text-fill-color: currentColor !important; }
-.bo-measure strong::after { content: none !important; }
-.sq-ledger-result:not([data-reveal="true"]) strong { animation: none !important; background: none !important; -webkit-text-fill-color: currentColor !important; }
-.sq-ledger-result:not([data-reveal="true"]) strong::after { content: none !important; }
+/* Baseline counters and running totals shine softly (tier 2) but never carry stars. */
+.bo-measure strong::after, .bo-measure strong::before { content: none !important; }
+.sq-ledger-result:not([data-reveal="true"]) strong::after, .sq-ledger-result:not([data-reveal="true"]) strong::before { content: none !important; }
 
 :is(
   .rr-delta[data-hero="true"] .cx-hero-num, .ll-delta[data-hero="true"] .cx-hero-num, .tl-hero .cx-hero-num,
@@ -199,4 +198,38 @@ svg rect[fill="#1c2037"][stroke="#776b9d"], svg rect[fill="#201f36"][stroke="#74
   :is(.cx-hero-num, .sq-ledger-result strong, .cxp-metrics .cxp-delta, .rg-delta:not(.rg-quiet) > b, .xs-callout > b, .cr-delta strong, .sp-payoff, .dv-delta strong) { animation: none; background: none; -webkit-text-fill-color: currentColor; filter: none; }
   :is(.cx-hero-num, .sq-ledger-result strong, .rg-delta:not(.rg-quiet) > b, .xs-callout > b, .cr-delta strong, .dv-delta strong)::after { animation: none; opacity: .85; }
   :is(.cx-hero-num, .sq-ledger-result strong, .rg-delta:not(.rg-quiet) > b, .xs-callout > b, .cr-delta strong, .dv-delta strong)::before { display: none; }
+}
+
+/* ══ Every prominent number carries light ═════════════════════════════════
+   Tier 2 (all key numbers in plates, tabs, reels and figures): a slower, softer
+   sweep, staggered so the page never flashes at once. Tier 1 (the one earned
+   result per view, above) keeps the brighter sweep, glow and two stars. */
+:is(
+  .cxp-paired b, .rr-values strong, .ll-values strong, .sp-result-bars strong, .sp-live-answer strong,
+  .rg-comparison span, .rg-final-equation strong, .rg-final-equation > span, .rg-fraction strong, .rg-contribution-sum b,
+  .sq-ledger-result strong, .bo-measure strong, .cr-card dd, .dv-round-math strong,
+  .xs-paired-values b, .xs-cost-values b, .xs-allowance-number, .tl-row strong, .pr-focus-values strong, .pr-baseline-value,
+  .rs-readout strong, .rs-lab-metrics strong, .ls-main-result strong, .ls-value,
+  .mb-value mark, .gb-value mark, .rl-value mark, .sr-value mark, .df-pair
+) {
+  background-image: linear-gradient(100deg, currentColor 0 40%, rgba(255,255,255,.95) 48%, currentColor 56% 100%);
+  background-size: 300% 100%; background-repeat: no-repeat; background-position: 100% 0;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: cx-shine-soft 7.5s cubic-bezier(.4,0,.2,1) infinite;
+}
+:is(.cxp-paired b, .rr-values strong, .ll-values strong, .rg-comparison span, .cr-card dd, .tl-row strong, .rs-readout strong):nth-of-type(2n) { animation-delay: 1.4s; }
+:is(.mb-value mark, .gb-value mark, .rl-value mark) { animation-delay: .7s; }
+/* Small units inside a lit number stay quiet. */
+:is(.rr-values strong, .ll-values strong, .sp-result-bars strong, .rg-fraction strong, .tl-row strong, .pr-focus-values strong, .rs-readout strong) small { -webkit-text-fill-color: #8f9cab; }
+@keyframes cx-shine-soft { 0%, 62% { background-position: 100% 0; } 88%, 100% { background-position: 0 0; } }
+
+/* Numbers drawn inside SVG figures cannot clip a gradient; they glow as the light passes. */
+:is(.ex-num-l, .ex-num-xl, .sh-metric, .sh-value, .so-value, .so-metric, .sa-metric, .sa-value, .sc-metric, .sc-value, .sd-metric, .sd-value, .rg-number, .cxp-bracket-value, .xs-count, .ar-value) {
+  animation: cx-svg-glint 7.5s ease-in-out infinite;
+}
+@keyframes cx-svg-glint { 0%, 64%, 100% { filter: drop-shadow(0 0 0 rgba(255,255,255,0)); } 76% { filter: drop-shadow(0 0 7px rgba(255,246,228,.75)); } }
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.cxp-paired b, .rr-values strong, .ll-values strong, .sp-result-bars strong, .rg-comparison span, .cr-card dd, .tl-row strong, .rs-readout strong, .mb-value mark, .gb-value mark, .rl-value mark, .bo-measure strong) { animation: none; background: none; -webkit-text-fill-color: currentColor; }
+  :is(.ex-num-l, .ex-num-xl, .sh-metric, .so-value, .sa-metric, .rg-number) { animation: none; }
 }
