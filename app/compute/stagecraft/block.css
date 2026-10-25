@@ -424,16 +424,32 @@
   .lb-stage .gb-card em { display: none; }
   .lb-stage .rg-mini { display: none; }
   .lb-stage .ls-training .ls-figure-label { padding-block: 6px; }
-  .lb-stage .ls-training .pf-scene { max-height: 320px; }
+  .lb-stage .ls-training .pf-scene { max-height: 290px; }
+  .lb-stage .ar-example-boundary, .lb-stage .tt-equation, .lb-stage .pf-behavior { display: none; }
+  .lb-stage .tt-question { font-size: 13px; }
+  .lb-stage .ll-evidence, .lb-stage .ll-result-label { display: none; }
+  .lb-stage .ll-tools, .lb-stage .rr-tools { padding-block: 3px !important; }
+  .vx-shell .lb-stage :is(.ll-tools, .rr-tools) button { min-height: 0; padding-block: 4px; }
+  .lb-stage .xs-scroll svg { max-height: calc(100svh - 520px); }
+  .lb-stage .xs-parameter-slot { min-height: 36px; }
+  .lb-stage .xs-demand-focus .xs-focus-note { display: none; }
+  .lb-stage .xs-control { padding-block: 4px; }
+  .lb-stage .xs-focus svg.xs-comparison-bars { max-height: 120px; }
+  .lb-stage .xs-demand-focus > svg { max-height: 140px; }
+  .lb-stage .ls-training .ls-footer { padding-block: 1px; }
+  .lb-stage .ls-training .ls-story-heading { padding: 5px 22px 2px; }
+  .lb-stage .ls-training .ls-topline { padding-block: 1px; }
+  .vx-shell .lb-stage .tt-budget-buttons button { padding-block: 3px; }
+  .lb-stage .ar-example { gap: 8px; }
   .lb-stage .ls-training .pf-case-routes { max-height: 150px; }
   .lb-stage .ls-training .ls-trail { max-height: 120px; }
   .lb-stage .ls-training .ls-cohort { max-height: 80px; }
-  .lb-stage .tt-plot { min-height: 0; max-height: 170px; }
-  .lb-stage .tt-sequence-scroll svg { max-height: 100px; }
+  .lb-stage .tt-plot { min-height: 0; max-height: 150px; }
+  .lb-stage .tt-sequence-scroll svg { max-height: 88px; }
   .lb-stage .tt-search-contract { display: none; }
   .lb-stage .tt-repo-trace { display: none; }
   .lb-stage .rg-consequence { min-height: 0; padding: 12px 16px; margin-block: 6px; }
-  .lb-stage .ar-scroll svg { max-height: calc(100svh - 530px); }
+  .lb-stage .ar-scroll svg { max-height: calc(100svh - 565px); }
 }
 
 /* The film's workload: a quiet two-option toggle in the stage's top-right corner. */
