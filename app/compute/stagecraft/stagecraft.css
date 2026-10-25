@@ -248,7 +248,7 @@ aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 .tl-axis-label { fill: #8f9cab; font: 500 11px var(--font-geist-mono), monospace; letter-spacing: .05em; }
 .tl-solved-zone { fill: color-mix(in srgb, var(--active-accent) 5%, transparent); }
 .tl-ability { stroke: var(--active-accent); stroke-width: 1.6; stroke-dasharray: 6 5; }
-.tl-ability-label { fill: var(--active-accent); font: 500 11px var(--font-geist-mono), monospace; }
+.tl-ability-label { fill: var(--active-accent); font: 500 12px var(--font-geist-mono), monospace; paint-order: stroke; stroke: #080c11; stroke-width: 5px; stroke-linejoin: round; }
 .tl-ghost { fill: #5e6a76; }
 .tl-median { stroke-width: 3; stroke-linecap: round; }
 .tl-median-base { stroke: #8fb4ff; } .tl-median-post { stroke: #f3a0bc; }
