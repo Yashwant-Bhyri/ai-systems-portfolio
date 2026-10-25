@@ -442,3 +442,9 @@
 .gb-card[data-link]:hover { background: rgba(255,255,255,.025); }
 .gb-glyph :is(.g-t, .g-code) { display: none; }
 .vx-shell .gb-card button { font-size: 13px; }
+.lb-stage .rs-exhibit { position: relative; }
+/* The post-training explorers are toured by the cursor; the old walkthrough buttons would only claim motion. */
+#post-training-study .lb-stage .rs-playback { display: none; }
+/* Explorer figures take the stage height; no empty band under the checkpoint row. */
+.lb-stage .rs-exhibit { display: flex; flex-direction: column; min-height: 100%; }
+.lb-stage .rs-exhibit > .rs-stage { flex: 1; align-items: center; }

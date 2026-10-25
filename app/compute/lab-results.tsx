@@ -114,6 +114,19 @@ function alignBlock(inside: Element | null) {
   window.setTimeout(() => { html.style.scrollSnapType = snap; }, 1400);
 }
 
+/* Post-training explorers tour themselves: every checkpoint, then every thought allowance. */
+const TRAINING_DEMO: readonly CursorStep[] = [
+  { target: ".rs-policy-strip button:nth-of-type(1)", label: "Base checkpoint", hold: 4200 },
+  { target: ".rs-policy-strip button:nth-of-type(2)", label: "After SFT", hold: 4200 },
+  { target: ".rs-policy-strip button:nth-of-type(3)", label: "RL checkpoint", hold: 4600 },
+  { target: ".rs-policy-strip button:nth-of-type(4)", label: "Lean RL", hold: 4600 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(1)", label: "1× thought", hold: 3800 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(3)", label: "4× thought", hold: 3800 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(4)", label: "8× thought", hold: 3800 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(2)", label: "Back to 2×", hold: 2600 },
+  { target: ".rs-policy-strip button:nth-of-type(3)", label: "RL checkpoint", hold: 2600 },
+]
+
 const INFERENCE_VIEWS = [
   { name: "Policy × runtime", detail: "Compare cost & accuracy", symbol: "↖" },
   {
@@ -718,6 +731,9 @@ export function ComputeLabStudy({
               tabIndex={-1}
               aria-label={views[view].name}
             >
+              {training && (
+                <GhostCursor root={exhibitRef} script={TRAINING_DEMO} enabled={mode === "explore"} startDelay={2500} restDelay={2200} />
+              )}
               <div className="rs-context-bar">
                 <span className="rs-status rs-status-scenario">
                   {training
