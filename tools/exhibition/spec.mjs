@@ -1,0 +1,14 @@
+import { chromium } from '/Users/yash/antigravity/node_modules/playwright/index.mjs';
+const [, , vw = '1440', vh = '900', wait = '6000'] = process.argv;
+const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: +vw, height: +vh } })).newPage();
+await p.goto('http://localhost:3290/', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1200);
+await p.evaluate(() => { const el = document.getElementById('inference-study'); window.scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: 'instant' }); });
+await p.waitForTimeout(500);
+await p.locator('#inference-study .br-branch').nth(1).click(); await p.waitForTimeout(600);
+await p.locator('#inference-study .lb-bar button').filter({ hasText: 'Speculative decoding' }).first().click();
+await p.waitForTimeout(9000); await p.screenshot({ path: 'fit/spec-film.jpg', type: 'jpeg', quality: 70 });
+await p.locator('#inference-study .df-switch button').nth(1).click(); await p.waitForTimeout(+wait);
+const r = await p.evaluate(() => { const s = document.querySelector('#inference-study .lb-stage'); return [s.clientHeight, s.scrollHeight]; });
+console.log('accounting view', r);
+await p.screenshot({ path: 'fit/spec-acc.jpg', type: 'jpeg', quality: 70 });
+await b.close();

@@ -488,3 +488,6 @@
 }
 .lb-stage .cr-heading > span { display: none; }
 .lb-stage .rg-footer { display: none; }
+@media (max-width: 900px) {
+  .ls-workload-switch { position: static; width: fit-content; margin: 10px 16px 2px; }
+}
