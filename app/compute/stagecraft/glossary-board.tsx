@@ -18,7 +18,7 @@ export function GlossaryBoard({ items }: { items: readonly ReelItem[] }) {
       <div className="gb-grid">
         {items.map((item) => (
           <article key={item.key} className="gb-card" data-link={item.onOpen ? true : undefined} onClick={item.onOpen}>
-            <span className="gb-glyph" aria-hidden="true"><item.Glyph /></span>
+            <span className="gb-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
             <strong>{tr(item.title)}</strong>
             {item.term && <em>{tr(item.term)}</em>}
             {item.value && <span className="gb-value"><mark>{item.value}</mark> {item.unit && <small>{tr(item.unit)}</small>}</span>}

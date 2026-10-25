@@ -30,11 +30,11 @@
 .rl-reel .rl-glyph { transition: height .45s cubic-bezier(.2,.7,.2,1), margin .45s; }
 
 /* Compact reel: shorter tiles; closed tiles keep their silhouette and name. */
-.rl-reel[data-compact] .rl-row { height: 112px; }
-.rl-reel[data-compact] .rl-glyph { height: 46px; margin: 2px 0 4px; }
-.rl-reel[data-compact] .rl-num { display: none; }
-.rl-reel[data-compact] .rl-head { padding-bottom: 6px; }
-.rl-reel[data-compact] .rl-detail { margin-top: 2px; }
+:is(.rl-reel[data-compact], .lf-nav[data-condensed] .rl-reel) .rl-row { height: 112px; }
+:is(.rl-reel[data-compact], .lf-nav[data-condensed] .rl-reel) .rl-glyph { height: 46px; margin: 2px 0 4px; }
+:is(.rl-reel[data-compact], .lf-nav[data-condensed] .rl-reel) .rl-num { display: none; }
+:is(.rl-reel[data-compact], .lf-nav[data-condensed] .rl-reel) .rl-head { padding-bottom: 6px; }
+:is(.rl-reel[data-compact], .lf-nav[data-condensed] .rl-reel) .rl-detail { margin-top: 2px; }
 
 /* A · top: sticky under the site header; condenses once you scroll into the stage. */
 .lab-flow-top .lf-nav {

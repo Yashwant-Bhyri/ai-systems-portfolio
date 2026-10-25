@@ -27,19 +27,19 @@ const {
   overviewPresentationTime,
 } = await import("../app/compute/serving-overview-playback.ts");
 
-test("one 128-second presentation clock preserves the 94-second underlying trace", () => {
-  assert.equal(OVERVIEW_PLAYBACK_DURATION_MS, 128000);
+test("one 98.5-second presentation clock preserves the 94-second underlying trace", () => {
+  assert.equal(OVERVIEW_PLAYBACK_DURATION_MS, 98500);
   assert.equal(overviewTraceTime(0), 0);
-  assert.equal(overviewTraceTime(128000), 94000);
+  assert.equal(overviewTraceTime(98500), 94000);
   assert.equal(overviewTraceTime(-1), 0);
-  assert.equal(overviewTraceTime(128001), 94000);
+  assert.equal(overviewTraceTime(98501), 94000);
   assert.throws(() => overviewTraceTime(NaN), RangeError);
   assert.throws(() => overviewPresentationTime(Infinity), RangeError);
 });
 
 test("presentation is monotone; every trace position is reversibly seekable", () => {
   let previous = 0;
-  for (let t = 0; t <= 128000; t += 50) {
+  for (let t = 0; t <= 98500; t += 50) {
     const trace = overviewTraceTime(t);
     assert.ok(trace >= previous);
     assert.ok(
@@ -68,14 +68,10 @@ test("held consequences are frozen states, not additional service work", () => {
   }
 });
 
-test("verification and delivery close-ups slow only the intended trace intervals", () => {
+test("the repeated mechanisms pass as a time-lapse; the rest plays at authored pace", () => {
   assert.equal(
-    overviewPresentationTime(27000) - overviewPresentationTime(26600),
-    3400,
-  );
-  assert.equal(
-    overviewPresentationTime(28200) - overviewPresentationTime(27000),
-    3200,
+    overviewPresentationTime(30000) - overviewPresentationTime(12000),
+    4500,
   );
   assert.equal(
     overviewPresentationTime(43000) - overviewPresentationTime(30000),

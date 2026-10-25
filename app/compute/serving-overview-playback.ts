@@ -1,40 +1,22 @@
 import { SERVING_OVERVIEW_DURATION_MS } from "./serving-load-overview-model";
 
 /** Holds and slow close-ups on one authored clock, never added service time. */
-export const OVERVIEW_PACING = [
-  { from: 17900, to: 17900, durationMs: 2000, reason: "retained prefix" },
+export const OVERVIEW_PACING: readonly { from: number; to: number; durationMs: number; reason: string }[] = [
   {
-    from: 21950,
-    to: 21950,
-    durationMs: 3000,
-    reason: "C's selected placement",
+    // Stream pause, locality and draft/verify each have their own module in this
+    // branch, so the overview passes through them as a short time-lapse.
+    from: 12000,
+    to: 30000,
+    durationMs: 4500,
+    reason: "time-lapse through mechanisms shown in full elsewhere",
   },
-  {
-    from: 23700,
-    to: 23700,
-    durationMs: 3000,
-    reason: "D's admission consequence",
-  },
-  {
-    from: 26600,
-    to: 27000,
-    durationMs: 3400,
-    reason: "prefill-ready draft verification",
-  },
-  {
-    from: 27000,
-    to: 28200,
-    durationMs: 3200,
-    reason: "committed token delivery",
-  },
-  { from: 28900, to: 28900, durationMs: 3000, reason: "committed answer" },
   {
     from: 88000,
     to: 94000,
     durationMs: 24000,
     reason: "completion and delivery qualification",
   },
-] as const;
+];
 export const OVERVIEW_PLAYBACK_DURATION_MS =
   SERVING_OVERVIEW_DURATION_MS +
   OVERVIEW_PACING.reduce(

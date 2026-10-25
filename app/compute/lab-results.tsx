@@ -137,12 +137,12 @@ const INFERENCE_VIEWS = [
     symbol: "⇉",
   },
   { name: "Queue & latency", detail: "Compare waiting & p95", symbol: "⌁" },
-  { name: "Where the 96 tasks land", detail: "Base vs post-trained", symbol: "⁘" },
 ];
 const TRAINING_VIEWS = [
   { name: "Capability map", detail: "See which tasks change", symbol: "⊞" },
   { name: "Compute curves", detail: "Compare all four policies", symbol: "⌁" },
   { name: "Regression audit", detail: "Follow gains and losses", symbol: "⇄" },
+  { name: "Where the 96 tasks land", detail: "Base vs RL checkpoint", symbol: "⁘" },
 ];
 const RESEARCH = [
   {
@@ -401,19 +401,19 @@ export function ComputeLabStudy({
   const tr = useTr();
   const labNav = useLabNav();
   // In the top orientation the reel condenses once the visitor scrolls into the stage.
-  const [condensed, setCondensed] = useState(false);
+  const [scrolledIn, setScrolledIn] = useState(false);
   useEffect(() => {
-    if (labNav !== "top") { setCondensed(false); return; }
     const onScroll = () => {
       const el = ref.current;
       if (!el) return;
       const top = el.getBoundingClientRect().top;
-      setCondensed(top < -120 && top > -el.offsetHeight + 300);
+      setScrolledIn(top < -120 && top > -el.offsetHeight + 300);
     };
-    onScroll();
+    const raf = requestAnimationFrame(onScroll);
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [labNav, ref]);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", onScroll); };
+  }, [ref]);
+  const condensed = labNav === "top" && scrolledIn;
   const replayHost = useRef<HTMLDivElement>(null),
     latencyHost = useRef<HTMLDivElement>(null);
   const tourRef = useRef<InferenceTourHandle>(null);
@@ -499,21 +499,18 @@ export function ComputeLabStudy({
         { key: "film", title: "The experiment", term: "base → SFT → RL → 4× thought → lean RL", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "map", title: "Capability map", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thought`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thought", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thought", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thought`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
         { key: "audit", title: "Regression audit", term: "gains beside losses", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thought`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
         { key: "film", title: "The experiment", term: "continuous batching → prefix reuse → faster rates", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
-        { key: "composition", title: "Policy × runtime", term: "training lifts accuracy · serving cuts cost", value: `−${Math.round(reductionPercent(rlStatic.correctCost!, rlFast.correctCost!)!)}%`, unit: "GPU-s per correct answer", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thought`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
+        { key: "composition", title: "Policy × runtime", term: "training lifts accuracy · serving cuts cost · both at once", value: `${simulateLab(0, budget, false, workload).correct} → ${rlFast.correct}`, unit: `of 96 correct · ${Math.round(reductionPercent(simulateLab(0, budget, false, workload).correctCost!, rlFast.correctCost!)!)}% less GPU-s per correct answer`, Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "replay", title: "Execution replay", term: "any of the 96 requests", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "latency", title: "Queue & latency", term: "arrival → completion, ranked", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ];
   // The reel orientations keep the stage at its natural size; "bar" is the one-screen block.
   const block = labNav === "bar";
-  const reelItems: ReelItem[] = railItems.map((item) => ({
-    key: item.key, title: item.title, term: item.term, value: item.value, unit: item.unit,
-    Glyph: item.Glyph ?? GlyphExperiment, onOpen: item.onOpen, current: item.current,
-  }));
+  const reelItems: readonly ReelItem[] = railItems;
   const navLabel = labNav === "side" ? "Go deeper" : training ? "Go deeper · post-training laboratory" : "Go deeper · same intelligence, cheaper execution";
   const navNode = block ? (
     <div className="lb-bar">
@@ -911,14 +908,9 @@ export function ComputeLabStudy({
                       </div>
                     </Suspense>
                   </RetainedLabPanel>
-                  <RetainedLabPanel
-                    active={view === 3}
-                    id={`${domain}-figure-3`}
-                    label="Where the 96 tasks land"
-                  >
-                    <TaskLanding budget={budget} active={mode === "explore" && view === 3} />
-                  </RetainedLabPanel>
                 </>
+              ) : view === 3 ? (
+                <TaskLanding budget={budget} active={mode === "explore"} />
               ) : (
                 <>
                   <p className="rs-pan-hint">

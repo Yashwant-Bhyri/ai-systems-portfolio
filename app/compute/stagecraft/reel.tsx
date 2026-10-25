@@ -16,7 +16,7 @@ export type ReelItem = {
   value?: string;
   unit?: string;
   chips?: readonly string[];
-  Glyph: ComponentType;
+  Glyph?: ComponentType;
   /** Puts this investigation on the stage. Without it the tile only opens in place. */
   onOpen?: () => void;
   /** Words for the open action, when it leads somewhere other than this stage. */
@@ -138,7 +138,7 @@ export function ExplorationReel({
               aria-label={`${item.title}${item.value ? `, ${item.value} ${item.unit ?? ""}` : ""}${item.onOpen ? ". Open on the stage" : ""}`}
             >
               <span className="rl-num">{String(i + 1).padStart(2, "0")}{item.current && <b>{tr("on stage")}</b>}</span>
-              <span className="rl-glyph" aria-hidden="true"><item.Glyph /></span>
+              <span className="rl-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
               <strong className="rl-title">{tr(item.title)}</strong>
               <span className="rl-detail" aria-hidden={!lit}>
                 {item.term && <em className="rl-term">{tr(item.term)}</em>}

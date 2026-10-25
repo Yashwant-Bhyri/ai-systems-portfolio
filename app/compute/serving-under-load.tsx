@@ -416,9 +416,9 @@ export function ServingUnderLoad() {
         ? <ModuleBar label="Serving under load" items={railItems} />
         : <ExplorationReel
             label={labNav === "side" ? "Go deeper" : "Go deeper · serving under load"}
-            items={railItems.map((r) => ({ key: r.key, title: r.title, term: r.term, value: r.value, unit: r.unit, Glyph: r.Glyph ?? GlyphServingMap, onOpen: r.onOpen, current: r.current }))}
+            items={railItems}
             orientation={labNav === "side" ? "column" : "row"}
-            compact={labNav === "dock" || (labNav === "top" && !!railSlot.closest("[data-condensed]"))}
+            compact={labNav === "dock"}
             note="Hover to hold · click to put it on the stage"
           />, railSlot)}
     </div>

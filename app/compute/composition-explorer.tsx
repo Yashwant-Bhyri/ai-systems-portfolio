@@ -44,8 +44,8 @@ const LENSES = [
   },
   {
     id: "combined",
-    name: "Combine policy & runtime",
-    detail: "Trace both contributions",
+    name: "Training and serving, combined",
+    detail: "Base on the static runtime → RL checkpoint on the optimized runtime",
   },
 ] as const;
 
@@ -67,7 +67,7 @@ export function CompositionExplorer({
   };
 }) {
   const [localLens, setLens] = useState<CompositionLens>(
-    initial?.lens ?? "runtime",
+    initial?.lens ?? "combined",
   );
   const [localMetric, setMetric] = useState<Metric>(initial?.metric ?? "cost");
   const lens = presentation?.state.lens ?? localLens,
@@ -192,11 +192,12 @@ export function CompositionExplorer({
   useEffect(() => {
     if (presentation || !finished) return;
     const id = window.setTimeout(() => {
-      const order: CompositionLens[] = ["runtime", "policy", "combined"];
-      const next = order[(order.indexOf(lens) + 1) % order.length];
+      // Only the combined lens lives here: the runtime-only comparison is chapter 05 of
+      // the experiment, and the training-only comparison is the post-training lab.
+      const next: CompositionLens = "combined";
       setLens(next);
       setHover(null);
-      setMetric(next === "policy" ? "accuracy" : "cost");
+      setMetric("cost");
       latest.current.film.seek(0);
       latest.current.replay();
     }, 3200);
@@ -273,7 +274,7 @@ export function CompositionExplorer({
         role="group"
         aria-label="Choose the controlled comparison"
       >
-        {LENSES.map((item) => (
+        {LENSES.filter((item) => item.id === "combined").map((item) => (
           <button
             type="button"
             key={item.id}
