@@ -266,7 +266,7 @@ function PrefixMechanism({
       </Hotspot>
       <g opacity={frame.store}>
         <text x="811" y="122" className="pr-label">
-          Reused: the contract's
+          Reused: the contract&rsquo;s
         </text>
         <text x="811" y="142" className="pr-label">
           keys and values, not its answer

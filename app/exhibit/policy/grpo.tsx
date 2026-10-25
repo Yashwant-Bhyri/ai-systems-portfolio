@@ -163,9 +163,10 @@ export function PolicyGrpo({ active, mode, clock, tall }: RoomProps) {
     const c = ease.out(prog(t, T_FLIP, T_FLIP + 1800));
     const set = (key: string, s: string) => { const e = vals.current[key]; if (e && e.textContent !== s) e.textContent = s; };
     set("solved", `${solved} / 96`);
-    set("pass", `${fmt(lerp(CK.sft.pass1, CK.rl.pass1, c), 1)}%`);
-    set("tok", Math.round(lerp(CK.sft.tokensPerTask, CK.rl.tokensPerTask, c)).toLocaleString("en-US"));
-    set("cost", fmt(lerp(CK.sft.costPerTask, CK.rl.costPerTask, c)));
+    // pass@1 follows the solved count exactly; per-task costs switch once the flips land.
+    set("pass", `${fmt((100 * solved) / 96, 1)}%`);
+    set("tok", Math.round(c >= 0.999 ? CK.rl.tokensPerTask : CK.sft.tokensPerTask).toLocaleString("en-US"));
+    set("cost", fmt(c >= 0.999 ? CK.rl.costPerTask : CK.sft.costPerTask));
   }, [mode, L, LX, LY, LANE, ROW, TER]);
   useSceneFrame(active, clock.readTime, draw);
   useEffect(() => { tok.current = null; }, [mode]);

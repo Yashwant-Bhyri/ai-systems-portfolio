@@ -41,7 +41,6 @@ export function SchedulingLedger({
   const idle = [idleAt(study.gaps, time), idleAt(study.optimizedGaps, time)];
   const finalIdle = idleAt(study.gaps, study.horizon);
   const scaleMax = Math.max(study.work, finalIdle, 1);
-  const settled = time >= study.horizon;
   const removed = idle[0] - idle[1];
   // Request 7 arrives at the same time in both runs, so its waiting gain is its start-time gain.
   const waitGain = study.baseline[FOLLOWED].start - study.optimized[FOLLOWED].start;

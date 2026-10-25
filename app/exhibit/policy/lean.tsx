@@ -71,10 +71,12 @@ export function PolicyLean({ active, mode, clock, tall }: RoomProps) {
     }
     const c = ease.out(prog(t, T_CARVE, T_DONE));
     const set = (k: string, s: string) => { const e = vals.current[k]; if (e && e.textContent !== s) e.textContent = s; };
-    set("tok", Math.round(lerp(A.tokensPerTask, B.tokensPerTask, c)).toLocaleString("en-US"));
-    set("cost", fmt(lerp(A.costPerTask, B.costPerTask, c)));
-    set("tokd", c > 0.02 ? `−${Math.round((1 - lerp(A.tokensPerTask, B.tokensPerTask, c) / A.tokensPerTask) * 100)}%` : "");
-    set("costd", c > 0.02 ? `−${((1 - lerp(A.costPerTask, B.costPerTask, c) / A.costPerTask) * 100).toFixed(1)}%` : "");
+    // Settled values only: the bars carry the motion, the numbers switch once the carve lands.
+    const done = c >= 0.999;
+    set("tok", Math.round(done ? B.tokensPerTask : A.tokensPerTask).toLocaleString("en-US"));
+    set("cost", fmt(done ? B.costPerTask : A.costPerTask));
+    set("tokd", done ? `−${Math.round((1 - B.tokensPerTask / A.tokensPerTask) * 100)}%` : "");
+    set("costd", done ? `−${((1 - B.costPerTask / A.costPerTask) * 100).toFixed(1)}%` : "");
   }, [L, BAR, H]);
   useSceneFrame(active, clock.readTime, draw);
   useEffect(() => { tok.current = null; }, [mode]);

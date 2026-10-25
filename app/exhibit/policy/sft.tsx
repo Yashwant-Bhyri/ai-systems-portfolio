@@ -114,9 +114,10 @@ export function PolicySft({ active, mode, clock, tall }: RoomProps) {
     const set = (k: string, s: string) => { const e = vals.current[k]; if (e && e.textContent !== s) e.textContent = s; };
     set("solved", `${solved} / 96`);
     set("delta", solved > CK.base.correct ? `+${solved - CK.base.correct}` : "");
-    set("pass", `${fmt(lerp(CK.base.pass1, CK.sft.pass1, c), 1)}%`);
-    set("cost", fmt(lerp(CK.base.costPerTask, CK.sft.costPerTask, c)));
-    set("tok", Math.round(lerp(CK.base.tokensPerTask, CK.sft.tokensPerTask, c)).toLocaleString("en-US"));
+    // pass@1 follows the solved count exactly; per-task costs switch once the flips land.
+    set("pass", `${fmt((100 * solved) / 96, 1)}%`);
+    set("cost", fmt(c >= 0.999 ? CK.sft.costPerTask : CK.base.costPerTask));
+    set("tok", Math.round(c >= 0.999 ? CK.sft.tokensPerTask : CK.base.tokensPerTask).toLocaleString("en-US"));
   }, [L, W, SIDE, tall]);
   useSceneFrame(active, clock.readTime, draw);
   useEffect(() => { tok.current = null; }, [mode]);
