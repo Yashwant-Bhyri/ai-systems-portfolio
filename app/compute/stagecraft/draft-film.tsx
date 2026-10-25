@@ -14,7 +14,8 @@ import { useTr } from "../../exhibit/i18n";
 const CTX = "The cache stores";
 const R1 = [" the", " keys", " and", " weights", " here"], OK1 = 3, FIX1 = " values";
 const R2 = [" in", " the", " output", " buffer", " too"], FIX2 = " for";
-const X0 = 120, Y = 250, DUR = 18000;
+const X0 = 440, Y = 250, DUR = 18000;
+const DRAFT = { x: 40, y: 92, w: 330, h: 104 }, TARGET = { x: 40, y: 330, w: 330, h: 150 };
 const C = { acc: "#ffc267", ink: "#f2f4ee", ok: "#9fe3a8", fail: "#ff8176", slate: "#5e6a76", dim: "#8a96a3" };
 
 const BEATS: readonly [number, string][] = [
@@ -46,6 +47,9 @@ export function DraftFilm({ active }: { active: boolean }) {
   const blocksB = useRef<(SVGRectElement | null)[]>([]);
   const ticks = useRef<(SVGRectElement | null)[]>([]);
   const callTxt = useRef<SVGTextElement>(null);
+  const draftCard = useRef<SVGGElement>(null), targetCard = useRef<SVGGElement>(null);
+  const draftLinks = useRef<(SVGPathElement | null)[]>([]);
+  const beam = useRef<SVGPathElement>(null);
   const [beat, setBeat] = useState(0);
   const [inView, setInView] = useState(false);
 
@@ -62,7 +66,7 @@ export function DraftFilm({ active }: { active: boolean }) {
     const canvas = document.createElement("canvas").getContext("2d");
     const measure = (s: string) => {
       if (!canvas) return s.length * 22;
-      canvas.font = '400 44px "Geist", ui-sans-serif, system-ui, sans-serif';
+      canvas.font = '400 38px ui-sans-serif, -apple-system, system-ui, sans-serif';
       return canvas.measureText(s).width;
     };
     let raf = 0, start = performance.now(), lastBeat = -1;
@@ -76,6 +80,17 @@ export function DraftFilm({ active }: { active: boolean }) {
       const lt = round2 ? t - 10.6 : t;
       let x = X0 + measure(base);
       const xs = words.map((w) => { const a = x; x += measure(w); return [a, x] as const; });
+      // Agents: the draft model fires five guesses; the target model sweeps them in one pass.
+      const drafting = lt > 1.9 && lt < 3.5, verifying = lt > 3.5 && lt < 5.0, correcting = lt > 5.9 && lt < 7.0;
+      attrs(draftCard.current, { opacity: drafting ? 1 : 0.5 });
+      attrs(targetCard.current, { opacity: verifying || correcting ? 1 : 0.5 });
+      words.forEach((_, i) => {
+        const a = prog(lt, 2.0 + i * 0.13, 2.25 + i * 0.13), gone = prog(lt, 3.3, 3.8);
+        const [x0, x1] = xs[i];
+        attrs(draftLinks.current[i], { d: `M${DRAFT.x + DRAFT.w} ${DRAFT.y + DRAFT.h / 2}C${DRAFT.x + DRAFT.w + 90} ${DRAFT.y + DRAFT.h / 2} ${(x0 + x1) / 2 - 60} ${Y - 70} ${(x0 + x1) / 2} ${Y - 44}`, opacity: a * (1 - gone) * 0.8 });
+      });
+      const bv = Math.sin(Math.PI * prog(lt, 3.5, 5.0));
+      attrs(beam.current, { d: `M${TARGET.x + TARGET.w} ${TARGET.y + 40}C${TARGET.x + TARGET.w + 80} ${TARGET.y + 40} ${xs[0][0] - 40} ${Y + 60} ${xs[0][0] - 10} ${Y + 30}L${xs[4][1] + 10} ${Y + 30}`, opacity: bv });
       attrs(cursor.current, { x: X0 + measure(typed) + 4, opacity: lt < 1.6 ? (Math.floor(t * 2.2) % 2 ? 0.9 : 0.2) : 0 });
       words.forEach((w, i) => {
         const appear = prog(lt, 2.0 + i * 0.13, 2.2 + i * 0.13);
@@ -102,7 +117,7 @@ export function DraftFilm({ active }: { active: boolean }) {
       attrs(fix.current, { x: xs[okN][0], y: Y - 60 * (1 - fp), opacity: fp });
       attrs(fixLab.current, { x: xs[okN][0], opacity: fp * (1 - prog(lt, 9.2, 9.8)) });
       attrs(ledger.current, { opacity: prog(t, 7.6, 8.2) });
-      const bw = 150, sx0 = 400, nA = round2 ? 5 : 4;
+      const bw = 150, sx0 = 640, nA = round2 ? 5 : 4;
       blocksA.current.forEach((b, i) => {
         const on = i < nA ? ease.out(prog(t, 8.0 + i * 0.25, 8.4 + i * 0.25)) : 0;
         const r2 = round2 && i === 4 ? ease.out(prog(t, 14.6, 15.0)) : on;
@@ -147,6 +162,23 @@ export function DraftFilm({ active }: { active: boolean }) {
         <text ref={sweepLab} y={Y + 92} className="df-small" opacity={0}>{tr("the large model checks all five at once")}</text>
         <text ref={fix} className="df-word" style={{ fill: C.acc }} opacity={0} />
         <text ref={fixLab} y={Y - 96} className="df-small" opacity={0}>{tr("the large model's own word")}</text>
+        <g ref={draftCard} opacity={0.5}>
+          <rect x={DRAFT.x} y={DRAFT.y} width={DRAFT.w} height={DRAFT.h} rx={12} className="df-agent df-agent-draft" />
+          {[0, 1, 2, 3].map((k) => <rect key={k} x={DRAFT.x + 20} y={DRAFT.y + 22 + k * 15} width={56} height={8} rx={2} fill={C.acc} opacity={0.35 + k * 0.12} />)}
+          <text x={DRAFT.x + 96} y={DRAFT.y + 40} className="df-agent-name">{tr("Draft model")}</text>
+          <text x={DRAFT.x + 96} y={DRAFT.y + 64} className="df-agent-meta">Qwen3-0.6B · {tr("fast, cheap")}</text>
+          <text x={DRAFT.x + 96} y={DRAFT.y + 86} className="df-agent-meta">{tr("guesses k = 5 tokens")}</text>
+        </g>
+        <g ref={targetCard} opacity={0.5}>
+          <rect x={TARGET.x} y={TARGET.y} width={TARGET.w} height={TARGET.h} rx={12} className="df-agent df-agent-target" />
+          {Array.from({ length: 10 }, (_, k) => <rect key={k} x={TARGET.x + 20} y={TARGET.y + 18 + k * 12} width={56} height={7} rx={2} fill="#9fb4c8" opacity={0.3 + k * 0.06} />)}
+          <text x={TARGET.x + 96} y={TARGET.y + 42} className="df-agent-name">{tr("Target model")}</text>
+          <text x={TARGET.x + 96} y={TARGET.y + 66} className="df-agent-meta">Qwen3-4B · {tr("the answer's owner")}</text>
+          <text x={TARGET.x + 96} y={TARGET.y + 88} className="df-agent-meta">{tr("checks all five in one pass")}</text>
+          <text x={TARGET.x + 96} y={TARGET.y + 110} className="df-agent-meta">{tr("writes its own word on a miss")}</text>
+        </g>
+        {[0, 1, 2, 3, 4].map((i) => <path key={i} ref={(e) => { draftLinks.current[i] = e; }} className="df-link df-link-draft" opacity={0} />)}
+        <path ref={beam} className="df-link df-link-verify" opacity={0} />
         <g ref={ledger} opacity={0}>
           <text x={X0} y={448} className="df-label">{tr("one word per call")}</text>
           <text x={X0} y={508} className="df-label">{tr("draft, then verify")}</text>

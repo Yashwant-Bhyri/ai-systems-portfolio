@@ -629,7 +629,7 @@ export function RequestReplayExplorer({
                   : `${number(before.tokens, 0)} output tokens in each lane`
               : Math.abs(delta) < 1e-8
                 ? "= no difference"
-                : `Δ ${number(Math.abs(delta))} ${delivery ? "s" : "GPU-s"} ${delta > 0 ? "less" : "more"}`}
+                : <><b className="cx-hero-num">Δ {number(Math.abs(delta))}</b> <span className="cx-hero-unit">{delivery ? "s" : "GPU-s"} {delta > 0 ? "less" : "more"}</span></>}
             <small>
               {settled &&
                 Math.abs(delta) >= 1e-8 &&
@@ -803,9 +803,7 @@ export function RequestReplayExplorer({
       </div>
       <details
         className="rr-accounting"
-        onToggle={(event) => {
-          if (event.currentTarget.open) player.pause();
-        }}
+        
       >
         <summary>Inspect the time and work accounting</summary>
         <p>

@@ -122,7 +122,7 @@ export function ServingPressureFilm({ onInspectTrace }: { onInspectTrace: (selec
   const values = firstToken ? [pair.whole.requests[2].ttftMs!, pair.chunked.requests[2].ttftMs!] : [pair.whole.requests[0].maxGapMs!, pair.chunked.requests[0].maxGapMs!];
   const settled = ["whole", "chunked", "gap", "first-token"].includes(frame.focus);
   const stateWhole = servingPressureState(pair.whole, frame.serviceMs), stateChunked = servingPressureState(pair.chunked, frame.serviceMs);
-  const inspect = (next: Detail) => { player.pause(); inspectionOrigin.current = document.activeElement instanceof SVGElement ? document.activeElement : null; setDetail(next); };
+  const inspect = (next: Detail) => { inspectionOrigin.current = document.activeElement instanceof SVGElement ? document.activeElement : null; setDetail(next); };
   const releaseInspection = () => { setDetail(null); inspectionOrigin.current?.focus(); };
   const seek = (time: number) => { setDetail(null); film.seek(time); };
   const replay = () => { setDetail(null); film.seek(0); player.replay(); };

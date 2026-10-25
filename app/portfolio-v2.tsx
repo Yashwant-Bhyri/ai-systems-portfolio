@@ -1858,6 +1858,23 @@ function FlagshipChapter({
     reducedMotion,
   });
 
+  // Other parts of the chapter (the serving glossary) can open a microscope step directly.
+  useEffect(() => {
+    const open = (event: Event) => {
+      const detail = (event as CustomEvent<{ chapter: string; step: number }>).detail;
+      if (detail?.chapter !== id) return;
+      controller.choose(detail.step);
+      const el = microscopeRef.current;
+      if (!el) return;
+      const html = document.documentElement, snap = html.style.scrollSnapType;
+      html.style.scrollSnapType = "none";
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY, behavior: "smooth" });
+      window.setTimeout(() => { html.style.scrollSnapType = snap; }, 2200);
+    };
+    window.addEventListener("cx:microscope", open);
+    return () => window.removeEventListener("cx:microscope", open);
+  }, [controller, id]);
+
   const selectArchitectureNode = useCallback((index: number) => {
     controller.choose(index);
     if ((id === "inference" || id === "post-training") && controller.autoplayEnabled) controller.toggle();

@@ -12,7 +12,7 @@ import { useTr } from "../../exhibit/i18n";
 export type CursorStep = {
   /** CSS selector inside the root. */
   target: string;
-  action?: "click" | "hover" | "range" | "select";
+  action?: "click" | "hover" | "range" | "select" | "sweep";
   /** For "range": the value to set; for "select": the option value. */
   value?: number | string;
   /** Milliseconds to stay after acting. */
@@ -21,6 +21,14 @@ export type CursorStep = {
   label?: string;
   /** Horizontal point inside the target, 0..1. */
   fx?: number;
+  /** For "sweep": glide across `target` while driving the range input `drive` from `from` to `to`. */
+  drive?: string;
+  from?: number;
+  to?: number;
+  /** For "sweep": milliseconds for the whole glide. */
+  duration?: number;
+  /** Wait up to this long for the target to appear (a later film moment) before acting. */
+  waitFor?: number;
 };
 
 const sleep = (ms: number, token: { dead: boolean }) =>
@@ -62,7 +70,6 @@ export function GhostCursor({
   const cursor = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
   const [taken, setTaken] = useState(false);
-  const [hovering, setHovering] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [run, setRun] = useState(0);
   const [tag, setTag] = useState<string | null>(null);
@@ -80,27 +87,25 @@ export function GhostCursor({
     if (!el) return;
     const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.35 });
     io.observe(el);
-    // Any real act inside the root hands control to the visitor.
+    // Only operating a control hands the demo over; looking, hovering or tapping
+    // the figure leaves it running.
     const take = (e: Event) => {
       if (!e.isTrusted) return;
-      if ((e.target as HTMLElement | null)?.closest?.(".gc-replay")) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.(".gc-replay")) return;
+      if (!t?.closest?.("button, input, select, [role='button'], summary")) return;
       setTaken(true);
     };
-    const enter = () => setHovering(true), leave = () => setHovering(false);
     el.addEventListener("pointerdown", take, true);
     el.addEventListener("keydown", take, true);
-    el.addEventListener("pointerenter", enter);
-    el.addEventListener("pointerleave", leave);
     return () => {
       io.disconnect();
       el.removeEventListener("pointerdown", take, true);
       el.removeEventListener("keydown", take, true);
-      el.removeEventListener("pointerenter", enter);
-      el.removeEventListener("pointerleave", leave);
     };
   }, [root]);
 
-  const live = enabled && inView && !taken && !hovering && !reduced;
+  const live = enabled && inView && !taken && !reduced;
 
   const place = useCallback((x: number, y: number, ms: number) => {
     const c = cursor.current;
@@ -126,9 +131,35 @@ export function GhostCursor({
         c.dataset.shown = "1";
         for (const step of script) {
           if (token.dead) return;
-          const target = el.querySelector<HTMLElement>(step.target);
+          let target = el.querySelector<HTMLElement>(step.target);
+          const until = performance.now() + (step.waitFor ?? 0);
+          while ((!target || !target.getClientRects().length) && performance.now() < until && !token.dead) {
+            await sleep(250, token);
+            target = el.querySelector<HTMLElement>(step.target);
+          }
           if (!target || !target.getClientRects().length) continue;
           const r = target.getBoundingClientRect(), o = el.getBoundingClientRect();
+          if (step.action === "sweep") {
+            // Glide across the strip; every element passed becomes the selection.
+            const input = el.querySelector<HTMLInputElement>(step.drive ?? "");
+            const from = step.from ?? 1, to = step.to ?? 96, dur = step.duration ?? 6000;
+            const sx = r.left - o.left + r.width * 0.01, ex = r.left - o.left + r.width * 0.99, y = r.top - o.top + r.height * 0.6;
+            c.dataset.state = "move"; place(sx, y, 500); at = { x: sx, y }; await sleep(560, token);
+            setTag(step.label ?? null);
+            const t0 = performance.now();
+            let last = -1;
+            while (!token.dead) {
+              const k = Math.min(1, (performance.now() - t0) / dur);
+              place(sx + (ex - sx) * k, y, 0);
+              const v = Math.round(from + (to - from) * k);
+              if (input && v !== last) { setRange(input, v); last = v; }
+              if (k >= 1) break;
+              await sleep(40, token);
+            }
+            at = { x: ex, y };
+            await sleep(step.hold ?? 800, token);
+            continue;
+          }
           let fx = step.fx ?? 0.5;
           if (step.action === "range" && target instanceof HTMLInputElement && step.value !== undefined) {
             const min = Number(target.min || 0), max = Number(target.max || 100);

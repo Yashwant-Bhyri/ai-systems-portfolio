@@ -17,7 +17,7 @@
 :is(.bo-consequence, .rg-consequence, .rr-result, .sp-consequence, .ll-result) h4 {
   font-weight: 450 !important; letter-spacing: -.015em !important; text-wrap: balance;
 }
-:is(.bo-consequence, .rg-consequence, .rr-result, .sp-consequence, .ll-result, .cxp-readout) p {
+:is(.bo-consequence, .rg-consequence, .rr-result, .sp-consequence, .ll-result, .cxp-readout) p:not(.rr-delta, .ll-delta, [class*="delta"]) {
   color: #93a1af !important; font-size: 12px !important; line-height: 1.55 !important;
 }
 
@@ -44,14 +44,15 @@
   min-height: 2.6em; margin: 18px 0 10px !important;
   font: 500 26px/1.15 var(--font-geist-sans), sans-serif !important; letter-spacing: -.02em !important;
 }
-:is(.rr-delta, .ll-delta)[data-hero="true"] {
+/* The sweep of light lives on the number itself (a parent's text clip never reaches an inline-block). */
+:is(.rr-delta, .ll-delta)[data-hero="true"] .cx-hero-num {
   background: linear-gradient(105deg, #dcc1ff 0 40%, #fff 48%, #dcc1ff 56% 100%) 0 0 / 260% 100% no-repeat;
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   animation: cx-shine 4.8s cubic-bezier(.4,0,.2,1) infinite;
 }
 .rr-delta small { display: block; margin-top: 6px; font: 400 12px/1.3 var(--font-geist-mono), monospace; letter-spacing: .02em; min-height: 1.3em; }
-.rr-delta[data-hero="true"] small { -webkit-text-fill-color: #a99bc0; }
-@media (prefers-reduced-motion: reduce) { :is(.rr-delta, .ll-delta)[data-hero="true"] { animation: none; -webkit-text-fill-color: #dcc1ff; background: none; } }
+.rr-delta small { color: #a99bc0; }
+@media (prefers-reduced-motion: reduce) { :is(.rr-delta, .ll-delta)[data-hero="true"] .cx-hero-num { animation: none; -webkit-text-fill-color: #dcc1ff; background: none; } }
 .rr-result .rr-values strong { transition: opacity .6s; }
 .rr-result:has(.rr-delta[data-hero="true"]) .rr-values strong { opacity: .62; }
 .ll-result:has(.ll-delta[data-hero="true"]) .ll-values strong { opacity: .62; }
@@ -72,7 +73,82 @@ svg rect[fill="#1c2037"][stroke="#776b9d"], svg rect[fill="#201f36"][stroke="#74
 .so-scroll, .so-diagram { border-color: transparent !important; background: none !important; }
 
 /* Result plates hold their tallest state, so changing copy never moves the figure beside them. */
-.ll-result { min-height: 690px; }
+/* Queue & latency: the chart sits at the top; the stage reserves the card's tallest state. */
+.ll-stage { align-items: start !important; min-height: 640px; }
 .ll-result h4 { min-height: 2.7em; }
-.ll-scroll { align-self: start; }
 .rr-result h4 { min-height: 2.7em; }
+
+/* Policy × runtime: the active lens shows how far its comparison has played. */
+.cxp-lenses button { position: relative; }
+.cxp-lens-progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--active-accent); transform-origin: left; transition: transform .2s linear; }
+
+/* ── Plate type system (every result card) ───────────────────────────────
+   label 11 mono · title 19/500 · value 24 tabular · hero Δ 32 with shine + ✦ ·
+   explanation 12.5/1.55 · actions 11 mono. Spacing: 8 / 16 / 24.            */
+:is(.bo-subtitle, .ll-result-label, .sp-result-label, .rg-context) {
+  display: block; color: #8f9cab !important; font: 400 11px/1.5 var(--font-geist-mono), monospace !important; letter-spacing: .03em;
+}
+:is(.bo-consequence, .rr-result, .ll-result, .sp-consequence, .rg-consequence) h4 {
+  margin: 8px 0 18px !important; color: #eef2f6; font: 500 19px/1.3 var(--font-geist-sans), sans-serif !important; letter-spacing: -.015em !important;
+}
+:is(.rr-values, .ll-values, .sp-result-bars) span { color: #a7b3bf; font-size: 12px !important; }
+:is(.rr-values, .ll-values, .sp-result-bars) strong { font-size: 24px !important; font-weight: 450 !important; font-variant-numeric: tabular-nums; }
+:is(.rr-values, .ll-values, .sp-result-bars) strong small { font: 400 11px var(--font-geist-mono), monospace !important; margin-left: 3px; opacity: .8; }
+:is(.ll-values) > div { margin-bottom: 14px !important; padding-bottom: 10px !important; }
+:is(.rr-delta, .ll-delta) { font-size: 18px !important; line-height: 1.25 !important; min-height: 72px !important; }
+/* Only the number is the hero; its unit and verb sit beside it, small. */
+.cx-hero-num { position: relative; display: inline-block; margin-right: .3em; font: 500 34px/1.05 var(--font-geist-sans), sans-serif; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.cx-hero-unit { font: 400 13px var(--font-geist-mono), monospace; letter-spacing: .01em; color: #b9a9cf; }
+.sp-payoff { color: #dcc1ff !important; font: 500 20px/1.25 var(--font-geist-sans), sans-serif !important; margin: 16px 0 8px !important; }
+:is(.rr-cause, .ll-explanation, .sp-reason, .ll-intervention) { color: #93a1af !important; font-size: 12.5px !important; line-height: 1.55 !important; border: 0 !important; padding-top: 0 !important; }
+.bo-measure strong { font-size: 44px !important; line-height: 1.05 !important; }
+
+/* The star that marks an earned result. */
+.bo-measure strong, .sq-ledger-result strong { position: relative; display: inline-block; }
+:is(.rr-delta, .ll-delta)[data-hero="true"] .cx-hero-num::after, .bo-measure strong::after, .sq-ledger-result[data-reveal="true"] strong::after {
+  content: "✦"; position: absolute; right: -.7em; top: -.25em; font-size: .4em; -webkit-text-fill-color: #fff; color: #fff;
+  text-shadow: 0 0 10px #dcc1ff; opacity: 0; animation: cx-glint 4.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .cx-hero-num::after, .bo-measure strong::after { animation: none; opacity: .8; } }
+
+/* Percentile switch reads as one segmented control; the active boundary glows. */
+.ll-percentiles { gap: 0 !important; margin-top: 18px !important; }
+.vx-shell .ll-percentiles button { border-radius: 0; margin-left: -1px; font: 500 12px var(--font-geist-mono), monospace !important; padding: 8px 16px !important; }
+.vx-shell .ll-percentiles button[aria-pressed="true"] { box-shadow: 0 0 14px rgba(199,166,255,.35); position: relative; z-index: 1; }
+.ll-evidence { margin-top: 18px !important; }
+
+/* Queue & latency density. */
+.ll-tools { padding: 9px 24px !important; }
+.ll-heading { padding: 14px 24px 6px !important; }
+.ll-transport { padding: 8px 24px !important; }
+.ll-moments { padding: 8px 24px !important; }
+
+/* Figure story: the tour's chapter row drives each figure, so the figure's own tab rows step back. */
+.ift-tour :is(.rr-tools, .ll-tools, .cxp-lenses) { display: none !important; }
+.ift-tour .rr-measure-chapters { border-top: 0; }
+.ift-heading { padding-top: 12px !important; padding-bottom: 10px !important; }
+
+/* Prefix reuse card: Δ saved is the one hero; totals and the ratio step back. */
+.pr-gain strong { position: relative; display: inline-block; font-size: 40px !important; }
+.pr-gain[data-revealed="true"] strong {
+  background: linear-gradient(105deg, #dcc1ff 0 40%, #fff 48%, #dcc1ff 56% 100%) 0 0 / 260% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: cx-shine 4.8s cubic-bezier(.4,0,.2,1) infinite;
+}
+.pr-gain[data-revealed="true"] strong small { -webkit-text-fill-color: #b9a9cf; }
+.pr-gain[data-revealed="true"] strong::after { content: "✦"; position: absolute; right: -.75em; top: -.2em; font-size: .4em; -webkit-text-fill-color: #fff; text-shadow: 0 0 10px #dcc1ff; opacity: 0; animation: cx-glint 4.8s ease-in-out infinite; }
+.pr-focus-values strong { font-size: 24px !important; }
+.pr-focus-values .pr-baseline-value { font-size: 20px !important; opacity: .7; }
+.pr-focus-result b { font-size: 18px !important; }
+.pr-focus-context strong { font-size: 19px !important; }
+
+/* Combined gains: the final value carries the shine and the star. */
+.rg-final-equation strong { position: relative; display: inline-block;
+  background: linear-gradient(105deg, currentColor 0 40%, #fff 48%, currentColor 56% 100%) 0 0 / 260% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: cx-shine 4.8s cubic-bezier(.4,0,.2,1) infinite; }
+.rg-final-equation strong::after { content: "✦"; position: absolute; right: -.75em; top: -.2em; font-size: .4em; -webkit-text-fill-color: #fff; text-shadow: 0 0 10px #fff; opacity: 0; animation: cx-glint 4.8s ease-in-out infinite; }
+.rg-final-equation > span { opacity: .65; }
+
+/* Scheduling ledger heading joins the plate scale. */
+.sq-ledger header h4 { font: 500 19px/1.3 var(--font-geist-sans), sans-serif !important; letter-spacing: -.015em; }

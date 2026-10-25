@@ -39,9 +39,9 @@ import "./stagecraft/stagecraft.css";
 import "./stagecraft/plates.css";
 import "./stagecraft/film-spot.css";
 import "./stagecraft/quiet.css";
+import "./stagecraft/explorers.css";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
-import { PolicyRuntimeStage } from "./stagecraft/policy-runtime";
 import {
   GlyphAudit,
   GlyphCapability,
@@ -57,6 +57,11 @@ import {
 const ServingUnderLoad = lazy(() =>
   import("./serving-under-load").then((module) => ({
     default: module.ServingUnderLoad,
+  })),
+);
+const CompositionExplorer = lazy(() =>
+  import("./composition-explorer").then((module) => ({
+    default: module.CompositionExplorer,
   })),
 );
 const RequestReplayExplorer = lazy(() =>
@@ -77,22 +82,20 @@ const InferenceFigureTour = lazy(() =>
 
 /* The cursor performs each figure's own controls, so nobody has to discover them. */
 const REPLAY_DEMO: readonly CursorStep[] = [
-  { target: ".rr-request-slider input", action: "range", value: 7, label: "Request 7 · shared prefix", hold: 3600 },
-  { target: ".rr-measure-chapters button:nth-child(2)", label: "Input only", hold: 3200 },
-  { target: ".rr-measure-chapters button:nth-child(3)", label: "Answer only", hold: 3200 },
-  { target: ".rr-measure-chapters button:nth-child(4)", label: "Wait + execute", hold: 3400 },
-  { target: ".rr-measure-chapters button:nth-child(1)", label: "Total GPU work", hold: 1600 },
-  { target: ".rr-request-slider input", action: "range", value: 1, label: "Request 1 · cold read", hold: 3400 },
-  { target: ".rr-request-slider input", action: "range", value: 61, label: "Request 61", hold: 3400 },
-];
+  { target: ".rr-cohort-plot", action: "sweep", drive: ".rr-request-slider input", from: 1, to: 96, duration: 9000, label: "All 96 requests", hold: 900 },
+  { target: ".rr-request-slider input", action: "range", value: 7, label: "Request 7 · shared prefix", hold: 6000 },
+  { target: ".rr-measure-chapters button:nth-child(2)", label: "Input only", hold: 3600 },
+  { target: ".rr-measure-chapters button:nth-child(3)", label: "Answer only", hold: 3600 },
+  { target: ".rr-measure-chapters button:nth-child(4)", label: "Wait + execute", hold: 3600 },
+  { target: ".rr-measure-chapters button:nth-child(1)", label: "Total GPU work", hold: 2400 },
+]
 const LATENCY_DEMO: readonly CursorStep[] = [
-  { target: ".ll-moments button:nth-child(4)", label: "Rank every response", hold: 4200 },
-  { target: ".ll-percentiles button:nth-child(1)", label: "p50", hold: 2600 },
-  { target: ".ll-percentiles button:nth-child(2)", label: "p95", hold: 2600 },
-  { target: ".ll-percentiles button:nth-child(3)", label: "p99", hold: 2600 },
-  { target: ".ll-inspect-request input", action: "range", value: 92, label: "One request, both runs", hold: 3600 },
-  { target: ".ll-moments button:nth-child(5)", label: "p95 comparison", hold: 4200 },
-];
+  // The film plays itself to the ranked distribution; then the cursor walks the percentiles.
+  { target: ".ll-percentiles button:nth-child(1)", label: "p50 · median response", hold: 3200, waitFor: 60000 },
+  { target: ".ll-percentiles button:nth-child(2)", label: "p95 · the slow tail", hold: 3600 },
+  { target: ".ll-percentiles button:nth-child(3)", label: "p99 · the slowest few", hold: 3600 },
+  { target: ".ll-percentiles button:nth-child(2)", label: "Back to p95", hold: 2600 },
+]
 
 const INFERENCE_VIEWS = [
   { name: "Policy × runtime", detail: "Compare cost & accuracy", symbol: "↖" },
@@ -415,11 +418,15 @@ export function ComputeLabStudy({
   const caption = training ? trainingCaption : inferenceCaption;
   // Whatever the reel opens lands on the stage, and the stage comes into view.
   const toStage = () =>
-    requestAnimationFrame(() =>
-      document
-        .getElementById(`${domain}-cost-lab`)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" }),
-    );
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`${domain}-cost-lab`);
+      if (!el) return;
+      // Page snapping would pull this jump back to the section heading; lift it for the glide.
+      const html = document.documentElement, snap = html.style.scrollSnapType;
+      html.style.scrollSnapType = "none";
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 82, behavior: "smooth" });
+      window.setTimeout(() => { html.style.scrollSnapType = snap; }, 2200);
+    });
   const openView = (i: number) => {
     setView(i);
     setFigureHandoff(null);
@@ -496,29 +503,31 @@ export function ComputeLabStudy({
         </div>
       </header>
       {!training && (
-        <div
-          className="ip-parts"
-          role="group"
-          aria-label="Inference investigation parts"
-        >
-          <button
-            type="button"
-            aria-controls="inference-cost-lab"
-            aria-pressed={inferencePart === "cheaper"}
-            onClick={() => setInferencePart("cheaper")}
-          >
-            <span>Part 1</span>
-            <strong>Same intelligence, cheaper execution</strong>
-          </button>
-          <button
-            type="button"
-            aria-controls="inference-serving-lab"
-            aria-pressed={inferencePart === "load"}
-            onClick={() => setInferencePart("load")}
-          >
-            <span>Part 2</span>
-            <strong>Serving under load</strong>
-          </button>
+        <div className="br-fork" role="group" aria-label="Two ways to make inference cheaper">
+          <span className="br-root">Two ways to make<br />inference cheaper</span>
+          <svg className="br-lines" viewBox="0 0 120 120" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 60C50 60 60 26 120 26" data-on={inferencePart === "cheaper"} />
+            <path d="M0 60C50 60 60 94 120 94" data-on={inferencePart === "load"} />
+          </svg>
+          <div className="br-branches">
+            {([
+              ["cheaper", "01", "Same intelligence, cheaper execution", "36.61 → 19.29", "GPU-s per correct answer"],
+              ["load", "02", "Serving under load", "56 → 10.25", "ms longest gap in a live answer"],
+            ] as const).map(([key, n, title, value, unit]) => (
+              <button
+                key={key}
+                type="button"
+                className="br-branch"
+                aria-pressed={inferencePart === key}
+                aria-controls={key === "cheaper" ? "inference-cost-lab" : "inference-serving-lab"}
+                onClick={() => setInferencePart(key)}
+              >
+                <i>{n}</i>
+                <strong>{title}</strong>
+                <span><b>{value}</b> {unit}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
       <RetainedLabPanel
@@ -565,6 +574,12 @@ export function ComputeLabStudy({
         >
           <LabStory
             training={training}
+            onFinish={() => {
+              if (!training && mode === "watch") {
+                setInferencePart("load");
+                requestAnimationFrame(() => document.getElementById("inference-study")?.querySelector(".br-fork")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+              }
+            }}
             evidence={(storyRun, pauseStory) => (
               <LabEvidence run={storyRun} onInspect={pauseStory} />
             )}
@@ -756,8 +771,16 @@ export function ComputeLabStudy({
                         </p>
                       }
                     >
-                      <PolicyRuntimeStage
+                      <CompositionExplorer
+                        key={`composition-${workload}-${budget}-${figureRevisions[0]}`}
                         points={points}
+                        selected={selected}
+                        onSelect={playback.select}
+                        initial={
+                          figureHandoff?.selection.view === 0
+                            ? figureHandoff.selection.state
+                            : undefined
+                        }
                         evidence={(selectedRun, pause) => (
                           <LabEvidence run={selectedRun} onInspect={pause} />
                         )}
@@ -810,7 +833,7 @@ export function ComputeLabStudy({
                       }
                     >
                       <div ref={latencyHost} className="gc-host">
-                      <GhostCursor root={latencyHost} script={LATENCY_DEMO} enabled={mode === "explore" && view === 2} startDelay={2400} />
+                      <GhostCursor root={latencyHost} script={LATENCY_DEMO} enabled={mode === "explore" && view === 2} startDelay={1000} restDelay={1800} />
                       <LoadLatencyExplorer
                         key={`${base.policyIndex}-${budget}-${workload}-${figureRevisions[2]}`}
                         baseline={base}

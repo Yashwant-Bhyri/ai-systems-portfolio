@@ -140,7 +140,7 @@ export function useStudyPlayback(
       clock.seek(value);
       setSeekState((s) => ({ revision: s.revision + 1, offset: value }));
       setFinished(false);
-      setPlaying(false);
+      // Jumping to a moment keeps the film running; only the pause control stops it.
     },
     pause: () => setPlaying(false),
     toggle: () => {

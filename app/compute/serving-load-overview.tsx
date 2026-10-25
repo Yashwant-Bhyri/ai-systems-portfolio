@@ -237,7 +237,6 @@ export function ServingLoadOverview({
     return () => observer.disconnect();
   }, [frame.beat, isActive]);
   const changeBranch = (change: () => void) => {
-    clock.pause();
     change();
   };
 
@@ -471,7 +470,6 @@ export function ServingLoadOverview({
                         ...old,
                         firstTokenMs: ms,
                       }));
-                      clock.pause();
                     }}
                   >
                     {ms} ms
@@ -491,7 +489,6 @@ export function ServingLoadOverview({
                     aria-pressed={deliveryTargets.maxGapMs === ms}
                     onClick={() => {
                       setDeliveryTargets((old) => ({ ...old, maxGapMs: ms }));
-                      clock.pause();
                     }}
                   >
                     {ms} ms
@@ -616,7 +613,6 @@ export function ServingLoadOverview({
         <button
           type="button"
           onClick={() => {
-            clock.pause();
             diagramScroll.current?.scrollTo({ left: 0, behavior: "instant" });
           }}
         >
@@ -625,7 +621,6 @@ export function ServingLoadOverview({
         <button
           type="button"
           onClick={() => {
-            clock.pause();
             diagramScroll.current?.scrollTo({
               left: diagramScroll.current.scrollWidth,
               behavior: "instant",
@@ -645,7 +640,7 @@ export function ServingLoadOverview({
         {opening ? (
           <ServingAdmissionScenes
             frame={frame}
-            onPause={clock.pause}
+            onPause={() => undefined}
             reduced={clock.reduced}
             revision={clock.revision}
           />
@@ -653,7 +648,7 @@ export function ServingLoadOverview({
           <ServingLocalityScene
             frame={frame}
             reduced={clock.reduced}
-            onPause={clock.pause}
+            onPause={() => undefined}
             onRoute={(option) =>
               changeBranch(() => {
                 setRoute(option);
@@ -673,9 +668,8 @@ export function ServingLoadOverview({
             targets={deliveryTargets}
             reduced={clock.reduced}
             selected={selectedDelivery}
-            onPause={clock.pause}
+            onPause={() => undefined}
             onSelect={(id) => {
-              clock.pause();
               setDeliverySelection(
                 id ? { id, revision: clock.revision } : null,
               );
@@ -688,7 +682,6 @@ export function ServingLoadOverview({
             topology={topology}
             selectedWeight={selectedWeight}
             onWeight={(index) => {
-              clock.pause();
               setSelectedWeight(index);
             }}
           />
@@ -700,7 +693,6 @@ export function ServingLoadOverview({
             type="button"
             className="slo-deep-action"
             onClick={() => {
-              clock.pause();
               onOpenOverlap();
             }}
           >
@@ -712,7 +704,6 @@ export function ServingLoadOverview({
             type="button"
             className="slo-deep-action"
             onClick={() => {
-              clock.pause();
               onOpenDraft();
             }}
           >
@@ -724,7 +715,6 @@ export function ServingLoadOverview({
             type="button"
             className="slo-deep-action"
             onClick={() => {
-              clock.pause();
               onOpenCache();
             }}
           >
@@ -736,7 +726,6 @@ export function ServingLoadOverview({
             type="button"
             className="slo-deep-action"
             onClick={() => {
-              clock.pause();
               onOpenContinuity();
             }}
           >

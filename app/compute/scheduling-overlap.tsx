@@ -186,6 +186,12 @@ function ScheduleLane({
                 strokeWidth="2"
               />
             )}
+            {/* Freeze-frame on the first idle gap: the film holds here and names it. */}
+            {i === 0 && frame.presentationMs >= 8000 && frame.presentationMs < 12000 && (
+              <g className="so-idle-callout">
+                <rect x={x(gap.start)} y={y + 65} width={x(gap.end) - x(gap.start)} height="26" fill={RED} className="so-idle-pulse" />
+              </g>
+            )}
           </g>
         );
       })}
@@ -348,27 +354,24 @@ function Comparison({
     selected !== null
       ? [`Step ${selected + 1}`, "Same GPU operation"]
       : frame.beat === 0
-        ? ["Prepare. Execute.", "Deliver two outputs."]
+        ? ["One decode step", "= CPU + GPU + CPU, in series"]
         : frame.beat === 1
           ? gap
-            ? ["GPU ready.", "CPU still working."]
+            ? [`GPU idle ${gap} ms:`, "waiting for the CPU"]
             : ["No host delay.", "No gap to remove."]
           : frame.beat === 2
             ? study.profile === "negligible"
               ? ["No CPU overhead.", "Nothing to overlap."]
-              : ["CPU prepares step 3.", "GPU executes step 2."]
+              : ["CPU builds step 3", "while the GPU runs step 2"]
             : frame.beat === 3
-              ? [
-                  "Same output.",
-                  study.savedElapsed > 0
-                    ? "Earlier completion."
-                    : "Same completion time.",
-                ]
+              ? study.savedElapsed > 0
+                ? [`All 8 tokens by ${b.finish} ms`, `instead of ${a.finish} ms`]
+                : [`All 8 tokens at ${a.finish} ms`, "in both runs"]
               : [
                   study.savedElapsed > 0
-                    ? "Earlier delivery."
-                    : "Same delivery time.",
-                  "Same GPU work.",
+                    ? `${study.savedElapsed} ms sooner (−${study.savedPercent.toFixed(0)}%)`
+                    : "Same wall time",
+                  `same ${a.gpuBusy} ms of GPU work`,
                 ];
   const elapsedA = selectedA?.deliver.end ?? a.finish;
   const elapsedB = selectedB?.deliver.end ?? b.finish;
@@ -403,7 +406,7 @@ function Comparison({
         }
       >
         {frame.beat === 0 && selected === null
-          ? study.inputs.gpu
+          ? study.inputs.prepare + study.inputs.gpu + study.inputs.deliver
           : Math.abs(value)}
         <tspan className="so-unit"> ms</tspan>
       </text>
@@ -415,9 +418,9 @@ function Comparison({
               ? "later delivery of this step"
               : "same delivery time"
           : frame.beat === 0
-            ? "GPU work per decode step"
+            ? `per step, end to end: CPU ${study.inputs.prepare} + GPU ${study.inputs.gpu} + CPU ${study.inputs.deliver}`
             : frame.beat === 1
-              ? "between GPU steps 1 and 2"
+              ? "GPU idle between step 1 and step 2"
               : frame.beat === 2
                 ? "simultaneous CPU + GPU"
                 : study.savedElapsed > 0
@@ -428,18 +431,18 @@ function Comparison({
         <g>
           <text x="793" y="267" className="so-small">
             {frame.beat === 0
-              ? "One step, in order"
-              : "What occupies the host?"}
+              ? "One decode step, run serially"
+              : "Why the GPU waits"}
           </text>
           {(frame.beat === 0
             ? ([
-                ["CPU preparation", study.inputs.prepare, AMBER],
-                ["GPU execution", study.inputs.gpu, BLUE],
-                ["Host delivery", study.inputs.deliver, VIOLET],
+                ["CPU: build batch", study.inputs.prepare, AMBER],
+                ["GPU: forward pass", study.inputs.gpu, BLUE],
+                ["CPU: return tokens", study.inputs.deliver, VIOLET],
               ] as const)
             : ([
-                ["Deliver step 1", study.inputs.deliver, VIOLET],
-                ["Prepare step 2", study.inputs.prepare, AMBER],
+                ["CPU: return step 1", study.inputs.deliver, VIOLET],
+                ["CPU: build step 2", study.inputs.prepare, AMBER],
               ] as const)
           ).map(([label, value, color], i) => (
             <g key={label}>
@@ -467,8 +470,8 @@ function Comparison({
           ))}
           <text x="793" y="462" className="so-note">
             {frame.beat === 0
-              ? "Each step serves both streams."
-              : "These operations keep their cost."}
+              ? "One pass → one token each for A and B."
+              : `${study.inputs.deliver} + ${study.inputs.prepare} ms host work = ${study.inputs.deliver + study.inputs.prepare} ms idle`}
           </text>
         </g>
       ) : frame.beat === 2 && selected === null ? (
@@ -748,8 +751,8 @@ export function SchedulingOverlap({
           </button>
         ))}
         <span className="so-inputs">
-          Prepare {study.inputs.prepare} · GPU {study.inputs.gpu} · Deliver{" "}
-          {study.inputs.deliver} ms / step
+          Per step: CPU batch {study.inputs.prepare} ms · GPU pass {study.inputs.gpu} ms · CPU return{" "}
+          {study.inputs.deliver} ms
         </span>
       </div>
       <div className="so-mobile-nav">

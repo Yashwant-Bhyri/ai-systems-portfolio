@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, Suspense, useMemo, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   BUDGETS,
   compareTasks,
@@ -52,8 +52,10 @@ export function LabStory({
   training,
   evidence,
   explore,
+  onFinish,
 }: {
   training: boolean;
+  onFinish?: () => void;
   evidence: (run: LabRun, pause: () => void) => ReactNode;
   explore: () => void;
 }) {
@@ -63,7 +65,8 @@ export function LabStory({
     [budget, setBudget] = useState(4),
     [workload, setWorkload] = useState<Workload>("shared-prefix");
   const { ref, ...playback } = useStudyPlayback(training ? 6 : 5, 0, {
-    held: !!hover || !!pinned || undo,
+    // Hovering or pinning an inspection explains; it never stops the film.
+    held: undo,
     finite: true,
     interval: 12000,
     durations: training
@@ -77,6 +80,14 @@ export function LabStory({
         ],
   });
   const steps = training ? TRAINING_STORY : INFERENCE_STORY;
+  // When the last chapter ends, hand over to whatever comes next (the second branch).
+  const finishedRef = useRef(onFinish);
+  useEffect(() => { finishedRef.current = onFinish; });
+  useEffect(() => {
+    if (!playback.finished) return;
+    const id = window.setTimeout(() => finishedRef.current?.(), 3500);
+    return () => window.clearTimeout(id);
+  }, [playback.finished]);
   const runs = useMemo(
     () => (training ? trainingStoryRuns(budget) : inferenceStoryRuns(workload)),
     [training, budget, workload],
@@ -116,9 +127,9 @@ export function LabStory({
     playback.select(n);
     if (!playback.reduced) playback.resume();
   };
+  // Opening a record or inspector explains the moment; the film keeps running.
   const pause = () => {
     clear();
-    playback.pause();
   };
   const replay = () => {
     clear();

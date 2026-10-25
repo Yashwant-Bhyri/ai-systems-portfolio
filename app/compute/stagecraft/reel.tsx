@@ -19,6 +19,8 @@ export type ReelItem = {
   Glyph: ComponentType;
   /** Puts this investigation on the stage. Without it the tile only opens in place. */
   onOpen?: () => void;
+  /** Words for the open action, when it leads somewhere other than this stage. */
+  openLabel?: string;
   current?: boolean;
 };
 
@@ -45,6 +47,13 @@ export function ExplorationReel({
   const [narrow, setNarrow] = useState(false);
   const [width, setWidth] = useState(0);
   const open = hover ?? index;
+  // Hover intent: a tile opens only after the pointer settles, so tiles never shift under an aiming cursor.
+  const intent = useRef<number | undefined>(undefined);
+  const aim = (i: number | null) => {
+    window.clearTimeout(intent.current);
+    if (i === null) { setHover(null); return; }
+    intent.current = window.setTimeout(() => setHover(i), 320);
+  };
   const tr = useTr();
 
   useEffect(() => {
@@ -95,7 +104,7 @@ export function ExplorationReel({
         <i aria-hidden="true">{String(open + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}</i>
         {note && <small>{tr(note)}</small>}
       </header>
-      <div ref={row} className="rl-row" onPointerLeave={() => setHover(null)}>
+      <div ref={row} className="rl-row" onPointerLeave={() => aim(null)}>
         {items.map((item, i) => {
           const lit = i === open;
           return (
@@ -106,10 +115,10 @@ export function ExplorationReel({
               data-lit={lit}
               data-current={item.current || undefined}
               style={{ flexGrow: narrow ? undefined : lit ? GROW : 1 }}
-              onPointerEnter={(e) => { if (e.pointerType === "mouse") setHover(i); }}
+              onPointerEnter={(e) => { if (e.pointerType === "mouse") aim(i); }}
               onFocus={() => setHover(i)}
               onBlur={() => setHover(null)}
-              onClick={() => { setIndex(i); item.onOpen?.(); }}
+              onClick={() => { window.clearTimeout(intent.current); setHover(null); setIndex(i); item.onOpen?.(); }}
               aria-label={`${item.title}${item.value ? `, ${item.value} ${item.unit ?? ""}` : ""}${item.onOpen ? ". Open on the stage" : ""}`}
             >
               <span className="rl-num">{String(i + 1).padStart(2, "0")}{item.current && <b>{tr("on stage")}</b>}</span>
@@ -119,7 +128,7 @@ export function ExplorationReel({
                 {item.term && <em className="rl-term">{tr(item.term)}</em>}
                 {item.value && <span className="rl-value"><mark>{item.value}</mark>{item.unit && <small>{tr(item.unit)}</small>}</span>}
                 {item.chips && <span className="rl-chips">{item.chips.map((c) => <i key={c}>{c}</i>)}</span>}
-                {item.onOpen && !item.current && <span className="rl-open">{tr("Open on stage ↗")}</span>}
+                {item.onOpen && !item.current && <span className="rl-open">{tr(item.openLabel ?? "Open on stage ↗")}</span>}
               </span>
             </button>
           );

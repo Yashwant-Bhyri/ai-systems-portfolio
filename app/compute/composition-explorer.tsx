@@ -182,6 +182,27 @@ export function CompositionExplorer({
     film.seek(compositionMoment(4));
   };
 
+  // When one comparison finishes, hold its result, then play the next lens: the
+  // figure keeps telling its three stories without waiting for a click.
+  const latest = useRef({ film, replay: localPlayer.replay });
+  useEffect(() => {
+    latest.current = { film, replay: localPlayer.replay };
+  });
+  const finished = localPlayer.finished;
+  useEffect(() => {
+    if (presentation || !finished) return;
+    const id = window.setTimeout(() => {
+      const order: CompositionLens[] = ["runtime", "policy", "combined"];
+      const next = order[(order.indexOf(lens) + 1) % order.length];
+      setLens(next);
+      setHover(null);
+      setMetric(next === "policy" ? "accuracy" : "cost");
+      latest.current.film.seek(0);
+      latest.current.replay();
+    }, 3200);
+    return () => window.clearTimeout(id);
+  }, [presentation, finished, lens]);
+
   useEffect(() => {
     const node = stage.current;
     if (!node) return;
@@ -261,6 +282,9 @@ export function CompositionExplorer({
           >
             <strong>{item.name}</strong>
             <span>{item.detail}</span>
+            {lens === item.id && !presentation && (
+              <i className="cxp-lens-progress" aria-hidden="true" style={{ transform: `scaleX(${Math.min(1, motion.cursor / COMPOSITION_FILM_MS)})` }} />
+            )}
           </button>
         ))}
       </div>
@@ -749,15 +773,11 @@ export function CompositionExplorer({
                 data-highlight={activeMetric === item}
                 onClick={() => inspectMetric(item)}
                 onPointerEnter={() => {
-                  if (!presentation) {
-                    setHover(item);
-                    player.pause();
-                  }
+                  if (!presentation) setHover(item);
                 }}
                 onPointerLeave={() => setHover(null)}
                 onFocus={() => {
                   if (!presentation) setHover(item);
-                  player.pause();
                 }}
                 onBlur={() => setHover(null)}
               >
@@ -854,9 +874,7 @@ export function CompositionExplorer({
           </p>
           <details
             className="cxp-audit"
-            onToggle={(event) => {
-              if (event.currentTarget.open) player.pause();
-            }}
+            onToggle={() => undefined}
           >
             <summary>Inspect the accounting</summary>
             <p>

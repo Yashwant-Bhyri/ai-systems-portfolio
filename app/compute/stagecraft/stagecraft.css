@@ -146,7 +146,7 @@ aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 /* ── Draft film (speculative decoding opener) ─────────────────────────── */
 .df-film { position: relative; padding: 8px 0 18px; border-bottom: 1px solid var(--vx-line, rgba(255,255,255,.08)); margin-bottom: 18px; }
 .df-svg { display: block; width: 100%; height: auto; }
-.df-word { font: 400 44px var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif; fill: #f2f4ee; letter-spacing: -.01em; white-space: pre; }
+.df-word { font: 400 38px ui-sans-serif, -apple-system, system-ui, sans-serif; fill: #f2f4ee; letter-spacing: 0; white-space: pre; }
 .df-small { font: 400 15px var(--font-geist-mono), monospace; fill: #8a96a3; letter-spacing: .02em; }
 .df-kicker { font: 500 13px var(--font-geist-mono), monospace; fill: var(--active-accent, #ffc267); letter-spacing: .08em; }
 .df-label { font: 500 16px var(--font-geist-sans), sans-serif; fill: #c9d2db; }
@@ -202,3 +202,37 @@ aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 /* Phones: the portfolio intends no page snapping below 900px, but a later global
    rule re-enabled mandatory snapping; on tall sections that re-snaps and jumps. */
 @media (max-width: 900px) { html { scroll-snap-type: none !important; } }
+
+/* Draft film agents: the small drafter and the large target model, as two actors. */
+.df-agent { fill: rgba(255,255,255,.02); stroke-width: 1.2; }
+.df-agent-draft { stroke: rgba(255,194,103,.55); }
+.df-agent-target { stroke: rgba(180,200,220,.45); }
+.df-agent-name { fill: #eef2f6; font: 500 19px var(--font-geist-sans), sans-serif; }
+.df-agent-meta { fill: #8f9cab; font: 400 13px var(--font-geist-mono), monospace; }
+.df-link { fill: none; stroke-linecap: round; }
+.df-link-draft { stroke: #ffc267; stroke-width: 1.4; stroke-dasharray: 3 6; }
+.df-link-verify { stroke: #c9d6e2; stroke-width: 2.4; }
+.df-link-fix { stroke: #ffc267; stroke-width: 2; }
+.df-film g, .df-film path { transition: opacity .35s; }
+
+/* ── The fork: two ways to make inference cheaper ─────────────────────── */
+.br-fork { display: grid; grid-template-columns: auto 90px minmax(0, 1fr); align-items: center; gap: 0 4px; margin: 18px 0 22px; }
+.br-root { color: #9aa7b4; font: 500 12px/1.45 var(--font-geist-mono), monospace; letter-spacing: .03em; text-transform: uppercase; }
+.br-lines { width: 90px; height: 116px; overflow: visible; }
+.br-lines path { fill: none; stroke: rgba(230,237,244,.18); stroke-width: 1.4; vector-effect: non-scaling-stroke; transition: stroke .5s; }
+.br-lines path[data-on="true"] { stroke: var(--active-accent); stroke-width: 2; filter: drop-shadow(0 0 4px var(--active-accent)); }
+.br-branches { display: grid; gap: 8px; }
+.vx-shell .br-branch { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: baseline; gap: 4px 12px; padding: 12px 16px; text-align: left; cursor: pointer;
+  background: none; border: 0; border-left: 2px solid rgba(230,237,244,.12); color: #8794a1; transition: border-color .4s, color .4s, background .4s; }
+.br-branch i { font: 500 12px var(--font-geist-mono), monospace; font-style: normal; color: inherit; }
+.br-branch strong { color: inherit; font: 500 19px/1.25 var(--font-geist-sans), sans-serif; letter-spacing: -.015em; }
+.br-branch span { font: 400 12px var(--font-geist-mono), monospace; color: #7d8996; white-space: nowrap; }
+.br-branch span b { font: 500 16px var(--font-geist-mono), monospace; color: inherit; }
+.vx-shell .br-branch[aria-pressed="true"] { border-left-color: var(--active-accent); color: #f1f4f7; background: linear-gradient(90deg, color-mix(in srgb, var(--active-accent) 7%, transparent), transparent 70%); }
+.br-branch[aria-pressed="true"] span b { color: var(--active-accent); }
+@media (max-width: 760px) {
+  .br-fork { grid-template-columns: 1fr; }
+  .br-lines { display: none; }
+  .vx-shell .br-branch { grid-template-columns: 28px 1fr; }
+  .br-branch span { grid-column: 2; white-space: normal; }
+}

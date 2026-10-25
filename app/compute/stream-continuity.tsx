@@ -567,7 +567,6 @@ export function StreamContinuity({ initial }: { initial?: StreamInspectorInitial
     (inspection.policy === "whole" ? pair.whole : pair.chunked).steps[inspection.index] :
     null;
   const inspect = (next: NonNullable<Inspection>) => {
-    film.pause();
     setInspection(next);
   };
   const releaseInspection = () => {
@@ -577,7 +576,6 @@ export function StreamContinuity({ initial }: { initial?: StreamInspectorInitial
     setInspection(null);
   };
   const download = () => {
-    film.pause();
     const blob = new Blob([JSON.stringify({
       version: STREAM_MODEL_VERSION,
       status: "illustrative, not measured GPU execution",
@@ -705,7 +703,7 @@ export function StreamContinuity({ initial }: { initial?: StreamInspectorInitial
         </label>
         <label>
           <span>Iteration token budget</span>
-          <select value={tokenBudget} onChange={(event) => { film.pause(); setInspection(null); setTokenBudget(Number(event.target.value) as 16 | 32 | 64); }}>
+          <select value={tokenBudget} onChange={(event) => { setInspection(null); setTokenBudget(Number(event.target.value) as 16 | 32 | 64); }}>
             <option value="16">16 tokens</option>
             <option value="32">32 tokens</option>
             <option value="64">64 tokens</option>
@@ -713,7 +711,7 @@ export function StreamContinuity({ initial }: { initial?: StreamInspectorInitial
         </label>
         <label>
           <span>KV reservation</span>
-          <select value={capacityPages} onChange={(event) => { film.pause(); setInspection(null); setCapacityPages(Number(event.target.value) as 12 | 24); }}>
+          <select value={capacityPages} onChange={(event) => { setInspection(null); setCapacityPages(Number(event.target.value) as 12 | 24); }}>
             <option value="24">24 pages</option>
             <option value="12">12 pages</option>
           </select>

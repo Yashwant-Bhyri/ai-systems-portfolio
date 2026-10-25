@@ -42,16 +42,18 @@ import {
 
 /* Serving terms each get one silhouette and one number; values come from the
    lab's own model or from Qwen3-4B arithmetic (36 layers, 8 KV heads × 128). */
+const microscope = (step: number) => () => window.dispatchEvent(new CustomEvent("cx:microscope", { detail: { chapter: "inference", step } }));
+const IN_MICROSCOPE = "See it in the microscope ↗";
 const GLOSSARY: ReelItem[] = [
-  { key: "sse", title: "Streaming over SSE", term: "one event per token", value: "0", unit: "pages held after a disconnect", Glyph: GlyphSSE },
+  { key: "sse", title: "Streaming over SSE", term: "one event per token", value: "0", unit: "pages held after a disconnect", Glyph: GlyphSSE, onOpen: microscope(7), openLabel: IN_MICROSCOPE },
   { key: "kv", title: "KV cache sizing", term: "2 × 36 layers × 8 KV heads × 128 × 2 B", value: "144 KiB", unit: "per token · 12 users at 32k on 80 GB", Glyph: GlyphKVSizing },
-  { key: "paged", title: "PagedAttention", term: "16-token pages · block table", value: "≤ 15", unit: "tokens wasted per sequence", Glyph: GlyphPaged },
-  { key: "flash", title: "FlashAttention", term: "tiled · online softmax", value: "0", unit: "N × N score writes to HBM", Glyph: GlyphFlash },
-  { key: "batch", title: "Continuous batching", term: "admit at every iteration", value: "11.65 → 0", unit: "worker-s idle with work waiting", Glyph: GlyphBatching },
-  { key: "quant", title: "Quantization", term: "FP8 · INT4 AWQ", value: "8.04 → 2.01", unit: "GB of weights per decode step", Glyph: GlyphQuant },
-  { key: "observe", title: "Observability", term: "TTFT · TPOT · KV util · prefix hit", value: "93.8%", unit: "prefix hit · 90 of 96", Glyph: GlyphObserve },
-  { key: "engines", title: "vLLM · TRT-LLM · SGLang", term: "paged KV · compiled FP8 · radix prefix tree", Glyph: GlyphEngines },
-  { key: "scale", title: "GPU autoscaling", term: "scale on queue depth · warm pool", value: "61 → 6", unit: "s to serve · cold vs warm replica", Glyph: GlyphAutoscale },
+  { key: "paged", title: "PagedAttention", term: "16-token pages · block table", value: "≤ 15", unit: "tokens wasted per sequence", Glyph: GlyphPaged, onOpen: microscope(1), openLabel: IN_MICROSCOPE },
+  { key: "flash", title: "FlashAttention", term: "tiled · online softmax", value: "0", unit: "N × N score writes to HBM", Glyph: GlyphFlash, onOpen: microscope(2), openLabel: IN_MICROSCOPE },
+  { key: "batch", title: "Continuous batching", term: "admit at every iteration", value: "11.65 → 0", unit: "worker-s idle with work waiting", Glyph: GlyphBatching, onOpen: microscope(0), openLabel: IN_MICROSCOPE },
+  { key: "quant", title: "Quantization", term: "FP8 · INT4 AWQ", value: "8.04 → 2.01", unit: "GB of weights per decode step", Glyph: GlyphQuant, onOpen: microscope(3), openLabel: IN_MICROSCOPE },
+  { key: "observe", title: "Observability", term: "TTFT · TPOT · KV util · prefix hit", value: "93.8%", unit: "prefix hit · 90 of 96", Glyph: GlyphObserve, onOpen: microscope(6), openLabel: IN_MICROSCOPE },
+  { key: "engines", title: "vLLM · TRT-LLM · SGLang", term: "paged KV · compiled FP8 · radix prefix tree", Glyph: GlyphEngines, onOpen: microscope(2), openLabel: IN_MICROSCOPE },
+  { key: "scale", title: "GPU autoscaling", term: "scale on queue depth · warm pool", value: "61 → 6", unit: "s to serve · cold vs warm replica", Glyph: GlyphAutoscale, onOpen: microscope(7), openLabel: IN_MICROSCOPE },
 ];
 
 const StreamContinuity = lazy(() =>
@@ -221,7 +223,7 @@ export function ServingUnderLoad() {
         label="Prefill and decode scheduling"
       >
         <div ref={pressureHost} className="gc-host">
-          <GhostCursor root={pressureHost} script={DEMOS.pressure} enabled={view === "pressure"} startDelay={9000} />
+          <GhostCursor root={pressureHost} script={DEMOS.pressure} enabled={view === "pressure"} startDelay={38000} />
           <ServingPressureFilm
             onInspectTrace={(initial) => openContinuity(true, initial)}
           />
@@ -302,7 +304,7 @@ export function ServingUnderLoad() {
           >
             <DraftFilm active={view === "loop" && explorer === "draft"} />
             <div ref={draftHost} className="gc-host">
-              <GhostCursor root={draftHost} script={DEMOS.draft} enabled={view === "loop" && explorer === "draft"} startDelay={6000} />
+              <GhostCursor root={draftHost} script={DEMOS.draft} enabled={view === "loop" && explorer === "draft"} startDelay={58000} />
               <DraftVerification
                 active={view === "loop" && explorer === "draft"}
               />
@@ -322,7 +324,7 @@ export function ServingUnderLoad() {
             }
           >
             <div ref={cacheHost} className="gc-host">
-              <GhostCursor root={cacheHost} script={DEMOS.cache} enabled={view === "loop" && explorer === "cache"} startDelay={9000} />
+              <GhostCursor root={cacheHost} script={DEMOS.cache} enabled={view === "loop" && explorer === "cache"} startDelay={46000} />
               <CacheRouting active={view === "loop" && explorer === "cache"} />
             </div>
           </Suspense>
@@ -340,7 +342,7 @@ export function ServingUnderLoad() {
             }
           >
             <div ref={overlapHost} className="gc-host">
-              <GhostCursor root={overlapHost} script={DEMOS.overlap} enabled={view === "loop" && explorer === "overlap"} startDelay={9000} />
+              <GhostCursor root={overlapHost} script={DEMOS.overlap} enabled={view === "loop" && explorer === "overlap"} startDelay={30000} />
               <SchedulingOverlap
                 active={view === "loop" && explorer === "overlap"}
               />
@@ -389,7 +391,12 @@ export function ServingUnderLoad() {
         </Suspense>
       </RetainedLabPanel>
       <ExplorationReel label="Go deeper · serving under load" note="Hover to hold · click to put it on the stage" items={investigations} />
-      <ExplorationReel label="Serving glossary" note="Every term, one number" items={GLOSSARY} step={2600} />
+      <ExplorationReel
+        label="Serving glossary"
+        note="Every term, where it lives in this project"
+        items={GLOSSARY.map((g) => (g.key === "kv" ? { ...g, onOpen: () => show("loop", "cache"), openLabel: "Open the KV capacity study ↗" } : g))}
+        step={2600}
+      />
     </div>
   );
 }
