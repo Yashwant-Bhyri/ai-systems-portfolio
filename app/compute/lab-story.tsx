@@ -1,6 +1,7 @@
 "use client";
 
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useTr } from "../exhibit/i18n";
 import { createPortal } from "react-dom";
 import { useSlot } from "./stagecraft/use-slot";
 import {
@@ -61,6 +62,7 @@ export function LabStory({
   evidence: (run: LabRun, pause: () => void) => ReactNode;
   explore: () => void;
 }) {
+  const tr = useTr();
   const [hover, setHover] = useState<Inspection | null>(null),
     [pinned, setPinned] = useState<Inspection | null>(null);
   const [undo, setUndo] = useState(false),
@@ -208,7 +210,7 @@ export function LabStory({
       {!training && (
         <div className="ls-workload-switch" role="group" aria-label="Story workload">
           {([["shared-prefix", "One shared document"], ["interactive", "Different documents"]] as const).map(([value, label]) => (
-            <button key={value} type="button" aria-pressed={workload === value} onClick={() => { setWorkload(value); select(step); }}>{label}</button>
+            <button key={value} type="button" aria-pressed={workload === value} onClick={() => { setWorkload(value); select(step); }}>{tr(label)}</button>
           ))}
         </div>
       )}
