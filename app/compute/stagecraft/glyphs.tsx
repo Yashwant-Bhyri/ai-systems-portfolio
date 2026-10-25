@@ -293,6 +293,22 @@ export function GlyphTasks() {
   </svg>;
 }
 
+/** Elastic RL: GPU rows whose cells flip between rollout (rose) and training (cyan) without a shared barrier. */
+export function GlyphFleet() {
+  return <svg viewBox={VB}>
+    {Array.from({ length: 8 }, (_, r) => {
+      const split = 60 + ((r * 37) % 70);
+      return <g key={r}>
+        <rect x={16} y={14 + r * 11} width={split} height={7} rx={1.5} className="g-r" opacity={.75} />
+        <rect x={20 + split} y={14 + r * 11} width={80} height={7} rx={1.5} className="g-c" opacity={.7}>
+          <animate attributeName="x" values={`${20 + split};${10 + split};${20 + split}`} dur={D(3.2 + r * 0.2)} repeatCount="indefinite" />
+        </rect>
+        <rect x={104 + split} y={14 + r * 11} width={210 - 104 - split > 0 ? 210 - 104 - split : 6} height={7} rx={1.5} className="g-r" opacity={.5} />
+      </g>;
+    })}
+  </svg>;
+}
+
 export function GlyphCurves() {
   const curves = [["M20 96L70 90L130 86L220 84", "g-m-s"], ["M20 84L70 72L130 64L220 58", "g-b-s"], ["M20 76L70 58L130 38L220 26", "g-r-s"], ["M20 76L60 56L100 38L150 24", "g-g-s"]] as const;
   return <svg viewBox={VB}>

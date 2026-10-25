@@ -46,6 +46,7 @@ import { ModuleBar, type RailItem } from "./stagecraft/side-rail";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { LabNavSwitcher, useLabNav } from "./stagecraft/lab-nav";
 import { TaskLanding } from "./stagecraft/task-landing";
+import { FleetModule } from "./stagecraft/fleet-module";
 import { useTr } from "../exhibit/i18n";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 import {
@@ -54,6 +55,7 @@ import {
   GlyphComposition,
   GlyphCurves,
   GlyphExperiment,
+  GlyphFleet,
   GlyphFrontier,
   GlyphLatency,
   GlyphReplay,
@@ -143,6 +145,7 @@ const TRAINING_VIEWS = [
   { name: "Compute curves", detail: "Compare all four policies", symbol: "⌁" },
   { name: "Regression audit", detail: "Follow gains and losses", symbol: "⇄" },
   { name: "Where the 96 tasks land", detail: "Base vs RL checkpoint", symbol: "⁘" },
+  { name: "Elastic RL on 64 GPUs", detail: "Rollout and training roles per GPU", symbol: "≋" },
 ];
 const RESEARCH = [
   {
@@ -500,6 +503,7 @@ export function ComputeLabStudy({
         { key: "map", title: "Capability map", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thought`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thought", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thought", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thought`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
+        { key: "fleet", title: "Elastic RL on 64 GPUs", term: "rollout ↔ training role per GPU · after QwenGyre", value: "4 → 7", unit: "RL steps in 14 min · 1.96×", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
         { key: "audit", title: "Regression audit", term: "gains beside losses", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thought`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
@@ -761,12 +765,14 @@ export function ComputeLabStudy({
             </div>
             <article
               className="rs-exhibit"
+              data-view={view}
+              data-training={training || undefined}
               ref={exhibitRef}
               tabIndex={-1}
               aria-label={views[view].name}
             >
               {training && (
-                <GhostCursor root={exhibitRef} script={TRAINING_DEMO} enabled={mode === "explore"} startDelay={2500} restDelay={2200} />
+                <GhostCursor root={exhibitRef} script={TRAINING_DEMO} enabled={mode === "explore" && view < 3} startDelay={2500} restDelay={2200} />
               )}
               <div className="rs-context-bar">
                 <span className="rs-status rs-status-scenario">
@@ -911,6 +917,8 @@ export function ComputeLabStudy({
                 </>
               ) : view === 3 ? (
                 <TaskLanding budget={budget} active={mode === "explore"} />
+              ) : view === 4 ? (
+                <FleetModule active={mode === "explore"} />
               ) : (
                 <>
                   <p className="rs-pan-hint">
