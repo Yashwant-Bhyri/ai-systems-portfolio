@@ -856,14 +856,14 @@ export function DraftVerification({ active = true }: { active?: boolean }) {
                   <div className="dv-round-math">
                     <span>Committed this round</span>
                     <strong>
-                      {frame.verdict ? r.accepted : "…"}
+                      {frame.verdict ? r.accepted : 0}
                       <i> accepted</i>
                     </strong>
                     <strong>
                       +{" "}
                       {frame.verdict
                         ? Number(!!(r.correction ?? r.bonus))
-                        : "…"}
+                        : 0}
                       <i>
                         {" "}
                         {r.correction ? "target correction" : "target bonus"}
@@ -871,7 +871,7 @@ export function DraftVerification({ active = true }: { active?: boolean }) {
                     </strong>
                     <hr />
                     <strong>
-                      = {frame.commit === 1 ? r.committed.length : "…"}
+                      = {frame.commit === 1 ? r.committed.length : 0}
                       <i> sent to the user</i>
                     </strong>
                   </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { draftStudy } from "../draft-verification-model";
 import { attrs, ease, prog } from "../../exhibit/engine";
 import { useTr } from "../../exhibit/i18n";
 
@@ -24,7 +25,7 @@ const BEATS: readonly [number, string][] = [
   [3600, "The large model checks all five in one pass."],
   [4800, "Three are right. The fourth is wrong; everything after it goes."],
   [6000, "The large model's own word replaces the mistake."],
-  [7600, "Four words for one call of the large model, instead of four."],
+  [7600, "Four words from one large-model call instead of four calls."],
   [10600, "When the first guess is wrong, the drafting is wasted."],
   [15600, "Speculation pays only when the guesses are good."],
 ];
@@ -52,6 +53,10 @@ export function DraftFilm({ active }: { active: boolean }) {
   const beam = useRef<SVGPathElement>(null);
   const [beat, setBeat] = useState(0);
   const [inView, setInView] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const clock = useRef(0);
+  // The whole answer's accounting, from the same study the round-by-round view uses.
+  const study = useMemo(() => draftStudy("mixed", 4), []);
 
   useEffect(() => {
     const el = root.current;
@@ -137,17 +142,18 @@ export function DraftFilm({ active }: { active: boolean }) {
       for (let k = 0; k < BEATS.length; k++) if (ms >= BEATS[k][0]) b = k;
       if (b !== lastBeat) { lastBeat = b; setBeat(b); }
     };
-    if (reduced || !active || !inView) { draw(reduced ? 9800 : 9800); return; }
-    const tick = (now: number) => { draw((now - start) % DUR); raf = requestAnimationFrame(tick); };
-    start = performance.now();
+    if (reduced || !active || !inView) { draw(9800); return; }
+    if (paused) { draw(clock.current); return; }
+    const tick = (now: number) => { clock.current = (now - start) % DUR; draw(clock.current); raf = requestAnimationFrame(tick); };
+    start = performance.now() - clock.current;
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [active, inView, tr]);
+  }, [active, inView, tr, paused]);
 
   return (
     <div ref={root} className="df-film">
       <svg viewBox="0 0 1600 600" className="df-svg" role="img" aria-label="Speculative decoding: a draft model proposes five words, the target model verifies them in one pass, three are accepted, the fourth is corrected.">
-        <text x={X0} y={70} className="df-kicker">{tr("SPECULATIVE DECODING · DRAFT k = 5 · ONE TARGET PASS")}</text>
+        <text x={X0} y={70} className="df-kicker">{tr("Draft five words, check them in one pass")}</text>
         <text ref={draftLab} y={Y - 96} className="df-small" opacity={0}>{tr("a small model guesses ahead")}</text>
         <rect ref={sweep} y={Y - 74} height={110} rx={10} fill={C.acc} opacity={0} />
         <text ref={ctx} x={X0} y={Y} className="df-word" />
@@ -189,6 +195,13 @@ export function DraftFilm({ active }: { active: boolean }) {
         </g>
       </svg>
       <p className="df-caption" aria-live="polite">{tr(BEATS[beat][1])}</p>
+      <aside className="df-result-card" data-shown={beat >= 5 || undefined}>
+        <span>{tr(`The full ${study.baselineCalls}-word answer`)}</span>
+        <p className="df-result-line"><b className="df-result">Δ {study.callsAvoided}</b> <small>{tr("large-model calls")}</small></p>
+        <p className="df-pair">{study.baselineCalls} → {study.targetCalls} <small>{tr("serial calls")}</small></p>
+        <p className="df-cause">{tr(`Cause: each call accepts ${Math.min(...study.rounds.map((r) => r.accepted))}–${Math.max(...study.rounds.map((r) => r.accepted))} drafted words plus its own`)}</p>
+        <button type="button" className="df-pause" aria-pressed={paused} onClick={() => setPaused((p) => !p)}>{paused ? "▷ Play" : "Ⅱ Pause"}</button>
+      </aside>
     </div>
   );
 }

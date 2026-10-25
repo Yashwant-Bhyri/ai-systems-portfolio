@@ -366,6 +366,31 @@
   .vx-shell .lb-stage .tt-budget-buttons button > * { margin: 0; }
 }
 
+@media (min-width: 901px) {
+  /* Speculative decoding · round-by-round accounting */
+  .lb-stage .dv-root { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-content: start; }
+  .lb-stage .dv-root > * { grid-column: 1 / -1; min-width: 0; }
+  .lb-stage .dv-heading { margin: 0; padding: 8px 22px 4px; }
+  .lb-stage .dv-heading > div:first-child { display: flex; align-items: baseline; gap: 2px 16px; flex-wrap: wrap; }
+  .lb-stage .dv-heading h3 { font-size: 22px; margin: 0; }
+  .lb-stage .dv-heading p { margin: 0; font-size: 13px; }
+  .lb-stage .dv-heading > span { display: none; }
+  .lb-stage .dv-controls { position: absolute; top: 6px; right: 22px; margin: 0; padding: 0; border: 0; }
+  .vx-shell .lb-stage .dv-controls button { min-height: 0; padding-block: 5px; }
+  .lb-stage .dv-stage { min-height: 0; }
+  .lb-stage .dv-scroll svg { max-height: calc(100svh - 425px); }
+  .lb-stage .dv-scroll { padding-block: 0; }
+  .lb-stage .dv-card { min-height: 0; margin-block: 6px; padding: 14px 18px; }
+  .lb-stage .dv-rounds { grid-column: 1; margin: 0; padding: 6px 8px 6px 22px; border-top: 1px solid rgba(230,237,244,.07); }
+  .vx-shell .lb-stage .dv-rounds button { min-height: 0; height: 30px; }
+  .lb-stage .dv-transport { grid-column: 2; margin: 0; padding: 6px 8px; border-top: 1px solid rgba(230,237,244,.07); }
+  .vx-shell .lb-stage .dv-transport button { width: 32px; height: 30px; min-height: 0; }
+  .lb-stage .dv-moments { grid-column: 3; flex-wrap: nowrap; margin: 0; padding: 6px 22px 6px 6px; gap: 4px 14px; border-top: 1px solid rgba(230,237,244,.07); }
+  .vx-shell .lb-stage .dv-moments button { white-space: nowrap; min-height: 0; padding-block: 4px; }
+  .lb-stage .dv-method { display: none; }
+  .lb-stage .df-film { min-height: 100%; align-content: center; border: 0; margin: 0; }
+}
+
 /* ══ Short screens (laptops at 800–860 px tall): quieter chrome, tighter plates ══ */
 @media (min-width: 901px) and (max-height: 860px) {
   .cs-study.lab-block { padding-top: calc(var(--lb-header) + 4px); gap: 6px; padding-bottom: 6px; }
