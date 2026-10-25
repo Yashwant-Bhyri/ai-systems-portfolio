@@ -18,8 +18,8 @@ const DETAILS = {
   stream: ["The gap is the user's interruption", "Every mark is one emitted token of request 1. The highlighted gap is the longest interval between two emissions. It is not time to first token, overall latency, or a measured production SLO."],
 } as const;
 
-function MachineLane({ trace, time, top, focus, onInspect }: {
-  trace: StreamTrace; time: number; top: number; focus: string; onInspect: (detail: Detail) => void;
+function MachineLane({ trace, time, top, focus, narrate, onInspect }: {
+  trace: StreamTrace; time: number; top: number; focus: string; narrate: "whole" | "chunked" | null; onInspect: (detail: Detail) => void;
 }) {
   const state = servingPressureState(trace, time);
   const chunked = trace.policy === "chunked";
@@ -32,7 +32,8 @@ function MachineLane({ trace, time, top, focus, onInspect }: {
   const stalled = !answer.done && answer.count > 0 && state.decode === 0 && state.prefill > 0;
   const atCompare = ["whole", "chunked", "gap", "first-token"].includes(focus);
   const showGap = time >= gap.endMs && focus !== "first-token";
-  const inactive = focus === "whole" ? chunked : focus === "chunked" ? !chunked : false;
+  // One lane is narrated at a time while both run on the shared clock.
+  const inactive = narrate ? (narrate === "whole" ? chunked : !chunked) : focus === "whole" ? chunked : focus === "chunked" ? !chunked : false;
   const inspectable = (detail: Exclude<Detail, null>, label: string) => ({
     role: "button", tabIndex: 0, "aria-label": label,
     className: "sp-inspect", onClick: (event: React.MouseEvent<SVGGElement>) => { event.currentTarget.focus(); onInspect(detail); },
@@ -116,8 +117,16 @@ export function ServingPressureFilm({ onInspectTrace }: { onInspectTrace: (selec
   const film = useFilmTime(player.readTime, player.running, player.reduced, STREAM_FILM_DURATION_MS, player.seek);
   const pair = useMemo(() => ({ whole: simulateStream({ policy: "whole", tokenBudget: budget, capacityPages: pages }), chunked: simulateStream({ policy: "chunked", tokenBudget: budget, capacityPages: pages }) }), [budget, pages]);
   const frame = streamFilmFrame(film.time, pair);
+  const narrate = frame.focus === "interference" ? (film.time < 12_500 ? "whole" : "chunked") : null;
   const blocked = pages === 12;
-  const title = frame.focus === "streams" ? "Decode existing requests" : frame.focus === "entry" ? "Admit a longer prompt" : blocked ? "KV capacity limits admission" : frame.focus === "whole" ? "Whole prefill blocks decode" : frame.focus === "chunked" ? "Interleave prefill and decode" : frame.focus === "gap" ? "Compare inter-token latency" : frame.focus === "first-token" ? "First-token latency tradeoff" : "Prefill/decode scheduling";
+  const title = frame.focus === "streams" ? "Requests 1 and 2 are streaming their answers"
+    : frame.focus === "entry" ? "Request 3's 128-token document arrives while request 1 is streaming"
+    : blocked ? "The KV pool is full: request 3 waits outside, both streams keep going"
+    : frame.focus === "whole" || narrate === "whole" ? "Baseline: request 1's stream stops while the whole document is read"
+    : frame.focus === "chunked" || narrate === "chunked" ? `Chunked prefill: the document is read ${budget} tokens at a time, between decode steps`
+    : frame.focus === "gap" ? "The worst token gap in request 1's stream"
+    : frame.focus === "first-token" ? "The cost: request 3's first token arrives later"
+    : "Prefill and decode share one GPU";
   const firstToken = frame.focus === "first-token";
   const values = firstToken ? [pair.whole.requests[2].ttftMs!, pair.chunked.requests[2].ttftMs!] : [pair.whole.requests[0].maxGapMs!, pair.chunked.requests[0].maxGapMs!];
   const settled = ["whole", "chunked", "gap", "first-token"].includes(frame.focus);
@@ -156,27 +165,27 @@ export function ServingPressureFilm({ onInspectTrace }: { onInspectTrace: (selec
     <div className="sp-stage" ref={stage}>
       <div className="sp-diagram"><p className="sp-pan">Scroll to inspect the execution lanes →</p><div className="sp-scroll" role="region" tabIndex={0} aria-label="Paired serving machines and token delivery" onFocusCapture={player.pause}>
         <svg className="sp-plot" viewBox="0 0 840 610" role="group" aria-label="Two scheduling rules, the same four requests and output lengths">
-          <MachineLane trace={pair.whole} time={frame.serviceMs} top={20} focus={frame.focus} onInspect={inspect} />
+          <MachineLane trace={pair.whole} time={frame.serviceMs} top={20} focus={frame.focus} narrate={narrate} onInspect={inspect} />
           <path d="M28 303H810" stroke="#2d4350" />
-          <MachineLane trace={pair.chunked} time={frame.serviceMs} top={328} focus={frame.focus} onInspect={inspect} />
+          <MachineLane trace={pair.chunked} time={frame.serviceMs} top={328} focus={frame.focus} narrate={narrate} onInspect={inspect} />
           {[0, 100, 200, 300].map(time => <text key={time} x={208 + time / 300 * 590} y="600" textAnchor="middle" className="sp-small">{time} ms</text>)}
         </svg>
       </div></div>
       <aside className="sp-consequence" aria-label="What the scheduling change means for the request">
         {detail ? <div className="sp-detail"><button type="button" onClick={releaseInspection}>Close inspection ×</button><h4>{DETAILS[detail][0]}</h4><p>{DETAILS[detail][1]}</p></div> : <>
           <span className="sp-result-label">{firstToken ? "New document · request 3" : "Existing answer · request 1"}</span>
-          <h4>{settled ? firstToken ? "Time to first token (TTFT)" : "Maximum inter-token latency (ITL)" : "Answer tokens delivered"}</h4>
+          <h4>{settled ? firstToken ? "Time to first token (TTFT)" : "Worst token gap (ITL)" : "Answer tokens delivered"}</h4>
           {settled ? <>
             <div className="sp-result-bars">{values.map((value, index) => <div key={index} data-active={frame.focus === (index ? "chunked" : "whole")}><span data-sp-target={index ? "chunked" : "whole"}>{index ? "Chunked" : "Baseline"}</span><strong style={{ color: index ? GREEN : BLUE }}>{number(value, 2)}<small> ms</small></strong><i style={{ width: `${100 * value / Math.max(...values)}%`, background: index ? GREEN : BLUE }} /></div>)}</div>
-            <p className="sp-payoff" style={{ color: firstToken ? AMBER : VIOLET }}>{values[0] === values[1] ? "No stream-gap reduction" : `Δ ${number(Math.abs(values[1] - values[0]), 2)} ms ${firstToken ? "longer wait" : "shorter pause"}`}</p>
-            <p className="sp-reason">{blocked ? "Both policies keep decoding while the long document waits outside the full KV pool." : firstToken ? "Interleaving existing answers delays completion of the new input." : "Chunked prefill makes room for decode between pieces of the arriving input."}</p>
+            <p className="sp-payoff" data-hero={!firstToken && values[0] !== values[1]} style={{ color: firstToken ? AMBER : VIOLET }}>{values[0] === values[1] ? "No stream-gap reduction" : firstToken ? `Cost: request 3's first token arrives ${number(Math.abs(values[1] - values[0]), 2)} ms later` : <>Δ {number(Math.abs(values[1] - values[0]), 2)} ms <small>shorter worst pause in request 1's stream</small></>}</p>
+            <p className="sp-reason">{blocked ? "Both policies keep decoding while the long document waits outside the full KV pool." : firstToken ? "Cause: request 3's input now shares every step with request 1's stream." : `Cause: request 3's input runs in ${budget}-token chunks, so request 1 keeps decoding.`}</p>
           </> : <div className="sp-live-answer">{[stateWhole, stateChunked].map((state, index) => { const request = state.requests[0], paused = !request.done && state.prefill > 0 && state.decode === 0; return <div key={index}><span>{index ? "Chunked" : "Baseline"}</span><strong style={{ color: paused ? RED : index ? GREEN : BLUE }}>{request.count}<small> / 24 tokens</small></strong><span>{paused ? `${number(request.sinceLast)} ms since its last token` : request.done ? "Answer complete" : "Generating the answer"}</span></div>; })}</div>}
           <div className="sp-two-effects"><button type="button" aria-pressed={!firstToken && settled} onClick={() => seek(26000)}>Inspect the stream gap <span>↗</span></button><button type="button" aria-pressed={firstToken} onClick={() => seek(31000)}>Inspect the first-token tradeoff <span>↗</span></button></div>
         </>}
       </aside>
       {settled && !detail && links.length > 0 && <svg className="sp-result-links" aria-hidden="true">{links.map(link => <path key={link.policy} d={link.path} fill="none" stroke={link.policy === "whole" ? BLUE : GREEN} strokeWidth="1.3" />)}</svg>}
     </div>
-    <div className="sp-controls"><label>Input + output tokens per chunked iteration<select value={budget} onChange={event => { setBudget(Number(event.target.value) as 16 | 32 | 64); seek(26000); }}><option value={16}>16 tokens</option><option value={32}>32 tokens</option><option value={64}>64 tokens</option></select></label><label>KV reservation pool<select value={pages} onChange={event => { setPages(Number(event.target.value) as 12 | 24); seek(26000); }}><option value={24}>24 pages · document fits</option><option value={12}>12 pages · document waits</option></select></label></div>
+    <div className="sp-controls"><label>Input + output tokens per chunked iteration<select value={budget} onChange={event => { setBudget(Number(event.target.value) as 16 | 32 | 64); seek(26000); }}><option value={16}>16-token chunks</option><option value={32}>32-token chunks</option><option value={64}>64-token chunks</option></select></label><label>KV reservation pool<select value={pages} onChange={event => { setPages(Number(event.target.value) as 12 | 24); seek(26000); }}><option value={24}>24 KV pages · document fits</option><option value={12}>12 KV pages · document waits</option></select></label></div>
     <div className="sp-transport"><button type="button" disabled={player.reduced} aria-label={player.running ? "Pause serving film" : "Play serving film"} onClick={() => { setDetail(null); if (player.finished || film.time >= STREAM_FILM_DURATION_MS) replay(); else player.toggle(); }}>{player.running ? "Ⅱ" : "▷"}</button><input aria-label="Scrub serving film" type="range" min={0} max={STREAM_FILM_DURATION_MS} step={10} value={film.time} onChange={event => seek(Number(event.target.value))} /><time>{number(film.time / 1000)} / 36 s</time><button type="button" onClick={replay} disabled={player.reduced}>↺ Replay</button></div>
     <nav className="sp-moments" aria-label="Serving film moments">{[[0, "Answer in flight"], [5000, "Document arrives"], [18500, "Baseline interruption"], [22500, "Interleave the work"], [26000, "Compare the gap"], [31000, "Expose the tradeoff"]].map(([at, label]) => <button type="button" key={label} onClick={() => seek(Number(at))}>{label}</button>)}</nav>
     <footer className="sp-footer"><span>Execution tiles are schematic; token events come from the shared trace.</span><button type="button" onClick={() => { player.pause(); onInspectTrace({ tokenBudget: budget, capacityPages: pages, filmMs: film.time }); }}>Inspect iterations, reservations & export ↗</button></footer>

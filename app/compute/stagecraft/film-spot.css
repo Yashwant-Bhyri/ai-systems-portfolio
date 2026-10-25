@@ -64,3 +64,5 @@ g[data-so-lane] { transition: opacity .5s; }
 g[data-so-lane][data-quiet="true"] { opacity: .32; filter: saturate(.25); }
 .cr-replica { transition: opacity .5s, filter .5s; }
 .cr-replica[data-quiet="true"] { opacity: .32; filter: saturate(.25); }
+.sp-lane { transition: opacity .5s, filter .5s; }
+.sp-lane[data-quiet="true"] { opacity: .45; filter: saturate(.25); }

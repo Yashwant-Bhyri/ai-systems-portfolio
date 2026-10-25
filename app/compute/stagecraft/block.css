@@ -262,7 +262,13 @@
   .lb-stage .sp-header { padding: 8px 22px 4px !important; min-height: 0; }
   .lb-stage .sp-header h3 { font-size: 22px; min-height: 0 !important; margin: 0; }
   .lb-stage .sp-header time { font-size: 18px; }
-  .lb-stage .sp-controls { position: absolute; top: 12px; left: 400px; margin: 0; padding: 0; border: 0; gap: 18px; }
+  .lb-stage .sp-controls label { font-size: 0; gap: 0; }
+  .lb-stage .sp-controls select { font-size: 12px; }
+  .lb-stage .sp-header { padding-right: 340px !important; }
+  .lb-stage .sp-header > div { flex: 1; min-width: 0; }
+  .lb-stage .sp-header h3 { max-width: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-stage .sp-header time { display: none; }
+  .lb-stage .sp-controls { position: absolute; top: 12px; right: 22px; margin: 0; padding: 0; border: 0; gap: 18px; }
   .lb-stage .sp-plot { min-width: 0; max-height: calc(100svh - 356px); }
   .lb-stage .sp-consequence { margin-block: 6px; padding: 12px 16px; }
   .lb-stage .sp-transport { grid-column: 1; padding: 6px 10px 6px 20px; border-top: 1px solid rgba(230,237,244,.07); }
@@ -448,3 +454,7 @@
 /* Explorer figures take the stage height; no empty band under the checkpoint row. */
 .lb-stage .rs-exhibit { display: flex; flex-direction: column; min-height: 100%; }
 .lb-stage .rs-exhibit > .rs-stage { flex: 1; align-items: center; }
+/* Prefill/decode: the Δ is the hero; the two inspect links stay out of the plate. */
+.lb-stage .sp-payoff[data-hero="true"] { font: 500 30px/1.1 var(--font-geist-sans), sans-serif !important; }
+.lb-stage .sp-payoff small { display: block; margin-top: 4px; font: 400 12.5px/1.35 var(--font-geist-mono), monospace; color: #b9a9cf; -webkit-text-fill-color: #b9a9cf; }
+.lb-stage .sp-two-effects { display: none; }
