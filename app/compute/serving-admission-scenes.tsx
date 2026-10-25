@@ -640,10 +640,6 @@ export function ServingAdmissionScenes({
           </text>
         </g>
       ))}
-      <text x="32" y="688" className="sa-small">
-        The clock paces this schematic. Token-step limits and KV reservations
-        are different resources.
-      </text>
     </svg>
   );
 

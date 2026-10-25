@@ -89,9 +89,7 @@ function PrefixMechanism({
       <text x="28" y="25" className="pr-label">
         Same model · same token rates · answers are not cached
       </text>
-      <text x="968" y="25" textAnchor="end" className="pr-label">
-        Trace close-up
-      </text>
+      
 
       <Hotspot
         inspect={inspect}
@@ -563,7 +561,6 @@ export function PrefixReuseReveal({
                   ? `Request 7 finishes its GPU work at ${fmtS(study.request.gpuSeconds)} s with reuse; baseline needs ${fmtS(study.reference.gpuSeconds)} s`
                   : `Δ ${fmtS(study.reference.gpuSeconds - study.request.gpuSeconds)} GPU-s for request 7 · cause: ${format(study.savedTokens)} input tokens not recomputed`}
         </h4>
-        <span>Service replay</span>
       </div>
       <div className="pr-stage">
         <div

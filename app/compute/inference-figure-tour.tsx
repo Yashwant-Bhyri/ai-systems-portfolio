@@ -158,7 +158,7 @@ export function InferenceFigureTour({
             : context.policy
               ? "RL checkpoint"
               : "Base checkpoint"}{" "}
-          · {context.budget}× cap
+          · {context.budget}× thought
         </span>
       </div>
       <div

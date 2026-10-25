@@ -47,7 +47,7 @@ import {
 /* Serving terms each get one silhouette and one number; values come from the
    lab's own model or from Qwen3-4B arithmetic (36 layers, 8 KV heads × 128). */
 const microscope = (step: number) => () => window.dispatchEvent(new CustomEvent("cx:microscope", { detail: { chapter: "inference", step } }));
-const IN_MICROSCOPE = "See it in the microscope ↗";
+const IN_MICROSCOPE = "In the microscope ↗";
 const GLOSSARY: ReelItem[] = [
   { key: "sse", title: "Streaming over SSE", term: "one event per token", value: "0", unit: "pages held after a disconnect", Glyph: GlyphSSE, onOpen: microscope(7), openLabel: IN_MICROSCOPE },
   { key: "kv", title: "KV cache sizing", term: "2 × 36 layers × 8 KV heads × 128 × 2 B", value: "144 KiB", unit: "per token · 12 users at 32k on 80 GB", Glyph: GlyphKVSizing },
@@ -55,9 +55,9 @@ const GLOSSARY: ReelItem[] = [
   { key: "flash", title: "FlashAttention", term: "tiled · online softmax", value: "0", unit: "N × N score writes to HBM", Glyph: GlyphFlash, onOpen: microscope(2), openLabel: IN_MICROSCOPE },
   { key: "batch", title: "Continuous batching", term: "admit at every iteration", value: "11.65 → 0", unit: "worker-s idle with work waiting", Glyph: GlyphBatching, onOpen: microscope(0), openLabel: IN_MICROSCOPE },
   { key: "quant", title: "Quantization", term: "FP8 · INT4 AWQ", value: "8.04 → 2.01", unit: "GB of weights per decode step", Glyph: GlyphQuant, onOpen: microscope(3), openLabel: IN_MICROSCOPE },
-  { key: "observe", title: "Observability", term: "TTFT · TPOT · KV util · prefix hit", value: "93.8%", unit: "prefix hit · 90 of 96", Glyph: GlyphObserve, onOpen: microscope(6), openLabel: IN_MICROSCOPE },
+  { key: "observe", title: "Observability", term: "time to first token · worst token gap · prefix hits", value: "93.8%", unit: "prefix hit · 90 of 96", Glyph: GlyphObserve, onOpen: microscope(6), openLabel: IN_MICROSCOPE },
   { key: "engines", title: "vLLM · TRT-LLM · SGLang", term: "paged KV · compiled FP8 · radix prefix tree", Glyph: GlyphEngines, onOpen: microscope(2), openLabel: IN_MICROSCOPE },
-  { key: "scale", title: "GPU autoscaling", term: "scale on queue depth · warm pool", value: "61 → 6", unit: "s to serve · cold vs warm replica", Glyph: GlyphAutoscale, onOpen: microscope(7), openLabel: IN_MICROSCOPE },
+  { key: "scale", title: "GPU autoscaling", term: "scale on queue depth · warm pool", Glyph: GlyphAutoscale, onOpen: microscope(7), openLabel: IN_MICROSCOPE },
 ];
 
 const StreamContinuity = lazy(() =>
@@ -164,12 +164,12 @@ export function ServingUnderLoad() {
     else setView(next);
   };
   const railItems: RailItem[] = [
-    { key: "pressure", title: "Prefill / decode scheduling", term: "chunked prefill · per-iteration token budget", value: "56 → 10.25 ms", unit: "longest gap in request 1's stream", Glyph: GlyphChunked, onOpen: () => show("pressure"), current: view === "pressure" || view === "continuity" },
+    { key: "pressure", title: "Prefill / decode scheduling", term: "chunked prefill · per-iteration token budget", value: "56 → 10.25 ms", unit: "worst token gap in request 1's stream", Glyph: GlyphChunked, onOpen: () => show("pressure"), current: view === "pressure" || view === "continuity" },
     { key: "draft", title: "Speculative decoding", term: "draft model guesses · target model verifies", value: "12 → 3", unit: "serial target-model calls", Glyph: GlyphDraft, onOpen: () => show("loop", "draft"), current: view === "loop" && explorer === "draft" },
     { key: "cache", title: "Cache-aware routing", term: "warm prefix vs. memory pressure", value: "−20 ms", unit: "first token on the warm replica", Glyph: GlyphCacheRoute, onOpen: () => show("loop", "cache"), current: view === "loop" && explorer === "cache" },
     { key: "overlap", title: "CPU / GPU overlap", term: "host prepares step n+1 during step n", value: "52 → 37 ms", unit: "four decode steps, two streams", Glyph: GlyphOverlap, onOpen: () => show("loop", "overlap"), current: view === "loop" && explorer === "overlap" },
-    { key: "map", title: "Serving system overview", term: "requests A–D on one serving clock", value: "11", unit: "mechanisms in one loop", Glyph: GlyphServingMap, onOpen: () => show("loop", "map"), current: view === "loop" && explorer === "map" },
-    { key: "glossary", title: "Serving glossary", term: "SSE · KV sizing · PagedAttention · …", value: "9", unit: "terms, each linked to where it runs", Glyph: GlyphKVSizing, onOpen: () => show("glossary"), current: view === "glossary" },
+    { key: "map", title: "Serving system overview", term: "requests A–D on one serving clock", value: "10", unit: "mechanisms on one serving clock", Glyph: GlyphServingMap, onOpen: () => show("loop", "map"), current: view === "loop" && explorer === "map" },
+    { key: "glossary", title: "Serving glossary", term: "SSE · KV sizing · PagedAttention · …", value: "9", unit: "serving terms, each linked to the microscope", Glyph: GlyphKVSizing, onOpen: () => show("glossary"), current: view === "glossary" },
   ];
   return (
     <div className="sul-root" ref={root}>

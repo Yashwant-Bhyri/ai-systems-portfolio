@@ -183,7 +183,7 @@ export function LabStory({
               )}
             </button>
           ))}
-          {!training && <label className="ls-workload" title="Workload">Workload<select aria-label="Story workload" value={workload} onChange={event => { setWorkload(event.target.value as typeof workload); select(step); }}><option value="interactive">Different documents</option><option value="shared-prefix">One shared document</option></select></label>}
+          
         </nav>
   );
   return (
@@ -205,6 +205,13 @@ export function LabStory({
         }
       }}
     >
+      {!training && (
+        <div className="ls-workload-switch" role="group" aria-label="Story workload">
+          {([["shared-prefix", "One shared document"], ["interactive", "Different documents"]] as const).map(([value, label]) => (
+            <button key={value} type="button" aria-pressed={workload === value} onClick={() => { setWorkload(value); select(step); }}>{label}</button>
+          ))}
+        </div>
+      )}
       <div className="ls-topline" hidden={!training}>
         {training && (
           <span>

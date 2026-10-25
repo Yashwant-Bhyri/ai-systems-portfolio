@@ -536,7 +536,7 @@ export function ReasoningRoutes({
                   "Shortcut",
                   "Decompose → check",
                   "Unverified claim",
-                  searching ? `${budget}× allowance` : "Unexplored route",
+                  searching ? `${budget}× thought` : "Unexplored route",
                 ][i]
               }
             </text>

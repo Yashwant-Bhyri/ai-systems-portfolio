@@ -223,7 +223,7 @@ export function CapabilityShiftPlot({
         Remains correct
       </text>
       <text x="882" y="376" className="rs-tick">
-        Same {after.budget}× allowance
+        Same {after.budget}× thought
       </text>
     </svg>
   );

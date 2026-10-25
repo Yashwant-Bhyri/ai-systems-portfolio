@@ -22,7 +22,7 @@ const n = (v: number) =>
 const MOMENTS = [
   "Requests arrive",
   "Admit the next request",
-  "Follow request 5",
+  "Follow request 7",
   "Compare work and waiting",
 ];
 
@@ -136,7 +136,6 @@ export function SchedulingReveal({
     >
       <div className="sq-invariants">
         <span>Same arrivals · same work · 2 workers each</span>
-        <span>Scheduling trace</span>
       </div>
       <header className="sq-heading">
         <h3>
@@ -395,7 +394,7 @@ export function SchedulingReveal({
               <path d="M92 433H722" className="sq-grid" />
               <path d="M27 481h21" stroke={RED} strokeWidth="3" />
               <text x="58" y="485" className="sq-label">
-                Red = idle with requests waiting · R = request
+                idle worker while a request waits
               </text>
             </svg>
           </div>

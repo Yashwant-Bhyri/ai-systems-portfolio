@@ -19,14 +19,17 @@
 /* ── Head: where you are, the title, the two branches ─────────────────── */
 .lb-head { padding-right: 160px; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; gap: 4px 32px; }
 .lb-head .rs-chapter-path { grid-column: 1 / -1; grid-row: 1; margin: 0; padding: 0; font-size: 10px; }
+/* The floating contact button (fixed, top right, about 94–142 px) must never sit on the module bar:
+   the head always reaches below it. */
+.lb-head { min-height: 58px; }
 .lb-head h2 { grid-column: 1; grid-row: 2; margin: 0; color: #f1f4f7; font: 500 26px/1.1 var(--font-geist-sans), sans-serif; letter-spacing: -.025em; white-space: nowrap; }
 .lb-head .br-fork { grid-column: 2; grid-row: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; }
 .vx-shell .lb-head .br-branch { display: grid; grid-template-columns: minmax(0, 1fr); align-items: baseline; gap: 3px; padding: 7px 14px 8px; }
 .lb-head .br-branch i { display: none; }
 .lb-head .br-branch strong { font-size: 15px; }
-.lb-head .br-techniques { display: block; white-space: nowrap; overflow: hidden; }
+.lb-head .br-techniques { display: block; }
 .lb-head .br-techniques em { font: 400 10.5px/1.4 var(--font-geist-sans), sans-serif; font-style: normal; color: inherit; opacity: .72; }
-.lb-head .br-techniques em + em::before { content: "·"; margin: 0 5px; opacity: .55; }
+.lb-head .br-techniques em:not(:last-child)::after { content: "·"; margin: 0 5px; opacity: .55; }
 
 /* ── Body: the module bar, then the stage at full width ───────────────── */
 .lb-body { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
@@ -37,8 +40,16 @@
 .lb-stage .rs-exhibit, .lb-stage .ls-story { border: 0 !important; }
 
 /* ── Module bar ───────────────────────────────────────────────────────── */
-.mb-bar { display: flex; align-items: stretch; gap: 0; height: 50px; padding: 0 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
-  mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+.mb-wrap { position: relative; }
+.mb-bar { display: flex; align-items: stretch; gap: 0; height: 50px; padding: 0 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.mb-wrap[data-more-right] .mb-bar { mask-image: linear-gradient(90deg, #000 calc(100% - 96px), transparent calc(100% - 30px)); }
+.mb-wrap[data-more-left] .mb-bar { mask-image: linear-gradient(90deg, transparent 30px, #000 96px); }
+.mb-wrap[data-more-left][data-more-right] .mb-bar { mask-image: linear-gradient(90deg, transparent 30px, #000 96px, #000 calc(100% - 96px), transparent calc(100% - 30px)); }
+.vx-shell .mb-more { position: absolute; top: 0; bottom: 0; z-index: 2; display: flex; align-items: center; gap: 4px; padding: 0 12px; border: 0; background: none;
+  color: var(--active-accent); font: 500 15px/1 var(--font-geist-sans), sans-serif; cursor: pointer; }
+.mb-more small { font: 500 11px/1 var(--font-geist-mono), monospace; opacity: .85; }
+.mb-more-right { right: 0; }
+.mb-more-left { left: 0; }
 .mb-bar::-webkit-scrollbar { display: none; }
 .mb-item { display: flex; align-items: stretch; flex: 0 0 auto; }
 .mb-chapters .ls-chapters > * { flex: 0 0 auto; }
@@ -88,6 +99,7 @@
   .lb-head .br-techniques { white-space: normal; }
   .lb-head .rs-chapter-path { display: none; }
   .lb-head h2 { grid-row: 1; }
+  .lb-head h2 { padding-right: 116px; }
   .lb-head .br-fork { grid-row: 2 !important; }
   .vx-shell .lb-head .br-branch { display: grid; grid-template-columns: minmax(0, 1fr); }
   .lb-head .br-branch :is(strong, .br-techniques) { grid-column: 1 !important; grid-row: auto !important; }
@@ -359,6 +371,7 @@
   .cs-study.lab-block { padding-top: calc(var(--lb-header) + 4px); gap: 6px; padding-bottom: 6px; }
   .lb-head .rs-chapter-path { display: none; }
   .lb-head h2 { font-size: 22px; }
+  .lb-head { min-height: 56px; }
   .vx-shell .lb-head .br-branch { padding: 5px 12px 6px; gap: 1px; }
   .lb-head .br-branch strong { font-size: 14px; }
   .mb-bar { height: 44px; }
@@ -383,3 +396,16 @@
   .lb-stage .rg-consequence { min-height: 0; padding: 12px 16px; margin-block: 6px; }
   .lb-stage .ar-scroll svg { max-height: calc(100svh - 530px); }
 }
+
+/* The film's workload: a quiet two-option toggle in the stage's top-right corner. */
+.ls-story { position: relative; }
+.ls-workload-switch { position: absolute; top: 7px; right: 16px; z-index: 4; display: flex; gap: 2px; padding: 2px; border: 1px solid rgba(230,237,244,.1); border-radius: 14px; background: rgba(8,12,17,.75); }
+.vx-shell .ls-workload-switch button { min-height: 0; height: 24px; padding: 0 11px; border: 0; border-radius: 12px; background: none; color: #8b97a3; font: 450 11.5px/1 var(--font-geist-sans), sans-serif; cursor: pointer; }
+.vx-shell .ls-workload-switch button[aria-pressed="true"] { background: color-mix(in srgb, var(--active-accent) 16%, transparent); color: #f1f4f7; }
+.lb-stage .bo-heading time { display: none; }
+
+/* Glossary: whole cards open the microscope; the illustrations stay pictures (no unreadable micro-text). */
+.gb-card[data-link] { cursor: pointer; transition: background .3s; }
+.gb-card[data-link]:hover { background: rgba(255,255,255,.025); }
+.gb-glyph :is(.g-t, .g-code) { display: none; }
+.vx-shell .gb-card button { font-size: 13px; }

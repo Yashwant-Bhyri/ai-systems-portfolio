@@ -13,17 +13,17 @@ export function GlossaryBoard({ items }: { items: readonly ReelItem[] }) {
     <div className="gb-root">
       <header className="gb-head">
         <h3>{tr("Serving glossary")}</h3>
-        <span>{tr("Nine terms from production serving, each with one number from this lab and the place it runs.")}</span>
+        <span>{tr("Nine serving terms, with this lab's number where it measures one. Select a term to see it in the microscope.")}</span>
       </header>
       <div className="gb-grid">
         {items.map((item) => (
-          <article key={item.key} className="gb-card">
+          <article key={item.key} className="gb-card" data-link={item.onOpen ? true : undefined} onClick={item.onOpen}>
             <span className="gb-glyph" aria-hidden="true"><item.Glyph /></span>
             <strong>{tr(item.title)}</strong>
             {item.term && <em>{tr(item.term)}</em>}
             {item.value && <span className="gb-value"><mark>{item.value}</mark> {item.unit && <small>{tr(item.unit)}</small>}</span>}
             {item.onOpen && (
-              <button type="button" onClick={item.onOpen}>{tr(item.openLabel ?? "Open ↗")}</button>
+              <button type="button" aria-label={`${tr(item.title)}: ${tr(item.openLabel ?? "Open ↗")}`} onClick={(e) => { e.stopPropagation(); item.onOpen?.(); }}>↗</button>
             )}
           </article>
         ))}

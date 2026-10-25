@@ -194,7 +194,7 @@ function LabEvidence({
           <div>
             <span>Illustrative, not measured</span>
             <h3 id={id}>
-              {POLICIES[run.policyIndex].name} · {run.budget}× nominal cap
+              {POLICIES[run.policyIndex].name} · {run.budget}× thought
             </h3>
           </div>
           <button
@@ -740,10 +740,10 @@ export function ComputeLabStudy({
                             playback.select(selected);
                           }}
                         >
-                          {b}× cap
+                          {b}× thought
                         </button>
                       ))
-                    : (["interactive", "shared-prefix"] as const).map((w) => (
+                    : (["shared-prefix", "interactive"] as const).map((w) => (
                         <button
                           type="button"
                           key={w}
@@ -755,8 +755,8 @@ export function ComputeLabStudy({
                           }}
                         >
                           {w === "interactive"
-                            ? "Interactive"
-                            : "Shared-prefix burst"}
+                            ? "Different documents"
+                            : "One shared document"}
                         </button>
                       ))}
                 </div>
@@ -903,8 +903,8 @@ export function ComputeLabStudy({
                     >
                       <span className="rs-readout-label">
                         {training
-                          ? `${budget}× nominal cap`
-                          : `${workload} · ${budget}× allowance`}
+                          ? `${budget}× thought`
+                          : `${workload === "interactive" ? "Different documents" : "One shared document"} · ${budget}× thought`}
                       </span>
                       <h3>{label}</h3>
                       <LabMetrics

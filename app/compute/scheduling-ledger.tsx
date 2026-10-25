@@ -121,7 +121,7 @@ export function SchedulingLedger({
         {focus === "difference" ? (
           <>
             <strong>
-              Δ {n(waitGain)} s
+              Δ {waitGain.toLocaleString("en-US", { maximumFractionDigits: 2 })} s
               <small> less waiting for request 7</small>
             </strong>
             <p>Cause: a free worker starts the next request without waiting for its pair</p>
@@ -205,10 +205,6 @@ export function SchedulingLedger({
           </button>
         ))}
       </nav>
-      <small className="sq-ledger-unit">
-        Worker-seconds add time across both workers. Idle without waiting
-        requests is excluded.
-      </small>
     </aside>
   );
 }

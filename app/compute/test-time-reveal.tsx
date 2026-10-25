@@ -414,7 +414,7 @@ export function TestTimeReveal({
         </section>
       </div>
       <div className="tt-revelation" key={`reveal-${index}`}>
-        <span>{BUDGETS[index]}× allowance</span>
+        <span>{BUDGETS[index]}× thought</span>
         <strong>
           {returning
             ? `Hold ${comparisonBudget}×. Compare policies next.`

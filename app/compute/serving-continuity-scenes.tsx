@@ -616,7 +616,6 @@ export function ServingVerificationScene({
             notes: [
               "Keep draft work separate from output.",
               "Only a valid prefix can be accepted.",
-              "No runtime speedup is inferred here.",
             ],
           };
   return (

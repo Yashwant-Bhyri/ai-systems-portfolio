@@ -358,7 +358,7 @@ function FusionScene({ progress }: { progress: number }) {
       </g>
       <Consequence
         title={["Keep the intermediate", "on-chip."]}
-        metric={result ? "−32" : "…"}
+        metric="−32"
         unit="B"
         caption="temporary traffic removed"
         rows={[
@@ -366,7 +366,7 @@ function FusionScene({ progress }: { progress: number }) {
           ["Kernel launches", "2 → 1"],
           ["Toy output", "identical"],
         ]}
-        notes={["Bias traffic held fixed.", "Device latency needs profiling."]}
+        notes={[]}
       />
     </g>
   );
@@ -537,16 +537,16 @@ function PrecisionScene({
       )}
       <Consequence
         title={["Storage shrinks.", "Values also move."]}
-        metric={ready ? `−${q.sourceBytes - q.totalBytes}` : "…"}
+        metric={`−${q.sourceBytes - q.totalBytes}`}
         unit="B"
-        caption="including the stored scale"
+        caption={`stored, incl. scale (was ${q.sourceBytes} B)`}
         rows={[
           ["Weight storage", `${q.sourceBytes} → ${q.totalBytes} B`],
           ["Largest error", n(q.maxError, 4)],
           ["First-row dot", n(q.dot, 4)],
           ["Quantized dot", n(q.reconstructedDot, 4)],
         ]}
-        notes={["No quality pass is assumed.", "Validate the downstream task."]}
+        notes={[]}
       />
     </g>
   );
@@ -739,10 +739,7 @@ function PlacementScene({
             ["GPU 2 partial", "−1"],
             ["Collective", "sum"],
           ]}
-          notes={[
-            "Communication is extra work.",
-            "This is not a 2× speed claim.",
-          ]}
+          notes={[]}
           color={AMBER}
         />
       </g>
@@ -860,10 +857,7 @@ function PlacementScene({
             ["Fill / drain slots", "6"],
             ["Layers per device", "different"],
           ]}
-          notes={[
-            "Work slots are not seconds.",
-            "Balance and transfer cost matter.",
-          ]}
+          notes={[]}
         />
       </g>
     );
@@ -962,10 +956,7 @@ function PlacementScene({
             ["E3 mixture weight", "0.25"],
             ["Output", "1.5"],
           ]}
-          notes={[
-            "Dispatch + combine communicate.",
-            "Expert imbalance can dominate.",
-          ]}
+          notes={[]}
         />
       </g>
     );
@@ -1037,10 +1028,7 @@ function PlacementScene({
           ["KV ownership", "local"],
           ["Output collective", "none"],
         ]}
-        notes={[
-          "Queue and locality affect routing.",
-          "No fixed throughput multiplier.",
-        ]}
+        notes={[]}
       />
     </g>
   );
@@ -1172,10 +1160,7 @@ function LifecycleScene({ frame }: { frame: ServingFrame }) {
           ["Empty slots", `${freeBefore} → ${freeNow}`],
           ["B prefix retained", "2"],
         ]}
-        notes={[
-          "Do not reuse in-flight memory.",
-          "Cancel, observe, then reclaim.",
-        ]}
+        notes={[]}
       />
     </g>
   );
@@ -1255,11 +1240,6 @@ export function ServingHardwareScenes({
           </text>
         </g>
       ))}
-      <text x="32" y="688" className="sh-small">
-        {frame.beat === "lifecycle"
-          ? "Page ownership follows the overview's event cursor."
-          : "Arithmetic and topology close-ups are separate teaching fixtures, not added speedups for the original trace."}
-      </text>
     </svg>
   );
 }

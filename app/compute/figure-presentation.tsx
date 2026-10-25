@@ -217,7 +217,7 @@ export function FigurePresentation({
           {training
             ? POLICIES[run.policyIndex].name
             : points[beat.policy].label}{" "}
-          · {beat.budget}× cap
+          · {beat.budget}× thought
         </span>
         <strong>
           {run.accuracy.toFixed(1)}% <small>task accuracy</small>
