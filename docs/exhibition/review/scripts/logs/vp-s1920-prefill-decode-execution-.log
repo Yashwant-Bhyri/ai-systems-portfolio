@@ -1,0 +1,11 @@
+t=20s stage 839/839 doc 1920/1920 secH 1080 minFont 8.8
+  clipped: div.cf-dissolve "Baseline serving: 8 requests, 2 workers, one batch" sw1418/cw1418 sh724/ch677
+  overlap: 
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/prefill-decode-execution-s1920-1920-20s.jpg
+t=78s stage 839/839 doc 1920/1920 secH 1080 minFont 10.0
+  clipped: div.cf-dissolve "Baseline serving: 8 requests, 2 workers, one batch" sw1418/cw1418 sh724/ch604
+  overlap: 
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/prefill-decode-execution-s1920-1920-78s.jpg
+errors none

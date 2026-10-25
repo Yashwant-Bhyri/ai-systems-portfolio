@@ -22,7 +22,7 @@ const LENSES: readonly { id: CompositionLens; name: string; from: number; to: nu
 const LENS_MS = 9800;
 const TOTAL = LENS_MS * LENSES.length;
 const COLOR = { base: "#8d9aab", serve: "#ffc267", train: "#f3a0bc", both: "#f7f1de", ink: "#eef2f6", dim: "#6c7884" };
-const NAMES = ["Base · static", "Base · optimized", "Post-trained · static", "Post-trained · optimized"];
+const NAMES = ["Base · static", "Base · optimized", "RL checkpoint · static", "RL checkpoint · optimized"];
 const VB = { w: 1200, h: 610 };
 const P = { x0: 92, x1: 742, y0: 520, y1: 70 };
 const A0 = 35, A1 = 80;

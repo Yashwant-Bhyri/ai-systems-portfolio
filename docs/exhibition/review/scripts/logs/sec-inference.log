@@ -1,0 +1,11 @@
+t=3s stage 923/923 doc 1440/1440 secH 924 minFont 8.0
+  clipped: aside.vx-contribution-tile "MY CONTRIBUTIONI engineered LLM inference pipeline" sw738/cw511 sh129/ch129 ; p.cx-scientific-claim "RESEARCH OBJECTIVEThe model is unchanged. The cogn" sw1807/cw1240 sh48/ch48
+  overlap: "I engineered" x "across KV-cache optimization, " ; "LLM inference pipelines" x "across KV-cache optimization, " ; "across KV-cache optimization, " x "CUDA, TensorRT, and vLLM" ; "across KV-cache optimization, " x "with distributed model serving" ; "CUDA, TensorRT, and vLLM" x "with distributed model serving"
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/-inference-1440-3s.jpg
+t=15s stage 923/923 doc 1440/1440 secH 924 minFont 8.0
+  clipped: aside.vx-contribution-tile "MY CONTRIBUTIONI engineered LLM inference pipeline" sw744/cw511 sh129/ch129
+  overlap: "I engineered" x "across KV-cache optimization, " ; "LLM inference pipelines" x "across KV-cache optimization, " ; "across KV-cache optimization, " x "CUDA, TensorRT, and vLLM" ; "across KV-cache optimization, " x "with distributed model serving" ; "CUDA, TensorRT, and vLLM" x "with distributed model serving"
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/-inference-1440-15s.jpg
+errors none

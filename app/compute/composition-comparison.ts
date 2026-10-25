@@ -90,7 +90,7 @@ export function compositionMechanisms(
     );
     return [
       step("Supervised fine-tuning", reference, sft, "accuracy"),
-      step("Correctness RL", sft, target, "accuracy"),
+      step("RL", sft, target, "accuracy"),
     ];
   }
   return [

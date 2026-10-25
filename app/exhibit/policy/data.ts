@@ -35,7 +35,7 @@ export const CK = {
   sft: checkpoint("sft", "SFT · LoRA", "SFT", 1, 1),
   rl: checkpoint("rl", "GRPO", "GRPO", 2, 1),
   rl4: checkpoint("rl4", "GRPO · 4× thinking", "4× think", 2, 4),
-  eff4: checkpoint("eff4", "Length-aware RL · 4×", "lean 4×", 3, 4),
+  eff4: checkpoint("eff4", "Lean RL · 4×", "lean 4×", 3, 4),
 } as const;
 export const PATH = [CK.base, CK.sft, CK.rl, CK.rl4, CK.eff4] as const;
 

@@ -54,7 +54,9 @@ import {
   GlyphFrontier,
   GlyphLatency,
   GlyphReplay,
+  GlyphTasks,
 } from "./stagecraft/glyphs";
+import { latencyDistribution } from "./load-latency-model";
 
 const ServingUnderLoad = lazy(() =>
   import("./serving-under-load").then((module) => ({
@@ -454,20 +456,27 @@ export function ComputeLabStudy({
     toStage();
   };
   const chapterSlot = <div id={`${domain}-chapters-slot`} className="sr-chapters" />;
-  const solvedGain = simulateLab(2, budget).correct - simulateLab(0, budget).correct;
+  // Every tab value is computed from the same scenario its module opens on:
+  // the RL checkpoint at the lab's thought allowance.
+  const baseRun = simulateLab(0, budget), rlRun = simulateLab(2, budget);
+  const rlFlips = compareTasks(baseRun, rlRun);
+  const solvedGain = rlRun.correct - baseRun.correct;
+  const rlStatic = simulateLab(2, budget, false, workload), rlFast = simulateLab(2, budget, true, workload);
+  const p95 = (r: LabRun) => latencyDistribution(r, 95).threshold.latency;
+  const fmt = (v: number, d = 2) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
   const railItems: RailItem[] = training
     ? [
         { key: "film", title: "The experiment", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
-        { key: "map", title: "Capability map", term: "every task, every checkpoint", value: "+54", unit: "tasks, net of 5 regressions", Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thought", value: "88", unit: "of 96 at 8×", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
-        { key: "audit", title: "Regression audit", term: "gains beside negative flips", value: "59 / 5", unit: "gained / regressed", Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "map", title: "Capability map", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thought`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thought", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thought", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "audit", title: "Regression audit", term: "gains beside losses", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thought`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
         { key: "film", title: "The experiment", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
-        { key: "composition", title: "Policy × runtime", term: "training lifts accuracy · serving cuts cost", value: "−47%", unit: "GPU-s per correct answer", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: "tasks solved after SFT + RL", Glyph: GlyphCapability, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
-        { key: "replay", title: "Execution replay", term: "any of the 96 requests", value: "23.75 → 11.55", unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
-        { key: "latency", title: "Queue & latency", term: "arrival → completion, ranked", value: "1,081 → 445", unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "composition", title: "Policy × runtime", term: "training lifts accuracy · serving cuts cost", value: `−${Math.round(reductionPercent(rlStatic.correctCost!, rlFast.correctCost!)!)}%`, unit: "GPU-s per correct answer", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thought`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
+        { key: "replay", title: "Execution replay", term: "any of the 96 requests", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "latency", title: "Queue & latency", term: "arrival → completion, ranked", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ];
   return (
     <section
@@ -497,7 +506,7 @@ export function ComputeLabStudy({
         {!training && (
           <div className="br-fork" role="group" aria-label={tr("Two branches of inference optimization")}>
             {([
-              ["cheaper", "01", "Same intelligence, cheaper execution", ["Continuous batching", "Paged KV + prefix reuse", "Fused prefill & decode kernels"]],
+              ["cheaper", "01", "Same intelligence, cheaper execution", ["Continuous batching", "Prefix reuse (KV cache)", "Faster prefill & decode rates"]],
               ["load", "02", "Serving under load", ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"]],
             ] as const).map(([key, n, title, techniques]) => (
               <button

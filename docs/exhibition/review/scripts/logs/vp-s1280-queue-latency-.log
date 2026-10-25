@@ -1,0 +1,6 @@
+t=40s stage 610/648 OVERFLOW doc 1280/1280 secH 800 minFont 6.9
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15 ; div.lb-stage "▷ Watch the experimentScheduling → cache reuse → e" sw1238/cw1238 sh648/ch610
+  overlap: "Δ 309.6" x "s faster response"
+  outside: "40.8 / 49 s" b811 r583 ; "Request arrivals" b822 r715 ; "Queue buildup" b822 r808 ; "Workload completion" b822 r934 ; "Latency ranking" b822 r1034 ; "Scan every rank" b822 r1134 ; "p95 comparison" b822 r1235
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/queue-latency-s1280-1280-40s.jpg
+errors none

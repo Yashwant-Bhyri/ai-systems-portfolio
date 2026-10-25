@@ -1,0 +1,26 @@
+t=4s stage 659/659 doc 1440/1440 secH 900 minFont 8.8
+  clipped: 
+  overlap: 
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/queue-latency-1440-4s.jpg
+t=16s stage 659/659 doc 1440/1440 secH 900 minFont 8.8
+  clipped: 
+  overlap: "Δ 42" x "fewer requests waiting"
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/queue-latency-1440-16s.jpg
+t=28s stage 659/659 doc 1440/1440 secH 900 minFont 8.8
+  clipped: 
+  overlap: 
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/queue-latency-1440-28s.jpg
+t=40s stage 659/659 doc 1440/1440 secH 900 minFont 8.8
+  clipped: 
+  overlap: "Δ 316.1" x "s faster response"
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/queue-latency-1440-40s.jpg
+t=50s stage 659/659 doc 1440/1440 secH 900 minFont 8.8
+  clipped: 
+  overlap: "Δ 275.5" x "s faster response"
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/queue-latency-1440-50s.jpg
+errors none

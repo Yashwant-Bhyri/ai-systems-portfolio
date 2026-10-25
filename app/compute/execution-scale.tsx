@@ -23,8 +23,8 @@ const BLUE = "#9cc5f5",
 const f = (n: number, d = 0) =>
   n.toLocaleString("en-US", { maximumFractionDigits: d });
 const unit = (n: number) => Math.max(0, Math.min(1, n));
-const minutes = (n: number) =>
-  `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, "0")}`;
+// One time format across the laboratory: whole seconds with thousands separators.
+const minutes = (n: number) => `${Math.floor(n).toLocaleString("en-US")} s`;
 
 export function RequestWaterfall({
   trace,
@@ -248,7 +248,7 @@ export function WaterfallPayoff({
   return (
     <div className="xs-focus" data-earned={time >= b.finish} data-comparison-focus={focus}>
       <span className="xs-focus-label">
-        Time to finish {selected + 1} requests
+        {selected === 0 ? "Time to finish request 1" : `Time to finish the first ${selected + 1} requests`}
       </span>
       <ComparisonBars
         baseline={a.finish}
@@ -267,9 +267,9 @@ export function WaterfallPayoff({
           </>
         ) : (
           <>
-            <b data-result-target="difference"><span className="xs-delta-symbol">Δ</span> {f(Math.abs(saved), 1)} s {Math.abs(saved) < 1e-8 ? "difference" : saved > 0 ? "earlier" : "later"}</b>
+            <b data-result-target="difference"><span className="xs-delta-symbol">Δ</span> {f(Math.abs(saved), 1)} s {Math.abs(saved) < 1e-8 ? "difference" : saved > 0 ? "sooner" : "later"}</b>
             {Math.abs(saved) < 1e-8 ? "Same completion time" :
-              `${f(Math.abs((100 * saved) / a.finish), 1)}% ${saved > 0 ? "less" : "more"} elapsed time`} for {selected === 0 ? "the same request" : `the same ${selected + 1} requests`}
+              `for ${selected === 0 ? "request 1" : `the first ${selected + 1} requests`} (${saved > 0 ? "−" : "+"}${f(Math.abs((100 * saved) / a.finish), 1)}%)`}
           </>
         )}
       </p>
@@ -510,15 +510,12 @@ export function AllowancePayoff({
           <>
             <b data-result-target="difference"><span className="xs-delta-symbol">Δ</span> {result.extra > 0 ? "+" : ""}{result.extra} requests</b>
             {result.extra === 0 ? "Same number completed at this allowance" : result.baseline.completed > 0
-              ? `${f(Math.abs(100 * result.extra / result.baseline.completed), 1)}% ${result.extra > 0 ? "more" : "fewer"} completed with ${f(allowance)} GPU-s`
+              ? `from the same ${f(allowance)} GPU-s (${result.baseline.completed} → ${result.optimized.completed})`
               : `Baseline has not completed its first request`}
           </>
         )}
       </p>
       <span className="xs-cause">Faster prefill + decode execution<span>Same request order · cache reuse held fixed</span></span>
-      <span className="xs-focus-note">
-        Busy compute, not a wall-clock deadline
-      </span>
     </div>
   );
 }
@@ -775,25 +772,24 @@ export function DemandPayoff({
       <p className="xs-callout">
         {focus === "baseline" ? (
           <>
-            <b>{complete ? minutes(demand.reference.finish) : `${a.completed} requests`}</b>{complete ? " to clear the baseline queue" : " completed by the baseline at this clock"}
+            <b>{complete ? minutes(demand.reference.finish) : `${a.completed} requests`}</b>{complete ? " to clear the baseline queue" : " done by the baseline so far"}
           </>
         ) : focus === "optimized" ? (
           <>
-            <b>{complete ? minutes(demand.optimized.finish) : `${b.completed} requests`}</b>{complete ? " to clear the optimized queue" : " completed by the optimized runtime at this clock"}
+            <b>{complete ? minutes(demand.optimized.finish) : `${b.completed} requests`}</b>{complete ? " to clear the optimized queue" : " done by the optimized runtime so far"}
           </>
         ) : complete ? (
           <>
             <b data-result-target="difference"><span className="xs-delta-symbol">Δ</span>{" "}
-              {f((demand.reference.finish - demand.optimized.finish) / 60, 1)}{" "}
-              min
+              {f(demand.reference.finish - demand.optimized.finish, 0)} s sooner
             </b>{" "}
-            earlier to finish the queue
+            to clear all 1,000 requests
           </>
         ) : (
           <>
             <b data-result-target="difference"><span className="xs-delta-symbol">Δ</span> {b.completed > a.completed ? "+" : ""}{b.completed - a.completed} requests</b>{" "}
             {a.completed === b.completed ? "Same number completed at this clock" : a.completed
-              ? `${f((100 * (b.completed - a.completed)) / a.completed, 1)}% more completed by ${minutes(time)}`
+              ? `done by ${minutes(time)} (${f((100 * (b.completed - a.completed)) / a.completed, 1)}% more)`
               : "Both runtimes have just started"}
           </>
         )}

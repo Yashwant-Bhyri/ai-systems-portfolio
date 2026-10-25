@@ -1,0 +1,6 @@
+t=36s stage 1218/1218 doc 390/390 secH 1550 minFont 10.1
+  clipped: button. "05Combined runtime gains" sw196/cw158 sh28/ch28
+  overlap: "Continuous batching" x "Fused prefill & decode kernels" ; "Paged KV + prefix reuse" x "Fused prefill & decode kernels" ; "Chunked prefill" x "Cache-aware routing" ; "Speculative decoding" x "Cache-aware routing" ; "Cache-aware routing" x "CPU/GPU overlap"
+  outside: "The experiment" b678 r-559 ; "01" b677 r-515 ; "02" b677 r-351 ; "03" b677 r-187 ; "04" b677 r-23 ; "Policy × runtime" b678 r681 ; "Where the 96 tasks land" b678 r928 ; "Execution replay" b678 r1123 ; "Queue & latency" b678 r1318 ; "GPU cost per correct answer" b855 r462 ; "36.61" b940 r684 ; "+ Worker scheduling" b998 r401 ; "36.61" b1030 r684 ; "Same GPU work; less waiting" b1051 r416 ; "24.03" b1120 r684
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/combined-runtime-gains-s390-390-36s.jpg
+errors none

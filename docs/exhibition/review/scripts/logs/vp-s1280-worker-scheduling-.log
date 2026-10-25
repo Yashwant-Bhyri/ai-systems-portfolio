@@ -1,0 +1,6 @@
+t=33s stage 610/610 doc 1280/1280 secH 800 minFont 7.1
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15
+  overlap: 
+  outside: "Execution replay" b167 r1399 ; "Queue & latency" b167 r1593
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/worker-scheduling-s1280-1280-33s.jpg
+errors none

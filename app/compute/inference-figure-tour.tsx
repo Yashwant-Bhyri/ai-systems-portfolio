@@ -156,7 +156,7 @@ export function InferenceFigureTour({
           {selection.view === 0 && selection.state.lens !== "runtime"
             ? "Base ↔ post-trained"
             : context.policy
-              ? "Post-trained checkpoint"
+              ? "RL checkpoint"
               : "Base checkpoint"}{" "}
           · {context.budget}× cap
         </span>

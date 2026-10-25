@@ -35,9 +35,9 @@ const TITLES = [
 ];
 const ROWS = [
   "Baseline serving",
-  "+ Worker scheduling",
-  "+ KV prefix reuse",
-  "+ Faster execution",
+  "+ Continuous batching",
+  "+ Prefix reuse",
+  "+ Faster prefill & decode",
 ];
 const yRow = (i: number) => 104 + i * 98;
 const WORK_X = 286,
@@ -250,13 +250,15 @@ export function RuntimeGainsReveal({
         : beat === 3
           ? q[2].gpuSeconds
           : study.cohort[0].total;
+  // The plate states the settled result at once; the bars carry the motion,
+  // so a visitor never copies a half-counted number.
   const after =
     beat === 1
-      ? frame.rows[1].queue
+      ? q[1].queueSeconds
       : beat === 2
-        ? frame.rows[2].work
+        ? q[2].gpuSeconds
         : beat === 3
-          ? frame.rows[3].work
+          ? q[3].gpuSeconds
           : study.cohort[3].total;
   const delta = Math.max(0, before - after);
   const source =
@@ -320,7 +322,19 @@ export function RuntimeGainsReveal({
       aria-label="Combined runtime gains film"
     >
       <header className="rg-heading">
-        <h3>{TITLES[beat]}</h3>
+        <h3>
+          {beat === 1
+            ? `Continuous batching: request 7 waits ${n(q[1].queueSeconds)} s instead of ${n(q[0].queueSeconds)} s`
+            : beat === 2
+              ? study.hits
+                ? `Prefix reuse: request 7's input drops from ${n(q[1].prefill)} to ${n(q[2].prefill)} GPU-s`
+                : "Prefix reuse: no shared prefix, no saving"
+              : beat === 3
+                ? `Faster prefill & decode: ${n(q[2].gpuSeconds)} → ${n(q[3].gpuSeconds)} GPU-s for request 7`
+                : beat === 5
+                  ? `All ${study.n} requests: ${n(study.cohort[0].total)} → ${n(study.cohort[3].total)} GPU-s per correct answer`
+                  : TITLES[beat]}
+        </h3>
         <span>
           {cohort
             ? "96 matched requests · unchanged checkpoint and outputs"
@@ -450,10 +464,10 @@ export function RuntimeGainsReveal({
             </g>
             <g opacity={frame.cohortMix}>
               <text x="30" y="28" className="rg-axis">
-                Same task identities
+                Same 96 requests
               </text>
               <text x="30" y="50" className="rg-small">
-                Request 7 stays in the cohort
+                Request 7 highlighted
               </text>
               {Array.from({ length: study.n }, (_, i) => (
                 <g key={i}>
@@ -533,7 +547,7 @@ export function RuntimeGainsReveal({
                     </text>
                     {i === 1 && (
                       <text x={WORK_X} y={y + 40} className="rg-small">
-                        Same GPU work; less waiting
+                        Same GPU work · waiting not counted here
                       </text>
                     )}
                     {i === 2 && (
@@ -633,14 +647,14 @@ export function RuntimeGainsReveal({
             {
               [
                 "The request pays two different costs",
-                "Admit the next request sooner",
+                "A free worker starts request 7 sooner",
                 study.hits
                   ? "Reuse the context; compute the suffix"
                   : "Different inputs still need full prefill",
-                "Lower the cost of every remaining token",
+                "Every token costs less: input 1.20 → 0.95 ms, output 2.80 → 2.25 ms",
                 "Every request contributes to the bill",
                 study.hits
-                  ? "Two compute savings, one total"
+                  ? "Two savings, one bill"
                   : "Execution supplies the compute saving",
               ][beat]
             }
@@ -721,9 +735,9 @@ export function RuntimeGainsReveal({
                 {study.correct} <small>correct outcomes</small>
               </strong>
               <p>Includes work spent on unsuccessful requests.</p>
-              <div className="rg-delta">
+              <div className="rg-delta rg-quiet">
                 <b>{n(study.cohort[0].total)}</b>
-                <span>baseline GPU-s / correct answer</span>
+                <span>baseline GPU-s per correct answer</span>
               </div>
             </div>
           ) : (
@@ -732,12 +746,12 @@ export function RuntimeGainsReveal({
                 <span>
                   Prefix reuse{" "}
                   <b style={{ color: AMBER }}>
-                    {study.savings[2] > 0 ? `−${n(study.savings[2])}` : "0"}
+                    {study.savings[2] > 0 ? `−${n(study.savings[2])} GPU-s` : "0 GPU-s"}
                   </b>
                 </span>
                 <span>
-                  Faster execution{" "}
-                  <b style={{ color: BLUE }}>−{n(study.savings[3])}</b>
+                  Faster prefill & decode{" "}
+                  <b style={{ color: BLUE }}>−{n(study.savings[3])} GPU-s</b>
                 </span>
                 <span className="rg-sum-total" data-rg-target>
                   Total reduction <b>−{n(study.totalSaved)}</b>
@@ -750,9 +764,8 @@ export function RuntimeGainsReveal({
                 <strong>{n(study.cohort[3].total)}</strong>
               </div>
               <p>
-                <b>{n(study.percentSaved)}% less GPU work</b> per correct
-                answer. Scheduling also reduced waiting; it is not added to this
-                compute saving.
+                <b>Δ {n(study.totalSaved)} GPU-s per correct answer (−{study.percentSaved.toFixed(1)}%)</b>{" "}
+                · cause: reused prefixes + faster token rates
               </p>
             </>
           )}

@@ -48,12 +48,12 @@ for (const workload of ["interactive", "shared-prefix"]) {
   const baseline = study.baseline;
   const optimized = study.optimized;
 
-  test(`${workload}: scheduler comparison preserves six task identities and service work`, () => {
-    assert.equal(baseline.length, 6);
-    assert.equal(optimized.length, 6);
+  test(`${workload}: scheduler comparison preserves the eight task identities (request 7 is followed) and service work`, () => {
+    assert.equal(baseline.length, 8);
+    assert.equal(optimized.length, 8);
     assert.deepEqual(
       baseline.map((task) => task.id),
-      [0, 1, 2, 3, 4, 5],
+      [0, 1, 2, 3, 4, 5, 6, 7],
     );
     assert.deepEqual(
       optimized.map((task) => task.id),
@@ -137,7 +137,7 @@ for (const workload of ["interactive", "shared-prefix"]) {
     );
     const admission = optimized[2].start;
     const comparison = (optimized[2].start + baseline[2].start) / 2;
-    const later = optimized[4].finish;
+    const later = optimized[6].finish;
     assert.equal(schedulingFrame(0, study).time, 0);
     assert.equal(schedulingFrame(700, study).time, 0);
     assert.equal(schedulingFrame(5500, study).time, admission);
@@ -148,7 +148,7 @@ for (const workload of ["interactive", "shared-prefix"]) {
     assert.equal(schedulingFrame(23500, study).time, study.horizon);
     assert.equal(schedulingFrame(26000, study).time, study.horizon);
     assert.equal(schedulingFrame(12999, study).selected, 2);
-    assert.equal(schedulingFrame(13000, study).selected, 4);
+    assert.equal(schedulingFrame(13000, study).selected, 6);
     assert.equal(schedulingFrame(21999, study).beat, 2);
     assert.equal(schedulingFrame(22000, study).beat, 3);
 
@@ -178,7 +178,7 @@ for (const workload of ["interactive", "shared-prefix"]) {
             state.active.length +
             state.waiting.length +
             state.future.length,
-          6,
+          8,
         );
         assert.ok(state.work >= 0);
         assert.ok(state.work <= study.work + 1e-8);
@@ -194,12 +194,12 @@ for (const workload of ["interactive", "shared-prefix"]) {
     }
   });
 
-  test(`${workload}: the endpoint finishes all six tasks on both lanes`, () => {
+  test(`${workload}: the endpoint finishes all eight tasks on both lanes`, () => {
     const frame = schedulingFrame(SCHEDULING_DURATION, study);
     assert.equal(frame.time, study.horizon);
     for (const tasks of [baseline, optimized]) {
       const state = schedulingAt(tasks, frame.time);
-      assert.equal(state.done.length, 6);
+      assert.equal(state.done.length, 8);
       assert.equal(state.active.length, 0);
       assert.equal(state.waiting.length, 0);
       assert.equal(state.future.length, 0);

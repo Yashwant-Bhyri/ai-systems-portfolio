@@ -1,0 +1,11 @@
+t=20s stage 610/610 doc 1280/1280 secH 800 minFont 5.2
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15
+  overlap: 
+  outside: "Prefill / decode scheduling" b167 r-54
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/serving-system-overview-s1280-1280-20s.jpg
+t=65s stage 610/610 doc 1280/1280 secH 800 minFont 5.6
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15
+  overlap: 
+  outside: "Prefill / decode scheduling" b167 r-54
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/serving-system-overview-s1280-1280-65s.jpg
+errors none

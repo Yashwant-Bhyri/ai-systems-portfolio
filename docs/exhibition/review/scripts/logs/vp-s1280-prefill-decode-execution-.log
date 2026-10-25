@@ -1,0 +1,11 @@
+t=36s stage 610/650 OVERFLOW doc 1280/1280 secH 800 minFont 8.8
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15 ; div.lb-stage "▷ Watch the experimentScheduling → cache reuse → e" sw1238/cw1238 sh650/ch610
+  overlap: 
+  outside: "Execution replay" b167 r1444 ; "Queue & latency" b167 r1639
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/prefill-decode-execution-s1280-1280-36s.jpg
+t=78s stage 610/610 doc 1280/1280 secH 800 minFont 10.0
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15
+  overlap: 
+  outside: "Execution replay" b167 r1444 ; "Queue & latency" b167 r1639
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/prefill-decode-execution-s1280-1280-78s.jpg
+errors none

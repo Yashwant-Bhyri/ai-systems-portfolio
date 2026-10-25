@@ -1892,7 +1892,7 @@ function FlagshipChapter({
       >
         <div className="vx-section-shell">
           <CaseHeading number={number} brand={brand} category={category} title={title} copy={copy} accent={accent} />
-          {(id === "inference" || id === "post-training") && <p className="cx-scientific-claim"><span>RESEARCH OBJECTIVE</span>{id === "inference" ? "The model is unchanged. The cognition request is unchanged. The execution becomes more efficient." : "Improve verified held-out accuracy across actual test-time compute budgets."}<a href={`#${id}-study`}>Explore the result figures ↗</a></p>}
+          {(id === "inference" || id === "post-training") && <p className="cx-scientific-claim"><span>RESEARCH OBJECTIVE</span>{id === "inference" ? "Same model, same requests: the serving runtime does less work per answer." : "Raise verified accuracy per GPU-second across thought allowances (synthetic 96-task cohort)."}<a href={`#${id}-study`}>Explore the result figures ↗</a></p>}
           <div className="vx-overview-shell">
             <div className="vx-overview-top">
               <span>HIGH-LEVEL ARCHITECTURE</span>

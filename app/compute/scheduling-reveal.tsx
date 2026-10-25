@@ -8,6 +8,7 @@ import {
   schedulingStudy,
   schedulingFrame,
   schedulingAt,
+  FOLLOWED,
 } from "./scheduling-study-math";
 import "./scheduling-reveal.css";
 import { SchedulingLedger } from "./scheduling-ledger";
@@ -107,7 +108,7 @@ export function SchedulingReveal({
               before,
               after,
               limits:
-                "Two abstract serial workers. Baseline paired batches wait for both arrivals and both prior completions. Optimized admits FIFO to the first available worker. No batching speedup, contention, network, idle-device billing or verifier cost modeled. Six-request preview preserves original cohort timestamps.",
+                "Two abstract serial workers. Baseline paired batches wait for both arrivals and both prior completions. Optimized admits FIFO to the first available worker. No batching speedup, contention, network, idle-device billing or verifier cost modeled. Eight-request preview preserves original cohort timestamps.",
             },
             null,
             2,
@@ -142,16 +143,16 @@ export function SchedulingReveal({
           {pinned !== null
             ? `Inspect request ${a.id + 1}`
             : frame.beat === 0
-              ? "Six requests enter the queue"
+              ? "Eight requests arrive 2 s apart; two workers"
               : frame.beat === 1
-                ? `Request ${a.id + 1} starts as soon as a worker is free`
+                ? `Worker ${study.optimized[2].worker + 1} frees at ${n(study.optimized[2].start)} s; request 3 starts at once instead of waiting for its pair`
                 : frame.beat === 2
-                  ? "Earlier starts become earlier answers"
+                  ? `Request 7 starts ${n(study.baseline[FOLLOWED].start - study.optimized[FOLLOWED].start)} s sooner`
                   : frame.focus === "baseline"
                     ? "Baseline: a free worker waits for its partner"
                     : frame.focus === "optimized"
-                      ? "Optimized: the next request starts immediately"
-                      : "The same computation, without avoidable waiting"}
+                      ? "Continuous batching: the next request starts immediately"
+                      : `Same ${n(study.work)} worker-s of work; request 7 waits ${n(study.baseline[FOLLOWED].start - study.optimized[FOLLOWED].start)} s less`}
         </h3>
         <time>{n(frame.time)} s</time>
       </header>
@@ -197,9 +198,9 @@ export function SchedulingReveal({
                   }}
                 >
                   <rect
-                    x={27 + i * 122}
+                    x={27 + i * 92}
                     y="12"
-                    width="112"
+                    width="86"
                     height="54"
                     rx="4"
                     fill="#132a37"
@@ -207,16 +208,16 @@ export function SchedulingReveal({
                     className="sq-hit"
                   />
                   <circle
-                    cx={40 + i * 122}
+                    cx={37 + i * 92}
                     cy="28"
                     r="3"
                     fill={frame.time >= task.arrival ? AMBER : "#405665"}
                   />
-                  <text x={51 + i * 122} y="32" className="sq-label">
+                  <text x={45 + i * 92} y="32" className="sq-label">
                     Request {task.id + 1}
                   </text>
-                  <text x={40 + i * 122} y="53" className="sq-small">
-                    arrives {n(task.arrival)}s
+                  <text x={37 + i * 92} y="53" className="sq-small">
+                    arrives {n(task.arrival)} s
                   </text>
                 </g>
               ))}
@@ -463,7 +464,7 @@ export function SchedulingReveal({
           Download scheduling trace ↗
         </button>
         <p>
-          These six requests retain their original cohort arrival times, service
+          These eight requests retain their original cohort arrival times, service
           times and answers. Baseline launches fixed pairs only after both
           requests have arrived and the preceding pair has finished. Independent
           admission sends the next arrived request to the first available

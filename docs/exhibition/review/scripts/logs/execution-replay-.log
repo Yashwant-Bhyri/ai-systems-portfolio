@@ -1,0 +1,21 @@
+t=3s stage 659/659 doc 1440/1440 secH 900 minFont 7.0
+  clipped: label.rr-request-slider "Request23" sw167/cw1 sh9/ch1
+  overlap: "All 96 requests" x "24"
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/execution-replay-1440-3s.jpg
+t=12s stage 659/659 doc 1440/1440 secH 900 minFont 7.0
+  clipped: label.rr-request-slider "Request96" sw167/cw1 sh9/ch1
+  overlap: "All 96 requests" x "Total GPU execution work"
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/execution-replay-1440-12s.jpg
+t=24s stage 659/659 doc 1440/1440 secH 900 minFont 7.0
+  clipped: label.rr-request-slider "Request7" sw167/cw1 sh9/ch1
+  overlap: 
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/execution-replay-1440-24s.jpg
+t=34s stage 659/659 doc 1440/1440 secH 900 minFont 7.0
+  clipped: label.rr-request-slider "Request7" sw167/cw1 sh9/ch1
+  overlap: "Total GPU work" x "Choose a request from the same"
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/execution-replay-1440-34s.jpg
+errors none

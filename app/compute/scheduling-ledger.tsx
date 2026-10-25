@@ -4,6 +4,7 @@ import {
   idleAt,
   schedulingAt,
   type schedulingStudy,
+  FOLLOWED,
 } from "./scheduling-study-math";
 
 type Study = ReturnType<typeof schedulingStudy>;
@@ -42,6 +43,8 @@ export function SchedulingLedger({
   const scaleMax = Math.max(study.work, finalIdle, 1);
   const settled = time >= study.horizon;
   const removed = idle[0] - idle[1];
+  // Request 7 arrives at the same time in both runs, so its waiting gain is its start-time gain.
+  const waitGain = study.baseline[FOLLOWED].start - study.optimized[FOLLOWED].start;
   return (
     <aside
       className="sq-ledger"
@@ -50,9 +53,9 @@ export function SchedulingLedger({
     >
       <header>
         <h4>
-          {settled ? "Worker utilization comparison" : "Work & idle accumulation"}
+          Idle time while work waited
         </h4>
-        <span>6 requests · 2 workers</span>
+        <span>{study.baseline.length} requests · 2 workers</span>
       </header>
       <svg viewBox="0 0 330 312" role="img" aria-labelledby={id}>
         <title id={id}>
@@ -115,22 +118,24 @@ export function SchedulingLedger({
         ))}
       </svg>
       <div className="sq-ledger-result" data-reveal={focus === "difference"}>
-        <strong>
-          {n(removed)}
-          <small> worker-s removed</small>
-        </strong>
-        <p>
-          {settled ? (
-            <>
-              <b>{n(idle[0] ? (100 * removed) / idle[0] : 0)}% less</b> idle
-              time with waiting work
-            </>
-          ) : (
-            "Red accumulates only while a free worker could start a waiting request."
-          )}
-        </p>
-        {settled && (
-          <span>{n(study.work)} worker-s of computation in both.</span>
+        {focus === "difference" ? (
+          <>
+            <strong>
+              Δ {n(waitGain)} s
+              <small> less waiting for request 7</small>
+            </strong>
+            <p>Cause: a free worker starts the next request without waiting for its pair</p>
+            <span>{n(removed)} worker-s of idle removed · same {n(study.work)} worker-s of work</span>
+          </>
+        ) : (
+          <>
+            <strong className="sq-ledger-running">
+              {n(removed)}
+              <small> worker-s of idle avoided so far</small>
+            </strong>
+            <p>Red grows only while a worker is free and a request is waiting</p>
+            <span>&nbsp;</span>
+          </>
         )}
       </div>
       {pinned && (

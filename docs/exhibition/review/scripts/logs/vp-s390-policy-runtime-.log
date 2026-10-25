@@ -1,0 +1,6 @@
+t=13s stage 1621/1621 doc 390/390 secH 1954 minFont 9.0
+  clipped: 
+  overlap: "Continuous batching" x "Fused prefill & decode kernels" ; "Paged KV + prefix reuse" x "Fused prefill & decode kernels" ; "Chunked prefill" x "Cache-aware routing" ; "Speculative decoding" x "Cache-aware routing" ; "Cache-aware routing" x "CPU/GPU overlap" ; "0 → 90 prefix hits. Scheduling" x "Baseline condition" ; "0 → 90 prefix hits. Scheduling" x "KV prefix reuse" ; "2 non-dominated points. The do" x "Faster prefill + decode" ; "2 non-dominated points. The do" x "Final condition" ; "2 non-dominated points. The do" x "Compare the change" ; "Contributions follow the displ" x "Ⅱ Pause comparison" ; "Contributions follow the displ" x "13.6 / 17.5 s"
+  outside: "The experiment" b305 r-686 ; "Policy × runtime" b305 r-493 ; "−47%" b305 r-449 ; "GPU-s per correct answer" b304 r-284 ; "Where the 96 tasks land" b305 r-36 ; "37.5" b872 r506 ; "50" b872 r634 ; "GPU-seconds per correct answer" b931 r458 ; "Faster prefill + decode" b974 r534 ; "Δ −4.74 GPU-s / correct" b997 r573 ; "static runtime" b756 r557 ; "static runtime" b699 r575 ; "Contributions follow the displ" b2032 r343
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/policy-runtime-s390-390-13s.jpg
+errors none

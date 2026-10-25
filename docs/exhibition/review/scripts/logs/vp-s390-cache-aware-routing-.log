@@ -1,0 +1,6 @@
+t=20s stage 1621/1621 doc 390/390 secH 1954 minFont 8.8
+  clipped: 
+  overlap: "Continuous batching" x "Fused prefill & decode kernels" ; "Paged KV + prefix reuse" x "Fused prefill & decode kernels" ; "Chunked prefill" x "Cache-aware routing" ; "Speculative decoding" x "Cache-aware routing" ; "Cache-aware routing" x "CPU/GPU overlap"
+  outside: "Prefill / decode scheduling" b305 r-508 ; "Speculative decoding" b305 r-279 ; "Cache-aware routing" b305 r-54 ; "−20 ms" b305 r7 ; "CPU / GPU overlap" b305 r428 ; "Serving system overview" b305 r679 ; "Serving glossary" b305 r875 ; "96 input tokens · up to 32 out" b717 r630 ; "P: shared prefix · S: new suff" b735 r678 ; "streaming answer" b771 r730 ; "Input work on this replica" b793 r511 ; "P1" b829 r414 ; "reused" b857 r422 ; "P2" b829 r473 ; "reused" b857 r480
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/cache-aware-routing-s390-390-20s.jpg
+errors none

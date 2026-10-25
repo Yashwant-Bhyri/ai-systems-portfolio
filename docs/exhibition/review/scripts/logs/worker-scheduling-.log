@@ -1,0 +1,21 @@
+t=4s stage 659/659 doc 1440/1440 secH 900 minFont 9.7
+  clipped: 
+  overlap: 
+  outside: "Queue & latency" b212 r1593
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/worker-scheduling-1440-4s.jpg
+t=12s stage 659/659 doc 1440/1440 secH 900 minFont 9.7
+  clipped: 
+  overlap: 
+  outside: "Queue & latency" b212 r1593
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/worker-scheduling-1440-12s.jpg
+t=22s stage 659/659 doc 1440/1440 secH 900 minFont 9.7
+  clipped: 
+  overlap: 
+  outside: "Queue & latency" b212 r1593
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/worker-scheduling-1440-22s.jpg
+t=33s stage 659/680 OVERFLOW doc 1440/1440 secH 900 minFont 9.7
+  clipped: div.lb-stage "▷ Watch the experimentScheduling → cache reuse → e" sw1398/cw1398 sh680/ch659
+  overlap: 
+  outside: "Queue & latency" b212 r1593
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/worker-scheduling-1440-33s.jpg
+errors none

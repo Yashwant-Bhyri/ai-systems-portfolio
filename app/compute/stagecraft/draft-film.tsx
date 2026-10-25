@@ -166,14 +166,14 @@ export function DraftFilm({ active }: { active: boolean }) {
           <rect x={DRAFT.x} y={DRAFT.y} width={DRAFT.w} height={DRAFT.h} rx={12} className="df-agent df-agent-draft" />
           {[0, 1, 2, 3].map((k) => <rect key={k} x={DRAFT.x + 20} y={DRAFT.y + 22 + k * 15} width={56} height={8} rx={2} fill={C.acc} opacity={0.35 + k * 0.12} />)}
           <text x={DRAFT.x + 96} y={DRAFT.y + 40} className="df-agent-name">{tr("Draft model")}</text>
-          <text x={DRAFT.x + 96} y={DRAFT.y + 64} className="df-agent-meta">Qwen3-0.6B · {tr("fast, cheap")}</text>
+          <text x={DRAFT.x + 96} y={DRAFT.y + 64} className="df-agent-meta">{tr("Draft model · small, fast")}</text>
           <text x={DRAFT.x + 96} y={DRAFT.y + 86} className="df-agent-meta">{tr("guesses k = 5 tokens")}</text>
         </g>
         <g ref={targetCard} opacity={0.5}>
           <rect x={TARGET.x} y={TARGET.y} width={TARGET.w} height={TARGET.h} rx={12} className="df-agent df-agent-target" />
           {Array.from({ length: 10 }, (_, k) => <rect key={k} x={TARGET.x + 20} y={TARGET.y + 18 + k * 12} width={56} height={7} rx={2} fill="#9fb4c8" opacity={0.3 + k * 0.06} />)}
           <text x={TARGET.x + 96} y={TARGET.y + 42} className="df-agent-name">{tr("Target model")}</text>
-          <text x={TARGET.x + 96} y={TARGET.y + 66} className="df-agent-meta">Qwen3-4B · {tr("the answer's owner")}</text>
+          <text x={TARGET.x + 96} y={TARGET.y + 66} className="df-agent-meta">{tr("Target model · decides every word")}</text>
           <text x={TARGET.x + 96} y={TARGET.y + 88} className="df-agent-meta">{tr("checks all five in one pass")}</text>
           <text x={TARGET.x + 96} y={TARGET.y + 110} className="df-agent-meta">{tr("writes its own word on a miss")}</text>
         </g>

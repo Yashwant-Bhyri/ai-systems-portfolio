@@ -724,7 +724,7 @@ export function CompositionExplorer({
                     fill={COLORS[index]}
                     className="cxp-point-label"
                   >
-                    {point.trained ? "Post-trained" : "Base"}
+                    {point.trained ? "RL checkpoint" : "Base"}
                     <tspan
                       x={point.optimized ? -23 : 23}
                       dy="15"
@@ -755,7 +755,7 @@ export function CompositionExplorer({
             {contribution
               ? `Step ${phase}: ${contribution.name}`
               : phase === 0
-                ? "Read the baseline"
+                ? `${reference.label} runtime: ${number(reference.correctCost!, 2)} GPU-s per correct answer`
                 : phase === 3
                   ? "Read the final condition"
                   : "Compare the complete change"}
@@ -854,16 +854,16 @@ export function CompositionExplorer({
                     ? "="
                     : mechanism.metric === "cost"
                       ? mechanism.delta > 0
-                        ? "≈ −"
-                        : "≈ +"
+                        ? "−"
+                        : "+"
                       : mechanism.delta > 0
-                        ? "≈ +"
-                        : "≈ −"}
+                        ? "+"
+                        : "−"}
                   {number(
                     Math.abs(mechanism.delta),
                     mechanism.metric === "cost" ? 2 : 1,
                   )}
-                  {mechanism.metric === "accuracy" ? " pp" : ""}
+                  {mechanism.metric === "accuracy" ? " pp" : " GPU-s"}
                 </strong>
               </div>
             ))}
@@ -918,7 +918,7 @@ export function CompositionExplorer({
             </p>
           </details>
           <div className="cxp-evidence">
-            <span>Selected: {points[selected].label}</span>
+
             {evidence(points[selected], player.pause)}
           </div>
         </aside>

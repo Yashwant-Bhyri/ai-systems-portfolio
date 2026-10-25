@@ -1,0 +1,31 @@
+t=5s stage 659/659 doc 1440/1440 secH 900 minFont 8.5
+  clipped: 
+  overlap: 
+  outside: "Execution replay" b212 r1444 ; "Queue & latency" b212 r1639
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/prefill-decode-execution-1440-5s.jpg
+t=20s stage 659/659 doc 1440/1440 secH 900 minFont 8.8
+  clipped: div.cf-dissolve "Baseline serving: 8 requests, 2 workers, one batch" sw1398/cw1398 sh623/ch578
+  overlap: 
+  outside: "Execution replay" b212 r1444 ; "Queue & latency" b212 r1639
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/prefill-decode-execution-1440-20s.jpg
+t=35s stage 659/659 doc 1440/1440 secH 900 minFont 8.8
+  clipped: 
+  overlap: 
+  outside: "Execution replay" b212 r1444 ; "Queue & latency" b212 r1639
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/prefill-decode-execution-1440-35s.jpg
+t=50s stage 659/659 doc 1440/1440 secH 900 minFont 7.5
+  clipped: 
+  overlap: 
+  outside: "Execution replay" b212 r1444 ; "Queue & latency" b212 r1639
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/prefill-decode-execution-1440-50s.jpg
+t=65s stage 659/659 doc 1440/1440 secH 900 minFont 7.5
+  clipped: 
+  overlap: 
+  outside: "Execution replay" b212 r1444 ; "Queue & latency" b212 r1639
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/prefill-decode-execution-1440-65s.jpg
+t=78s stage 659/659 doc 1440/1440 secH 900 minFont 10.0
+  clipped: div.cf-dissolve "Baseline serving: 8 requests, 2 workers, one batch" sw1398/cw1398 sh623/ch591
+  overlap: 
+  outside: "Execution replay" b212 r1444 ; "Queue & latency" b212 r1639
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/prefill-decode-execution-1440-78s.jpg
+errors none

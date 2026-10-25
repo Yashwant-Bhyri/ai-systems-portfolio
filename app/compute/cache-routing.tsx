@@ -621,9 +621,6 @@ function RoutingDiagram({
               ? "equal first-token times"
               : `${routeName(study.winner)} delivers first`}
           </text>
-          <text x="88" y="590" className="cr-small">
-            Drag or use ← →. On touch, adjust the release slider above.
-          </text>
         </g>
       )}
     </svg>
@@ -748,7 +745,7 @@ export function CacheRouting({ active = true }: { active?: boolean }) {
     >
       <header className="cr-heading">
         <div>
-          <h3>KV capacity & cache-aware routing</h3>
+          <h3>Request C: warm replica A vs cold replica B</h3>
           <p>
             {frame.chart && study.crossover === null
               ? "Available pages remove the waiting penalty"
@@ -884,7 +881,7 @@ export function CacheRouting({ active = true }: { active?: boolean }) {
               <h4>
                 {frame.beat === 0
                   ? config.retained
-                    ? "A keeps the prefix. B must read it."
+                    ? `A already holds ${study.workAvoided * 16} of C's ${study.cold.prefillBlocks * 16} input tokens; B must read all ${study.cold.prefillBlocks * 16}`
                     : "No retained prefix. Both must read it."
                   : frame.beat === 1
                     ? config.retained
@@ -892,15 +889,15 @@ export function CacheRouting({ active = true }: { active?: boolean }) {
                       : "No prefix hit. Allocate the full input."
                     : frame.beat === 2
                       ? study.warm.start
-                        ? "Release memory before admitting work."
+                        ? `A must wait ${study.warm.start} ms for request R to free pages`
                         : "Allocate memory, then process input."
                       : frame.beat === 3
-                        ? `${winner} ${study.winner === "tie" ? "deliver together." : "delivers first."}`
+                        ? study.winner === "tie" ? "Both first tokens arrive together" : `${winner}'s first token arrives ${Math.abs(study.delta)} ms sooner`
                         : frame.beat === 6
-                          ? "Keep reusable KV. Release private capacity."
+                          ? "C is done: private pages freed, the shared prefix stays"
                           : study.delta < 0
                             ? config.retained
-                              ? "Waiting outweighs the prefill saving."
+                              ? `Past ${study.workAvoided * study.prefillMsPerBlock} ms of waiting, send C to the cold replica`
                               : "No cache saving offsets the wait."
                             : study.delta === 0
                               ? "Equal first-token time. Check the work."
@@ -937,6 +934,7 @@ export function CacheRouting({ active = true }: { active?: boolean }) {
                   <div
                     className="cr-delta"
                     data-cr-target
+                    data-hero={study.delta > 0}
                     style={{ color: study.delta < 0 ? RED : VIOLET }}
                   >
                     <strong>
@@ -946,7 +944,7 @@ export function CacheRouting({ active = true }: { active?: boolean }) {
                     <span>
                       {study.delta === 0
                         ? "equal first-token latency"
-                        : `${study.winner === "warm" ? "A" : "B"} delivers the first token earlier`}
+                        : study.winner === "warm" ? "sooner first token on warm replica A" : "sooner on cold replica B: A waits too long"}
                     </span>
                   </div>
                   <dl>
@@ -955,27 +953,16 @@ export function CacheRouting({ active = true }: { active?: boolean }) {
                       <dd>{study.cold.firstToken} ms</dd>
                     </div>
                     <div>
-                      <dt>Replica A · selected state</dt>
+                      <dt>Replica A · reused prefix</dt>
                       <dd>{study.warm.firstToken} ms</dd>
                     </div>
                   </dl>
-                  <div className="cr-equation">
-                    <span>
-                      {study.workAvoided * study.prefillMsPerBlock} ms less
-                      prefill
-                    </span>
-                    <b>−</b>
-                    <span>{study.warm.start} ms waiting</span>
-                    <b>=</b>
+                  <p className="cr-equation">
+                    {`A saves ${study.workAvoided * study.prefillMsPerBlock} ms of prefill and waits ${study.warm.start} ms: `}
                     <strong>
-                      {Math.abs(study.delta)} ms{" "}
-                      {study.delta < 0
-                        ? "later on A"
-                        : study.delta > 0
-                          ? "earlier on A"
-                          : "difference"}
+                      {study.delta === 0 ? "same first-token time" : `first token ${Math.abs(study.delta)} ms ${study.delta > 0 ? "sooner" : "later"} than B`}
                     </strong>
-                  </div>
+                  </p>
                 </>
               ) : frame.beat === 6 ? (
                 <>
@@ -989,7 +976,7 @@ export function CacheRouting({ active = true }: { active?: boolean }) {
                       <dd>4 each</dd>
                     </div>
                     <div>
-                      <dt>Active C references</dt>
+                      <dt>Pages still held by C</dt>
                       <dd>0</dd>
                     </div>
                     <div>

@@ -1,0 +1,11 @@
+t=10s stage 610/610 doc 1280/1280 secH 800 minFont 9.5
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15
+  overlap: 
+  outside: "Execution replay" b167 r1385 ; "Queue & latency" b167 r1579
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/baseline-serving-s1280-1280-10s.jpg
+t=27s stage 610/610 doc 1280/1280 secH 800 minFont 10.5
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15
+  overlap: 
+  outside: "Where the 96 tasks land" b167 r1312 ; "Execution replay" b167 r1507 ; "Queue & latency" b167 r1702
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/baseline-serving-s1280-1280-27s.jpg
+errors none

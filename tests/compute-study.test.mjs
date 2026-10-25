@@ -41,8 +41,8 @@ test("composition keeps checkpoint and execution as independent factors", () => 
   assert.deepEqual(FRONTIER_CONDITIONS, [
     "Base / Static",
     "Base / Optimized",
-    "Post-trained / Static",
-    "Post-trained / Optimized",
+    "RL checkpoint / Static",
+    "RL checkpoint / Optimized",
   ]);
   assert.equal(CHECKPOINT_LADDER.at(-1), "Efficiency-aware RLVR");
   assert.equal(INFERENCE_GATE.length, 7);

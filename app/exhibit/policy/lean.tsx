@@ -80,7 +80,7 @@ export function PolicyLean({ active, mode, clock, tall }: RoomProps) {
   useEffect(() => { tok.current = null; }, [mode]);
 
   return (
-    <Surface ref={canvas} vb={L.vb} label="Length-aware RL keeps 82 of 96 tasks solved at 4× allowance while cutting tokens per task by 37 percent">
+    <Surface ref={canvas} vb={L.vb} label="Lean RL keeps 82 of 96 tasks solved at 4× allowance while cutting tokens per task by 37 percent">
       <text x={L.title[0]} y={L.title[1]} className="ex-m">{tr(tall ? "TOKENS / TASK" : "TOKENS PER TASK · 4× ALLOWANCE · GRPO (OUTLINE) → LENGTH-AWARE RL (FILLED)")}{tall ? " · 4×" : ""}</text>
       {[0, 1, 2].map((b) => L.rule(b) && <path key={b} d={L.rule(b)} stroke="var(--ex-line-2)" />)}
       {FAMILY_NAMES.map((n, b) => (

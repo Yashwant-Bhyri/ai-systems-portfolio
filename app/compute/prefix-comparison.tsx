@@ -394,7 +394,7 @@ export function PrefixComparison({
           <div className="pr-focus-values">
             <span className="pr-baseline-value">
               {fmt(revealed ? max : frame.baseline.work)}
-              <small>GPU-s baseline</small>
+              <small> GPU-s · baseline</small>
             </span>
             <strong>
               {fmt(revealed ? study.request.gpuSeconds : frame.optimized.work)}
@@ -432,7 +432,7 @@ export function PrefixComparison({
         <div className="pr-focus-status" data-live={contrast}>
           <i aria-hidden="true" />
           {contrast
-            ? `Answer complete with reuse. Baseline: ${fmt(frame.remaining)}s still to run.`
+            ? `Reuse done. Baseline still has ${fmt(frame.remaining)} s of GPU work left.`
             : revealed
               ? delta > 0
                 ? "Same answer length. Same decode rate."

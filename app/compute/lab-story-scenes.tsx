@@ -752,9 +752,9 @@ export function AccuracyCostTrail({
               title: [
                 "Base · 1×",
                 "SFT · 1×",
-                "Correctness RL · 1×",
-                `Correctness RL · ${r.budget}×`,
-                `Efficiency-aware RL · ${r.budget}×`,
+                "RL checkpoint · 1×",
+                `RL checkpoint · ${r.budget}×`,
+                `Lean RL · ${r.budget}×`,
               ][i],
               body: `${r.correct} of 96 synthetic outcomes correct (${r.accuracy.toFixed(1)}%). ${r.meanCost.toFixed(2)} GPU-s per task. The x coordinate is computed work, not the nominal allowance label.`,
             }}

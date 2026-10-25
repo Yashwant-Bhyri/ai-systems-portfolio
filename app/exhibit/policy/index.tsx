@@ -68,7 +68,7 @@ const ROOMS: Room[] = [
   },
   {
     id: "lean", label: "Lean RL",
-    kicker: "Length-aware RL · 4× allowance",
+    kicker: "Lean RL · 4× thought",
     title: <>Same 82 solved. <em>37% fewer tokens.</em></>,
     metric: { value: <>17.31</>, label: "GPU-s / task · was 26.04" },
     duration: 8000, beats: [2600, 3600, 6200], zh: { label: "精简 RL", kicker: "长度感知 RL · 4× 预算", title: <>同样解出 82 题，<em>token 减少 37%。</em></>, metricLabel: "GPU 秒 / 任务 · 原为 26.04" },

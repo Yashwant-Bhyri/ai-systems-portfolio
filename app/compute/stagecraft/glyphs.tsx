@@ -278,6 +278,21 @@ export function GlyphCapability() {
   </svg>;
 }
 
+/** Where the 96 tasks land: a cloud of tasks under an ability line that rises. */
+export function GlyphTasks() {
+  return <svg viewBox={VB}>
+    {Array.from({ length: 48 }, (_, i) => {
+      const x = 18 + ((i * 37) % 200), y = 18 + ((i * 53) % 84);
+      return <circle key={i} cx={x} cy={y} r={2.6} className={y > 58 ? "g-b" : y > 36 ? "g-r" : "g-m"} opacity={y > 58 ? .85 : y > 36 ? .3 : .25}>
+        {y <= 58 && y > 36 && <animate attributeName="opacity" values=".25;.25;.95;.95;.25" keyTimes="0;.3;.45;.9;1" dur={D(4.6)} repeatCount="indefinite" />}
+      </circle>;
+    })}
+    <path d="M14 58H226" className="g-line g-a-s" strokeWidth={1.6}>
+      <animate attributeName="d" values="M14 58H226;M14 58H226;M14 36H226;M14 36H226;M14 58H226" keyTimes="0;.3;.45;.9;1" dur={D(4.6)} repeatCount="indefinite" />
+    </path>
+  </svg>;
+}
+
 export function GlyphCurves() {
   const curves = [["M20 96L70 90L130 86L220 84", "g-m-s"], ["M20 84L70 72L130 64L220 58", "g-b-s"], ["M20 76L70 58L130 38L220 26", "g-r-s"], ["M20 76L60 56L100 38L150 24", "g-g-s"]] as const;
   return <svg viewBox={VB}>

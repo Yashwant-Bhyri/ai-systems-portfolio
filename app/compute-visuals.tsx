@@ -156,7 +156,7 @@ const TRAINING_NODES:readonly ArchNode[]=[
   {step:1,spot:"initialize",title:"Initialize",sub:"Qwen3-4B · SFT / LoRA",glyph:"chip",term:"SFT · LoRA r = 16",chips:["q k v o gate up down","36 layers","base frozen"],value:"0.82%",unit:"of 4.02B weights train"},
   {step:3,spot:"optimize",title:"Optimize",sub:"Group-relative updates",glyph:"parallel",term:"GRPO · G = 8",chips:["verifiable reward","group-normalized advantage","KL to reference"],value:"+11 −2",unit:"tasks vs SFT"},
   {step:5,spot:"search",title:"Search",sub:"Verifier + compute budget",glyph:"tree",term:"Test-time compute",chips:["best-of-N","verifier selects","θ frozen"],value:"55 → 82",unit:"of 96 at 4× search"},
-  {step:7,spot:"evaluate",title:"Evaluate",sub:"Math · logic · code",glyph:"stream",term:"Paired regression audit",chips:["pass@1","per-task flips","GPU-s per correct"],value:"28 → 82",unit:"solved · 5 regressions named"},
+  {step:7,spot:"evaluate",title:"Evaluate",sub:"Math · logic · code",glyph:"stream",term:"Paired regression audit",chips:["pass@1","per-task flips","GPU-s per correct"],value:"28 → 82",unit:"of 96 synthetic tasks · 5 regressions named"},
 ];
 function ComputeOverview({domain,active,onSelect}:{domain:"inference"|"training";active:number;onSelect:(n:number)=>void}) {
   const {ref,onScreen}=usePresence(),[paused,setPaused]=useState(false),clock=useReplayClock(onScreen&&!paused),inference=domain==="inference",nodes=inference?INFERENCE_NODES:TRAINING_NODES;

@@ -44,11 +44,11 @@ const MOMENTS = [
   "Compare GPU cost",
 ];
 const TITLES = [
-  "Request execution",
+  "Request 7 on faster prefill & decode rates",
   "Worker release",
   "Delivery time for twelve requests",
   "How many requests fit the same compute allowance?",
-  "1,000 arrivals. Two workers per runtime.",
+  "1,000 requests at once: which runtime clears the queue first?",
   "GPU cost per correct answer",
 ];
 const num = (n: number, d = 1) =>

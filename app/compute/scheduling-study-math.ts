@@ -74,8 +74,9 @@ export function schedulingStudy(before: LabRun, after: LabRun) {
     )
       throw new Error("Scheduling changed task work or arrival identity");
   });
-  const baseline = before.tasks.slice(0, 6),
-    optimized = after.tasks.slice(0, 6);
+  // The first eight requests of the cohort, the same eight as the baseline film; request 7 is followed.
+  const baseline = before.tasks.slice(0, 8),
+    optimized = after.tasks.slice(0, 8);
   const horizon = Math.max(
     ...baseline.map((t) => t.finish),
     ...optimized.map((t) => t.finish),
@@ -92,13 +93,16 @@ export function schedulingStudy(before: LabRun, after: LabRun) {
   };
 }
 
+/** Request 7, the protagonist of the whole experiment. */
+export const FOLLOWED = 6;
+
 export function schedulingFrame(
   ms: number,
   study: ReturnType<typeof schedulingStudy>,
 ) {
   const admission = study.optimized[2].start;
   const comparison = (study.optimized[2].start + study.baseline[2].start) / 2;
-  const later = study.optimized[4].finish;
+  const later = study.optimized[FOLLOWED].finish;
   const time =
     ms < 5500
       ? admission * windowProgress(ms, 700, 5500)
@@ -116,7 +120,7 @@ export function schedulingFrame(
   return {
     time,
     beat: ms < 5500 ? 0 : ms < 13000 ? 1 : ms < 22000 ? 2 : 3,
-    selected: ms < 13000 ? 2 : 4,
+    selected: ms < 13000 ? 2 : FOLLOWED,
     focus:
       ms < 23500
         ? "both"

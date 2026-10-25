@@ -25,18 +25,18 @@ const MOMENTS = [
   "Waiting for a worker",
   "Processing the input",
   "Generating the answer",
-  "Locate the three costs",
+  "Add up the three costs",
 ];
 /* Headings state what happens to request 7, with its own numbers. */
 type Study = ReturnType<typeof baselineStudy>;
 const HEADINGS: readonly ((s: Study) => string)[] = [
-  () => "Baseline serving: 8 requests, 2 workers, one batch barrier",
-  (s) => `Request 7 waits ${n(s.request.queueSeconds)} s while worker ${s.gap.worker + 1} sits idle`,
+  () => "8 requests share 2 workers; each pair must finish before the next starts",
+  (s) => `Request 7 waits ${n(s.request.queueSeconds)} s; the last stretch with worker ${s.gap.worker + 1} idle behind the barrier`,
   (s) => s.shared
     ? `Request 7 recomputes all ${n(s.request.inputTokens)} input tokens: ${n(s.request.prefill)} GPU-s`
     : `Request 7 computes its ${n(s.request.inputTokens)} input tokens: ${n(s.request.prefill)} GPU-s`,
   (s) => `Request 7 decodes ${n(s.request.tokens)} tokens, one per step: ${n(s.request.decode)} GPU-s`,
-  (s) => `Request 7 = ${n(s.request.queueSeconds)} s waiting + ${n(s.request.gpuSeconds)} GPU-s of work`,
+  (s) => `Request 7: ${n(s.request.queueSeconds)} s waiting + ${n(s.request.gpuSeconds)} s of GPU work = ${n(s.request.queueSeconds + s.request.gpuSeconds)} s`,
 ];
 
 /* What stays lit at each moment; the rest of the machine goes matte. */
@@ -464,7 +464,7 @@ export function BaselineReveal({
         >
           <span className="bo-subtitle">
             {frame.beat === 0
-              ? "Two workers share the workload"
+              ? "Requests 1–8 · one arrives every 2 s"
               : frame.beat === 4
                 ? "Request 7 · baseline accounting"
                 : `Request 7 · ${["Waiting", "Input processing", "Answer generation"][Math.max(0, selected)]}`}
@@ -480,7 +480,7 @@ export function BaselineReveal({
                     : "No earlier request shares this input"
                   : frame.beat === 3
                     ? "Each output token is one decode step on the GPU"
-                    : "Scheduling removes waiting; reuse and kernels remove work"}
+                    : "Scheduling removes waiting; prefix reuse and faster rates remove work"}
           </h4>
           {frame.beat === 0 ? (
             <div className="bo-population">
@@ -516,10 +516,6 @@ export function BaselineReveal({
                   <b>{row.count}</b>
                 </div>
               ))}
-              <p>
-                Only two requests can run at once. Later arrivals wait in the
-                queue.
-              </p>
             </div>
           ) : frame.beat === 4 ? (
             <div className="bo-accounting">

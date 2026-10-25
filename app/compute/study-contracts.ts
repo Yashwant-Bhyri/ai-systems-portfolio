@@ -9,7 +9,7 @@ export const STATUS_DEFINITIONS: Record<EvidenceStatus,string> = {
 };
 export const INFERENCE_GATE = ["Checkpoint", "Prompt / template", "Candidate count", "Token budget", "Verifier", "Output quality", "Workload trace"];
 export const INTEGRITY_GATE = ["No held-out feedback", "Independent verifier", "Reward-hacking audit", "Negative-flip analysis", "Confirmatory replication"];
-export const FRONTIER_CONDITIONS = ["Base / Static", "Base / Optimized", "Post-trained / Static", "Post-trained / Optimized"];
+export const FRONTIER_CONDITIONS = ["Base / Static", "Base / Optimized", "RL checkpoint / Static", "RL checkpoint / Optimized"];
 export const CHECKPOINT_LADDER = ["Base", "SFT", "Correctness RLVR / GRPO", "Efficiency-aware RLVR"];
 export const REQUIRED_RUN_FIELDS = [
   ["Model / checkpoint", "Exact revision and checkpoint hash not attached"],

@@ -325,7 +325,7 @@ export function TestTimeReveal({
           </div>
           <div className="tt-checkpoint-key">
             <i />
-            Correctness-trained checkpoint <span>┄ Base reference</span>
+            RL checkpoint <span>┄ Base reference</span>
           </div>
           <div className="tt-search-contract">
             <code>Cᵦ = Search(x, θ*, b)</code>

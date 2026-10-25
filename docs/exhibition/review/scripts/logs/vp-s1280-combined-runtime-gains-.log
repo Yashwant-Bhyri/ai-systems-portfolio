@@ -1,0 +1,6 @@
+t=36s stage 610/610 doc 1280/1280 secH 800 minFont 8.9
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15
+  overlap: 
+  outside: "Execution replay" b167 r1434 ; "Queue & latency" b167 r1629 ; "These are ordered comparisons " b1296 r222
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/combined-runtime-gains-s1280-1280-36s.jpg
+errors none

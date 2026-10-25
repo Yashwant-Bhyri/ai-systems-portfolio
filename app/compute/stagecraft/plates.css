@@ -153,44 +153,50 @@ svg rect[fill="#1c2037"][stroke="#776b9d"], svg rect[fill="#201f36"][stroke="#74
 /* Scheduling ledger heading joins the plate scale. */
 .sq-ledger header h4 { font: 500 19px/1.3 var(--font-geist-sans), sans-serif !important; letter-spacing: -.015em; }
 
-/* ══ Starred results: one shine system for every earned number ═══════════════
+/* ══ Starred results: one shine system, one earned result per view ═════════
    A brighter, wider sweep of light, a short glow as it passes, and two stars that
-   glint in turn. Units stay quiet; only the number carries the light. */
+   glint in turn. Only settled, favorable results carry it; baselines, losses and
+   running counters stay plain. Units stay quiet; only the number carries the light. */
+.bo-measure strong, .bo-measure strong::after { animation: none !important; background: none !important; -webkit-text-fill-color: currentColor !important; }
+.bo-measure strong::after { content: none !important; }
+.sq-ledger-result:not([data-reveal="true"]) strong { animation: none !important; background: none !important; -webkit-text-fill-color: currentColor !important; }
+.sq-ledger-result:not([data-reveal="true"]) strong::after { content: none !important; }
+
 :is(
-  .cx-hero-num, .tl-hero .cx-hero-num,
-  .bo-measure strong, .sq-ledger-result strong,
+  .rr-delta[data-hero="true"] .cx-hero-num, .ll-delta[data-hero="true"] .cx-hero-num, .tl-hero .cx-hero-num,
+  .sq-ledger-result[data-reveal="true"] strong,
   .cxp-metrics button[data-highlight="true"] .cxp-delta[data-visible="true"],
-  .rg-delta > b, .xs-callout > b, .cr-delta strong, .mb-value mark, .gb-value mark
+  .rg-delta:not(.rg-quiet) > b, .xs-callout > b[data-result-target="difference"], .cr-delta[data-hero="true"] strong,
+  .sp-payoff[data-hero="true"], .dv-delta strong, .df-result
 ) {
   position: relative; display: inline-block;
   background: linear-gradient(100deg, currentColor 0 34%, #fff 45%, #fffaf0 50%, #fff 55%, currentColor 66% 100%) 0 0 / 320% 100% no-repeat;
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   animation: cx-shine-2 4.2s cubic-bezier(.4,0,.2,1) infinite, cx-glow 4.2s ease-in-out infinite;
 }
-/* The rr/ll deltas shine only once the comparison has settled. */
-:is(.rr-delta, .ll-delta):not([data-hero="true"]) .cx-hero-num { animation: none; background: none; -webkit-text-fill-color: currentColor; }
-:is(.rr-delta, .ll-delta):not([data-hero="true"]) .cx-hero-num::after,
-:is(.rr-delta, .ll-delta):not([data-hero="true"]) .cx-hero-num::before { display: none; }
 .sq-ledger-result strong small, .cx-hero-num small { -webkit-text-fill-color: #b9a9c9; }
 
-:is(.cx-hero-num, .bo-measure strong, .sq-ledger-result strong, .rg-delta > b, .xs-callout > b, .cr-delta strong)::after {
+:is(.rr-delta[data-hero="true"] .cx-hero-num, .ll-delta[data-hero="true"] .cx-hero-num, .tl-hero .cx-hero-num, .sq-ledger-result[data-reveal="true"] strong, .rg-delta:not(.rg-quiet) > b, .xs-callout > b[data-result-target="difference"], .cr-delta[data-hero="true"] strong, .dv-delta strong)::after {
   content: "✦"; position: absolute; right: -.62em; top: -.28em; font-size: .42em; line-height: 1;
   -webkit-text-fill-color: #fff; color: #fff; text-shadow: 0 0 8px #fff, 0 0 16px #dcc1ff;
   opacity: 0; animation: cx-glint-2 4.2s ease-in-out infinite; pointer-events: none;
 }
-:is(.cx-hero-num, .bo-measure strong, .sq-ledger-result strong, .rg-delta > b, .xs-callout > b, .cr-delta strong)::before {
+:is(.rr-delta[data-hero="true"] .cx-hero-num, .ll-delta[data-hero="true"] .cx-hero-num, .tl-hero .cx-hero-num, .sq-ledger-result[data-reveal="true"] strong, .rg-delta:not(.rg-quiet) > b, .xs-callout > b[data-result-target="difference"], .cr-delta[data-hero="true"] strong, .dv-delta strong)::before {
   content: "✦"; position: absolute; left: -.38em; bottom: .05em; font-size: .26em; line-height: 1;
   -webkit-text-fill-color: #fff; color: #fff; text-shadow: 0 0 6px #fff;
   opacity: 0; animation: cx-glint-2 4.2s ease-in-out 1.3s infinite; pointer-events: none;
 }
-.mb-value mark, .gb-value mark { animation-duration: 5.6s, 5.6s; }
+/* Plain (unearned) deltas: no light, no stars. */
+:is(.rr-delta, .ll-delta):not([data-hero="true"]) .cx-hero-num { animation: none; background: none; -webkit-text-fill-color: currentColor; }
+:is(.rr-delta, .ll-delta):not([data-hero="true"]) .cx-hero-num::after,
+:is(.rr-delta, .ll-delta):not([data-hero="true"]) .cx-hero-num::before { display: none; }
 
 @keyframes cx-shine-2 { 0%, 40% { background-position: 100% 0; } 78%, 100% { background-position: 0 0; } }
 @keyframes cx-glow { 0%, 48%, 100% { filter: drop-shadow(0 0 0 rgba(255,255,255,0)); } 62% { filter: drop-shadow(0 0 9px rgba(255,248,235,.55)); } }
 @keyframes cx-glint-2 { 0%, 56% { opacity: 0; transform: scale(.3) rotate(0); } 66% { opacity: 1; transform: scale(1.15) rotate(45deg); } 78%, 100% { opacity: 0; transform: scale(.4) rotate(90deg); } }
 
 @media (prefers-reduced-motion: reduce) {
-  :is(.cx-hero-num, .bo-measure strong, .sq-ledger-result strong, .cxp-metrics .cxp-delta, .rg-delta > b, .xs-callout > b, .cr-delta strong, .mb-value mark, .gb-value mark) { animation: none; background: none; -webkit-text-fill-color: currentColor; filter: none; }
-  :is(.cx-hero-num, .bo-measure strong, .sq-ledger-result strong, .rg-delta > b, .xs-callout > b, .cr-delta strong)::after { animation: none; opacity: .85; }
-  :is(.cx-hero-num, .bo-measure strong, .sq-ledger-result strong, .rg-delta > b, .xs-callout > b, .cr-delta strong)::before { display: none; }
+  :is(.cx-hero-num, .sq-ledger-result strong, .cxp-metrics .cxp-delta, .rg-delta:not(.rg-quiet) > b, .xs-callout > b, .cr-delta strong, .sp-payoff, .dv-delta strong) { animation: none; background: none; -webkit-text-fill-color: currentColor; filter: none; }
+  :is(.cx-hero-num, .sq-ledger-result strong, .rg-delta:not(.rg-quiet) > b, .xs-callout > b, .cr-delta strong, .dv-delta strong)::after { animation: none; opacity: .85; }
+  :is(.cx-hero-num, .sq-ledger-result strong, .rg-delta:not(.rg-quiet) > b, .xs-callout > b, .cr-delta strong, .dv-delta strong)::before { display: none; }
 }

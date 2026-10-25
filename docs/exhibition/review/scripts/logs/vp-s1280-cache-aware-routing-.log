@@ -1,0 +1,11 @@
+t=20s stage 610/610 doc 1280/1280 secH 800 minFont 5.6
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15
+  overlap: 
+  outside: "Serving system overview" b167 r1462 ; "Serving glossary" b167 r1658
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/cache-aware-routing-s1280-1280-20s.jpg
+t=36s stage 610/610 doc 1280/1280 secH 800 minFont 6.9
+  clipped: span.br-techniques "Continuous batchingPaged KV + prefix reuseFused pr" sw405/cw391 sh15/ch15
+  overlap: 
+  outside: "Serving system overview" b167 r1462 ; "Serving glossary" b167 r1658
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/cache-aware-routing-s1280-1280-36s.jpg
+errors none

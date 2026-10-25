@@ -73,7 +73,8 @@ test("burst links come from completed request events, then switch to queue-clear
   assert.match(figure, /data-result-source="difference"/);
   const end = render(DemandPayoff, { demand, time: demand.reference.finish, focus: "difference" });
   assert.match(end, /Time to finish all 1,000 requests/);
-  assert.match(end, /earlier to finish the queue/);
+  assert.match(end, /s sooner/);
+  assert.match(end, /to clear all 1,000 requests/);
   assert.doesNotMatch(end, /\+\d+ requests/);
   const empty = render(DemandPayoff, { demand, time: 0, focus: "difference" });
   assert.match(empty, /Same number completed at this clock/);

@@ -275,7 +275,7 @@ export function CompositionPlot({
             fill={RESULT_COLORS[i]}
             className="rs-point-name"
           >
-            {p.trained ? "Post-trained" : "Base"} ·{" "}
+            {p.trained ? "RL checkpoint" : "Base"} ·{" "}
             {p.optimized ? "optimized" : "static"}
           </text>
         </PlotPoint>

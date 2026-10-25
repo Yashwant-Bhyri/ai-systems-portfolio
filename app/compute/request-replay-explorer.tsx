@@ -261,7 +261,7 @@ export function RequestReplayExplorer({
               aria-pressed={baseline.policyIndex === policy}
               onClick={() => onPolicy(policy)}
             >
-              {policy ? "Post-trained · SFT + RL" : "Base"}
+              {policy ? "RL checkpoint" : "Base"}
             </button>
           ))}
         </div>

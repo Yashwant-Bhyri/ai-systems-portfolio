@@ -24,7 +24,7 @@ export const POLICIES = [
   },
   {
     id: "rl",
-    name: "Correctness RL",
+    name: "RL checkpoint",
     skill: 0.61,
     growth: 0.125,
     work: 2.7,
@@ -32,7 +32,7 @@ export const POLICIES = [
   },
   {
     id: "efficient",
-    name: "Efficiency-aware RL",
+    name: "Lean RL",
     skill: 0.59,
     growth: 0.128,
     work: 1.7,
@@ -195,7 +195,7 @@ export function labComposition(workload: Workload = "interactive", budget = 2) {
       return {
         ...run,
         id: `${policy ? "trained" : "base"}-${optimized ? "optimized" : "static"}`,
-        label: `${policy ? "Post-trained" : "Base"} / ${optimized ? "Optimized" : "Static"}`,
+        label: `${policy ? "RL checkpoint" : "Base"} / ${optimized ? "Optimized" : "Static"}`,
         trained: policy !== 0,
         taskCost: run.meanCost,
         correctCost: run.correctCost!,

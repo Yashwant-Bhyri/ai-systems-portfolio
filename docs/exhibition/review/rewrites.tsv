@@ -1,0 +1,123 @@
+#	where	current	proposed
+1	baseline-reveal.tsx:34	Request 7 waits 64.32 s while worker 2 sits idle	Request 7 waits 64.32 s; the last stretch with worker 2 idle behind the barrier
+2	baseline-reveal.tsx:33	Baseline serving: 8 requests, 2 workers, one batch barrier	8 requests share 2 workers; each pair must finish before the next starts
+3	baseline-reveal.tsx:28	Locate the three costs	Add up the three costs
+4	baseline-reveal.tsx:520	Two workers share the workload / Only two requests can run at once…	(kicker) Requests 1–8 · arrivals every 2 s / (drop body line)
+5	baseline-reveal.tsx:39	Request 7 = 64.32 s waiting + 23.75 GPU-s of work	Request 7: 64.32 s waiting + 23.75 s of GPU work = 88.08 s
+6	scheduling-reveal.tsx:145	Six requests enter the queue	Eight requests arrive 2 s apart; two workers
+7	scheduling-reveal.tsx:147	Request 3 starts as soon as a worker is free	Worker 1 frees at 19 s; request 3 starts at once instead of waiting for its pair
+8	scheduling-reveal.tsx:154	The same computation, without avoidable waiting	Same 137.9 worker-s of work; request 7 waits 7.65 s less
+9	scheduling-ledger.tsx:53	Work & idle accumulation / Worker utilization comparison	Idle time while work waited
+10	scheduling-ledger.tsx:120–133	11.7 worker-s removed / 100% less idle… / 137.9 worker-s…	Δ 11.7 worker-s of idle removed · cause: no worker waits for its pair
+11	scheduling-ledger.tsx:204	Worker-seconds add time across both workers…	(delete; record)
+12	scheduling-reveal.tsx:397	Red = idle with requests waiting · R = request	(delete; label first red mark)
+13	prefix-reuse-reveal.tsx:562	Compute once, retain the context	Request 1 pays 9.83 GPU-s to read the contract once
+14	prefix-reuse-reveal.tsx:90	θ fixed · same token rates · no answer is cached	Same model · same token rates · answers are not cached
+15	prefix-reuse-reveal.tsx:115	Contract context	Contract · 8,192 tokens
+16	prefix-reuse-reveal.tsx:337	prefix identity lookup	match the first 7,808 tokens
+17	prefix-reuse-reveal.tsx:277	The document remains inside the context. / KV is computed state. / It is not the response.	Reused: the contract's keys and values, not its answer
+18	prefix-reuse-reveal.tsx:514	decode work retained	answer still decoded: 4,973 tokens
+19	prefix-reuse-reveal.tsx:520	Warm-up is charged before a later request can reuse anything.	Request 1 pays the warm-up; request 7 reuses it
+20	prefix-reuse-reveal.tsx:568	Reuse finishes; baseline continues	Request 7 finishes at 14.39 s with reuse; baseline needs 23.75 s
+21	prefix-reuse-reveal.tsx:569	Prefix reuse: GPU-work comparison	Δ 9.36 GPU-s for request 7 · cause: 7,808 input tokens not recomputed
+22	prefix-comparison.tsx:435	Answer complete with reuse. Baseline: 9.37s still to run.	Reuse done. Baseline still has 9.36 s of GPU work left.
+23	prefix-comparison.tsx:397	0GPU-s baseline	0 GPU-s · baseline
+24	execution-reveal.tsx:47	Request execution	Request 7 on faster prefill and decode rates: 14.39 → 11.55 GPU-s
+25	execution-scale.tsx:251	Time to finish 1 requests	Time to finish request 7
+26	execution-scale.tsx:272	Δ 2.8 s earlier · 19.7% less elapsed time for the same 1 requests	Δ 2.83 s sooner for request 7 (−19.7%) · cause: 0.95 ms/input and 2.25 ms/output token
+27	execution-scale.tsx:262	157.9 s Baseline finishes the first 12 requests here.	Δ 31.1 s sooner for 12 requests (157.9 → 126.8 s)
+28	execution-scale.tsx:507	306 requests … / 382 requests …	Δ +76 requests from the same 3,000 GPU-s (306 → 382)
+29	execution-scale.tsx:520	Busy compute, not a wall-clock deadline	(delete)
+30	execution-reveal.tsx:51	1,000 arrivals. Two workers per runtime.	1,000 requests at once: optimized clears the queue 16 min 10 s sooner
+31	execution-scale.tsx:647	Queue cleared at 80:47 / 64:37	Queue cleared at 4,847 s / 3,877 s
+32	execution-scale.tsx:796	Δ +6 requests 17.6% more completed by 3:05	(hide until ≥ 30 s) Δ +N requests done by 600 s
+33	runtime-gains-reveal.tsx:30	Scheduling reduces queue time	Scheduling: request 7 waits 56.67 s instead of 64.32 s
+34	runtime-gains-reveal.tsx:31	Prefix reuse removes input work	Prefix reuse: request 7's input drops from 9.83 to 0.46 GPU-s
+35	runtime-gains-reveal.tsx:32	Faster prefill and decode	Faster rates: 14.39 → 11.55 GPU-s for request 7
+36	runtime-gains-reveal.tsx:34	Combined GPU-cost reduction	All 96 requests: 36.61 → 19.29 GPU-s per correct answer
+37	runtime-gains-reveal.tsx:640	Lower the cost of every remaining token	Every token costs less: input 1.20 → 0.95 ms, output 2.80 → 2.25 ms
+38	runtime-gains-reveal.tsx:643	Two compute savings, one total	Two savings, one bill
+39	runtime-gains-reveal.tsx:453–456	Same task identities / Request 7 stays in the cohort	Same 96 requests / request 7 highlighted
+40	runtime-gains-reveal.tsx:536	Same GPU work; less waiting	Same GPU work · waiting not counted here
+41	runtime-gains right panel	Prefix reuse −12.59 / Faster execution −4.74	Prefix reuse −12.59 GPU-s / Faster rates −4.74 GPU-s
+42	runtime-gains final	47.31% less GPU work per correct answer. Scheduling also reduced waiting…	Δ 17.32 GPU-s per correct answer (−47.3%) · cause: reused prefixes + faster token rates
+43	composition-explorer.tsx:857–861	≈ −12.59	−12.59 GPU-s
+44	composition-explorer.tsx:687	Δ −12.59 GPU-s / correct	Δ −12.59 GPU-s per correct answer
+45	composition-explorer.tsx:921	Selected: Post-trained / Optimized	(delete)
+46	composition-explorer.tsx:758	Read the baseline	RL checkpoint on the static runtime: 36.61 GPU-s per correct answer
+47	lab-results.tsx:750 / lab-story.tsx:186	Interactive · Shared-prefix burst / Different documents · One shared document	Different documents · One shared document (both)
+48	task-landing.tsx:104	SFT + RL lifts the ability line	SFT, then RL, lift the ability line from 0.45 to 0.73
+49	task-landing.tsx:129	Post-training buys accuracy with longer reasoning	+24 tasks solved, for +9.8 GPU-s per task
+50	task-landing.tsx:130–135	Cause … / Next …	Cause: SFT lifts the line 0.45 → 0.60; RL lifts it to 0.73 with answers 2.7× the base length.
+51	request-replay-explorer.tsx:694	Choose a request from the same 96-task trace	(delete)
+52	request-replay-explorer.tsx:318	20.41 s · since worker start	(delete)
+53	request-replay-explorer.tsx:195	Only the declared output-token execution rate changes.	Cause: output tokens run at 2.25 ms instead of 2.80 ms
+54	load-latency-explorer.tsx:224	Δ 1 fewer requests waiting	1 fewer request waiting (no star until Δ ≥ 10)
+55	load-latency-explorer.tsx:214–216	Arrange by time to finish. / Each run gets its own order…	Sort each run fastest to slowest, then compare rank by rank
+56	load-latency-explorer.tsx:226	In each run, 48 of 96 responses finish within its boundary…	Half of each run finishes by this time; the amber half takes longer
+57	load-latency-explorer.tsx:98	Amber points take longer than their run's selected boundary.	Amber: slower than this percentile
+58	lab-results.tsx:470	1,081 → 445 s · p95 response	1,006 → 445 s · p95 response (or recompute)
+59	serving-pressure-film.tsx:120	Prefill/decode scheduling (beat h3)	Request 3's 128-token document arrives while request 1 is streaming
+60	serving-pressure-film.tsx	Whole prefill blocks decode	Baseline: request 1's stream stops for 56 ms
+61	serving-pressure-film.tsx:171	Δ 45.75 ms shorter pause	Δ 45.75 ms shorter worst pause in request 1's stream
+62	serving-pressure-film.tsx:172	Chunked prefill makes room for decode…	Cause: request 3's input runs in 16-token chunks, so request 1 keeps decoding
+63	serving-pressure-film.tsx:171	Δ 47.25 ms longer wait	Cost: request 3's first token arrives 47.25 ms later
+64	serving-pressure-film.tsx:172	Interleaving existing answers delays completion of the new input.	Cause: its input now shares every step with request 1's stream
+65	serving-pressure-film.tsx:174/182	Inspect … ↗ ×3	(delete all three)
+66	draft-film.tsx:27	Four words for one call of the large model, instead of four.	Four words from one large-model call instead of four calls.
+67	draft-film.tsx:169	Qwen3-0.6B · fast, cheap	Draft model · small, fast
+68	draft-film.tsx:176	Qwen3-4B · the answer's owner	Target model · decides every word
+69	draft-film.tsx kicker	SPECULATIVE DECODING · DRAFT k = 5 · ONE TARGET PASS	Draft five words, check them in one pass
+70	draft-film.tsx new beat	—	12 words in 3 target calls instead of 12
+71	cache-routing.tsx:751	KV capacity & cache-aware routing	Request C: warm replica A vs cold replica B
+72	cache-routing.tsx:887	A keeps the prefix. B must read it.	A already holds 64 of C's 96 input tokens; B must read all 96
+73	cache-routing.tsx:895	Release memory before admitting work.	A must wait 20 ms for request R to free 4 pages
+74	cache-routing.tsx 20 s h4	Replica A delivers first.	A's first token arrives 20 ms sooner
+75	cache-routing.tsx equation	40 ms less prefill − 20 ms waiting = 20 ms earlier on A	A saves 40 ms of prefill, waits 20 ms: first token 20 ms sooner
+76	cache-routing.tsx:973	40 ms less prefill − 62 ms waiting = 22 ms later on A	A saves 40 ms, waits 62 ms: first token 22 ms later than B
+77	cache-routing.tsx:903	Waiting outweighs the prefill saving.	Past 40 ms of waiting, send C to the cold replica
+78	cache-routing.tsx:958	Replica A · selected state	Replica A · reused prefix
+79	cache-routing.tsx:900	Keep reusable KV. Release private capacity.	C is done: 4 private pages freed on each replica, the shared prefix stays
+80	cache-routing.tsx:992	Active C references	Pages still held by C
+81	cache-routing.tsx:625	Drag or use ← →. On touch, adjust the release slider above.	(delete)
+82	scheduling-overlap.tsx:721	CPU/GPU scheduling overlap	Four decode steps for users A and B: 52 ms serial vs 37 ms overlapped
+83	scheduling-overlap.tsx:131	0 / 8 output units delivered	0 / 8 tokens delivered
+84	scheduling-overlap.tsx:932	Select a step to follow its output	(delete)
+85	scheduling-overlap.tsx:427	15 ms earlier final delivery	Δ 15 ms sooner (−29%) · cause: the CPU builds step n+1 while the GPU runs step n
+86	serving-under-load.tsx:171	11 mechanisms in one loop	10 mechanisms on one serving clock
+87	serving-load-overview.tsx:254	PART 2 · NEW A/B/C/D WORKLOAD	Requests A–D on one serving clock
+88	serving-admission-scenes.tsx:644	The clock paces this schematic…	(delete)
+89	serving-hardware-scenes.tsx:549	No quality pass is assumed. Validate the downstream task.	(delete)
+90	serving-hardware-scenes.tsx:744	Communication is extra work. This is not a 2× speed claim.	The all-reduce adds a step: two GPUs, not 2× faster
+91	serving-hardware-scenes.tsx:1261	Arithmetic and topology close-ups are separate teaching fixtures…	(delete)
+92	serving-continuity-scenes.tsx:619	No runtime speedup is inferred here.	(delete)
+93	serving-hardware-scenes.tsx:1260	Page ownership follows the overview's event cursor.	(delete)
+94	glossary-board.tsx:16	Nine terms from production serving, each with one number from this lab and the place it runs.	Nine serving terms, each with one number from this lab
+95	glossary observability	TTFT · TPOT · KV util · prefix hit	TTFT 105 ms · worst token gap 10.25 ms · prefix hits 90 of 96
+96	glossary autoscaling	61 → 6 s to serve · cold vs warm replica	(cite or drop)
+97	glossary each card	See it in the microscope ↗	(one link for the board)
+98	lab-results.tsx:500	Fused prefill & decode kernels	Faster prefill & decode rates
+99	lab-story-data.ts:59	A useful answer needs a useful reasoning path.	Base model: 28 of 96 synthetic tasks solved (29.2%)
+100	lab-story-data.ts:69	Good demonstrations make good paths easier to find.	SFT on verified traces: +18 tasks (28 → 46)
+101	lab-story-data.ts:79	Compare attempts. Reinforce the ones that work.	RL on 8 attempts per prompt: +11, −2 (46 → 55); answers 2.2× longer
+102	lab-story.tsx:110	Give the same model room to investigate.	Same weights, 4× thinking: 55 → 82 solved for +15.72 GPU-s per task
+103	lab-story-data.ts:99	Better reasoning is not simply longer reasoning.	Lean RL keeps 82 solved with 31% fewer tokens (−28% GPU-s per task)
+104	lab-story-data.ts:109	Training moves it up. Serving moves it left.	Training moves it up (+54 tasks); serving moves it left (28.89 → 14.94 GPU-s per correct)
+105	adapter-reveal.tsx:146 etc.	firstItem([]) crashes. Fix it.	first_item([]) crashes. Fix it.
+106	adapter-reveal.tsx:575	Offline training — … neither is a held-out evaluation.	(delete; record)
+107	adapter-reveal.tsx:590	No live-request weight update	(delete)
+108	adapter-reveal.tsx:29/41/45	Keep W. Learn an adapter. / Follow the output… / Teach the missing operation.	W stays frozen; 24 adapter values learn / Output y₁ moves 0.141 → 0.343 toward its target / The demonstration adds the empty-list guard: 2/3 → 3/3 tests
+109	lab-story.tsx:314/319/480	HOW THE POLICY CHANGES / Inspectable teaching model / FULL-COHORT RESULT	(delete kickers; panel title "96 tasks")
+110	policy-film.tsx GRPO	π · POLICY OVER REASONING PATHS · RESHAPED BY Â	Attempts that pass the tests become more likely
+111	policy-film.tsx GRPO	BATCH · 8 PROMPTS × G = 8 ROLLOUTS · VERIFIER-SCORED	8 prompts × 8 attempts, each scored by tests
+112	test-time-reveal.tsx	C₈ = Search(x, θ*, b)	(delete)
+113	test-time-reveal.tsx:328	Correctness-trained checkpoint	RL checkpoint
+114	lab-result-plots.tsx:681	Net gain = new successes − negative flips…	+26 gained, −2 lost: net +24
+115	lab-results.tsx:461–463	+54 … / 88 of 96 at 8× / 59 / 5	(compute from the view's default state)
+116	glyphs.tsx:277	28 → 82 of 96 tasks	43 → 67 of 96 tasks
+117	architecture-films.tsx:32	Many requests. Shared computation. Separate state.	Three requests share one GPU batch; each keeps its own KV pages
+118	portfolio-v2.tsx:1895	The model is unchanged. The cognition request is unchanged…	Same model, same requests: the serving runtime does less work per answer
+119	architecture strip	Schedule / Reuse / Accelerate / Distribute / Serve	Batch requests / Reuse prefixes / Run kernels faster / Split across GPUs / Stream and reclaim
+120	microscope footer	INPUT … → OPERATION … → OUTPUT …	(delete the triad)
+121	PT architecture	Improve verified held-out accuracy across actual test-time compute budgets.	Raise verified accuracy per GPU-second across thought allowances (synthetic 96-task cohort)
+122	PT architecture strip	28 → 82 solved · 5 regressions named	28 → 82 of 96 synthetic tasks · 5 regressions named

@@ -1,0 +1,12 @@
+import { chromium } from '/Users/yash/antigravity/node_modules/playwright/index.mjs';
+const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+await p.goto('http://localhost:3290/', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(3500);
+await p.evaluate(() => { const el = document.getElementById('inference-study'); window.scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: 'instant' }); });
+await p.waitForTimeout(600);
+await p.locator('#inference-study .br-branch').nth(1).click(); await p.waitForTimeout(700);
+await p.locator('#inference-study .lb-bar button').filter({ hasText: 'Speculative decoding' }).first().click({ force: true });
+await p.waitForTimeout(1500);
+await p.locator('#inference-study .lb-stage button').filter({ hasText: 'Round-by-round accounting' }).first().click();
+await p.waitForTimeout(4000);
+console.log(await p.evaluate(() => { const s = document.querySelector('#inference-study .lb-stage'); const all = [...s.querySelectorAll('*')].filter(e => e.getBoundingClientRect().height > 0); const maxB = Math.max(...all.map(e => e.getBoundingClientRect().bottom)); return { client: s.clientHeight, scroll: s.scrollHeight, stageBottom: Math.round(s.getBoundingClientRect().bottom), maxChildBottom: Math.round(maxB), secBottom: Math.round(document.getElementById('inference-study').getBoundingClientRect().bottom), scrollables: all.filter(e => { const c = getComputedStyle(e); return /auto|scroll/.test(c.overflowY) && e.scrollHeight > e.clientHeight + 4; }).map(e => e.className.toString().slice(0, 40) + ' ' + e.clientHeight + '/' + e.scrollHeight) }; }));
+await b.close();

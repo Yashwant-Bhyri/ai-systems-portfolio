@@ -87,7 +87,7 @@ function PrefixMechanism({
         id={id}
       >{`Cold request ${producer.id + 1} computes prompt state; later request ${request.id + 1} ${shared ? `reuses ${savedTokens} input tokens after cache readiness` : "has unrelated context and cannot reuse the prefix"}. New question and answer computation remain. KV groups are schematic, not physical page counts.`}</title>
       <text x="28" y="25" className="pr-label">
-        θ fixed · same token rates · no answer is cached
+        Same model · same token rates · answers are not cached
       </text>
       <text x="968" y="25" textAnchor="end" className="pr-label">
         Trace close-up
@@ -112,7 +112,7 @@ function PrefixMechanism({
         <path d="M40 72H190L205 87V210H40Z" fill="#11232e" stroke="#425b6c" />
         <path d="M190 72V87H205" fill="none" stroke="#647f91" />
         <text x="54" y="96" className="pr-title">
-          Contract context
+          {`Contract · ${format(producer.inputTokens)} tokens`}
         </text>
         {Array.from({ length: 10 }, (_, i) => (
           <g key={i}>
@@ -267,17 +267,11 @@ function PrefixMechanism({
         </text>
       </Hotspot>
       <g opacity={frame.store}>
-        <text x="811" y="112" className="pr-label">
-          The document remains
+        <text x="811" y="122" className="pr-label">
+          Reused: the contract's
         </text>
-        <text x="811" y="132" className="pr-label">
-          inside the context.
-        </text>
-        <text x="811" y="162" className="pr-small">
-          KV is computed state.
-        </text>
-        <text x="811" y="180" className="pr-small">
-          It is not the response.
+        <text x="811" y="142" className="pr-label">
+          keys and values, not its answer
         </text>
       </g>
 
@@ -334,7 +328,7 @@ function PrefixMechanism({
           fill={frame.matched ? AMBER : INK}
         >
           {frame.lookup < 1
-            ? "prefix identity lookup"
+            ? `match the first ${format(savedTokens)} tokens`
             : shared
               ? `${format(savedTokens)} tokens · reference KV`
               : "no exact prefix match"}
@@ -511,13 +505,13 @@ function PrefixMechanism({
         {format(frame.outputTokens)} tokens
       </text>
       <text x="815" y="420" className="pr-small">
-        decode work retained
+        answer still decoded
       </text>
       <text x="32" y="461" className="pr-label" fill={AMBER}>
         {frame.matched
           ? `${format(frame.avoidedTokens)} repeated input tokens avoided. The context was not removed.`
           : shared
-            ? "Warm-up is charged before a later request can reuse anything."
+            ? "Request 1 pays the warm-up; request 7 reuses it."
             : "No prefix match. No skipped prefill. The cache is not a universal speedup."}
       </text>
     </svg>
@@ -544,6 +538,7 @@ export function PrefixReuseReveal({
   inspect: Inspectors;
 }) {
   const study = useMemo(() => prefixStudy(before, after), [before, after]);
+  const fmtS = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const film = useFilmTime(readTime, playing, reduced, PREFIX_DURATION, onSeek);
   const frame = prefixFrame(film.time, study),
     shared = study.request.cacheHit;
@@ -559,14 +554,14 @@ export function PrefixReuseReveal({
       <div className="pr-comparison-heading">
         <h4>
           {frame.beat < 2
-            ? "Compute once, retain the context"
+            ? `Request 1 pays ${fmtS(study.producer.prefill)} GPU-s to read the contract once`
             : frame.beat === 2
               ? "Compute the new question"
               : frame.beat === 3
                 ? "Same request, less input work"
                 : frame.beat === 4 && shared
-                  ? "Reuse finishes; baseline continues"
-                  : "Prefix reuse: GPU-work comparison"}
+                  ? `Request 7 finishes its GPU work at ${fmtS(study.request.gpuSeconds)} s with reuse; baseline needs ${fmtS(study.reference.gpuSeconds)} s`
+                  : `Δ ${fmtS(study.reference.gpuSeconds - study.request.gpuSeconds)} GPU-s for request 7 · cause: ${format(study.savedTokens)} input tokens not recomputed`}
         </h4>
         <span>Service replay</span>
       </div>

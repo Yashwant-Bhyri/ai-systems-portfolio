@@ -462,3 +462,6 @@ path.xs-comparison-lane,
     transition: none;
   }
 }
+/* The lane values are quiet pairs; only the Δ takes the hero size. */
+.xs-callout > b:not([data-result-target]) { font-size: 17px !important; color: #c9d4de; margin-right: 8px; }
+.xs-callout > b { display: inline-block; margin-right: 8px; }

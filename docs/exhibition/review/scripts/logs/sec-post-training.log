@@ -1,0 +1,11 @@
+t=3s stage 942/942 doc 1440/1440 secH 943 minFont 8.0
+  clipped: aside.vx-contribution-tile "MY CONTRIBUTIONI developed a Qwen3-4B reasoning-mo" sw756/cw511 sh148/ch148 ; p.cx-scientific-claim "RESEARCH OBJECTIVEImprove verified held-out accura" sw1807/cw1240 sh48/ch48
+  overlap: "I developed a" x "using supervised reasoning fin" ; "Qwen3-4B reasoning-model post-" x "using supervised reasoning fin" ; "using supervised reasoning fin" x "SFT, GRPO-style policy updates" ; "SFT, GRPO-style policy updates" x "for mathematics, multi-step lo"
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/-post-training-1440-3s.jpg
+t=15s stage 942/942 doc 1440/1440 secH 943 minFont 8.0
+  clipped: aside.vx-contribution-tile "MY CONTRIBUTIONI developed a Qwen3-4B reasoning-mo" sw756/cw511 sh148/ch148 ; p.cx-scientific-claim "RESEARCH OBJECTIVEImprove verified held-out accura" sw1541/cw1240 sh48/ch48
+  overlap: "I developed a" x "using supervised reasoning fin" ; "Qwen3-4B reasoning-model post-" x "using supervised reasoning fin" ; "using supervised reasoning fin" x "SFT, GRPO-style policy updates" ; "SFT, GRPO-style policy updates" x "for mathematics, multi-step lo"
+  outside: 
+  -> /Users/yash/Portfolio/design-lab/docs/exhibition/review/shots/-post-training-1440-15s.jpg
+errors none
