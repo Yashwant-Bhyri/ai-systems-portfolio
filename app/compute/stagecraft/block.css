@@ -461,3 +461,13 @@
 /* One clock per film: the transport carries time; headings carry the event. */
 .lb-stage :is(.sq-heading, .ll-heading, .rr-heading) time { display: none; }
 .lb-stage .rr-cohort > div:first-child > strong { display: none; }
+
+/* Text floor inside scaled figures: the figures shrink to fit the block, so their
+   smallest labels are set larger here to land near 10–11 px on screen. */
+@media (min-width: 901px) {
+  .lb-stage .rr-small { font-size: 13px; }
+  .lb-stage .cr-small { font-size: 13px; }
+  .lb-stage .em-small, .lb-stage .em-mono { font-size: 13px; }
+  .lb-stage .xs-small { font-size: 13px; }
+}
+.lb-stage .cr-heading > span { display: none; }
