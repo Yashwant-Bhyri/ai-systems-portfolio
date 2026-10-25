@@ -41,7 +41,10 @@ import "./stagecraft/film-spot.css";
 import "./stagecraft/quiet.css";
 import "./stagecraft/explorers.css";
 import "./stagecraft/block.css";
+import "./stagecraft/lab-flow.css";
 import { ModuleBar, type RailItem } from "./stagecraft/side-rail";
+import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
+import { LabNavSwitcher, useLabNav } from "./stagecraft/lab-nav";
 import { TaskLanding } from "./stagecraft/task-landing";
 import { useTr } from "../exhibit/i18n";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
@@ -396,6 +399,21 @@ export function ComputeLabStudy({
     );
   const exhibitRef = useRef<HTMLElement>(null);
   const tr = useTr();
+  const labNav = useLabNav();
+  // In the top orientation the reel condenses once the visitor scrolls into the stage.
+  const [condensed, setCondensed] = useState(false);
+  useEffect(() => {
+    if (labNav !== "top") { setCondensed(false); return; }
+    const onScroll = () => {
+      const el = ref.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      setCondensed(top < -120 && top > -el.offsetHeight + 300);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [labNav, ref]);
   const replayHost = useRef<HTMLDivElement>(null),
     latencyHost = useRef<HTMLDivElement>(null);
   const tourRef = useRef<InferenceTourHandle>(null);
@@ -478,25 +496,50 @@ export function ComputeLabStudy({
   const fmt = (v: number, d = 2) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
   const railItems: RailItem[] = training
     ? [
-        { key: "film", title: "The experiment", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "film", title: "The experiment", term: "base → SFT → RL → 4× thought → lean RL", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "map", title: "Capability map", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thought`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thought", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thought", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "audit", title: "Regression audit", term: "gains beside losses", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thought`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
-        { key: "film", title: "The experiment", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "film", title: "The experiment", term: "continuous batching → prefix reuse → faster rates", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "composition", title: "Policy × runtime", term: "training lifts accuracy · serving cuts cost", value: `−${Math.round(reductionPercent(rlStatic.correctCost!, rlFast.correctCost!)!)}%`, unit: "GPU-s per correct answer", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thought`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
         { key: "replay", title: "Execution replay", term: "any of the 96 requests", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "latency", title: "Queue & latency", term: "arrival → completion, ranked", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ];
+  // The reel orientations keep the stage at its natural size; "bar" is the one-screen block.
+  const block = labNav === "bar";
+  const reelItems: ReelItem[] = railItems.map((item) => ({
+    key: item.key, title: item.title, term: item.term, value: item.value, unit: item.unit,
+    Glyph: item.Glyph ?? GlyphExperiment, onOpen: item.onOpen, current: item.current,
+  }));
+  const navLabel = labNav === "side" ? "Go deeper" : training ? "Go deeper · post-training laboratory" : "Go deeper · same intelligence, cheaper execution";
+  const navNode = block ? (
+    <div className="lb-bar">
+      {training || inferencePart === "cheaper" ? (
+        <ModuleBar label={training ? "Post-training laboratory" : "Same intelligence, cheaper execution"} items={railItems} />
+      ) : (
+        <div id="inference-serving-rail" className="lb-bar-slot" />
+      )}
+    </div>
+  ) : (
+    <div className="lf-nav" data-condensed={condensed || undefined}>
+      {training || inferencePart === "cheaper" ? (
+        <ExplorationReel label={navLabel} items={reelItems} orientation={labNav === "side" ? "column" : "row"} compact={labNav === "dock" || (labNav === "top" && condensed)} note="Hover to hold · click to put it on the stage" />
+      ) : (
+        <div id="inference-serving-rail" className="lf-nav-slot" />
+      )}
+    </div>
+  );
   return (
     <section
       ref={ref}
       id={training ? "post-training-study" : "inference-study"}
       data-vx-page
       data-running={playback.running}
-      className={`cs-study rs-laboratory lab-block vx-section-shell vx-accent-${training ? "rose" : "amber"}`}
+      data-nav={labNav}
+      className={`cs-study rs-laboratory ${block ? "lab-block" : `lab-flow lab-flow-${labNav}`} vx-section-shell vx-accent-${training ? "rose" : "amber"}`}
       aria-labelledby={`${domain}-study-title`}
     >
       <div className="lb-head">
@@ -537,15 +580,10 @@ export function ComputeLabStudy({
           </div>
         )}
       </div>
-      <div className="lb-body">
-        <div className="lb-bar">
-          {training || inferencePart === "cheaper" ? (
-            <ModuleBar label={training ? "Post-training laboratory" : "Same intelligence, cheaper execution"} items={railItems} />
-          ) : (
-            <div id="inference-serving-rail" className="lb-bar-slot" />
-          )}
-        </div>
-        <div className="lb-stage">
+      <div className={block ? "lb-body" : "lf-body"}>
+        {labNav !== "dock" && navNode}
+        <div className={block ? "lb-stage" : "lf-stage"}>
+          {!block && (training || inferencePart === "cheaper") && mode === "watch" && <div className="lf-chapters">{chapterSlot}</div>}
       <RetainedLabPanel
         active={training || inferencePart === "cheaper"}
         id={`${domain}-cost-lab`}
@@ -1055,7 +1093,9 @@ export function ComputeLabStudy({
         </RetainedLabPanel>
       )}
         </div>
+        {labNav === "dock" && navNode}
       </div>
+      {!training && <LabNavSwitcher />}
     </section>
   );
 }

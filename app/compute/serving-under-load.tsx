@@ -11,6 +11,8 @@ import "./stagecraft/plates.css";
 import "./stagecraft/quiet.css";
 import type { ReelItem } from "./stagecraft/reel";
 import { ModuleBar, type RailItem } from "./stagecraft/side-rail";
+import { ExplorationReel } from "./stagecraft/reel";
+import { useLabNav } from "./stagecraft/lab-nav";
 import { GlossaryBoard } from "./stagecraft/glossary-board";
 import { createPortal } from "react-dom";
 import { useSlot } from "./stagecraft/use-slot";
@@ -91,6 +93,7 @@ export function ServingUnderLoad() {
   );
   const [draftDetail, setDraftDetail] = useState(false);
   const railSlot = useSlot("inference-serving-rail");
+  const labNav = useLabNav();
   const [explorer, setExplorer] = useState<
     "map" | "draft" | "cache" | "overlap"
   >("map");
@@ -409,7 +412,15 @@ export function ServingUnderLoad() {
       <RetainedLabPanel active={view === "glossary"} id={`${id}-glossary`} label="Serving glossary">
         <GlossaryBoard items={GLOSSARY.map((g) => (g.key === "kv" ? { ...g, onOpen: () => show("loop", "cache"), openLabel: "Open the KV capacity study ↗" } : g))} />
       </RetainedLabPanel>
-      {railSlot && createPortal(<ModuleBar label="Serving under load" items={railItems} />, railSlot)}
+      {railSlot && createPortal(labNav === "bar"
+        ? <ModuleBar label="Serving under load" items={railItems} />
+        : <ExplorationReel
+            label={labNav === "side" ? "Go deeper" : "Go deeper · serving under load"}
+            items={railItems.map((r) => ({ key: r.key, title: r.title, term: r.term, value: r.value, unit: r.unit, Glyph: r.Glyph ?? GlyphServingMap, onOpen: r.onOpen, current: r.current }))}
+            orientation={labNav === "side" ? "column" : "row"}
+            compact={labNav === "dock" || (labNav === "top" && !!railSlot.closest("[data-condensed]"))}
+            note="Hover to hold · click to put it on the stage"
+          />, railSlot)}
     </div>
   );
 }

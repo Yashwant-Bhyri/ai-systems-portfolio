@@ -25,17 +25,25 @@ export type ReelItem = {
 };
 
 const GROW = 3.4;
+/** Stacked tiles have less length to share, so the open one grows less. */
+const GROW_COLUMN = 2.3;
 
 export function ExplorationReel({
   label,
   items,
   step = 2900,
   note,
+  orientation = "row",
+  compact = false,
 }: {
   label: string;
   items: readonly ReelItem[];
   step?: number;
   note?: string;
+  /** "column" stacks the tiles; the open tile then grows downward. */
+  orientation?: "row" | "column";
+  /** A shorter reel (glyph and title only on closed tiles), for sticky placements. */
+  compact?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const row = useRef<HTMLDivElement>(null);
@@ -46,6 +54,8 @@ export function ExplorationReel({
   const [reduced, setReduced] = useState(false);
   const [narrow, setNarrow] = useState(false);
   const [width, setWidth] = useState(0);
+  const [height, setHeight] = useState(0);
+  const column = orientation === "column";
   const open = hover ?? index;
   // Hover intent: a tile opens only after the pointer settles, so tiles never shift under an aiming cursor.
   const intent = useRef<number | undefined>(undefined);
@@ -63,7 +73,7 @@ export function ExplorationReel({
     const el = root.current;
     const io = el ? new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.4 }) : null;
     if (el) io?.observe(el);
-    const ro = row.current ? new ResizeObserver(([e]) => setWidth(e.contentRect.width)) : null;
+    const ro = row.current ? new ResizeObserver(([e]) => { setWidth(e.contentRect.width); setHeight(e.contentRect.height); }) : null;
     if (row.current) ro?.observe(row.current);
     return () => { m.removeEventListener("change", u); n.removeEventListener("change", u); io?.disconnect(); ro?.disconnect(); };
   }, []);
@@ -85,11 +95,17 @@ export function ExplorationReel({
     const c = cursor.current, r = row.current;
     if (!c || !r || narrow || !width) return;
     const n = items.length, gap = 10;
-    const unit = (width - gap * (n - 1)) / (n - 1 + GROW);
-    const x = open * (unit + gap) + (unit * GROW) / 2;
-    c.style.transform = `translate3d(${x + 18}px, ${r.offsetTop + 54}px, 0)`;
+    if (column) {
+      const unit = (height - gap * (n - 1)) / (n - 1 + GROW_COLUMN);
+      const y = open * (unit + gap) + Math.min(unit * GROW_COLUMN, 140) / 2;
+      c.style.transform = `translate3d(${width * 0.62}px, ${r.offsetTop + y}px, 0)`;
+    } else {
+      const unit = (width - gap * (n - 1)) / (n - 1 + GROW);
+      const x = open * (unit + gap) + (unit * GROW) / 2;
+      c.style.transform = `translate3d(${x + 18}px, ${r.offsetTop + (compact ? 34 : 54)}px, 0)`;
+    }
     c.dataset.live = String(auto);
-  }, [open, width, narrow, auto, items.length]);
+  }, [open, width, height, narrow, auto, items.length, column, compact]);
 
   useEffect(() => {
     if (!narrow || !auto) return;
@@ -98,7 +114,7 @@ export function ExplorationReel({
   }, [index, narrow, auto]);
 
   return (
-    <div ref={root} className="rl-reel" data-auto={auto}>
+    <div ref={root} className="rl-reel" data-auto={auto} data-orientation={orientation} data-compact={compact || undefined}>
       <header className="rl-head">
         <span>{tr(label)}</span>
         <i aria-hidden="true">{String(open + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}</i>
@@ -114,7 +130,7 @@ export function ExplorationReel({
               className="rl-tile"
               data-lit={lit}
               data-current={item.current || undefined}
-              style={{ flexGrow: narrow ? undefined : lit ? GROW : 1 }}
+              style={{ flexGrow: narrow ? undefined : lit ? (column ? GROW_COLUMN : GROW) : 1 }}
               onPointerEnter={(e) => { if (e.pointerType === "mouse") aim(i); }}
               onFocus={() => setHover(i)}
               onBlur={() => setHover(null)}

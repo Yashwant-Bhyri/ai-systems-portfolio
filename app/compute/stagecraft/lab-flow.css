@@ -1,0 +1,96 @@
+/* The laboratory with its "Go deeper" reel kept intact (tiles with live
+   silhouettes; one expands while the rest blur). The stage keeps its natural,
+   full size; only the reel moves: top (sticky, condensing), side (sticky
+   column) or dock (sticky to the bottom of the screen). */
+
+.cs-study.lab-flow {
+  box-sizing: border-box;
+  width: min(1420px, calc(100vw - 40px));
+  max-width: none;
+  margin-inline: auto;
+  padding: calc(78px + 12px) 0 48px;
+}
+.lab-flow .lf-body { position: relative; margin-top: 14px; }
+.lf-stage { position: relative; min-width: 0; border: 1px solid rgba(230,237,244,.07); background: rgba(8,12,17,.55); }
+.lf-stage .rs-exhibit, .lf-stage .ls-story { border: 0 !important; }
+
+/* Film chapters: quiet numbered pills at the top of the stage. */
+.lf-chapters { display: flex; align-items: center; min-height: 48px; padding: 0 16px; border-bottom: 1px solid rgba(230,237,244,.07); }
+.lf-chapters:empty { display: none; }
+/* The film's workload toggle shares the chapters row, at its right end. */
+.lf-stage .ls-story { position: static; }
+.lf-stage .ls-workload-switch { position: absolute; top: 9px; right: 16px; }
+
+/* The reel, shared */
+.lf-nav { position: relative; z-index: 6; }
+.lab-flow-side .lf-nav-slot { height: 100%; }
+.lf-nav .rl-reel { margin-top: 0; }
+.lf-nav .rl-head { padding-top: 2px; }
+.rl-reel .rl-row { transition: height .45s cubic-bezier(.2,.7,.2,1); }
+.rl-reel .rl-glyph { transition: height .45s cubic-bezier(.2,.7,.2,1), margin .45s; }
+
+/* Compact reel: shorter tiles; closed tiles keep their silhouette and name. */
+.rl-reel[data-compact] .rl-row { height: 112px; }
+.rl-reel[data-compact] .rl-glyph { height: 46px; margin: 2px 0 4px; }
+.rl-reel[data-compact] .rl-num { display: none; }
+.rl-reel[data-compact] .rl-head { padding-bottom: 6px; }
+.rl-reel[data-compact] .rl-detail { margin-top: 2px; }
+
+/* A · top: sticky under the site header; condenses once you scroll into the stage. */
+.lab-flow-top .lf-nav {
+  position: sticky; top: 78px; padding: 10px 0 12px; margin-bottom: 14px;
+  background: linear-gradient(180deg, rgba(6,9,12,.97) 80%, rgba(6,9,12,.86));
+  backdrop-filter: blur(10px);
+}
+.lab-flow-top .lf-nav[data-condensed] { padding: 6px 170px 8px 0; border-bottom: 1px solid rgba(230,237,244,.07); }
+.lab-flow-top .lf-nav[data-condensed] .rl-head small { display: none; }
+
+/* B · side: a sticky column; the open tile grows downward. */
+.lab-flow-side .lf-body { display: grid; grid-template-columns: 286px minmax(0, 1fr); gap: 18px; align-items: start; }
+.lab-flow-side .lf-nav { position: sticky; top: 90px; height: calc(100svh - 104px); }
+.rl-reel[data-orientation="column"] { display: flex; flex-direction: column; height: 100%; }
+.rl-reel[data-orientation="column"] .rl-head { flex-wrap: wrap; row-gap: 4px; }
+.rl-reel[data-orientation="column"] .rl-head small { margin-left: 0; flex-basis: 100%; }
+.rl-reel[data-orientation="column"] .rl-row { flex: 1; min-height: 0; height: auto; flex-direction: column; }
+.vx-shell .rl-reel[data-orientation="column"] .rl-tile { flex-basis: 0; min-height: 0; }
+.rl-reel[data-orientation="column"] .rl-glyph { flex: 1 1 0; min-height: 0; max-height: 170px; height: auto; margin: 6px 0 6px; }
+.rl-reel[data-orientation="column"] .rl-tile[data-lit="false"] .rl-glyph { max-height: 34px; margin: 4px 0; }
+.rl-reel[data-orientation="column"] .rl-tile[data-lit="false"] .rl-num { display: none; }
+.vx-shell .rl-reel[data-orientation="column"] .rl-tile { padding: 9px 12px; }
+.rl-reel[data-orientation="column"] .rl-detail { flex-wrap: wrap; white-space: normal; }
+.rl-reel[data-orientation="column"] .rl-title { white-space: normal; }
+
+/* C · dock: the original reel, docked to the bottom of the screen while the lab is on screen. */
+.lab-flow-dock .lf-nav {
+  position: sticky; bottom: 10px; margin-top: 14px; padding: 10px 12px 12px;
+  background: rgba(6,9,12,.95); backdrop-filter: blur(12px);
+  border: 1px solid rgba(230,237,244,.08); border-radius: 10px;
+  box-shadow: 0 -18px 40px -20px rgba(0,0,0,.8);
+}
+
+/* The review switcher: a small tab at the left edge; hover or focus opens the four layouts. */
+.lnv-switch {
+  position: fixed; left: 0; top: 50%; z-index: 210; display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 8px 4px;
+  border: 1px solid rgba(230,237,244,.14); border-left: 0; border-radius: 0 12px 12px 0; background: rgba(6,9,12,.94); backdrop-filter: blur(12px);
+  opacity: 0; pointer-events: none; transform: translate(-8px, -50%); transition: opacity .4s, transform .4s;
+}
+.lnv-switch[data-visible] { opacity: 1; pointer-events: auto; transform: translate(0, -50%); }
+.lnv-switch > span { padding: 2px 6px 6px; color: #7d8996; font: 500 9.5px/1 var(--font-geist-mono), monospace; letter-spacing: .08em; text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); align-self: center; }
+.vx-shell .lnv-switch button, .lnv-switch button {
+  display: none; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 0; border-radius: 14px; background: none;
+  color: #9aa6b2; font: 450 12px/1 var(--font-geist-sans), sans-serif; cursor: pointer; white-space: nowrap;
+}
+.lnv-switch button[aria-pressed="true"] { display: inline-flex; padding: 0 7px; }
+.lnv-switch button[aria-pressed="true"] { font-size: 0; gap: 0; }
+.lnv-switch:is(:hover, :focus-within) > span { writing-mode: horizontal-tb; transform: none; align-self: flex-start; }
+.lnv-switch:is(:hover, :focus-within) button { display: inline-flex; font-size: 12px; gap: 6px; padding: 0 11px; }
+.lnv-switch button i { font: 500 11px/1 var(--font-geist-mono), monospace; font-style: normal; color: #6f7c89; }
+.lnv-switch button[aria-pressed="true"] { background: color-mix(in srgb, var(--active-accent, #ffc267) 16%, transparent); color: #f1f4f7; }
+.lnv-switch button[aria-pressed="true"] i { color: var(--active-accent, #ffc267); }
+
+@media (max-width: 900px) {
+  .cs-study.lab-flow { width: calc(100vw - 24px); padding-top: 84px; }
+  .lab-flow-side .lf-body { grid-template-columns: 1fr; }
+  .lab-flow-side .lf-nav, .lab-flow-top .lf-nav, .lab-flow-dock .lf-nav { position: relative; top: auto; bottom: auto; height: auto; }
+  .lnv-switch { left: 8px; right: 8px; bottom: 8px; overflow-x: auto; }
+}

@@ -52,10 +52,10 @@
 .mb-more-left { left: 0; }
 .mb-bar::-webkit-scrollbar { display: none; }
 .mb-item { display: flex; align-items: stretch; flex: 0 0 auto; }
-.mb-chapters .ls-chapters > * { flex: 0 0 auto; }
-.mb-chapters .ls-chapters button > strong { white-space: nowrap; }
-.vx-shell .mb-chapters .ls-chapters button { flex-direction: row !important; align-items: center !important; }
-.mb-chapters .ls-chapters button > :is(span, strong) { font-size: inherit; }
+:is(.mb-chapters, .lf-chapters) .ls-chapters > * { flex: 0 0 auto; }
+:is(.mb-chapters, .lf-chapters) .ls-chapters button > strong { white-space: nowrap; }
+.vx-shell :is(.mb-chapters, .lf-chapters) .ls-chapters button { flex-direction: row !important; align-items: center !important; }
+:is(.mb-chapters, .lf-chapters) .ls-chapters button > :is(span, strong) { font-size: inherit; }
 .vx-shell .mb-tab { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: none; border: 0; cursor: pointer; color: #8793a0; white-space: nowrap;
   transition: color .3s; }
 .mb-tab:hover { color: #dfe5eb; }
@@ -74,21 +74,21 @@
 
 /* The film's chapters unfold beside its tab: numbered segments; the open one
    carries its name and the playback progress. */
-.mb-chapters { display: flex; align-items: center; padding: 0 10px 0 2px; animation: mb-in .5s cubic-bezier(.2,.7,.2,1) both; }
+:is(.mb-chapters, .lf-chapters) { display: flex; align-items: center; padding: 0 10px 0 2px; animation: mb-in .5s cubic-bezier(.2,.7,.2,1) both; }
 .mb-chapters:empty { display: none; }
-.mb-chapters .ls-chapters { display: flex !important; align-items: center; gap: 4px; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: visible; }
-.vx-shell .mb-chapters .ls-chapters button { position: relative; display: inline-flex !important; align-items: center; gap: 8px; min-height: 0 !important; height: 30px; padding: 0 11px !important; overflow: hidden;
+:is(.mb-chapters, .lf-chapters) .ls-chapters { display: flex !important; align-items: center; gap: 4px; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: visible; }
+.vx-shell :is(.mb-chapters, .lf-chapters) .ls-chapters button { position: relative; display: inline-flex !important; align-items: center; gap: 8px; min-height: 0 !important; height: 30px; padding: 0 11px !important; overflow: hidden;
   border: 1px solid rgba(230,237,244,.12) !important; border-radius: 15px; background: none !important; color: #7d8996; white-space: nowrap; transition: color .3s, border-color .3s, background .3s; }
-.mb-chapters .ls-chapters button > span { font: 500 11.5px/1 var(--font-geist-mono), monospace !important; opacity: 1 !important; }
-.mb-chapters .ls-chapters button > strong { display: none; font: 450 13px/1 var(--font-geist-sans), sans-serif !important; color: inherit; }
-.mb-chapters .ls-chapters button[data-complete="true"] { color: #aab4be; }
-.vx-shell .mb-chapters .ls-chapters button[aria-current="step"] { color: #f3f6f8; border-color: color-mix(in srgb, var(--active-accent) 55%, transparent) !important;
+:is(.mb-chapters, .lf-chapters) .ls-chapters button > span { font: 500 11.5px/1 var(--font-geist-mono), monospace !important; opacity: 1 !important; }
+:is(.mb-chapters, .lf-chapters) .ls-chapters button > strong { display: none; font: 450 13px/1 var(--font-geist-sans), sans-serif !important; color: inherit; }
+:is(.mb-chapters, .lf-chapters) .ls-chapters button[data-complete="true"] { color: #aab4be; }
+.vx-shell :is(.mb-chapters, .lf-chapters) .ls-chapters button[aria-current="step"] { color: #f3f6f8; border-color: color-mix(in srgb, var(--active-accent) 55%, transparent) !important;
   background: color-mix(in srgb, var(--active-accent) 10%, transparent) !important; padding-right: 14px !important; }
-.mb-chapters .ls-chapters button[aria-current="step"] > strong { display: inline; }
-.mb-chapters .ls-chapters button:hover > strong { display: inline; }
-.mb-chapters .ls-chapters .ls-progress { left: 0 !important; right: 0 !important; bottom: 0 !important; height: 2px !important; }
-.mb-chapters .ls-workload { display: inline-flex !important; align-items: center; margin: 0 0 0 10px !important; padding: 0 0 0 12px !important; border-left: 1px solid rgba(230,237,244,.1); font-size: 0 !important; }
-.vx-shell .mb-chapters .ls-workload select { height: 30px; min-height: 0; padding: 0 28px 0 12px; border: 1px solid rgba(230,237,244,.14); border-radius: 15px; background-color: transparent;
+:is(.mb-chapters, .lf-chapters) .ls-chapters button[aria-current="step"] > strong { display: inline; }
+:is(.mb-chapters, .lf-chapters) .ls-chapters button:hover > strong { display: inline; }
+:is(.mb-chapters, .lf-chapters) .ls-chapters .ls-progress { left: 0 !important; right: 0 !important; bottom: 0 !important; height: 2px !important; }
+:is(.mb-chapters, .lf-chapters) .ls-workload { display: inline-flex !important; align-items: center; margin: 0 0 0 10px !important; padding: 0 0 0 12px !important; border-left: 1px solid rgba(230,237,244,.1); font-size: 0 !important; }
+.vx-shell :is(.mb-chapters, .lf-chapters) .ls-workload select { height: 30px; min-height: 0; padding: 0 28px 0 12px; border: 1px solid rgba(230,237,244,.14); border-radius: 15px; background-color: transparent;
   color: #c9d2db; font: 400 12.5px/1 var(--font-geist-sans), sans-serif; cursor: pointer; }
 
 @media (max-width: 900px) {

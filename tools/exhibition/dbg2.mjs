@@ -1,0 +1,10 @@
+import { chromium } from '/Users/yash/antigravity/node_modules/playwright/index.mjs';
+const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+await p.goto(`http://localhost:3290/?labnav=top`, { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1500);
+const top = await p.evaluate(() => document.getElementById('inference-study').getBoundingClientRect().top + scrollY);
+await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), top); await p.waitForTimeout(800);
+const br = p.locator('#inference-study .br-branch').nth(1);
+console.log(await br.boundingBox(), await p.evaluate(() => { const b = document.querySelectorAll('#inference-study .br-branch')[1].getBoundingClientRect(); const el = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2); return el?.className?.toString().slice(0, 80); }));
+await br.click(); await p.waitForTimeout(1500);
+console.log(await p.evaluate(() => [...document.querySelectorAll('#inference-study .br-branch')].map(b => b.getAttribute('aria-pressed')).join(',')), await p.evaluate(() => window.scrollY));
+await b.close();
