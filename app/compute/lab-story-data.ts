@@ -1,4 +1,4 @@
-import { simulateLab, type Workload } from "./lab-simulation";
+import { compareTasks, simulateLab, type Workload } from "./lab-simulation";
 
 export const INFERENCE_STORY = [
   {
@@ -52,11 +52,23 @@ export const INFERENCE_STORY = [
       "All stages share task identity, policy, allowance, logical inputs, output-token counts and correctness. Cost includes synthetic busy-work, not idle device allocation or verifier execution.",
   },
 ] as const;
+/* Chapter titles carry the chapter's own result, computed from the shared model. */
+const PT = (() => {
+  const base = simulateLab(0, 1), sft = simulateLab(1, 1), rl = simulateLab(2, 1), rl4 = simulateLab(2, 4), lean = simulateLab(3, 4);
+  const flips = compareTasks(sft, rl);
+  const perTask = (r: typeof base) => r.tokens / r.n;
+  return {
+    base: base.correct, basePct: base.accuracy.toFixed(1), sft: sft.correct, rl: rl.correct, gained: flips.gained.length, lost: flips.lost.length,
+    longer: (perTask(rl) / perTask(sft)).toFixed(1), rl4: rl4.correct, extra: (rl4.meanCost - rl.meanCost).toFixed(2),
+    lean: lean.correct, fewer: Math.round(100 * (1 - perTask(lean) / perTask(rl4))),
+  };
+})();
+
 export const TRAINING_STORY = [
   {
     name: "The starting point",
     verb: "BASE",
-    title: "A useful answer needs a useful reasoning path.",
+    title: `Base model: ${PT.base} of 96 tasks solved (${PT.basePct}%)`,
     detail:
       "One cohort, one starting policy. The outcome map is the reference we will carry forward.",
     mechanism: "Base policy",
@@ -66,7 +78,7 @@ export const TRAINING_STORY = [
   {
     name: "SFT + LoRA",
     verb: "SFT",
-    title: "Good demonstrations make good paths easier to find.",
+    title: `SFT on verified traces: +${PT.sft - PT.base} tasks (${PT.base} → ${PT.sft})`,
     detail:
       "Supervised reasoning examples teach a pattern: decompose, solve, check. The policy changes; the allowance stays at 1×.",
     mechanism: "Supervised fine-tuning",
@@ -76,7 +88,7 @@ export const TRAINING_STORY = [
   {
     name: "Learn from outcomes",
     verb: "GRPO",
-    title: "Compare attempts. Reinforce the ones that work.",
+    title: `RL on 8 attempts per prompt: +${PT.gained}, −${PT.lost} (${PT.sft} → ${PT.rl}); answers ${PT.longer}× longer`,
     detail:
       "A verifier scores a group of trajectories. Relative rewards shift the policy toward useful attempts.",
     mechanism: "Relative policy optimization",
@@ -86,7 +98,7 @@ export const TRAINING_STORY = [
   {
     name: "Give it more thought",
     verb: "SEARCH",
-    title: "Keep the weights. Spend more time exploring.",
+    title: `Same weights, 4× thinking: ${PT.rl} → ${PT.rl4} solved for +${PT.extra} GPU-s per task`,
     detail:
       "At inference time, a larger allowance can recover problems the same policy missed. Watch the cost move too.",
     mechanism: "Inference-time search",
@@ -96,7 +108,7 @@ export const TRAINING_STORY = [
   {
     name: "Make thought count",
     verb: "REFINE",
-    title: "Better reasoning is not simply longer reasoning.",
+    title: `Lean RL keeps ${PT.lean} solved with ${PT.fewer}% fewer tokens per task`,
     detail:
       "Compare an efficiency-aware policy at the same allowance. Inspect what it keeps, what it gains and what it loses.",
     mechanism: "Efficiency-aware policy",
@@ -106,7 +118,7 @@ export const TRAINING_STORY = [
   {
     name: "The frontier",
     verb: "FRONTIER",
-    title: "Training moves it up. Serving moves it left.",
+    title: `Training moves it up (+${PT.lean - PT.base} tasks); serving moves it left`,
     detail:
       "Five moves, each with what was done and what it bought: 28 → 82 solved, then 43.69 → 14.94 GPU-seconds per correct answer.",
     mechanism: "Policy × runtime",

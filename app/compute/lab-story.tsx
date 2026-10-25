@@ -109,7 +109,6 @@ export function LabStory({
     training && step === 3
       ? {
           ...steps[step],
-          title: "Give the same model room to investigate.",
           detail:
             "Move from 1× to 8×, follow the assistant's investigation, then return to the selected allowance for the next policy comparison.",
         }
@@ -234,7 +233,8 @@ export function LabStory({
                 <button
                   key={b}
                   type="button"
-                  aria-pressed={budget === b}
+                  // chapters 01–03 run at 1× thought; the selected allowance applies from chapter 04
+                  aria-pressed={step < 3 ? b === 1 : budget === b}
                   onClick={() => {
                     setBudget(b);
                     select(Math.max(3, step));

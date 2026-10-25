@@ -173,7 +173,7 @@ export function PolicyGrpo({ active, mode, clock, tall }: RoomProps) {
 
   return (
     <Surface ref={canvas} vb={L.vb} label="GRPO: eight rollouts per prompt are scored by a verifier and normalised within their group">
-      <text x={tall ? L.pl : LX} y={LY - 30} className="ex-m">{tr(tall ? "BATCH · 8 × G = 8" : "BATCH · 8 PROMPTS × G = 8 ROLLOUTS · VERIFIER-SCORED")}</text>
+      <text x={tall ? L.pl : LX} y={LY - 30} className="ex-m">{tr(tall ? "8 PROMPTS × 8 ATTEMPTS" : "8 PROMPTS × 8 ATTEMPTS · EACH SCORED BY ITS TESTS")}</text>
       {R.map((_, p) => (
         <g key={p}>
           <text x={L.pl} y={LY + p * ROW + 20} className="ex-m">p{p + 1}</text>
@@ -184,7 +184,7 @@ export function PolicyGrpo({ active, mode, clock, tall }: RoomProps) {
         </g>
       ))}
       <text x={L.mean.x} y={LY - 30} className="ex-m">{tr(tall ? "MEAN" : "GROUP MEAN")}</text>
-      <text x={TER.x0} y={L.terLabel} className="ex-m">{tr(tall ? "π · POLICY · RESHAPED BY Â" : "π · POLICY OVER REASONING PATHS · RESHAPED BY Â")}</text>
+      <text x={TER.x0} y={L.terLabel} className="ex-m">{tr(tall ? "ATTEMPTS THAT PASS GET MORE LIKELY" : "THE POLICY · ATTEMPTS THAT PASS THEIR TESTS BECOME MORE LIKELY")}</text>
       <text x={L.field.x} y={L.field.y - 44} className="ex-m">{tr("EVAL · SFT → GRPO")}</text>
       <TaskField ref={field} x={L.field.x} y={L.field.y} cell={L.field.cell} gap={L.field.gap} />
       <g transform={`translate(${L.read.x} ${L.read.y})`}>
