@@ -88,17 +88,16 @@ const InferenceFigureTour = lazy(() =>
 const REPLAY_DEMO: readonly CursorStep[] = [
   { target: ".rr-cohort-plot", action: "sweep", drive: ".rr-request-slider input", from: 1, to: 96, duration: 9000, label: "All 96 requests", hold: 900 },
   { target: ".rr-request-slider input", action: "range", value: 7, label: "Request 7 · shared prefix", hold: 6000 },
-  { target: ".rr-measure-chapters button:nth-child(2)", label: "Input only", hold: 3600 },
-  { target: ".rr-measure-chapters button:nth-child(3)", label: "Answer only", hold: 3600 },
-  { target: ".rr-measure-chapters button:nth-child(4)", label: "Wait + execute", hold: 3600 },
-  { target: ".rr-measure-chapters button:nth-child(1)", label: "Total GPU work", hold: 2400 },
+  { target: ".rr-measure-chapters button:nth-child(2)", label: "Input only", hold: 8200 },
+  { target: ".rr-measure-chapters button:nth-child(3)", label: "Answer only", hold: 8200 },
+  { target: ".rr-measure-chapters button:nth-child(4)", label: "Wait + execute", hold: 8200 },
+  { target: ".rr-measure-chapters button:nth-child(1)", label: "Total GPU work", hold: 8200 },
 ]
 const LATENCY_DEMO: readonly CursorStep[] = [
   // The film plays to its end (ranking, then the rank scan); only then does the cursor walk the percentiles.
-  { target: ".ll-explorer[data-done=\"true\"] .ll-percentiles button:nth-child(1)", label: "p50 · median response", hold: 3200, waitFor: 70000 },
-  { target: ".ll-percentiles button:nth-child(2)", label: "p95 · the slow tail", hold: 3600 },
-  { target: ".ll-percentiles button:nth-child(3)", label: "p99 · the slowest few", hold: 3600 },
-  { target: ".ll-percentiles button:nth-child(2)", label: "Back to p95", hold: 2600 },
+  { target: ".ll-explorer[data-done=\"true\"] .ll-percentiles button:nth-child(3)", label: "p99 · the slowest few", hold: 3600, waitFor: 70000 },
+  { target: ".ll-percentiles button:nth-child(1)", label: "p50 · the median", hold: 3600 },
+  { target: ".ll-percentiles button:nth-child(2)", label: "p95 · the slow tail", hold: 4200 },
 ]
 
 /** Bring the laboratory block flush with the viewport; a no-op when it already is. */

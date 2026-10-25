@@ -170,7 +170,9 @@ export function RequestReplayExplorer({
       return;
     }
     setMetric(next);
-    film.seek(REQUEST_FILM_MS);
+    // Each new measure replays its last seven seconds, so the comparison visibly lands.
+    film.seek(REQUEST_FILM_MS - 7000);
+    player.resume();
   };
   const play = () => {
     film.seek(0);
@@ -188,13 +190,13 @@ export function RequestReplayExplorer({
       : Math.max(aSegmentEnd, bSegmentEnd);
   const cause =
     metric === "latency"
-      ? "Earlier service also changes the queue ahead of this request."
+      ? "Cause: earlier requests finish sooner, so this one waits less in the queue."
       : metric === "decode"
         ? mechanism === "reuse"
-          ? "Prefix reuse does not change the answer-generation rate."
-          : "Only the declared output-token execution rate changes."
+          ? "Prefix reuse leaves the answer's output tokens unchanged."
+          : "Cause: output tokens run at 2.25 ms instead of 2.80 ms."
         : mechanism === "rates"
-          ? "Faster declared input/output rates; no prefix reuse."
+          ? "Cause: input and output tokens run faster; no prefix is reused."
           : after.cacheHit
             ? mechanism === "reuse"
               ? "Ready prefix state removes repeated input computation."
@@ -465,10 +467,12 @@ export function RequestReplayExplorer({
                     {done && (
                       <circle cx={x(duration)} cy={y - 8} r="4" fill={color} />
                     )}
-                    <text x="160" y={y + 40} className="rr-small" fill={AMBER}>
-                      {number(task.computedInputTokens, 0)} input tokens
-                      computed
-                    </text>
+                    {metric !== "decode" && (
+                      <text x="160" y={y + 40} className="rr-small" fill={AMBER}>
+                        {number(task.computedInputTokens, 0)} input tokens
+                        computed
+                      </text>
+                    )}
                     {Array.from({ length: 20 }, (_, bit) => (
                       <rect
                         key={bit}

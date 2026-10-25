@@ -128,7 +128,6 @@ export function GhostCursor({
         // Appear where the first target is, never as an idle arrow mid-diagram.
         const first = el.querySelector<HTMLElement>(script[0]?.target ?? "");
         if (first) { const r = first.getBoundingClientRect(), o = el.getBoundingClientRect(); at = { x: r.left - o.left + r.width * 0.5 + 60, y: r.top - o.top + r.height * 0.55 + 40 }; place(at.x, at.y, 0); }
-        c.dataset.shown = "1";
         for (const step of script) {
           if (token.dead) return;
           let target = el.querySelector<HTMLElement>(step.target);
@@ -138,6 +137,13 @@ export function GhostCursor({
             target = el.querySelector<HTMLElement>(step.target);
           }
           if (!target || !target.getClientRects().length) continue;
+          // Show the cursor only once it has something to do: never as an idle arrow while a step waits.
+          if (c.dataset.shown !== "1") {
+            const r0 = target.getBoundingClientRect(), o0 = el.getBoundingClientRect();
+            at = { x: r0.left - o0.left + r0.width * 0.5 + 60, y: r0.top - o0.top + r0.height * 0.55 + 40 };
+            place(at.x, at.y, 0);
+            c.dataset.shown = "1";
+          }
           const r = target.getBoundingClientRect(), o = el.getBoundingClientRect();
           if (step.action === "sweep") {
             // Glide across the strip; every element passed becomes the selection.

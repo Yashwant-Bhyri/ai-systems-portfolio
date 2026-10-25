@@ -458,3 +458,6 @@
 .lb-stage .sp-payoff[data-hero="true"] { font: 500 30px/1.1 var(--font-geist-sans), sans-serif !important; }
 .lb-stage .sp-payoff small { display: block; margin-top: 4px; font: 400 12.5px/1.35 var(--font-geist-mono), monospace; color: #b9a9cf; -webkit-text-fill-color: #b9a9cf; }
 .lb-stage .sp-two-effects { display: none; }
+/* One clock per film: the transport carries time; headings carry the event. */
+.lb-stage :is(.sq-heading, .ll-heading, .rr-heading) time { display: none; }
+.lb-stage .rr-cohort > div:first-child > strong { display: none; }
