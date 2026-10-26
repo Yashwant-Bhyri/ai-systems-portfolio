@@ -2,7 +2,7 @@
    (tools/tracker): beside the left column the stage is ~1108 px wide, so figures drawn for
    1400 px scale down and their smallest labels fell to 7.4–9.8 px. Nothing reads under ~10.5 px. */
 .lab-flow-show .lf-stage :is(.ls-figure-label, .cf-practice-heading, .cf-user-question, .cf-request-invariant, .pf-scrub, .ls-cohort-heading, .rs-evidence-trigger) { font-size: 11px; }
-.lab-flow-show .lf-stage .ls-story small { font-size: max(11px, 1em); }
+.lab-flow-show .lf-stage .ls-story small:not(.ma-interlude *) { font-size: max(11px, 1em); }
 .lab-flow-show .lf-stage .rs-figure-label { font-size: 14px; }
 .lab-flow-show .lf-stage .rs-tick { font-size: 14px; }
 .lab-flow-show .lf-stage .ll-small { font-size: 11px; }

@@ -3,6 +3,7 @@
 import { DraftFilm } from "../stagecraft/draft-film";
 import { draftStudy, TARGET_UNITS } from "../draft-verification-model";
 import { ease, prog } from "../../exhibit/engine";
+import { STEP_OVERHEAD, bandwidth, decodeBytes } from "../calibration";
 import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
 
 /* Speculative decoding, as a full circle. The sentence and every count come
@@ -45,19 +46,55 @@ function Problem({ t }: SceneProps) {
   </svg>;
 }
 
-/** Calls per answer by how good the guesses are: the result and its condition. */
+/* Wall time, calibrated (calibration.ts): the target, Qwen3-4B, reads 8 GB per step; the
+   draft, Qwen3-0.6B (published: 0.6 B parameters, 28 layers, 8 KV heads × 128), reads ~1.2 GB.
+   A verification pass over five positions is still one memory-bound read of the target. */
+const TARGET_MS = (STEP_OVERHEAD + decodeBytes(10_000, false) / bandwidth()) * 1000;
+const DRAFT_MS = (STEP_OVERHEAD + (0.6e9 * 2 + 10_000 * 2 * 28 * 8 * 128 * 2) / bandwidth()) * 1000;
+const timeOf = (st: ReturnType<typeof draftStudy>) => st.rounds.reduce((a, r) => a + r.proposal.length * DRAFT_MS + TARGET_MS, 0);
+export const SPEC_TIME = { serial: MIXED.baselineCalls * TARGET_MS, speculative: timeOf(MIXED), aligned: timeOf(ALIGNED), miss: timeOf(MISS) };
+
+/** Each round: four cheap draft steps, then one verification read of the target. */
+const SPEC_TIMELINE = MIXED.rounds.flatMap((r, i) => {
+  const at = MIXED.rounds.slice(0, i).reduce((x, q) => x + q.proposal.length * DRAFT_MS + TARGET_MS, 0);
+  return [
+    ...r.proposal.map((w, j) => ({ kind: "draft" as const, a: at + j * DRAFT_MS, b: at + (j + 1) * DRAFT_MS, word: w, ok: j < r.accepted })),
+    { kind: "verify" as const, a: at + r.proposal.length * DRAFT_MS, b: at + r.proposal.length * DRAFT_MS + TARGET_MS, word: r.committed.join(" "), ok: true },
+  ];
+});
+/** The answer, call by call, in wall time; and how the gain depends on the guesses. */
 function Modes({ t }: SceneProps) {
-  const k = ease.out(prog(t, 500, 2200));
-  const rows: [string, number, number][] = [["every guess right", ALIGNED.targetCalls, ALIGNED.discardedPositions], ["one wrong guess", MIXED.targetCalls, MIXED.discardedPositions], ["every guess wrong", MISS.targetCalls, MISS.discardedPositions]];
-  return <svg viewBox="0 0 560 150" role="img" aria-label="Large-model calls for the same answer by guess quality">
-    <text x={0} y={14} className="ma-l">large-model calls for the same 12 words</text>
-    {rows.map(([label, calls, waste], i) => (
-      <g key={label} transform={`translate(0 ${34 + i * 38})`}>
-        <text x={0} y={16} className="ma-l">{label}</text>
-        <rect x={160} y={2} width={(calls / 12) * 300 * k} height={18} rx={2} fill={calls >= 12 ? C.red : C.ok} opacity={0.85} />
-        <text x={470} y={16} className="ma-l" style={{ fill: C.ink }}>{calls} · {waste} wasted</text>
-      </g>
-    ))}
+  const k = ease.io(prog(t, 300, 3600));
+  // the two timelines share one scale; the guess-quality row below has its own
+  const L = 220, R = 1170, span = SPEC_TIME.serial * 1.04, sx = (ms: number) => L + (ms / span) * (R - L);
+  const modeMax = Math.max(SPEC_TIME.serial, SPEC_TIME.miss);
+  const now = k * span;
+  const serial = Array.from({ length: MIXED.baselineCalls }, (_, i) => ({ a: i * TARGET_MS, b: (i + 1) * TARGET_MS, word: TARGET_UNITS[i] }));
+  const spec = SPEC_TIMELINE;
+  const modes: [string, number, number][] = [["every guess right", ALIGNED.targetCalls, SPEC_TIME.aligned], ["one wrong guess", MIXED.targetCalls, SPEC_TIME.speculative], ["every guess wrong", MISS.targetCalls, SPEC_TIME.miss]];
+  return <svg viewBox="0 0 1200 380" role="img" aria-label="The same 12-word answer: twelve serial large-model calls against drafting and verifying, in milliseconds">
+    <text x={0} y={58} className="ma-k">One call per word</text>
+    <text x={0} y={78} className="ma-l">large model only</text>
+    {serial.filter((c) => c.a <= now).map((c, i) => <g key={i}>
+      <rect x={sx(c.a) + 1} y={40} width={Math.max(0, sx(Math.min(c.b, now)) - sx(c.a) - 2)} height={38} rx={3} fill={C.acc} opacity={0.85} />
+      {now >= c.b && sx(c.b) - sx(c.a) > 34 && <text x={(sx(c.a) + sx(c.b)) / 2} y={64} textAnchor="middle" className="ma-l" style={{ fill: "#1a1205" }}>{c.word}</text>}
+    </g>)}
+    {now >= SPEC_TIME.serial && <text x={sx(SPEC_TIME.serial)} y={30} textAnchor="end" className="ma-n" style={{ fill: C.ink }}>{SPEC_TIME.serial.toFixed(0)} ms</text>}
+    <text x={0} y={152} className="ma-k">Draft 4, verify once</text>
+    <text x={0} y={172} className="ma-l">small guesses, large checks</text>
+    {spec.filter((c) => c.a <= now).map((c, i) => <rect key={i} x={sx(c.a) + 0.5} y={c.kind === "draft" ? 150 : 134} width={Math.max(0, sx(Math.min(c.b, now)) - sx(c.a) - 1)} height={c.kind === "draft" ? 22 : 38} rx={3}
+      fill={c.kind === "verify" ? C.acc : c.ok ? C.ok : C.red} opacity={c.kind === "verify" ? 0.85 : 0.6} />)}
+    {now >= SPEC_TIME.speculative && <text x={sx(SPEC_TIME.speculative)} y={124} textAnchor="end" className="ma-n" style={{ fill: C.ink }}>{SPEC_TIME.speculative.toFixed(0)} ms · {(SPEC_TIME.serial / SPEC_TIME.speculative).toFixed(2)}× sooner</text>}
+    <g transform="translate(220 214)">
+      {[[`large-model call · ${TARGET_MS.toFixed(1)} ms`, C.acc], [`draft guess kept · ${DRAFT_MS.toFixed(1)} ms`, C.ok], ["draft guess thrown away", C.red]].map(([l, c], i) => <g key={l} transform={`translate(${i * 340} 0)`}><rect width={14} height={14} rx={2} fill={c} opacity={0.8} /><text x={22} y={12} className="ma-l">{l}</text></g>)}
+    </g>
+    <text x={0} y={272} className="ma-k">It depends on the guesses</text>
+    {modes.map(([l, calls, ms], i) => <g key={l} transform={`translate(${220 + i * 320} 256)`}>
+      <text x={0} y={14} className="ma-l">{l}</text>
+      <rect x={0} y={24} width={((ms / modeMax) * 290) * Math.min(1, k * 1.4)} height={14} rx={2} fill={ms > SPEC_TIME.serial ? C.red : C.ok} opacity={0.85} />
+      <text x={0} y={60} className="ma-n" style={{ fill: C.ink }}>{ms.toFixed(0)} ms</text>
+      <text x={0} y={80} className="ma-l">{calls} large-model calls</text>
+    </g>)}
   </svg>;
 }
 
@@ -70,9 +107,9 @@ export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; 
     Scene: makeImpact({
       from: MIXED.baselineCalls, to: MIXED.targetCalls, unit: "calls", digits: 0,
       what: "Serial large-model calls for the same 12-word answer",
-      cause: "Each verification pass keeps every guess up to the first wrong one, plus one word of its own; one wrong guess in four costs a single correction.",
+      cause: `Each verification pass keeps every guess up to the first wrong one, plus one word of its own. In wall time on one H100 that is ${SPEC_TIME.serial.toFixed(0)} → ${SPEC_TIME.speculative.toFixed(0)} ms for the answer: the draft model's steps are cheap but not free.`,
       base: "One word per call", optimized: "Draft 4, verify once",
-      cost: { what: `Extra work: ${MIXED.draftTokens} drafted words; verified positions thrown away`, from: 0, to: MIXED.discardedPositions, unit: "positions", digits: 0 },
+      cost: { what: `Extra work: ${MIXED.draftTokens} drafted words, of which these were thrown away`, to: MIXED.draftTokens - MIXED.acceptedTokens, unit: "words", digits: 0 },
       Figure: Modes,
     }),
   },

@@ -88,20 +88,43 @@ function Mechanism({ t }: SceneProps) {
   </svg>;
 }
 
-/** First token vs. the wait for free pages: where routing to the warm replica stops paying. */
+/** The result: both routes on one clock, and where routing to the warm replica stops paying. */
 function Crossover({ t }: SceneProps) {
-  const k = ease.out(prog(t, 400, 2400));
+  const k = ease.io(prog(t, 300, 3200));
+  // left: the two routes on one clock
+  const L = 150, Wd = 420, H = Math.max(S.cold.firstToken, S.warm.firstToken) + 20, sx = (ms: number) => L + (ms / H) * Wd, now = k * H;
+  const lane = (r: typeof S.warm, y: number, label: string, col: string) => {
+    const vis = (a: number, b: number) => Math.max(0, Math.min(b, now) - a);
+    return <g>
+      <text x={0} y={y + 20} className="ma-k">{label}</text>
+      {r.start > 0 && <rect x={sx(0)} y={y} width={(vis(0, r.start) / H) * Wd} height={30} rx={3} fill="none" stroke={C.wait} strokeDasharray="4 3" />}
+      {r.start > 0 && now > r.start && <text x={sx(r.start / 2)} y={y + 50} textAnchor="middle" className="ma-l" style={{ fill: C.wait }}>wait {r.start} ms</text>}
+      <rect x={sx(r.start)} y={y} width={(vis(r.start, r.prefillEnd) / H) * Wd} height={30} rx={3} fill={C.q} opacity={0.85} />
+      {now >= r.prefillEnd && <text x={(sx(r.start) + sx(r.prefillEnd)) / 2} y={y + 20} textAnchor="middle" className="ma-l" style={{ fill: "#1a1205" }}>{r.prefillBlocks} pages read</text>}
+      {now >= r.firstToken && <g><path d={`M${sx(r.firstToken)} ${y - 4}l8 19-8 19-8-19z`} fill={col} /><text x={sx(r.firstToken) + 12} y={y + 20} className="ma-n" style={{ fill: col }}>{r.firstToken} ms</text></g>}
+    </g>;
+  };
+  // right: first token against the wait for free pages
+  const X0 = 700, XW = 470, px = (ms: number) => X0 + (ms / 100) * XW, maxY = 150, py = (v: number) => 330 - (v / maxY) * 280;
   const W = (ms: number) => cacheRoutingStudy({ retained: true, occupied: 8, releaseMs: ms }).warm.firstToken;
-  const px = (ms: number) => 40 + ms * 4.5, py = (v: number) => 122 - v * 0.68;
   const pts = Array.from({ length: 21 }, (_, i) => i * 5).filter((ms) => ms <= 100 * k);
-  return <svg viewBox="0 0 560 150" role="img" aria-label="First token time against the wait for free pages; the warm replica wins while the wait is under 40 ms">
-    <text x={0} y={12} className="ma-l">first token (ms) vs. wait for free pages (ms)</text>
-    <path d={`M40 122H${px(100)}M40 122V12`} className="ma-axis" />
-    <path d={`M${px(0)} ${py(S.cold.firstToken)}H${px(100)}`} stroke="#9cc5f5" strokeDasharray="4 3" fill="none" />
-    <text x={px(100) + 6} y={py(S.cold.firstToken) + 4} className="ma-l" style={{ fill: "#9cc5f5" }}>cold</text>
-    <path d={pts.map((ms, i) => `${i ? "L" : "M"}${px(ms)} ${py(W(ms))}`).join("")} stroke={C.prefix} strokeWidth={2} fill="none" />
-    {k >= 1 && <><circle cx={px(S.crossover ?? 40)} cy={py(S.cold.firstToken)} r={5} fill="#c7a6ff" /><text x={px(S.crossover ?? 40)} y={py(S.cold.firstToken) - 12} textAnchor="middle" className="ma-l" style={{ fill: "#c7a6ff" }}>crossover · {S.crossover} ms wait</text></>}
-    {[0, 20, 40, 60, 80, 100].map((v) => <text key={v} x={px(v)} y={138} textAnchor="middle" className="ma-l">{v}</text>)}
+  return <svg viewBox="0 0 1200 380" role="img" aria-label="Both routes on one clock, and first-token time against the wait for free pages with the crossover marked">
+    <text x={0} y={30} className="ma-l">the same request, routed two ways</text>
+    {lane(S.cold, 70, "Cold replica", "#9cc5f5")}
+    {lane(S.warm, 170, "Warm replica", C.out)}
+    <path d={`M${sx(0)} 262H${sx(H)}`} className="ma-axis" />
+    {[0, 40, 80, 120].filter((v) => v <= H).map((v) => <text key={v} x={sx(v)} y={282} textAnchor="middle" className="ma-l">{v} ms</text>)}
+    <text x={0} y={330} className="ma-k" style={{ fill: C.out }}>{S.delta} ms sooner</text>
+    <text x={0} y={352} className="ma-l">{S.warm.reuse} of {S.promptBlocks} prompt pages were already cached</text>
+    <text x={X0} y={30} className="ma-l">first token (ms) against the warm replica&rsquo;s wait for pages (ms)</text>
+    <path d={`M${X0} 330H${px(100)}M${X0} 330V50`} className="ma-axis" />
+    {[0, 50, 100, 150].map((v) => <text key={v} x={X0 - 8} y={py(v) + 4} textAnchor="end" className="ma-l">{v}</text>)}
+    {[0, 20, 40, 60, 80, 100].map((v) => <text key={v} x={px(v)} y={352} textAnchor="middle" className="ma-l">{v}</text>)}
+    <path d={`M${px(0)} ${py(S.cold.firstToken)}H${px(100)}`} stroke="#9cc5f5" strokeWidth={2} strokeDasharray="6 4" fill="none" />
+    <text x={px(0) + 6} y={py(S.cold.firstToken) - 10} className="ma-l" style={{ fill: "#9cc5f5" }}>cold route</text>
+    {pts.length > 1 && <path d={pts.map((ms, i) => `${i ? "L" : "M"}${px(ms)} ${py(W(ms))}`).join("")} stroke={C.prefix} strokeWidth={2.5} fill="none" />}
+    <text x={px(12)} y={py(W(12)) + 24} className="ma-l" style={{ fill: C.prefix }}>warm route</text>
+    {S.crossover !== null && k >= 0.85 && <g><circle cx={px(S.crossover)} cy={py(S.cold.firstToken)} r={6} fill="#c7a6ff" /><text x={px(S.crossover) - 14} y={py(S.cold.firstToken) - 16} textAnchor="end" className="ma-n" style={{ fill: "#c7a6ff" }}>crossover · {S.crossover} ms wait</text></g>}
   </svg>;
 }
 

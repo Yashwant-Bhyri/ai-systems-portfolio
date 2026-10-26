@@ -117,21 +117,34 @@ function Mechanism({ t }: SceneProps) {
   </svg>;
 }
 
-/** The two streams side by side: the result in one picture. */
+/** The result in one picture: request 1's answer under both schedulers, what filled the gap, and what it cost the document. */
 function Streams({ t }: SceneProps) {
-  const k = ease.out(prog(t, 600, 2600));
-  const row = (trace: StreamTrace, y: number, label: string, col: string) => {
+  const sweepK = ease.io(prog(t, 400, 3800));
+  const now = sweepK * END;
+  const L = 200, R = 1180, sx = (ms: number) => L + (ms / END) * (R - L);
+  const row = (trace: StreamTrace, y: number, title: string, note: string, chunked: boolean) => {
     const g = worstGap(trace);
-    const sx = (ms: number) => 120 + ms * (430 / END);
+    const doc = trace.steps.filter((st) => st.prefill.some((p) => p.id === 3));
+    const ft = trace.requests[2].arrivalMs + (trace.requests[2].ttftMs ?? 0);
+    const col = chunked ? C.dec : "#9cc5f5";
+    const shown = now >= g.b;
     return <g>
-      <text x={0} y={y + 16} className="ma-l">{label}</text>
-      {trace.requests[0].tokenMs.filter((ms) => ms <= k * END).map((ms) => <rect key={ms} x={sx(ms) - 1} y={y} width={2.5} height={22} fill={col} />)}
-      {k >= 1 && <rect x={sx(g.a)} y={y - 3} width={(g.b - g.a) * (430 / END)} height={28} fill="none" stroke={col === C.dec ? C.dec : C.red} strokeWidth={1.5} rx={3} />}
+      <text x={0} y={y + 6} className="ma-k">{title}</text>
+      <text x={0} y={y + 26} className="ma-l">{note}</text>
+      {doc.filter((st) => st.startMs <= now).map((st) => <rect key={st.index} x={sx(st.startMs)} y={y - 34} width={Math.max(1.5, sx(Math.min(st.endMs, now)) - sx(st.startMs) - 1)} height={10} rx={2} fill={C.doc} opacity={0.75} />)}
+      <text x={L} y={y - 42} className="ma-l" style={{ fill: C.doc }}>{chunked ? "the document, a slice per step" : "the document, read in one step"}</text>
+      {shown && <rect x={sx(g.a)} y={y - 18} width={sx(g.b) - sx(g.a)} height={44} rx={4} fill={chunked ? C.dec : C.red} opacity={0.12} />}
+      {trace.requests[0].tokenMs.filter((ms) => ms <= now).map((ms) => <rect key={ms} x={sx(ms) - 1.5} y={y - 14} width={3} height={36} rx={1.5} fill={col} />)}
+      {shown && <text x={(sx(g.a) + sx(g.b)) / 2} y={y + 46} textAnchor="middle" className="ma-n" style={{ fill: chunked ? C.dec : C.red }}>{(g.b - g.a).toFixed(1)} ms without a token</text>}
+      {now >= ft && <g><path d={`M${sx(ft)} ${y - 30}l7 11-7 11-7-11z`} fill={C.doc} /><text x={sx(ft) + 10} y={y - 46} textAnchor="end" className="ma-l" style={{ fill: C.doc }}>document&rsquo;s first token · {ft.toFixed(0)} ms</text></g>}
     </g>;
   };
-  return <svg viewBox="0 0 560 96" role="img" aria-label="Request 1's tokens under both schedulers, worst gap outlined">
-    {row(WHOLE, 10, "baseline", "#9cc5f5")}
-    {row(CHUNKED, 58, "chunked", C.dec)}
+  return <svg viewBox="0 0 1200 360" role="img" aria-label="Request 1's tokens under both schedulers, with the document's prefill above them and its first token marked">
+    {row(WHOLE, 92, "Whole prompt", "baseline", false)}
+    {row(CHUNKED, 232, "1,024-token chunks", "chunked prefill", true)}
+    <path d={`M${L} 314H${R}`} className="ma-axis" />
+    {Array.from({ length: Math.floor(END / 50) + 1 }, (_, i) => i * 50).map((ms) => <text key={ms} x={sx(ms)} y={334} textAnchor="middle" className="ma-l">{ms} ms</text>)}
+    <path d={`M${sx(now)} 40V312`} stroke="#eef2f6" strokeOpacity={0.3} />
   </svg>;
 }
 

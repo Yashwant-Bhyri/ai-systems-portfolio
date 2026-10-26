@@ -130,7 +130,8 @@ export type ImpactSpec = {
   what: string;
   cause: string;
   base: string; optimized: string;
-  cost?: { what: string; from: number; to: number; unit: string; digits?: number };
+  /** The honest price of the gain; `from` is left out when it is a single amount, not a change. */
+  cost?: { what: string; from?: number; to: number; unit: string; digits?: number };
   /** An optional result figure drawn under the bars. */
   Figure?: ComponentType<SceneProps>;
 };
@@ -147,35 +148,51 @@ export function makeImpact(spec: ImpactSpec): ComponentType<SceneProps> {
     const delta = Math.abs(spec.from - spec.to);
     const pct = Math.round((100 * delta) / Math.max(spec.from, 1e-9));
     const showCost = prog(t, 3600, 4300);
+    const bars = (
+      <div className="ma-bars">
+        {[[spec.base, spec.from, "base"], [spec.optimized, spec.to, "opt"]].map(([label, v, tone]) => (
+          <div key={String(tone)} className="ma-bar" data-tone={tone}>
+            <span>{tr(String(label))}</span>
+            <i style={{ width: `${(100 * Number(v) * grow) / max}%` }} />
+            <b>{num(Number(v), spec.digits)} <small>{tr(spec.unit)}</small></b>
+          </div>
+        ))}
+        {spec.cost && (
+          <div className="ma-cost" style={{ opacity: showCost, transform: `translateY(${(1 - showCost) * 8}px)` }}>
+            <span>{tr(spec.cost.what)}</span>
+            <b>{spec.cost.from !== undefined && <>{num(spec.cost.from, spec.cost.digits)} → </>}{num(spec.cost.to, spec.cost.digits)} <small>{tr(spec.cost.unit)}</small></b>
+          </div>
+        )}
+      </div>
+    );
+    const hero = (
+      <div className="ma-hero">
+        <span className="ma-what">{tr(spec.what)}</span>
+        <strong className="cx-hero-num" data-hero={count >= 1 || undefined}>
+          <span className="ma-from">{num(spec.from, spec.digits)}</span>
+          <span className="ma-arrow">→</span>
+          <span>{num(cur, spec.digits)}</span>
+          <small>{tr(spec.unit)}</small>
+        </strong>
+        <span className="ma-delta" style={{ opacity: prog(t, 2400, 3000) }}>Δ {num(delta, spec.digits)} {tr(spec.unit)} · {spec.to < spec.from ? "−" : "+"}{pct}%</span>
+      </div>
+    );
+    // With a result figure: a board across the top (number, cause, bars) and the figure below at full width.
+    if (spec.Figure)
+      return (
+        <div className="ma-impact" data-board>
+          <header className="ma-board">
+            {hero}
+            <p className="ma-cause" style={{ opacity: prog(t, 2800, 3400) }}>{tr(spec.cause)}</p>
+            {bars}
+          </header>
+          <div className="ma-figure"><spec.Figure t={t} /></div>
+        </div>
+      );
     return (
       <div className="ma-impact">
-        <div className="ma-hero">
-          <span className="ma-what">{tr(spec.what)}</span>
-          <strong className="cx-hero-num" data-hero={count >= 1 || undefined}>
-            <span className="ma-from">{num(spec.from, spec.digits)}</span>
-            <span className="ma-arrow">→</span>
-            <span>{num(cur, spec.digits)}</span>
-            <small>{tr(spec.unit)}</small>
-          </strong>
-          <span className="ma-delta" style={{ opacity: prog(t, 2400, 3000) }}>Δ {num(delta, spec.digits)} {tr(spec.unit)} · {spec.to < spec.from ? "−" : "+"}{pct}%</span>
-          <p className="ma-cause" style={{ opacity: prog(t, 2800, 3400) }}>{tr(spec.cause)}</p>
-        </div>
-        <div className="ma-bars">
-          {[[spec.base, spec.from, "base"], [spec.optimized, spec.to, "opt"]].map(([label, v, tone]) => (
-            <div key={String(tone)} className="ma-bar" data-tone={tone}>
-              <span>{tr(String(label))}</span>
-              <i style={{ width: `${(100 * Number(v) * grow) / max}%` }} />
-              <b>{num(Number(v), spec.digits)} <small>{tr(spec.unit)}</small></b>
-            </div>
-          ))}
-          {spec.cost && (
-            <div className="ma-cost" style={{ opacity: showCost, transform: `translateY(${(1 - showCost) * 8}px)` }}>
-              <span>{tr(spec.cost.what)}</span>
-              <b>{num(spec.cost.from, spec.cost.digits)} → {num(spec.cost.to, spec.cost.digits)} <small>{tr(spec.cost.unit)}</small></b>
-            </div>
-          )}
-          {spec.Figure && <div className="ma-figure"><spec.Figure t={t} /></div>}
-        </div>
+        <div className="ma-hero-col">{hero}<p className="ma-cause" style={{ opacity: prog(t, 2800, 3400) }}>{tr(spec.cause)}</p></div>
+        {bars}
       </div>
     );
   }

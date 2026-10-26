@@ -8,7 +8,7 @@ import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-
    (arXiv 2609.33848: a device keeps its identity while its role changes), what
    we built on that idea, and the result. Every segment is the lab's fleet model. */
 const C = { rollout: "#f3a0bc", train: "#ffc267", sync: "#63d4df", idle: "#ff8f86", ink: "#eef2f6" };
-const A = colocated(), B = elastic();
+const A = colocated(), B = elastic(9);
 /** Eight of the 64 GPUs, including the slowest rollout of the first step. */
 const SLOWEST = A.segs.filter((s) => s.step === 0 && s.kind === "rollout").reduce((a, b) => (b.end > a.end ? b : a)).gpu;
 const ROWS = [0, 1, 2, 3, 4, 5, 6, SLOWEST];
@@ -63,18 +63,29 @@ function Idea({ t }: SceneProps) {
   </svg>;
 }
 
-/** Where the fleet's time goes, on one wall clock. */
-function Busy({ t }: SceneProps) {
-  const k = ease.out(prog(t, 500, 2200));
-  const rows: [string, number, string][] = [["synchronous", FLEET.utilA, "#9cc5f5"], ["elastic", FLEET.utilB, "#b8e986"]];
-  return <svg viewBox="0 0 560 120" role="img" aria-label="Share of GPU time spent generating or training">
-    <text x={0} y={14} className="ma-l">GPU time spent generating or training</text>
-    {rows.map(([l, v, c], i) => <g key={l} transform={`translate(0 ${34 + i * 36})`}>
-      <text x={0} y={15} className="ma-l">{l}</text>
-      <rect x={130} y={0} width={300} height={20} rx={3} fill="rgba(255,255,255,.04)" />
-      <rect x={130} y={0} width={300 * v * k} height={20} rx={3} fill={c} opacity={0.88} />
-      <text x={560} y={15} textAnchor="end" className="ma-l" style={{ fill: C.ink }}>{Math.round(v * 100)}%</text>
+/** All 64 GPUs on one wall clock: every row a GPU, every colour a role. */
+function Raster({ t }: SceneProps) {
+  const k = ease.io(prog(t, 300, 3800));
+  const L = 240, R = 1170, span = FLEET.span, sx = (m: number) => L + (m / span) * (R - L), now = k * span, rh = 2.3;
+  const panel = (segs: Segment[], stepEnds: number[], y: number, title: string, share: number) => <g>
+    <text x={0} y={y + 20} className="ma-k">{title}</text>
+    <text x={0} y={y + 40} className="ma-l">{Math.round(share * 100)}% of GPU time</text>
+    <text x={0} y={y + 58} className="ma-l">generating or training</text>
+    {segs.filter((sg) => sg.start < now && sg.start < span).map((sg, i) => (
+      <rect key={i} x={sx(sg.start)} y={y + sg.gpu * rh} width={Math.max(0.5, sx(Math.min(sg.end, now, span)) - sx(sg.start))} height={rh - 0.4}
+        fill={sg.kind === "idle" ? C.idle : C[sg.kind]} opacity={sg.kind === "idle" ? 0.35 : 0.9} />
+    ))}
+    {stepEnds.filter((e) => e <= Math.min(now, span)).map((e, i) => <g key={i}>
+      <path d={`M${sx(e)} ${y - 4}V${y + 64 * rh + 2}`} stroke="#eef2f6" strokeOpacity={0.5} />
+      <text x={sx(e)} y={y - 8} textAnchor="middle" className="ma-l" style={{ fill: C.ink }}>{i + 1}</text>
     </g>)}
+  </g>;
+  return <svg viewBox="0 0 1200 380" role="img" aria-label="All 64 GPUs over 14 minutes: the synchronous fleet idles at every barrier; the elastic fleet stays busy and completes more RL steps">
+    {panel(A.segs, A.stepEnds, 26, "Synchronous", FLEET.utilA)}
+    {panel(B.segs.filter((sg) => sg.start < span), B.stepEnds.filter((e) => e <= span), 206, "Elastic roles", FLEET.utilB)}
+    <path d={`M${L} 362H${R}`} className="ma-axis" />
+    {Array.from({ length: Math.floor(span / 2) + 1 }, (_, i) => i * 2).map((m) => <text key={m} x={sx(m)} y={376} textAnchor="middle" className="ma-l">{m} min</text>)}
+    <text x={0} y={376} className="ma-l">numbered lines: an RL step completes</text>
   </svg>;
 }
 
@@ -92,8 +103,8 @@ export const FLEET_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat;
       what: `RL steps completed by 64 GPUs in ${FLEET.span.toFixed(0)} minutes`,
       cause: `No GPU idles at the barrier: a finished GPU trains at once, so a step takes ${FLEET.stepB.toFixed(2)} instead of ${FLEET.stepA.toFixed(2)} minutes (${(FLEET.stepA / FLEET.stepB).toFixed(2)}×).`,
       base: "Synchronous barrier", optimized: "Elastic roles",
-      cost: { what: "Cost: a straggler's rollout trains one step late (policy staleness)", from: 0, to: 1, unit: "step", digits: 0 },
-      Figure: Busy,
+      cost: { what: "Cost: a straggler's rollout trains one step late (policy staleness)", to: 1, unit: "step of staleness", digits: 0 },
+      Figure: Raster,
     }),
   },
 };

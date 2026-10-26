@@ -1,7 +1,7 @@
 "use client";
 
 import { inferenceStoryRuns } from "../lab-story-data";
-import { STEP_OVERHEAD, fmtMs, prefillSeconds, rateCard } from "../calibration";
+import { STEP_OVERHEAD, fmtMs, kvBytesPerToken, prefillSeconds, rateCard, weightBytes } from "../calibration";
 import { BATCHING } from "../batching-result";
 import type { LabRun, Workload } from "../lab-simulation";
 import { ease, prog } from "../../exhibit/engine";
@@ -132,50 +132,104 @@ function Rates({ t }: SceneProps) {
   </svg>;
 }
 
-/* ── Result figures ───────────────────────────────────────────────────── */
-function TwoWorkloads({ metric, label, digits = 0, from, to }: { metric: (r: LabRun) => number; label: string; digits?: number; from: number; to: number }) {
+/* ── Result figures, full width ───────────────────────────────────────── */
+
+/** Continuous batching: every request's response time, ranked, before and after; and what sharing each step would do. */
+function batchingFigure(w: Workload) {
+  const [a, b] = [RUNS[w][0], RUNS[w][1]];
+  const ranked = (r: LabRun) => r.tasks.map((x) => x.latency).sort((p, q) => p - q);
+  const A = ranked(a), B = ranked(b), maxL = Math.max(A[95], B[95]);
   function Fig({ t }: SceneProps) {
-    const k = ease.out(prog(t, 500, 2200));
-    const rows: [string, number, number][] = [["one shared document", metric(RUNS["shared-prefix"][from]), metric(RUNS["shared-prefix"][to])], ["different documents", metric(RUNS.interactive[from]), metric(RUNS.interactive[to])]];
-    return <svg viewBox="0 0 560 120" role="img" aria-label={`${label} for both workloads`}>
-      <text x={0} y={14} className="ma-l">{label}, both workloads</text>
-      {rows.map(([l, a, b], i) => <g key={l} transform={`translate(0 ${34 + i * 40})`}>
-        <text x={0} y={16} className="ma-l">{l}</text>
-        {/* each workload on its own scale: the change, not the absolute size, is the point */}
-        <rect x={170} y={0} width={(a / Math.max(a, b)) * 250 * k} height={9} rx={2} fill="#9cc5f5" opacity={0.85} />
-        <rect x={170} y={11} width={(b / Math.max(a, b)) * 250 * k} height={9} rx={2} fill={C.b} opacity={0.9} />
-        <text x={560} y={16} textAnchor="end" className="ma-l" style={{ fill: C.ink }}>{fmt(a, digits)} → {fmt(b, digits)}</text>
-      </g>)}
+    const k = ease.io(prog(t, 300, 3200));
+    const L = 70, W = 600, top = 50, H = 270, sx = (i: number) => L + (i / 95) * W, sy = (v: number) => top + H - (v / maxL) * H;
+    const n = Math.round(k * 95);
+    const line = (arr: number[]) => arr.slice(0, n + 1).map((v, i) => `${i ? "L" : "M"}${sx(i)} ${sy(v)}`).join("");
+    const p95 = Math.ceil(0.95 * 96) - 1;
+    const bars: [string, number, string][] = [["one request per worker (this film)", BATCHING.serialPerCorrect, "#9cc5f5"], ["every running request in each step", BATCHING.batchedPerCorrect, C.b]];
+    return <svg viewBox="0 0 1200 380" role="img" aria-label="Response time of all 96 requests ranked, before and after; and GPU-seconds per correct answer with iteration-level batching">
+      <text x={L} y={24} className="ma-l">response time of each of the 96 requests, ranked (s)</text>
+      <path d={`M${L} ${top + H}H${L + W}M${L} ${top}V${top + H}`} className="ma-axis" />
+      {[0, 0.5, 1].map((f) => <text key={f} x={L - 8} y={sy(f * maxL) + 4} textAnchor="end" className="ma-l">{fmt(f * maxL, 0)}</text>)}
+      <path d={line(A)} fill="none" stroke="#9cc5f5" strokeWidth={2.5} />
+      <path d={line(B)} fill="none" stroke={C.b} strokeWidth={2.5} />
+      {k >= 1 && <g>
+        <path d={`M${sx(p95)} ${sy(A[p95])}V${sy(B[p95])}`} stroke="#c7a6ff" strokeWidth={2} strokeDasharray="4 3" />
+        <text x={L + 20} y={top + 24} className="ma-n" style={{ fill: "#9cc5f5" }}>fixed pairs · p95 {fmt(A[p95], 0)} s</text>
+        <text x={L + 20} y={top + 50} className="ma-n" style={{ fill: C.b }}>first free worker · p95 {fmt(B[p95], 0)} s</text>
+      </g>}
+      <text x={L + W / 2} y={top + H + 30} textAnchor="middle" className="ma-l">requests, fastest to slowest</text>
+      <g transform="translate(760 40)">
+        <text x={0} y={0} className="ma-k">Going further: share each step</text>
+        <text x={0} y={22} className="ma-l">serving simulator, same cohort, GPU-s per correct answer</text>
+        {bars.map(([l, v, c], i) => <g key={l} transform={`translate(0 ${60 + i * 92})`}>
+          <text x={0} y={0} className="ma-l">{l}</text>
+          <rect x={0} y={12} width={(v / BATCHING.serialPerCorrect) * 400 * k} height={30} rx={3} fill={c} opacity={0.88} />
+          <text x={0} y={66} className="ma-n" style={{ fill: C.ink }}>{fmt(v, 2)}</text>
+        </g>)}
+        <text x={0} y={262} className="ma-l">one 8 GB weight read serves every running answer,</text>
+        <text x={0} y={282} className="ma-l">and p95 falls to {fmt(BATCHING.batchedP95, 0)} s</text>
+      </g>
     </svg>;
   }
   return Fig;
 }
-function Ladder({ t }: SceneProps) {
-  const k = ease.out(prog(t, 500, 2400));
-  const runs = RUNS["shared-prefix"];
-  const names = ["paired baseline", "+ first free worker", "+ prefix reuse", "+ FP8 kernels"];
-  const max = runs[0].correctCost!;
-  return <svg viewBox="0 0 560 150" role="img" aria-label="GPU-seconds per correct answer after each technique">
-    <text x={0} y={14} className="ma-l">GPU-s per correct answer, one shared document</text>
-    {names.map((n, i) => <g key={n} transform={`translate(0 ${30 + i * 28})`}>
-      <text x={0} y={14} className="ma-l">{n}</text>
-      <rect x={190} y={2} width={(runs[i].correctCost! / max) * 280 * k} height={16} rx={2} fill={i === 3 ? C.b : "#9cc5f5"} opacity={0.85} />
-      <text x={560} y={14} textAnchor="end" className="ma-l" style={{ fill: C.ink }}>{fmt(runs[i].correctCost!, 2)}</text>
-    </g>)}
-  </svg>;
+
+/** Prefix reuse: each request's prompt work, before and after, and where the GPU time actually goes. */
+function reuseFigure(w: Workload) {
+  const [a, b] = [RUNS[w][1], RUNS[w][2]];
+  const maxP = Math.max(...a.tasks.map((x) => x.prefill));
+  const share = (r: LabRun) => r.tasks.reduce((x, q) => x + q.prefill, 0) / r.gpuSeconds;
+  function Fig({ t }: SceneProps) {
+    const k = ease.io(prog(t, 300, 3000));
+    const L = 140, W = 700, bw = W / 96;
+    const lane = (r: LabRun, y: number, label: string, col: string) => <g>
+      <text x={0} y={y - 24} className="ma-k">{label}</text>
+      <path d={`M${L} ${y}H${L + W}`} className="ma-axis" />
+      {r.tasks.slice(0, Math.round(k * 96)).map((q, i) => <rect key={i} x={L + i * bw + 0.5} y={y - (q.prefill / maxP) * 110} width={Math.max(1, bw - 1.5)} height={(q.prefill / maxP) * 110} fill={q.cacheHit ? C.c : col} opacity={0.88} />)}
+    </g>;
+    return <svg viewBox="0 0 1200 380" role="img" aria-label="Prompt-reading GPU time of each request, before and after reuse, and the share of all GPU time it represents">
+      <text x={L} y={22} className="ma-l">prompt-reading time of each of the 96 requests (tallest = {fmt(maxP * 1000, 0)} ms)</text>
+      {lane(a, 170, "Read every time", C.doc)}
+      {lane(b, 340, "Read once, reuse", C.doc)}
+      <text x={L + W + 8} y={336} className="ma-l" style={{ fill: C.c }}>cyan: cache hit</text>
+      <g transform="translate(900 70)">
+        <text x={0} y={0} className="ma-k">Where the GPU time goes</text>
+        {[["before", share(a)], ["after", share(b)]].map(([l, v], i) => <g key={String(l)} transform={`translate(0 ${40 + i * 110})`}>
+          <text x={0} y={0} className="ma-l">{l}</text>
+          <rect x={0} y={12} width={260} height={28} rx={3} fill={C.b} opacity={0.35} />
+          <rect x={0} y={12} width={Math.max(2, 260 * Number(v)) * k} height={28} rx={3} fill={C.doc} />
+          <text x={0} y={62} className="ma-l" style={{ fill: C.ink }}>reading prompts {(100 * Number(v)).toFixed(1)}% · answering {(100 - 100 * Number(v)).toFixed(1)}%</text>
+        </g>)}
+      </g>
+    </svg>;
+  }
+  return Fig;
 }
 
-const BATCHED = { serial: BATCHING.serialPerCorrect, batched: BATCHING.batchedPerCorrect };
-function Batched({ t }: SceneProps) {
-  const k = ease.out(prog(t, 600, 2400));
-  const rows: [string, number, string][] = [["one request per worker (this lab)", BATCHED.serial, "#9cc5f5"], ["every running request in each step", BATCHED.batched, C.b]];
-  return <svg viewBox="0 0 560 130" role="img" aria-label="GPU-seconds per correct answer when requests share each engine step">
-    <text x={0} y={14} className="ma-l">going further: GPU-s per correct answer, iteration-level batching</text>
-    {rows.map(([l, v, c], i) => <g key={l} transform={`translate(0 ${34 + i * 40})`}>
-      <text x={0} y={14} className="ma-l">{l}</text>
-      <rect x={0} y={20} width={(v / BATCHED.serial) * 470 * k} height={12} rx={2} fill={c} opacity={0.88} />
-      <text x={560} y={31} textAnchor="end" className="ma-l" style={{ fill: C.ink }}>{fmt(v, 2)}</text>
+/** FP8: what one decode step reads, in bytes and in milliseconds, and the whole ladder. */
+function Bytes({ t }: SceneProps) {
+  const k = ease.io(prog(t, 300, 3000));
+  const ctx = 10_000;
+  const rows = [false, true].map((fast) => ({ fast, weights: weightBytes(fast), kv: ctx * kvBytesPerToken(fast), ms: rateCard(fast).outputMs }));
+  const maxB = rows[0].weights + rows[0].kv, W = 520, gb = (v: number) => (v / 1e9).toFixed(2);
+  const runs = RUNS["shared-prefix"], names = ["paired baseline", "+ first free worker", "+ prefix reuse", "+ FP8 weights and KV"], max = runs[0].correctCost!;
+  return <svg viewBox="0 0 1200 380" role="img" aria-label="Bytes read by one decode step in BF16 and FP8, and GPU-seconds per correct answer after each technique">
+    <text x={0} y={22} className="ma-l">one decode step at a 10k-token context reads the weights and the request&rsquo;s KV cache</text>
+    {rows.map((r, i) => <g key={String(r.fast)} transform={`translate(0 ${60 + i * 120})`}>
+      <text x={0} y={18} className="ma-k">{r.fast ? "FP8" : "BF16"}</text>
+      <rect x={90} y={0} width={(r.weights / maxB) * W * k} height={30} rx={3} fill={r.fast ? C.b : "#9cc5f5"} opacity={0.9} />
+      <rect x={90 + (r.weights / maxB) * W * k} y={0} width={(r.kv / maxB) * W * k} height={30} rx={3} fill={C.c} opacity={0.75} />
+      <text x={90} y={52} className="ma-l">weights {gb(r.weights)} GB + KV {gb(r.kv)} GB</text>
+      <text x={90 + W} y={52} textAnchor="end" className="ma-n" style={{ fill: C.ink }}>{fmtMs(r.ms)} ms a token</text>
     </g>)}
+    <g transform="translate(700 40)">
+      <text x={0} y={0} className="ma-l">GPU-s per correct answer, one shared document</text>
+      {names.map((n, i) => <g key={n} transform={`translate(0 ${30 + i * 70})`}>
+        <text x={0} y={0} className="ma-l">{n}</text>
+        <rect x={0} y={10} width={(runs[i].correctCost! / max) * 380 * k} height={24} rx={3} fill={i === 3 ? C.b : "#9cc5f5"} opacity={0.85} />
+        <text x={480} y={28} textAnchor="end" className="ma-n" style={{ fill: C.ink }}>{fmt(runs[i].correctCost!, 2)}</text>
+      </g>)}
+    </g>
   </svg>;
 }
 
@@ -193,7 +247,7 @@ export const FILM_ARCS: Record<number, FilmArc> = {
         from: a.p95, to: b.p95, unit: "s", digits: w === "interactive" ? 1 : 0, what: "p95 response time across the 96 requests",
         cause: `Requests no longer wait for a partner to finish; each still runs alone on its H100, so the GPU work is unchanged at ${fmt(b.gpuSeconds)} GPU-s. Sharing each step across requests is what cuts the work (below).`,
         base: "Fixed pairs", optimized: "First free worker",
-        Figure: Batched,
+        Figure: batchingFigure(w),
       }) };
     },
   },
@@ -208,7 +262,7 @@ export const FILM_ARCS: Record<number, FilmArc> = {
         from: pre(a), to: pre(b), unit: "GPU-s of prompt reading", digits: 1, what: "Prefill work for the 96 requests",
         cause: w === "interactive" ? "Every request brings a different document, so no prefix is ready to reuse; the work is unchanged." : `The shared document is prefilled once per group; later requests reference its KV pages and read only their 384-token question. That is ${share.toFixed(1)}% of all GPU time here: the ~5,600-token answers dominate. Reuse pays most when prompts are long and answers short.`,
         base: "Read every time", optimized: "Read once, reuse",
-        Figure: TwoWorkloads({ metric: (r) => r.tasks.reduce((x, t) => x + t.prefill, 0), label: "GPU-s of prompt reading", from: 1, to: 2, digits: 1 }),
+        Figure: reuseFigure(w),
       }) };
     },
   },
@@ -221,7 +275,7 @@ export const FILM_ARCS: Record<number, FilmArc> = {
         from: a.correctCost!, to: b.correctCost!, unit: "GPU-s per correct answer", digits: 2, what: "Cost of each correct answer",
         cause: `Decode reads the weights every step: 8.04 GB in BF16, 4.02 GB in FP8, so an output token falls from ${fmtMs(rateCard(false).outputMs)} to ${fmtMs(rateCard(true).outputMs)} ms on one H100. Same tokens, same answers.`,
         base: "BF16", optimized: "FP8 weights and KV",
-        Figure: Ladder,
+        Figure: Bytes,
       }) };
     },
   },

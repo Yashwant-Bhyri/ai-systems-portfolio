@@ -74,20 +74,30 @@ function Mechanism({ t }: SceneProps) {
   </svg>;
 }
 
-/** The same four steps on three hosts: the gain is the CPU time it can hide. */
+/** The result: the GPU's own lane, in series and overlapped, on three hosts. Busy is green, waiting is red. */
 function Hosts({ t }: SceneProps) {
-  const k = ease.out(prog(t, 500, 2200));
-  const rows: [string, number, number][] = [["balanced host", S.baseline.finish, S.overlapped.finish], ["slower CPU", SLOW.baseline.finish, SLOW.overlapped.finish], ["no CPU overhead", NONE.baseline.finish, NONE.overlapped.finish]];
-  return <svg viewBox="0 0 560 150" role="img" aria-label="Elapsed time for four decode steps, before and after overlap, on three hosts">
-    <text x={0} y={14} className="ma-l">four decode steps, ms: in series → overlapped</text>
-    {rows.map(([label, a, b], i) => (
-      <g key={label} transform={`translate(0 ${34 + i * 38})`}>
-        <text x={0} y={16} className="ma-l">{label}</text>
-        <rect x={150} y={0} width={(a / HOST_MAX) * 300 * k} height={9} rx={2} fill="#9cc5f5" opacity={0.8} />
-        <rect x={150} y={11} width={(b / HOST_MAX) * 300 * k} height={9} rx={2} fill={C.gpu} opacity={0.9} />
-        <text x={470} y={16} className="ma-l" style={{ fill: C.ink }}>{a} → {b}</text>
-      </g>
-    ))}
+  const k = ease.io(prog(t, 300, 3400));
+  const L = 230, R = 1100, span = HOST_MAX, sx = (ms: number) => L + (ms / span) * (R - L), now = k * span;
+  const gpuLane = (lane: OverlapLane, y: number, label: string) => {
+    const busy = lane.steps.map((st) => st.gpu);
+    const idle = lane.gaps.concat(lane.steps[0].gpu.start > 0 ? [{ start: 0, end: lane.steps[0].gpu.start }] : [], [{ start: lane.steps.at(-1)!.gpu.end, end: lane.finish }]).filter((g) => g.end > g.start);
+    return <g>
+      <text x={L - 12} y={y + 15} textAnchor="end" className="ma-l">{label}</text>
+      {busy.filter((g) => g.start < now).map((g, i) => <rect key={`b${i}`} x={sx(g.start) + 0.5} y={y} width={Math.max(0, sx(Math.min(g.end, now)) - sx(g.start) - 1)} height={20} rx={2} fill={C.gpu} opacity={0.88} />)}
+      {idle.filter((g) => g.start < now).map((g, i) => <rect key={`i${i}`} x={sx(g.start) + 0.5} y={y + 1} width={Math.max(0, sx(Math.min(g.end, now)) - sx(g.start) - 1)} height={18} rx={2} fill="none" stroke={C.idle} strokeDasharray="3 2" />)}
+      {now >= lane.finish && <text x={sx(lane.finish) + 8} y={y + 15} className="ma-l" style={{ fill: C.ink }}>{lane.finish} ms</text>}
+    </g>;
+  };
+  const hosts: [string, string, typeof S][] = [["Balanced host", "modern engine: 1.5 ms prepare, 1 ms deliver", S], ["Slower CPU", "Python scheduler: 4 ms prepare, 2 ms deliver", SLOW], ["No CPU overhead", "nothing to hide", NONE]];
+  return <svg viewBox="0 0 1200 380" role="img" aria-label="The GPU lane for four decode steps, in series and overlapped, on three hosts">
+    <text x={0} y={22} className="ma-l">the GPU&rsquo;s lane for the same four decode steps · green busy, red waiting on the CPU</text>
+    {hosts.map(([name, note, st], i) => <g key={name} transform={`translate(0 ${48 + i * 108})`}>
+      <text x={0} y={18} className="ma-k">{name}</text>
+      {gpuLane(st.baseline, 4, "in series")}
+      {gpuLane(st.overlapped, 32, "overlapped")}
+      <text x={L} y={76} className="ma-l">{note}</text>
+      {now >= st.baseline.finish && <text x={R + 4} y={60} textAnchor="end" className="ma-n" style={{ fill: st.savedElapsed > 0 ? C.gpu : "#8794a1" }}>{st.savedElapsed > 0 ? `−${st.savedElapsed} ms` : "no gain"}</text>}
+    </g>)}
   </svg>;
 }
 
