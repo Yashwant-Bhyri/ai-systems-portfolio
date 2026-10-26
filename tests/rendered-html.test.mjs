@@ -103,15 +103,16 @@ test("renders both compute projects as complete, navigable flagship chapters", a
   assert.match(html, /Expand operation/);
   assert.match(html, /Operation story beats/);
   assert.match(html, /Pause architecture animation/);
-  assert.match(html, /Many requests\. Shared computation\. Separate state\./);
+  assert.match(html, /Three requests share one GPU batch; each keeps its own KV pages\./);
   assert.match(html, /First change the policy\. Then give it more room to think\./);
   assert.match(html, /cx-project-preview/);
   assert.match(html, /Illustrative replay/);
-  assert.match(html, /GPU-seconds per valid correct answer/);
-  assert.match(html, /TTC-AUC/);
+  // The laboratory names its two branches and the techniques under each (round-4 copy).
+  assert.match(html, /Same intelligence, cheaper execution/);
+  assert.match(html, /Serving under load/);
+  assert.match(html, /Speculative decoding/);
   assert.match(html, /Go deeper/);
   assert.match(html, /Illustrative, not measured/);
-  assert.match(html, /What made the same answer cheaper/);
   assert.match(html, /What did the model learn/);
   assert.match(html, /Watch the experiment/);
   assert.match(html, /Explore the figures/);
