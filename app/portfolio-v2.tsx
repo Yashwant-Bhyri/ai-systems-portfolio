@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -27,6 +28,7 @@ import { LangSwitch } from "./i18n/lang-switch";
 import { COMPUTE_PROJECTS, INFERENCE_STEPS, TRAINING_STEPS, INFERENCE_PROOF, TRAINING_PROOF } from "./compute-projects";
 import { InferenceOverview, TrainingOverview, InferenceVisual, TrainingVisual, ComputeProjectPreview } from "./compute-visuals";
 import { ComputeStudy } from "./compute-study";
+import { ProjectPoster } from "./posters/posters";
 
 const assetPath = (path: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 
@@ -70,7 +72,7 @@ type OverviewComponent = ComponentType<{ active: number; onSelect: (index: numbe
 type VisualComponent = ComponentType<{ active: number; playing?: boolean; onInspect?: () => void; onPlay?: () => void }>;
 type ProjectAccent = "lime" | "violet" | "cyan" | "amber" | "rose";
 
-const PROJECTS = [
+const ALL_PROJECTS = [
   {
     id: "antigravity",
     number: "01",
@@ -95,7 +97,7 @@ const PROJECTS = [
   },
   {
     id: "mindscape",
-    number: "03",
+    number: "02",
     brand: "MINDSCAPE",
     category: "Medical AI Clinician-Support Product",
     badge: "MEDICAL AI R&D PROJECT",
@@ -261,6 +263,8 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
     proof: "Question quality and runtime behavior remain inspectable",
   },
 ];
+/** Filmora is set aside for another time (round 6); its chapter stays in the code. */
+const PROJECTS = ALL_PROJECTS.filter((p) => p.id !== "filmora");
 
 const FILMORA_STEPS: readonly StoryStep[] = [
   {
@@ -1823,6 +1827,7 @@ function FlagshipChapter({
   proof,
   architecturePath,
   children,
+  part = "full",
 }: {
   id: string;
   number: string;
@@ -1837,6 +1842,8 @@ function FlagshipChapter({
   proof: readonly { label: string; value: string; detail: string }[];
   architecturePath: readonly number[];
   children?: React.ReactNode;
+  /** "overview": only the architecture page; the microscope and laboratory live on the project's own route. */
+  part?: "overview" | "full";
 }) {
   const reducedMotion = useReducedMotion();
   const overviewRef = useRef<HTMLElement>(null);
@@ -1858,6 +1865,15 @@ function FlagshipChapter({
     reducedMotion,
   });
 
+  // Arriving from the main page's architecture with ?step=n opens that component in the microscope.
+  const chooseRef = useRef(controller.choose);
+  useEffect(() => { chooseRef.current = controller.choose; });
+  useEffect(() => {
+    if (part !== "full") return;
+    const q = new URLSearchParams(window.location.search).get("step");
+    if (q !== null && !Number.isNaN(Number(q))) chooseRef.current(Number(q));
+  }, [part]);
+
   // Other parts of the chapter (the serving glossary) can open a microscope step directly.
   useEffect(() => {
     const open = (event: Event) => {
@@ -1875,11 +1891,13 @@ function FlagshipChapter({
     return () => window.removeEventListener("cx:microscope", open);
   }, [controller, id]);
 
+  const deep = part === "overview" ? `/${id}` : "";
   const selectArchitectureNode = useCallback((index: number) => {
+    if (part === "overview") { window.location.href = `/${id}?step=${index}#${id}-microscope`; return; }
     controller.choose(index);
     if ((id === "inference" || id === "post-training") && controller.autoplayEnabled) controller.toggle();
     moveToMicroscope();
-  }, [controller, id, moveToMicroscope]);
+  }, [controller, id, moveToMicroscope, part]);
 
   return (
     <>
@@ -1892,7 +1910,7 @@ function FlagshipChapter({
       >
         <div className="vx-section-shell">
           <CaseHeading number={number} brand={brand} category={category} title={title} copy={copy} accent={accent} />
-          {(id === "inference" || id === "post-training") && <p className="cx-scientific-claim"><span>RESEARCH OBJECTIVE</span>{id === "inference" ? "Same model, same requests: the serving runtime does less work per answer." : "Raise verified accuracy per GPU-second across thought allowances (synthetic 96-task cohort)."}<a href={`#${id}-study`}>Explore the result figures ↗</a></p>}
+          {(id === "inference" || id === "post-training") && <p className="cx-scientific-claim"><span>RESEARCH OBJECTIVE</span>{id === "inference" ? "Same model, same requests: the serving runtime does less work per answer." : "Raise verified accuracy per GPU-second across thought allowances (synthetic 96-task cohort)."}<a href={`${deep}#${id}-study`}>Explore the result figures ↗</a></p>}
           <div className="vx-overview-shell">
             <div className="vx-overview-top">
               <span>HIGH-LEVEL ARCHITECTURE</span>
@@ -1904,14 +1922,22 @@ function FlagshipChapter({
               onSelect={selectArchitectureNode}
             />
           </div>
-          <button type="button" className="vx-architecture-handoff" onClick={moveToMicroscope}>
-            <span>{id === "inference" || id === "post-training" ? "Inspect the mechanisms" : "Architecture complete"}</span>
-            <strong>Continue into the component microscope</strong>
-            <i>↓</i>
-          </button>
+          {part === "overview" ? (
+            <a className="vx-architecture-handoff" href={`${deep}#${id}-microscope`}>
+              <span>Inspect the mechanisms</span>
+              <strong>Open the component microscope</strong>
+              <i>↗</i>
+            </a>
+          ) : (
+            <button type="button" className="vx-architecture-handoff" onClick={moveToMicroscope}>
+              <span>{id === "inference" || id === "post-training" ? "Inspect the mechanisms" : "Architecture complete"}</span>
+              <strong>Continue into the component microscope</strong>
+              <i>↓</i>
+            </button>
+          )}
         </div>
       </section>
-      <section
+      {part === "full" && <section
         ref={microscopeRef}
         id={`${id}-microscope`}
         className={`vx-case-microscope-page vx-case-${id} vx-accent-${accent} vx-page`}
@@ -1934,7 +1960,7 @@ function FlagshipChapter({
             conclusionExtra={children}
           />
         </div>
-      </section>
+      </section>}
     </>
   );
 }
@@ -1965,6 +1991,8 @@ function AntigravityChapter() {
   );
 }
 
+// Set aside in round 6 ("something for another time"); kept for when it returns.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function FilmoraChapter() {
   return (
     <FlagshipChapter
@@ -1997,7 +2025,7 @@ function MindScapeChapter() {
   return (
     <FlagshipChapter
       id="mindscape"
-      number="03"
+      number="02"
       brand="MINDSCAPE"
       category="MEDICAL AI R&D PROJECT · CLINICIAN-SUPPORT PRODUCT"
       title="A medical AI assistant for evidence-grounded, clinician-controlled mental-health screening and diagnostic review."
@@ -2021,9 +2049,9 @@ function MindScapeChapter() {
   );
 }
 
-function InferenceChapter() {
-  return <FlagshipChapter
-    id="inference" number="04" brand="INFERENCE OPTIMIZATION ENGINE"
+export function InferenceChapter({ part = "full" }: { part?: "overview" | "full" }) {
+  return <FlagshipChapter part={part}
+    id="inference" number="03" brand="INFERENCE OPTIMIZATION ENGINE"
     category="LLM SERVING · GPU ACCELERATION · RUNTIME EFFICIENCY · 2026"
     title="From queued prompt to streamed token, every layer of execution matters."
     copy="I engineered ⟪LLM inference pipelines⟫ across KV-cache optimization, dynamic batching, memory management, quantization, GPU profiling, and kernel-level optimization. The work connects ⟪CUDA, TensorRT, and vLLM⟫ with distributed model serving, focusing on latency, throughput, and GPU memory efficiency."
@@ -2032,9 +2060,9 @@ function InferenceChapter() {
   />;
 }
 
-function TrainingChapter() {
-  return <FlagshipChapter
-    id="post-training" number="05" brand="ADVANCED POST-TRAINING"
+export function TrainingChapter({ part = "full" }: { part?: "overview" | "full" }) {
+  return <FlagshipChapter part={part}
+    id="post-training" number="04" brand="ADVANCED POST-TRAINING"
     category="ALIGNMENT · RL OPTIMIZATION · TEST-TIME SCALING · 2026"
     title="A foundation model learns to reason, then spends compute checking its work."
     copy="I developed a ⟪Qwen3-4B reasoning-model post-training pipeline⟫ using supervised reasoning fine-tuning and reinforcement-based preference optimization. The iterative loop combines ⟪SFT, GRPO-style policy updates, verifier-guided trajectories, and test-time compute scaling⟫ for mathematics, multi-step logic, and long-horizon software engineering."
@@ -2362,7 +2390,7 @@ export function PortfolioV2() {
         <div className="vx-cursor-light" aria-hidden="true" />
         <header className="vx-header">
           <a href="#top" className="vx-brand" aria-label="Yashwant Bhyri, portfolio home"><span>YB</span><div><strong>Yashwant Bhyri</strong><small>{t.brand.subtitle}</small></div></a>
-          <nav aria-label="Portfolio navigation"><a href="#profile">{t.nav.profile}</a><a href="#projects">{t.nav.projects}</a><a href="#antigravity">{t.nav.antigravity}</a><a href="#filmora">{t.nav.filmora}</a><a href="#mindscape">{t.nav.mindscape}</a><a href="#inference">Inference</a><a href="#post-training">Post-training</a><a href="#research">{t.nav.research}</a><a href="#contact">{t.nav.contact}</a></nav>
+          <nav aria-label="Portfolio navigation"><a href="#profile">{t.nav.profile}</a><a href="#projects">{t.nav.projects}</a><a href="#antigravity">{t.nav.antigravity}</a><a href="#mindscape">{t.nav.mindscape}</a><a href="#inference">Inference</a><a href="#post-training">Post-training</a><a href="#research">{t.nav.research}</a><a href="#contact">{t.nav.contact}</a></nav>
           <a className="vx-header-resume" href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">{t.resume}</a>
           <LangSwitch />
         </header>
@@ -2370,12 +2398,12 @@ export function PortfolioV2() {
         <ProfileSection />
         <ProjectIndex />
         <AntigravityChapter />
-        <FilmoraChapter />
         <MindScapeChapter />
-        <InferenceChapter />
-        <ComputeStudy domain="inference" />
-        <TrainingChapter />
-        <ComputeStudy domain="training" />
+        {/* Two levels: the architecture and a poster here; microscope and laboratory on /inference and /post-training */}
+        <InferenceChapter part="overview" />
+        <ProjectPoster domain="inference" />
+        <TrainingChapter part="overview" />
+        <ProjectPoster domain="training" />
         <ResearchSection />
         <ContactSection />
         <ContactDock />
@@ -2383,3 +2411,33 @@ export function PortfolioV2() {
     </>
   );
 }
+
+/** A project in depth: high-level architecture → component microscope → results laboratory. */
+export function ProjectDepthPage({ domain }: { domain: "inference" | "training" }) {
+  const reducedMotion = useReducedMotion();
+  const shellRef = useRef<HTMLElement>(null);
+  const t = useT();
+  useExperienceMotion(shellRef, reducedMotion);
+  const id = domain === "inference" ? "inference" : "post-training";
+  return (
+    <main ref={shellRef} className="vx-shell vx-depth">
+      <div className="vx-progress" aria-hidden="true"><i /></div>
+      <div className="vx-cursor-light" aria-hidden="true" />
+      <header className="vx-header">
+        <Link href="/" className="vx-brand" aria-label="Yashwant Bhyri, portfolio home"><span>YB</span><div><strong>Yashwant Bhyri</strong><small>{t.brand.subtitle}</small></div></Link>
+        <nav aria-label="Project navigation">
+          <Link href="/#projects">All projects</Link>
+          <a href={`#${id}`}>Architecture</a>
+          <a href={`#${id}-microscope`}>Component microscope</a>
+          <a href={`#${id}-study`}>Results laboratory</a>
+        </nav>
+        <a className="vx-header-resume" href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">{t.resume}</a>
+        <LangSwitch />
+      </header>
+      {domain === "inference" ? <InferenceChapter /> : <TrainingChapter />}
+      <ComputeStudy domain={domain} />
+      <ContactDock />
+    </main>
+  );
+}
+

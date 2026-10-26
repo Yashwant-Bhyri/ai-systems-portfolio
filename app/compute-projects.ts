@@ -2,7 +2,7 @@ import type { StoryStep, ConclusionMetric } from "./i18n/types";
 
 export const COMPUTE_PROJECTS = [
   {
-    id: "inference", number: "04", brand: "INFERENCE OPTIMIZATION", accent: "amber",
+    id: "inference", number: "03", brand: "INFERENCE OPTIMIZATION", accent: "amber",
     category: "LLM Serving, GPU Acceleration & Runtime Efficiency",
     badge: "INFERENCE SYSTEMS ENGINEERING · 2026",
     summary: "Make identical cognition cheaper to execute. A workload-aware serving pipeline connects batching, KV reuse, GPU execution, and controlled cost-per-correct-answer evaluation.",
@@ -10,7 +10,7 @@ export const COMPUTE_PROJECTS = [
     architecture: ["Schedule requests", "Allocate KV pages", "Execute on GPUs", "Profile + stream tokens"],
   },
   {
-    id: "post-training", number: "05", brand: "ADVANCED POST-TRAINING", accent: "rose",
+    id: "post-training", number: "04", brand: "ADVANCED POST-TRAINING", accent: "rose",
     category: "Reasoning, Alignment & Test-Time Scaling",
     badge: "REASONING MODEL RESEARCH · 2026",
     summary: "Improve verified reasoning across actual compute budgets. Follow Qwen3-4B through supervised learning, relative policy optimization, and fixed-checkpoint search, with explicit evidence gates.",
