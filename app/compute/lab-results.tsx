@@ -46,6 +46,9 @@ import "./stagecraft/lab-flow.css";
 import { ModuleBar, type RailItem } from "./stagecraft/side-rail";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { LabNavSwitcher, useLabNav } from "./stagecraft/lab-nav";
+import { LabLanding, TitleShow, type Pathway, type Rects, type ShowItem } from "./stagecraft/title-show";
+import { SERVING_RAIL } from "./serving-rail-meta";
+import { INFERENCE_STORY, TRAINING_STORY } from "./lab-story-data";
 import { TaskLanding } from "./stagecraft/task-landing";
 import { FleetModule } from "./stagecraft/fleet-module";
 import { useTr } from "../exhibit/i18n";
@@ -396,6 +399,18 @@ function TaskReadout({
   );
 }
 
+const INFERENCE_PATHWAYS: readonly Pathway[] = [
+  { n: "01", title: "Same intelligence, cheaper execution", short: "Cheaper execution", techniques: ["Continuous batching", "Prefix reuse (KV cache)", "Faster prefill & decode rates"] },
+  { n: "02", title: "Serving under load", short: "Serving under load", techniques: ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"] },
+];
+const TRAINING_PATHWAYS: readonly Pathway[] = [
+  { n: "01", title: "What did the model learn?", short: "Post-training", techniques: ["SFT + LoRA", "Correctness RL", "More thought", "Lean RL", "Elastic RL"] },
+];
+/** Modules without a scripted demonstration stay on stage this long before the show moves on. */
+const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 24000, tasks: 22000, fleet: 31000 };
+/** The next module's ring fills over this long once the current one has told its story. */
+const COUNTDOWN = 5200;
+
 export function ComputeLabStudy({
   domain,
 }: {
@@ -416,6 +431,14 @@ export function ComputeLabStudy({
     );
   const exhibitRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  // Title show: the landing (inference only), the flight from it, and which module is telling its story.
+  const [landingPhase, setLandingPhase] = useState<"on" | "leaving" | "off">(training ? "off" : "on");
+  const [flyFrom, setFlyFrom] = useState<Rects | null>(null);
+  const [servingKey, setServingKey] = useState("pressure");
+  const [chapter, setChapter] = useState("");
+  const [status, setStatus] = useState<{ key: string; phase: "running" | "done" | "taken" }>({ key: "", phase: "running" });
+  const [labInView, setLabInView] = useState(false);
+  const [filmRun, setFilmRun] = useState(0);
   const tr = useTr();
   const labNav = useLabNav();
   // In the top orientation the reel condenses once the visitor scrolls into the stage.
@@ -537,6 +560,7 @@ export function ComputeLabStudy({
     const open = () => {
       const [id, key] = window.location.hash.slice(1).split("/");
       if (id !== sectionId || !key) return;
+      setLandingPhase("off");
       if (!training && SERVING.includes(key)) {
         setInferencePart("load");
         // Part 2 loads lazily; repeat the request until it has mounted (opening is idempotent).
@@ -551,6 +575,81 @@ export function ComputeLabStudy({
     window.addEventListener("hashchange", open);
     return () => window.removeEventListener("hashchange", open);
   }, [training]);
+  // ── Title show ──
+  const show = labNav === "show";
+  const pathways = training ? TRAINING_PATHWAYS : INFERENCE_PATHWAYS;
+  const showItems: ShowItem[] = [
+    ...railItems.map((m) => ({
+      key: m.key, title: m.title, term: m.term, value: m.value, unit: m.unit, Glyph: m.Glyph, pathway: 0,
+      chapters: m.key === "film" ? (training ? TRAINING_STORY : INFERENCE_STORY).map((c) => c.name) : undefined,
+    })),
+    ...(training ? [] : SERVING_RAIL.map((m) => ({ ...m, pathway: 1 }))),
+  ];
+  const currentKey = !training && inferencePart === "load" ? servingKey : railItems.find((i) => i.current)?.key ?? "film";
+  const order = showItems.map((i) => i.key);
+  const nextKey = order[(order.indexOf(currentKey) + 1) % order.length];
+  const phase = status.key === currentKey ? status.phase : "running";
+  const nowLabel = currentKey === "film" ? chapter || "The experiment" : showItems.find((i) => i.key === currentKey)?.title ?? "";
+  const openSeq = useRef(0);
+  const openKey = (key: string) => {
+    const seq = ++openSeq.current;
+    setLandingPhase((p) => (p === "on" ? "off" : p));
+    if (key === "film" && currentKey !== "film") setFilmRun((n) => n + 1);
+    if (!training && SERVING_RAIL.some((m) => m.key === key)) {
+      setInferencePart("load");
+      // The serving lab loads lazily; ask until it has mounted, unless the visitor has moved on.
+      [0, 400, 1400, 3000].forEach((ms) => window.setTimeout(() => {
+        if (openSeq.current === seq) window.dispatchEvent(new CustomEvent("lab:serving-open", { detail: key }));
+      }, ms));
+    } else {
+      if (!training) setInferencePart("cheaper");
+      railRef.current.find((item) => item.key === key)?.onOpen();
+    }
+  };
+  const openKeyRef = useRef(openKey);
+  const currentRef = useRef(currentKey);
+  useEffect(() => { openKeyRef.current = openKey; currentRef.current = currentKey; });
+  const startShow = (key: string, from: Rects) => {
+    setFlyFrom(from);
+    setLandingPhase("leaving");
+    openKey(key);
+    window.setTimeout(() => setLandingPhase((p) => (p === "leaving" ? "off" : p)), 480);
+  };
+  useEffect(() => {
+    const onServing = (e: Event) => setServingKey((e as CustomEvent<string>).detail);
+    const onChapter = (e: Event) => {
+      const d = (e as CustomEvent<{ training: boolean; name?: string }>).detail;
+      if (d.training === training && d.name) setChapter(d.name);
+    };
+    window.addEventListener("lab:serving-current", onServing);
+    window.addEventListener("lab:film-chapter", onChapter);
+    return () => { window.removeEventListener("lab:serving-current", onServing); window.removeEventListener("lab:film-chapter", onChapter); };
+  }, [training]);
+  // A module has told its story when its demonstration completes a pass; operating it hands it to the visitor.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const done = () => setStatus((s) => (s.key === currentRef.current && s.phase === "taken" ? s : { key: currentRef.current, phase: "done" }));
+    const taken = () => setStatus({ key: currentRef.current, phase: "taken" });
+    el.addEventListener("lab:module-round", done);
+    el.addEventListener("lab:module-taken", taken);
+    const io = new IntersectionObserver(([e]) => setLabInView(e.isIntersecting), { threshold: 0.3 });
+    io.observe(el);
+    return () => { el.removeEventListener("lab:module-round", done); el.removeEventListener("lab:module-taken", taken); io.disconnect(); };
+  }, [ref]);
+  useEffect(() => {
+    const ms = DWELL[currentKey];
+    if (!show || landingPhase === "on" || !ms) return;
+    const id = window.setTimeout(() => setStatus((s) => (s.key === currentKey && s.phase === "taken" ? s : { key: currentKey, phase: "done" })), ms);
+    return () => window.clearTimeout(id);
+  }, [show, landingPhase, currentKey]);
+  useEffect(() => {
+    if (!show || landingPhase === "on" || phase !== "done" || !labInView) return;
+    const id = window.setTimeout(() => openKeyRef.current(nextKey), COUNTDOWN);
+    return () => window.clearTimeout(id);
+  }, [show, landingPhase, phase, labInView, nextKey]);
+  const landingOn = show && landingPhase === "on";
+
   // The reel orientations keep the stage at its natural size; "bar" is the one-screen block.
   const block = labNav === "bar";
   const reelItems: readonly ReelItem[] = railItems;
@@ -562,6 +661,21 @@ export function ComputeLabStudy({
       ) : (
         <div id="inference-serving-rail" className="lb-bar-slot" />
       )}
+    </div>
+  ) : show ? (
+    <div className="lf-nav">
+      <TitleShow
+        items={showItems}
+        pathways={pathways}
+        current={currentKey}
+        now={nowLabel}
+        next={nextKey}
+        phase={phase}
+        countdownMs={COUNTDOWN}
+        from={flyFrom}
+        onOpen={openKey}
+        onLanding={training ? undefined : () => setLandingPhase("on")}
+      />
     </div>
   ) : (
     <div className="lf-nav" data-condensed={condensed || undefined}>
@@ -620,9 +734,12 @@ export function ComputeLabStudy({
           </div>
         )}
       </div>
-      <div className={block ? "lb-body" : "lf-body"}>
-        {labNav !== "dock" && navNode}
-        <div ref={stageRef} className={block ? "lb-stage" : "lf-stage"}>
+      <div className={block ? "lb-body" : "lf-body"} data-landing={landingOn || undefined}>
+        {show && landingPhase !== "off" && (
+          <LabLanding pathways={pathways} items={showItems} leaving={landingPhase === "leaving"} onStart={startShow} />
+        )}
+        {labNav !== "dock" && !landingOn && navNode}
+        <div ref={stageRef} className={block ? "lb-stage" : "lf-stage"} hidden={landingOn}>
           {!block && (training || inferencePart === "cheaper") && mode === "watch" && <div className="lf-chapters">{chapterSlot}</div>}
       <RetainedLabPanel
         active={training || inferencePart === "cheaper"}
@@ -667,8 +784,13 @@ export function ComputeLabStudy({
           label="Watch the experiment"
         >
           <LabStory
+            key={filmRun}
             training={training}
             onFinish={() => {
+              if (show) {
+                setStatus((s) => (s.key === "film" && s.phase === "taken" ? s : { key: "film", phase: "done" }));
+                return;
+              }
               if (!training && mode === "watch") {
                 setInferencePart("load");
                 requestAnimationFrame(() => alignBlock(document.getElementById("inference-study")));

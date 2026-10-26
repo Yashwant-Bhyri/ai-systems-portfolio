@@ -95,6 +95,8 @@ export function GhostCursor({
       if (t?.closest?.(".gc-replay")) return;
       if (!t?.closest?.("button, input, select, [role='button'], summary")) return;
       setTaken(true);
+      // The laboratory stops advancing on its own once the visitor drives a module.
+      el.dispatchEvent(new CustomEvent("lab:module-taken", { bubbles: true }));
     };
     el.addEventListener("pointerdown", take, true);
     el.addEventListener("keydown", take, true);
@@ -193,6 +195,8 @@ export function GhostCursor({
         }
         setTag(null);
         c.dataset.shown = "0";
+        // One full pass of the demonstration: the module has told its story.
+        if (!token.dead) el.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true }));
         await sleep(restDelay, token);
       } while (loop && !token.dead);
     })();

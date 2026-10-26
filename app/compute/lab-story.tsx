@@ -94,6 +94,11 @@ export function LabStory({
     const id = window.setTimeout(() => finishedRef.current?.(), 3500);
     return () => window.clearTimeout(id);
   }, [playback.finished]);
+  // The title show names the chapter on stage.
+  const chapterName = steps[playback.step]?.name;
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("lab:film-chapter", { detail: { training, n: playback.step, name: chapterName } }));
+  }, [training, playback.step, chapterName]);
   const runs = useMemo(
     () => (training ? trainingStoryRuns(budget) : inferenceStoryRuns(workload)),
     [training, budget, workload],

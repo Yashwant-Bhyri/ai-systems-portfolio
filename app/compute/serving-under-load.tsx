@@ -15,6 +15,8 @@ import { ExplorationReel } from "./stagecraft/reel";
 import { useLabNav } from "./stagecraft/lab-nav";
 import { GlossaryBoard } from "./stagecraft/glossary-board";
 import { useStageHold } from "./stagecraft/stage-hold";
+import { ModuleArc } from "./stagecraft/module-arc";
+import { PRESSURE_ARC } from "./arc-scenes/pressure-arc";
 import { createPortal } from "react-dom";
 import { useSlot } from "./stagecraft/use-slot";
 import { DraftFilm } from "./stagecraft/draft-film";
@@ -44,7 +46,7 @@ const DEMOS: Record<string, readonly CursorStep[]> = {
     { target: ".so-controls button:nth-of-type(1)", label: "Balanced host", hold: 5000 },
   ],
 };
-import { GlyphCacheRoute, GlyphChunked, GlyphDraft, GlyphKVSizing, GlyphOverlap, GlyphServingMap } from "./stagecraft/glyphs";
+import { SERVING_RAIL, type ServingKey } from "./serving-rail-meta";
 import { FigAutoscale, FigBatching, FigEngines, FigFlash, FigKVSizing, FigObserve, FigPaged, FigQuant, FigSSE } from "./stagecraft/glossary-figures";
 
 /* Serving terms each get one silhouette and one number; values come from the
@@ -174,16 +176,15 @@ export function ServingUnderLoad() {
     if (next === "continuity") openContinuity();
     else setView(next);
   };
-  const railItems: RailItem[] = [
-    { key: "pressure", title: "Prefill / decode scheduling", term: "chunked prefill · per-iteration token budget", value: "56 → 10.25 ms", unit: "worst token gap in request 1's stream", Glyph: GlyphChunked, onOpen: () => show("pressure"), current: view === "pressure" || view === "continuity" },
-    { key: "draft", title: "Speculative decoding", term: "draft model guesses · target model verifies", value: "12 → 3", unit: "serial target-model calls", Glyph: GlyphDraft, onOpen: () => show("loop", "draft"), current: view === "loop" && explorer === "draft" },
-    { key: "cache", title: "Cache-aware routing", term: "warm prefix vs. memory pressure", value: "−20 ms", unit: "first token on the warm replica", Glyph: GlyphCacheRoute, onOpen: () => show("loop", "cache"), current: view === "loop" && explorer === "cache" },
-    { key: "overlap", title: "CPU / GPU overlap", term: "host prepares step n+1 during step n", value: "52 → 37 ms", unit: "four decode steps, two streams", Glyph: GlyphOverlap, onOpen: () => show("loop", "overlap"), current: view === "loop" && explorer === "overlap" },
-    { key: "map", title: "Serving system overview", term: "requests A–D on one serving clock", value: "10", unit: "mechanisms on one serving clock", Glyph: GlyphServingMap, onOpen: () => show("loop", "map"), current: view === "loop" && explorer === "map" },
-    { key: "glossary", title: "Serving glossary", term: "SSE · KV sizing · PagedAttention · …", value: "9", unit: "serving terms, each linked to the microscope", Glyph: GlyphKVSizing, onOpen: () => show("glossary"), current: view === "glossary" },
-  ];
+  const isCurrent = (key: ServingKey) =>
+    key === "pressure" ? view === "pressure" || view === "continuity" : key === "glossary" ? view === "glossary" : view === "loop" && explorer === key;
+  const openKey = (key: ServingKey) => (key === "pressure" || key === "glossary" ? show(key) : show("loop", key));
+  const railItems: RailItem[] = SERVING_RAIL.map((m) => ({ ...m, onOpen: () => openKey(m.key), current: isCurrent(m.key) }));
   useEffect(() => { railRef.current = railItems; });
   useStageHold(root, `${view}|${explorer}`);
+  // The title show follows whichever serving module is on the stage.
+  const currentKey = view === "pressure" || view === "continuity" ? "pressure" : view === "glossary" ? "glossary" : explorer;
+  useEffect(() => { window.dispatchEvent(new CustomEvent("lab:serving-current", { detail: currentKey })); }, [currentKey]);
   return (
     <div className="sul-root" ref={root}>
       <div
@@ -240,12 +241,14 @@ export function ServingUnderLoad() {
         id={`${id}-pressure`}
         label="Prefill and decode scheduling"
       >
-        <div ref={pressureHost} className="gc-host">
-          <GhostCursor root={pressureHost} script={DEMOS.pressure} enabled={view === "pressure"} startDelay={38000} />
-          <ServingPressureFilm
-            onInspectTrace={(initial) => openContinuity(true, initial)}
-          />
-        </div>
+        <ModuleArc active={view === "pressure"} {...PRESSURE_ARC}>
+          <div ref={pressureHost} className="gc-host">
+            <GhostCursor root={pressureHost} script={DEMOS.pressure} enabled={view === "pressure"} startDelay={38000} />
+            <ServingPressureFilm
+              onInspectTrace={(initial) => openContinuity(true, initial)}
+            />
+          </div>
+        </ModuleArc>
       </RetainedLabPanel>
       <RetainedLabPanel
         active={view === "loop"}

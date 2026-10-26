@@ -7,22 +7,25 @@ import { useEffect, useState, useSyncExternalStore } from "react";
  * side by side for review; the choice is remembered per visitor and can be set
  * with ?labnav=top|side|dock|bar.
  *
+ *  show — the title show: both pathways on a landing, then a left column with the
+ *         experiment pinned, the next module expanded and the rest in shadow (round 6)
  *  top  — the "Go deeper" reel above the stage, sticky; condenses once you scroll into the stage
  *  side — the same reel stacked in a sticky left column
  *  dock — the reel docked to the bottom of the screen while the lab is in view
  *  bar  — the compact one-screen block with a tab bar (round 4)
  */
-export type LabNav = "top" | "side" | "dock" | "bar";
+export type LabNav = "show" | "top" | "side" | "dock" | "bar";
 export const LAB_NAVS: readonly { id: LabNav; name: string; note: string }[] = [
+  { id: "show", name: "Title show", note: "Both pathways, then the show on the left" },
   { id: "top", name: "Reel on top", note: "Sticky, condenses while you read the stage" },
   { id: "side", name: "Reel on the side", note: "Sticky column, tiles expand downward" },
   { id: "dock", name: "Reel docked below", note: "Original reel, always in reach at the bottom" },
   { id: "bar", name: "Compact block", note: "Whole lab in one screen, tab bar on top" },
 ];
 const KEY = "lab-nav";
-const DEFAULT: LabNav = "top";
+const DEFAULT: LabNav = "show";
 const listeners = new Set<() => void>();
-const valid = (v: string | null): v is LabNav => v === "top" || v === "side" || v === "dock" || v === "bar";
+const valid = (v: string | null): v is LabNav => v === "show" || v === "top" || v === "side" || v === "dock" || v === "bar";
 
 function read(): LabNav {
   try {

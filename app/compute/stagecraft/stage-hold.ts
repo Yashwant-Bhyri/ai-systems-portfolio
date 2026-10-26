@@ -23,7 +23,10 @@ export function useStageHold(ref: RefObject<HTMLElement | null>, key: string) {
     if (!el || prevKey.current === key) return;
     prevKey.current = key;
     if (!last.current) return;
-    // Runs after the DOM swap and before paint: the old height holds the space.
+    // Runs after the DOM swap and before paint: the old height holds the space,
+    // and the incoming module fades up instead of snapping in while it loads.
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches)
+      el.animate([{ opacity: 0.25 }, { opacity: 1 }], { duration: 420, easing: "cubic-bezier(.2,.7,.2,1)" });
     el.style.transition = "none";
     el.style.minHeight = `${last.current}px`;
     let settled = 0, frame = 0, prevH = -1;

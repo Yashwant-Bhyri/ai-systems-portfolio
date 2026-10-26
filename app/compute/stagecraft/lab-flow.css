@@ -74,11 +74,11 @@
 
 /* The review switcher: a small tab at the left edge; hover or focus opens the four layouts. */
 .lnv-switch {
-  position: fixed; left: 0; top: 50%; z-index: 210; display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 8px 4px;
+  position: fixed; left: 0; top: auto; bottom: 18px; z-index: 210; display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 8px 4px;
   border: 1px solid rgba(230,237,244,.14); border-left: 0; border-radius: 0 12px 12px 0; background: rgba(6,9,12,.94); backdrop-filter: blur(12px);
-  opacity: 0; pointer-events: none; transform: translate(-8px, -50%); transition: opacity .4s, transform .4s;
+  opacity: 0; pointer-events: none; transform: translateX(-8px); transition: opacity .4s, transform .4s;
 }
-.lnv-switch[data-visible] { opacity: 1; pointer-events: auto; transform: translate(0, -50%); }
+.lnv-switch[data-visible] { opacity: 1; pointer-events: auto; transform: none; }
 .lnv-switch > span { padding: 2px 6px 6px; color: #7d8996; font: 500 9.5px/1 var(--font-geist-mono), monospace; letter-spacing: .08em; text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); align-self: center; }
 .vx-shell .lnv-switch button, .lnv-switch button {
   display: none; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 0; border-radius: 14px; background: none;
