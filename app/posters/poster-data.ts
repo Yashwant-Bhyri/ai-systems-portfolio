@@ -2,7 +2,7 @@ import { inferenceStoryRuns } from "../compute/lab-story-data";
 import { compareTasks, simulateLab } from "../compute/lab-simulation";
 import { latencyDistribution } from "../compute/load-latency-model";
 import { BATCHING } from "../compute/batching-result";
-import { PRESSURE_GAP } from "../compute/serving-rail-meta";
+import { OVERLAP, PRESSURE_GAP } from "../compute/serving-rail-meta";
 import { cacheRoutingStudy } from "../compute/cache-routing-model";
 const CACHE = cacheRoutingStudy();
 import { fmtMs, rateCard } from "../compute/calibration";
@@ -27,7 +27,7 @@ export const UNDER_LOAD: readonly (PosterCard & { a: number; b: number })[] = [
   { key: "pressure", title: "Prefill / decode scheduling", from: PRESSURE_GAP.whole.toFixed(0), to: PRESSURE_GAP.chunked.toFixed(1), unit: "ms worst pause in a live answer", cause: "an 8,192-token prompt is read in slices beside the answers", a: PRESSURE_GAP.whole, b: PRESSURE_GAP.chunked },
   { key: "draft", title: "Speculative decoding", from: "12", to: "3", unit: "serial large-model calls", cause: "a small model drafts, the large one checks in one pass", a: 12, b: 3 },
   { key: "cache", title: "Cache-aware routing", from: `${CACHE.cold.firstToken}`, to: `${CACHE.warm.firstToken}`, unit: "ms to the first token", cause: "the request goes where its prefix is cached", a: CACHE.cold.firstToken, b: CACHE.warm.firstToken },
-  { key: "overlap", title: "CPU / GPU overlap", from: "52", to: "37", unit: "ms for four decode steps", cause: "the CPU prepares the next step during this one", a: 52, b: 37 },
+  { key: "overlap", title: "CPU / GPU overlap", from: `${OVERLAP.baseline.finish}`, to: `${OVERLAP.overlapped.finish}`, unit: "ms for four decode steps", cause: "the CPU prepares the next step during this one", a: OVERLAP.baseline.finish, b: OVERLAP.overlapped.finish },
 ];
 const f = (v: number, d = 2) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 export const ALSO: readonly { key: string; title: string; value: string }[] = [

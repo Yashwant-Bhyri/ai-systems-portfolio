@@ -8,9 +8,10 @@ import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-
    (balanced host: prepare 3 ms, GPU step 8 ms, deliver 2 ms; four decode steps). */
 const S = overlapStudy("balanced", 4), SLOW = overlapStudy("host-bound", 4), NONE = overlapStudy("negligible", 4);
 const C = { prep: "#8fb4ff", gpu: "#b8e986", send: "#63d4df", idle: "#ff8f86", ink: "#eef2f6" };
-const X0 = 200, PX = 16, END = S.baseline.finish;
+const X0 = 200, END = S.baseline.finish, PX = (1040 - X0) / END;
 const x = (ms: number) => X0 + ms * PX;
 const PROBLEM_MS = 11000, MECH_MS = 12500;
+const HOST_MAX = Math.max(S.baseline.finish, SLOW.baseline.finish, NONE.baseline.finish);
 
 function Lanes({ lane, now, overlapped }: { lane: OverlapLane; now: number; overlapped: boolean }) {
   const block = (a: number, b: number, y: number, col: string, label: string, key: string) => {
@@ -63,7 +64,7 @@ function Lanes({ lane, now, overlapped }: { lane: OverlapLane; now: number; over
 const sweep = (t: number, ms: number, end: number) => ease.io(prog(t, 600, ms - 2600)) * end;
 
 function Problem({ t }: SceneProps) {
-  return <svg viewBox="0 0 1100 430" role="img" aria-label="Baseline: the CPU prepares and delivers each step while the GPU waits; 20 of 52 milliseconds idle">
+  return <svg viewBox="0 0 1100 430" role="img" aria-label={`Baseline: the CPU prepares and delivers each step while the GPU waits; ${S.baseline.gpuIdle} of ${S.baseline.finish} milliseconds idle`}>
     <Lanes lane={S.baseline} now={sweep(t, PROBLEM_MS, END)} overlapped={false} />
   </svg>;
 }
@@ -82,8 +83,8 @@ function Hosts({ t }: SceneProps) {
     {rows.map(([label, a, b], i) => (
       <g key={label} transform={`translate(0 ${34 + i * 38})`}>
         <text x={0} y={16} className="ma-l">{label}</text>
-        <rect x={150} y={0} width={(a / 90) * 300 * k} height={9} rx={2} fill="#9cc5f5" opacity={0.8} />
-        <rect x={150} y={11} width={(b / 90) * 300 * k} height={9} rx={2} fill={C.gpu} opacity={0.9} />
+        <rect x={150} y={0} width={(a / HOST_MAX) * 300 * k} height={9} rx={2} fill="#9cc5f5" opacity={0.8} />
+        <rect x={150} y={11} width={(b / HOST_MAX) * 300 * k} height={9} rx={2} fill={C.gpu} opacity={0.9} />
         <text x={470} y={16} className="ma-l" style={{ fill: C.ink }}>{a} → {b}</text>
       </g>
     ))}
@@ -97,7 +98,7 @@ export const OVERLAP_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBea
   impact: {
     label: "Impact", title: "The same GPU work, finished sooner", ms: 9000,
     Scene: makeImpact({
-      from: S.baseline.finish, to: S.overlapped.finish, unit: "ms", digits: 0,
+      from: S.baseline.finish, to: S.overlapped.finish, unit: "ms", digits: 1,
       what: "Four decode steps for two answer streams",
       cause: `The CPU's ${S.inputs.prepare} ms of preparation and ${S.inputs.deliver} ms of delivery now hide under the GPU's ${S.inputs.gpu} ms step; GPU idle time falls from ${S.baseline.gpuIdle} to ${S.overlapped.gpuIdle} ms.`,
       base: "CPU and GPU in series", optimized: "Overlapped",

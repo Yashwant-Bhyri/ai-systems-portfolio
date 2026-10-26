@@ -1,3 +1,5 @@
+import { decodeStepSeconds } from "./calibration.ts";
+
 /** A fixed active decode set. Durations are declared teaching inputs, not profiling. */
 export type HostProfile = "balanced" | "host-bound" | "negligible";
 export type Interval = { start: number; end: number };
@@ -25,10 +27,17 @@ export const OVERLAP_LABELS = [
   "Earlier delivery",
   "Time vs. GPU work",
 ] as const;
+/**
+ * The GPU step is calibrated (calibration.ts): one decode step for two streams at
+ * ~4k tokens of context each on an H100, memory-bound, rounded to 0.5 ms. CPU costs
+ * are stated assumptions: a modern engine (C++ scheduler, CUDA graphs) versus a
+ * Python scheduler. Derived from published specs, not profiled.
+ */
+export const GPU_STEP_MS = Math.round(decodeStepSeconds(2, 2 * 4096, false) * 1000 * 2) / 2;
 export const HOST_PROFILES = {
-  balanced: { label: "Balanced host", prepare: 3, gpu: 8, deliver: 2 },
-  "host-bound": { label: "Slower CPU", prepare: 10, gpu: 8, deliver: 4 },
-  negligible: { label: "No CPU overhead", prepare: 0, gpu: 8, deliver: 0 },
+  balanced: { label: "Balanced host", prepare: 1.5, gpu: GPU_STEP_MS, deliver: 1 },
+  "host-bound": { label: "Slower CPU", prepare: 4, gpu: GPU_STEP_MS, deliver: 2 },
+  negligible: { label: "No CPU overhead", prepare: 0, gpu: GPU_STEP_MS, deliver: 0 },
 } as const;
 export const ANSWER_STREAMS = [
   { id: "A", words: ["Cap", "is", "two", "years."] },

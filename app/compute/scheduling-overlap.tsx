@@ -32,7 +32,7 @@ const HEADINGS = [
   "The GPU waits for host-side work",
   "Prepare the next step while the GPU runs",
   "Overlap finishes all 8 tokens sooner: the CPU builds step n+1 while the GPU runs step n",
-  "Same 32 ms of GPU work; only the idle gaps are gone",
+  `Same ${HOST_PROFILES.balanced.gpu * 4} ms of GPU work; only the idle gaps are gone`,
 ];
 
 function ScheduleLane({
@@ -540,7 +540,7 @@ function Comparison({
             );
           })()}
           <text x="793" y="446" className="so-small">
-            GPU steps stay 8 ms long.
+            GPU steps stay {study.inputs.gpu} ms long.
           </text>
           <text x="793" y="474" className="so-note">
             {study.profile === "host-bound"

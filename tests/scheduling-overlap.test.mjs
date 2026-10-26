@@ -13,19 +13,20 @@ test("balanced overlap removes inter-step waiting, not device arithmetic", () =>
   const s = overlapStudy();
   assert.deepEqual(
     s.baseline.steps.map((x) => x.deliver.end),
-    [13, 26, 39, 52],
+    [6, 12, 18, 24],
   );
   assert.deepEqual(
     s.overlapped.steps.map((x) => x.deliver.end),
-    [13, 21, 29, 37],
+    [6, 9.5, 13, 16.5],
   );
-  assert.equal(s.savedElapsed, 15);
-  assert.equal(s.baseline.gpuBusy, 32);
-  assert.equal(s.overlapped.gpuBusy, 32);
-  assert.equal(s.baseline.cpuBusy, 20);
-  assert.equal(s.overlapped.cpuBusy, 20);
-  assert.equal(s.baseline.gpuIdle, 20);
-  assert.equal(s.overlapped.gpuIdle, 5);
+  // calibrated GPU step 3.5 ms (H100, two streams); modern host: 1.5 ms prepare, 1 ms deliver
+  assert.equal(s.savedElapsed, 7.5);
+  assert.equal(s.baseline.gpuBusy, 14);
+  assert.equal(s.overlapped.gpuBusy, 14);
+  assert.equal(s.baseline.cpuBusy, 10);
+  assert.equal(s.overlapped.cpuBusy, 10);
+  assert.equal(s.baseline.gpuIdle, 10);
+  assert.equal(s.overlapped.gpuIdle, 2.5);
   assert.equal(s.overlapped.gaps.length, 0);
 });
 
@@ -70,9 +71,9 @@ test("CPU bottleneck retains visible gaps even with overlap", () => {
   assert.ok(s.overlapped.gaps.reduce((sum, x) => sum + x.end - x.start, 0) > 0);
   assert.equal(
     s.overlapped.steps[0].deliver.end - s.baseline.steps[0].deliver.end,
-    2,
+    0.5,
   );
-  assert.equal(s.savedElapsed, 28);
+  assert.equal(s.savedElapsed, 12.5);
 });
 
 test("presentation holds do not add service time or completed tokens", () => {
@@ -91,13 +92,13 @@ test("presentation holds do not add service time or completed tokens", () => {
   }
   assert.equal(overlapFrame(19500, s).overlapped.completed, 4);
   assert.equal(overlapFrame(19500, s).baseline.completed, 2);
-  assert.equal(overlapFrame(19500, s).serviceMs, 37);
+  assert.equal(overlapFrame(19500, s).serviceMs, 16.5);
 });
 
 test("the linked overlap window is the intersection of actual CPU and GPU work", () => {
   for (const [profile, expected] of [
-    ["balanced", 3],
-    ["host-bound", 4],
+    ["balanced", 1.5],
+    ["host-bound", 1.5],
     ["negligible", 0],
   ]) {
     const window = preparationOverlap(overlapStudy(profile));
@@ -144,7 +145,7 @@ test("invalid controls fail explicitly and exported data preserves both clocks",
     JSON.stringify(overlapRecord(overlapStudy(), 19500, 2)),
   );
   assert.equal(record.frame.presentationMs, 19500);
-  assert.equal(record.frame.serviceMs, 37);
+  assert.equal(record.frame.serviceMs, 16.5);
   assert.equal(record.selectedStep, 2);
   assert.equal(record.study.baseline.gpuBusy, record.study.overlapped.gpuBusy);
   assert.match(record.evidence, /not a measured/);
