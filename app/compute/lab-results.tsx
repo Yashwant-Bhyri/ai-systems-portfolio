@@ -43,6 +43,7 @@ import "./stagecraft/quiet.css";
 import "./stagecraft/explorers.css";
 import "./stagecraft/block.css";
 import "./stagecraft/lab-flow.css";
+import "./stagecraft/legibility.css";
 import { ModuleBar, type RailItem } from "./stagecraft/side-rail";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { LabNavSwitcher, useLabNav } from "./stagecraft/lab-nav";

@@ -354,7 +354,7 @@ function Comparison({
     selected !== null
       ? [`Step ${selected + 1}`, "Same GPU operation"]
       : frame.beat === 0
-        ? ["One decode step", "= CPU + GPU + CPU, in series"]
+        ? ["One decode step", "runs CPU → GPU → CPU"]
         : frame.beat === 1
           ? gap
             ? [`GPU idle ${gap} ms:`, "waiting for the CPU"]

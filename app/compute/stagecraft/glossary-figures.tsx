@@ -40,7 +40,7 @@ export function FigSSE() {
       <rect x={270 + i * 32} y={30} width={26} height={34} rx={3} className="g-a" opacity={0}><Win a={t} b={0.6} to={0.9} /></rect>
     </g>)}
     <text x={270} y={88} className="gf-t">pages held</text>
-    {[1, 2, 3, 4].map((v, i) => <text key={v} x={400} y={88} textAnchor="end" className="gf-n" opacity={0}>{v}<Win a={fill[i]} b={i < 3 ? fill[i + 1] : 0.6} /></text>)}
+    {[1, 2, 3, 4].map((v, i) => <text key={v} x={400} y={88} textAnchor="end" className="gf-n" opacity={0}>{v}<Win a={fill[i]} b={i < 3 ? fill[i + 1] - 0.008 : 0.6} /></text>)}
     <text x={400} y={88} textAnchor="end" className="gf-n gf-green" opacity={0}>0<Win a={0.62} b={0.96} /></text>
     <text x={270} y={108} className="gf-t gf-green" opacity={0}>freed on disconnect<Win a={0.62} b={0.96} /></text>
   </Fig>;
@@ -53,7 +53,7 @@ export function FigKVSizing() {
   return <Fig label="KV cache sizing: 12 users at 32k context fit beside the weights on one 80 GB GPU">
     <text x={0} y={12} className="gf-t">one 80 GB GPU · 32k-token context per user</text>
     <text x={340} y={12} textAnchor="end" className="gf-t">users</text>
-    {Array.from({ length: 12 }, (_, i) => <text key={i} x={400} y={12} textAnchor="end" className="gf-n" opacity={0}>{i + 1}<Win a={0.1 + i * 0.05} b={i < 11 ? 0.15 + i * 0.05 : 0.96} /></text>)}
+    {Array.from({ length: 12 }, (_, i) => <text key={i} x={400} y={12} textAnchor="end" className="gf-n" opacity={0}>{i + 1}<Win a={0.1 + i * 0.05} b={i < 11 ? 0.142 + i * 0.05 : 0.96} /></text>)}
     <rect x={0} y={32} width={400} height={34} rx={3} className="gf-slot" />
     <rect x={0} y={32} width={W} height={34} rx={3} className="g-m" opacity={0.9} />
     {Array.from({ length: 12 }, (_, i) => <rect key={i} x={W + 1 + i * U} y={32} width={U - 2} height={34} rx={2} className="g-a" opacity={0}><Win a={0.1 + i * 0.05} b={0.96} to={0.88} /></rect>)}
@@ -197,7 +197,7 @@ export function FigAutoscale() {
     <path d={curve} className="gf-trace" />
     <circle r={4.5} className="g-a"><animateMotion path={curve} keyPoints="0;0;1;1" keyTimes="0;.04;.9;1" calcMode="linear" dur={DUR} repeatCount="indefinite" /></circle>
     <text x={282} y={12} className="gf-t">replicas</text>
-    {[1, 2, 3, 4].map((v, i) => <text key={v} x={400} y={12} textAnchor="end" className="gf-n" opacity={0}>{v}<Win a={i ? 0.3 + i * 0.1 : 0} b={i < 3 ? 0.4 + i * 0.1 : 0.96} /></text>)}
+    {[1, 2, 3, 4].map((v, i) => <text key={v} x={400} y={12} textAnchor="end" className="gf-n" opacity={0}>{v}<Win a={i ? 0.3 + i * 0.1 : 0} b={i < 3 ? 0.392 + i * 0.1 : 0.96} /></text>)}
     {[0, 1, 2, 3].map((i) => {
       const x = 282 + (i % 2) * 62, y = 26 + Math.floor(i / 2) * 40, warm = 0.2 + i * 0.1, ready = warm + 0.1;
       return <g key={i}>

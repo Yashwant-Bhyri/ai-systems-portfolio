@@ -16,7 +16,7 @@ export function frameIssues(s, { minPx = 10 } = {}) {
   for (let i = 0; i < texts.length; i++) {
     for (let j = i + 1; j < texts.length; j++) {
       const a = texts[i], b = texts[j];
-      if (a.k === b.k) continue;
+      if (a.k === b.k || a.rotated || b.rotated) continue;
       const ov = inter(a, b);
       if (ov > 0.25 * Math.min(area(a), area(b))) issues.push({ kind: "text-over-text", label: "text overlap", r: a, detail: `"${a.t || a.k.split(">").pop()}" × "${b.t || b.k.split(">").pop()}"` });
     }

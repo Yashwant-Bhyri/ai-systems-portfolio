@@ -68,10 +68,13 @@
         if (m) px = px * Math.hypot(m.a, m.b);
       }
       const clip = clipBoxOf(el);
+      // rotated labels have diagonal bounding boxes that overlap even when the letters do not
+      const ctm = svg && el instanceof SVGGraphicsElement ? el.getScreenCTM() : null;
+      const rotated = !!ctm && Math.abs(ctm.b) > 0.05;
       const op = opacityChain(el);
       rects.forEach((r, i) => {
         const clipped = clip ? (r.left < clip.left - 1 || r.right > clip.right + 1 || r.top < clip.top - 1 || r.bottom > clip.bottom + 1) : false;
-        texts.push({ t: i ? "" : s.slice(0, 80), k: keyOf(el, root), px: Math.round(px * 10) / 10, op: Math.round(op * 100) / 100, svg: !!svg, clipped, ...R(r) });
+        texts.push({ t: i ? "" : s.slice(0, 80), k: keyOf(el, root), px: Math.round(px * 10) / 10, op: Math.round(op * 100) / 100, svg: !!svg, rotated, clipped, ...R(r) });
       });
       // ellipsis truncation on HTML text
       if (!svg && el.scrollWidth > el.clientWidth + 1 && /ellipsis/.test(cs.textOverflow)) texts[texts.length - 1].truncated = true;
