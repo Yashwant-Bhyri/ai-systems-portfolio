@@ -210,7 +210,7 @@ export function GhostCursor({
         <i className="gc-ring" />
         {tag && <span className="gc-tag">{tr(tag)}</span>}
       </div>
-      {taken && !reduced && (
+      {taken && enabled && !reduced && (
         <button type="button" className="gc-replay" onClick={() => { setTaken(false); setRun((n) => n + 1); }}>
           {tr("↺ Show me")}
         </button>

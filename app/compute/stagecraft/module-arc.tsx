@@ -27,7 +27,7 @@ const REDUCED = "(prefers-reduced-motion: reduce)";
 const subscribeReduced = (notify: () => void) => { const m = matchMedia(REDUCED); m.addEventListener("change", notify); return () => m.removeEventListener("change", notify); };
 
 export function ModuleArc({
-  active, problem, mechanism, impact, systemTitle, systemMs = 90000, children,
+  active, problem, mechanism, impact, systemTitle, systemMs = 90000, labels = LABELS, children,
 }: {
   active: boolean;
   problem: ArcBeat;
@@ -36,6 +36,8 @@ export function ModuleArc({
   systemTitle: string;
   /** Fallback length of the system beat when the module has no scripted demonstration. */
   systemMs?: number;
+  /** The four step names, when a module tells its circle in other words. */
+  labels?: readonly string[];
   children: ReactNode;
 }) {
   const tr = useTr();
@@ -43,6 +45,7 @@ export function ModuleArc({
   const [beat, setBeat] = useState(0);
   const [t, setT] = useState(0);
   const [held, setHeld] = useState(false);
+  const [run, setRun] = useState(0);
   const [inView, setInView] = useState(false);
   const reduced = useSyncExternalStore(subscribeReduced, () => matchMedia(REDUCED).matches, () => false);
   const beats = [problem, mechanism, null, impact] as const;
@@ -80,7 +83,7 @@ export function ModuleArc({
     return () => cancelAnimationFrame(raf);
     // `t` is read once to resume from where the beat was; it must not restart the clock.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [live, beat, held, timed]);
+  }, [live, beat, held, timed, run]);
 
   // The system beat ends when the module's own demonstration completes a pass (or its fallback length).
   useEffect(() => {
@@ -102,12 +105,12 @@ export function ModuleArc({
     return () => window.clearTimeout(id);
   }, [beat, live, held, systemMs]);
 
-  const go = (i: number) => { setBeat(i); setT(0); };
+  const go = (i: number) => { setBeat(i); setT(0); setRun((n) => n + 1); };
   const shownT = reduced && timed ? timed.ms : t;
   return (
     <div ref={root} className="ma-root" data-beat={beat}>
       <nav className="ma-beats" aria-label={tr("The module, step by step")}>
-        {LABELS.map((l, i) => (
+        {labels.map((l, i) => (
           <button key={l} type="button" aria-pressed={beat === i} data-done={i < beat || undefined} onClick={() => go(i)}>
             <i>{String(i + 1).padStart(2, "0")}</i>{tr(l)}
             {beat === i && beats[i] && <b className="ma-progress" style={{ transform: `scaleX(${Math.min(1, shownT / beats[i]!.ms)})` }} />}

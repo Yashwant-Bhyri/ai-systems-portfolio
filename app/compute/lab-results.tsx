@@ -51,6 +51,8 @@ import { SERVING_RAIL } from "./serving-rail-meta";
 import { INFERENCE_STORY, TRAINING_STORY } from "./lab-story-data";
 import { TaskLanding } from "./stagecraft/task-landing";
 import { FleetModule } from "./stagecraft/fleet-module";
+import { ModuleArc } from "./stagecraft/module-arc";
+import { FLEET_ARC } from "./arc-scenes/fleet-arc";
 import { useTr } from "../exhibit/i18n";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 import {
@@ -407,7 +409,7 @@ const TRAINING_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "What did the model learn?", short: "Post-training", techniques: ["SFT + LoRA", "Correctness RL", "More thought", "Lean RL", "Elastic RL"] },
 ];
 /** Modules without a scripted demonstration stay on stage this long before the show moves on. */
-const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 24000, tasks: 22000, fleet: 31000 };
+const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 24000, tasks: 22000 };
 /** The next module's ring fills over this long once the current one has told its story. */
 const COUNTDOWN = 5200;
 
@@ -1079,7 +1081,7 @@ export function ComputeLabStudy({
               ) : view === 3 ? (
                 <TaskLanding budget={budget} active={mode === "explore"} />
               ) : view === 4 ? (
-                <FleetModule active={mode === "explore"} />
+                <ModuleArc active={mode === "explore" && view === 4} {...FLEET_ARC}><FleetModule active={mode === "explore"} /></ModuleArc>
               ) : (
                 <>
                   <p className="rs-pan-hint">
