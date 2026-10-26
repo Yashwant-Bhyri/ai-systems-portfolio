@@ -1,6 +1,6 @@
 "use client";
 
-import { simulateStream, type StreamTrace } from "../stream-continuity-model";
+import { PROMPT_BLOCK_TOKENS, STREAM_COSTS, simulateStream, type StreamTrace } from "../stream-continuity-model";
 import { ease, prog } from "../../exhibit/engine";
 import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
 
@@ -9,7 +9,8 @@ import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-
 const WHOLE = simulateStream({ policy: "whole", tokenBudget: 16, capacityPages: 24 });
 const CHUNKED = simulateStream({ policy: "chunked", tokenBudget: 16, capacityPages: 24 });
 const C = { ov: "#3a4550", doc: "#ffc267", other: "#8fa9d9", dec: "#b8e986", red: "#ff8f86", ink: "#e9edf2", slate: "#5e6a76" };
-const X0 = 190, PX = 3.9, END = 232;
+const END = Math.ceil(Math.max(WHOLE.finishMs, CHUNKED.finishMs) / 10) * 10;
+const X0 = 190, PX = (1070 - X0) / END;
 const x = (ms: number) => X0 + ms * PX;
 
 function worstGap(trace: StreamTrace) {
@@ -32,15 +33,15 @@ function Lanes({ trace, now, chunked }: { trace: StreamTrace; now: number; chunk
       <text x={0} y={196} className="ma-k">Request 1&rsquo;s answer</text>
       <text x={0} y={216} className="ma-l">streaming to a user</text>
       <text x={0} y={306} className="ma-k">Request 3</text>
-      <text x={0} y={326} className="ma-l">a 128-token document</text>
+      <text x={0} y={326} className="ma-l">an 8,192-token document</text>
       <path d={`M${X0} 118H${x(END)}M${X0} 240H${x(END)}M${X0} 350H${x(END)}`} className="ma-grid" />
 
       {/* iterations: overhead, then the work the scheduler packed into the step */}
       {trace.steps.filter((s) => s.startMs <= now).map((s) => {
         const vis = Math.min(s.endMs, now);
         const segs: [number, string][] = [[s.overheadMs, C.ov]];
-        const dec = s.decode.reduce((a, d) => a + d.tokens, 0) * 1;
-        const pre = s.prefill.map((p) => [p.tokens * 0.25, p.id === 3 ? C.doc : C.other] as [number, string]);
+        const dec = s.decodeMs;
+        const pre = s.prefill.map((p) => [p.tokens * STREAM_COSTS.prefillMsPerBlock, p.id === 3 ? C.doc : C.other] as [number, string]);
         if (chunked) segs.push([dec, C.dec], ...pre); else segs.push(...pre, [dec, C.dec]);
         let at = s.startMs;
         const docTokens = s.prefill.find((p) => p.id === 3)?.tokens;
@@ -52,7 +53,7 @@ function Lanes({ trace, now, chunked }: { trace: StreamTrace; now: number; chunk
               if (right <= a) return null;
               return <rect key={i} x={x(a) + 0.5} y={52} width={Math.max(0.5, (right - a) * PX - 1)} height={62} rx={2} fill={col} opacity={col === C.ov ? 0.9 : 0.92} />;
             })}
-            {docTokens && vis >= s.endMs && <text x={x((s.startMs + s.endMs) / 2)} y={44} textAnchor="middle" className="ma-l" style={{ fill: C.doc }}>{docTokens}</text>}
+            {docTokens && vis >= s.endMs && (s.endMs - s.startMs) * PX > 34 && <text x={x((s.startMs + s.endMs) / 2)} y={44} textAnchor="middle" className="ma-l" style={{ fill: C.doc }}>{(docTokens * PROMPT_BLOCK_TOKENS).toLocaleString("en-US")}</text>}
           </g>
         );
       })}
@@ -64,7 +65,7 @@ function Lanes({ trace, now, chunked }: { trace: StreamTrace; now: number; chunk
           <path d={`M${x(gap.a)} 162V154H${x(gap.b)}V162`} fill="none" stroke={chunked ? C.dec : C.red} strokeWidth={2} />
           <rect x={x(gap.a) + 2} y={178} width={(gap.b - gap.a) * PX - 4} height={32} fill={chunked ? C.dec : C.red} opacity={0.1} />
           <text x={(x(gap.a) + x(gap.b)) / 2} y={144} textAnchor="middle" className="ma-n" style={{ fill: chunked ? C.dec : C.red }}>
-            {chunked ? `worst gap ${(gap.b - gap.a).toFixed(2)} ms` : `${gap.b - gap.a} ms without a token`}
+            {chunked ? `worst gap ${(gap.b - gap.a).toFixed(1)} ms` : `${(gap.b - gap.a).toFixed(0)} ms without a token`}
           </text>
         </g>
       )}
@@ -102,7 +103,7 @@ function Lanes({ trace, now, chunked }: { trace: StreamTrace; now: number; chunk
 const sweep = (t: number, ms: number) => ease.io(prog(t, 700, ms - 2800)) * END;
 
 function Problem({ t }: SceneProps) {
-  return <svg viewBox="0 0 1100 420" role="img" aria-label="Baseline: the whole 128-token document is read in one step, and request 1's answer stops for 56 milliseconds">
+  return <svg viewBox="0 0 1100 420" role="img" aria-label="Baseline: the whole 8,192-token document is read in one step, and request 1's answer stops for over 200 milliseconds">
     <Lanes trace={WHOLE} now={sweep(t, PROBLEM_MS)} chunked={false} />
   </svg>;
 }
@@ -110,9 +111,9 @@ function Problem({ t }: SceneProps) {
 function Mechanism({ t }: SceneProps) {
   const now = sweep(t, MECH_MS);
   const rule = prog(t, 200, 900);
-  return <svg viewBox="0 0 1100 460" role="img" aria-label="Chunked prefill: each step decodes every live answer first, then reads at most 16 input tokens">
+  return <svg viewBox="0 0 1100 460" role="img" aria-label="Chunked prefill: each step decodes every live answer first, then reads at most 1,024 input tokens">
     <Lanes trace={CHUNKED} now={now} chunked />
-    <text opacity={rule} x={X0} y={448} className="ma-k" style={{ fill: C.dec }}>The rule: each step decodes every live answer first, then reads at most 16 input tokens.</text>
+    <text opacity={rule} x={X0} y={448} className="ma-k" style={{ fill: C.dec }}>The rule: each step decodes every live answer first, then reads at most 1,024 input tokens.</text>
   </svg>;
 }
 
@@ -121,11 +122,11 @@ function Streams({ t }: SceneProps) {
   const k = ease.out(prog(t, 600, 2600));
   const row = (trace: StreamTrace, y: number, label: string, col: string) => {
     const g = worstGap(trace);
-    const sx = (ms: number) => 120 + ms * 1.9;
+    const sx = (ms: number) => 120 + ms * (430 / END);
     return <g>
       <text x={0} y={y + 16} className="ma-l">{label}</text>
       {trace.requests[0].tokenMs.filter((ms) => ms <= k * END).map((ms) => <rect key={ms} x={sx(ms) - 1} y={y} width={2.5} height={22} fill={col} />)}
-      {k >= 1 && <rect x={sx(g.a)} y={y - 3} width={(g.b - g.a) * 1.9} height={28} fill="none" stroke={col === C.dec ? C.dec : C.red} strokeWidth={1.5} rx={3} />}
+      {k >= 1 && <rect x={sx(g.a)} y={y - 3} width={(g.b - g.a) * (430 / END)} height={28} fill="none" stroke={col === C.dec ? C.dec : C.red} strokeWidth={1.5} rx={3} />}
     </g>;
   };
   return <svg viewBox="0 0 560 96" role="img" aria-label="Request 1's tokens under both schedulers, worst gap outlined">
@@ -144,10 +145,10 @@ export const PRESSURE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBe
   impact: {
     label: "Impact", title: "A smoother stream, paid for with a later first token", ms: 9000,
     Scene: makeImpact({
-      from: gapW.b - gapW.a, to: gapC.b - gapC.a, unit: "ms", what: "Worst pause in request 1's answer",
-      cause: "Request 3's document is read 14 tokens at a time beside request 1's decoding, instead of in one 36 ms step.",
+      from: gapW.b - gapW.a, to: gapC.b - gapC.a, unit: "ms", digits: 1, what: "Worst pause in request 1's answer",
+      cause: `Request 3's 8,192-token document is read about 1,000 tokens at a time beside request 1's decoding, instead of in one ${(WHOLE.steps.find((st) => st.prefill.some((p) => p.id === 3))!.durationMs).toFixed(0)} ms step. Costs: Qwen3-4B on one H100, calibrated roofline.`,
       base: "Whole prefill", optimized: "Chunked prefill",
-      cost: { what: "Cost: request 3's first token arrives later", from: WHOLE.requests[2].ttftMs ?? 0, to: CHUNKED.requests[2].ttftMs ?? 0, unit: "ms" },
+      cost: { what: "Cost: request 3's first token arrives later", from: WHOLE.requests[2].ttftMs ?? 0, to: CHUNKED.requests[2].ttftMs ?? 0, unit: "ms", digits: 0 },
       Figure: Streams,
     }),
   },

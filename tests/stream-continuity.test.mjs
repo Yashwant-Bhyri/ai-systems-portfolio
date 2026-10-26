@@ -4,6 +4,7 @@ import {
   STREAM_MODEL_VERSION,
   STREAM_REQUESTS,
   STREAM_FILM_DURATION_MS,
+  STREAM_COSTS,
   longestTokenGap,
   reservedPages,
   simulateStream,
@@ -12,17 +13,18 @@ import {
 
 const close = (actual, expected) =>
   assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} != ${expected}`);
+const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 0.01, `${actual} != ${expected}`);
 const run = (policy, tokenBudget = 16, capacityPages = 24, requests) =>
   simulateStream({ policy, tokenBudget, capacityPages, requests });
 
 test("fixture, page reservation, and model version remain explicit", () => {
   assert.deepEqual(STREAM_REQUESTS.map((r) => [r.arrivalMs, r.promptTokens, r.outputTokens]), [
-    [0, 16, 24],
-    [0, 16, 24],
+    [0, 4, 24],
+    [0, 4, 24],
     [40, 128, 12],
     [46, 32, 8],
   ]);
-  assert.deepEqual(STREAM_REQUESTS.map(reservedPages), [3, 3, 9, 3]);
+  assert.deepEqual(STREAM_REQUESTS.map(reservedPages), [2, 2, 9, 3]);
   assert.equal(run("whole").version, STREAM_MODEL_VERSION);
   assert.equal(run("whole").status, "illustrative");
 });
@@ -33,17 +35,17 @@ for (const capacityPages of [12, 24]) {
       test(`${policy}, ${tokenBudget} tokens, ${capacityPages} pages: exact event and resource conservation`, () => {
         const trace = run(policy, tokenBudget, capacityPages);
         assert.deepEqual(trace, run(policy, tokenBudget, capacityPages));
-        assert.equal(trace.totalInputTokens, 192);
+        assert.equal(trace.totalInputTokens, 168);
         assert.equal(trace.totalOutputTokens, 68);
         assert.equal(trace.finalReservationPages, 0);
         assert.ok(trace.peakReservationPages <= capacityPages);
         assert.ok(trace.steps.length > 0);
         const input = trace.steps.flatMap((step) => step.prefill);
         const output = trace.steps.flatMap((step) => step.decode);
-        assert.equal(input.reduce((sum, entry) => sum + entry.tokens, 0), 192);
+        assert.equal(input.reduce((sum, entry) => sum + entry.tokens, 0), 168);
         assert.equal(output.reduce((sum, entry) => sum + entry.tokens, 0), 68);
         close(trace.iterationTimeMs, trace.steps.reduce((sum, step) => sum + step.durationMs, 0));
-        close(trace.overheadMs, trace.steps.length * 4);
+        close(trace.overheadMs, trace.steps.length * STREAM_COSTS.overheadMs);
         let reserved = 0;
         for (const [index, step] of trace.steps.entries()) {
           assert.equal(step.index, index);
@@ -56,8 +58,10 @@ for (const capacityPages of [12, 24]) {
           assert.equal(step.reservationEndPages, reserved);
           const prefillTokens = step.prefill.reduce((sum, entry) => sum + entry.tokens, 0);
           const decodeTokens = step.decode.reduce((sum, entry) => sum + entry.tokens, 0);
-          close(step.durationMs, 4 + 0.25 * prefillTokens + decodeTokens);
-          assert.equal(step.overheadMs, 4);
+          // every step decomposes into overhead + calibrated prefill blocks + one memory-bound decode step
+          close(step.durationMs, STREAM_COSTS.overheadMs + STREAM_COSTS.prefillMsPerBlock * prefillTokens + step.decodeMs);
+          assert.equal(step.overheadMs, STREAM_COSTS.overheadMs);
+          assert.equal(step.decodeMs > 0, decodeTokens > 0);
           if (policy === "whole" && prefillTokens) assert.equal(decodeTokens, 0);
           if (policy === "chunked") assert.ok(prefillTokens + decodeTokens <= tokenBudget);
           for (const emission of step.emitted) {
@@ -90,16 +94,19 @@ for (const capacityPages of [12, 24]) {
 test("24-page comparison exposes the pause versus first-token tradeoff", () => {
   const whole = run("whole");
   const chunked = run("chunked");
-  assert.equal(whole.requests[2].admissionMs, 42);
-  assert.equal(chunked.requests[2].admissionMs, 40);
-  close(whole.requests[0].maxGapMs, 56);
-  close(chunked.requests[0].maxGapMs, 10.25);
-  close(whole.requests[2].ttftMs, 58);
-  close(chunked.requests[2].ttftMs, 105.25);
+  // calibrated (Qwen3-4B, H100): reading an 8,192-token document in one step stalls a live answer
+  near(whole.requests[2].admissionMs, 44.02);
+  near(chunked.requests[2].admissionMs, 44.02);
+  near(whole.requests[0].maxGapMs, 224.52);
+  near(chunked.requests[0].maxGapMs, 23.47);
+  near(whole.requests[2].ttftMs, 228.54);
+  near(chunked.requests[2].ttftMs, 261.26);
   assert.ok(chunked.overheadMs > whole.overheadMs);
   assert.ok(chunked.finishMs > whole.finishMs);
   const gap = longestTokenGap(whole.requests[0].tokenMs);
-  assert.deepEqual(gap, { startMs: 42, endMs: 98, durationMs: 56 });
+  near(gap.startMs, 44.02);
+  near(gap.endMs, 268.54);
+  near(gap.durationMs, 224.52);
   assert.ok(whole.steps.some((step) => step.prefill.some((e) => e.id === 3 && e.tokens === 128)));
   assert.ok(chunked.steps.filter((step) => step.prefill.some((e) => e.id === 3)).length > 1);
 });
@@ -112,13 +119,14 @@ test("12 pages hold the long request until release, while decode keeps progressi
     assert.ok(trace.requests[3].admissionMs >= trace.requests[2].admissionMs);
     assert.ok(trace.steps.some((step) =>
       step.waitingIds.includes(3) && step.decode.some((entry) => entry.id === 1 || entry.id === 2)));
-    close(trace.requests[0].maxGapMs, 6);
+    near(trace.requests[0].maxGapMs, 4.53);
     assert.equal(trace.peakReservationPages, 12);
   }
   const baseline = run("whole", 16, 12);
   const chunked = run("chunked", 16, 12);
   assert.equal(chunked.requests[0].maxGapMs, baseline.requests[0].maxGapMs);
-  assert.ok(chunked.requests[2].ttftMs > baseline.requests[2].ttftMs);
+  // with no live answer left to protect, chunking changes the document's first token little either way
+  assert.ok(Math.abs(chunked.requests[2].ttftMs - baseline.requests[2].ttftMs) < 0.1 * baseline.requests[2].ttftMs);
   assert.ok(chunked.overheadMs > baseline.overheadMs);
 });
 

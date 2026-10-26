@@ -1,9 +1,18 @@
-/** A deterministic teaching loop. Times are illustrative milliseconds, not GPU telemetry. */
-export const STREAM_MODEL_VERSION = "stream-continuity-v1";
+import { STEP_OVERHEAD, decodeStepSeconds, prefillSeconds } from "./calibration.ts";
+
+/**
+ * A deterministic teaching loop on calibrated costs (calibration.ts): Qwen3-4B on one
+ * H100. Each prompt unit is a 64-token block, so request 3 is an 8,192-token document
+ * and the 16/32/64 budgets are 1,024/2,048/4,096 prompt tokens per iteration. Output
+ * units are single tokens. Derived from published specs, not GPU telemetry.
+ */
+export const STREAM_MODEL_VERSION = "stream-continuity-v2";
+export const PROMPT_BLOCK_TOKENS = 64;
 export const STREAM_FILM_DURATION_MS = 36_000;
 export const STREAM_REQUESTS = [
-  { id: 1, arrivalMs: 0, promptTokens: 16, outputTokens: 24 },
-  { id: 2, arrivalMs: 0, promptTokens: 16, outputTokens: 24 },
+  // two short chat questions (4 blocks = 256 tokens) are already streaming when the document arrives
+  { id: 1, arrivalMs: 0, promptTokens: 4, outputTokens: 24 },
+  { id: 2, arrivalMs: 0, promptTokens: 4, outputTokens: 24 },
   { id: 3, arrivalMs: 40, promptTokens: 128, outputTokens: 12 },
   { id: 4, arrivalMs: 46, promptTokens: 32, outputTokens: 8 },
 ] as const satisfies readonly StreamInput[];
@@ -28,6 +37,8 @@ export type StreamStep = {
   endMs: number;
   durationMs: number;
   overheadMs: number;
+  /** The memory-bound decode step: weights once plus every decoding request's KV. */
+  decodeMs: number;
   prefill: StreamAllocation[];
   decode: StreamAllocation[];
   emitted: { id: number; token: number; atMs: number }[];
@@ -78,9 +89,13 @@ type MutableRequest = StreamInput & {
 };
 
 const PAGE_TOKENS = 16;
-const OVERHEAD_MS = 4;
-const PREFILL_MS_PER_TOKEN = 0.25;
-const DECODE_MS_PER_TOKEN = 1;
+const OVERHEAD_MS = STEP_OVERHEAD * 1000;
+/** The calibrated costs, exported so tests and copy reconcile against the same numbers. */
+/** One 64-token prompt block, compute-bound (averaged over an 8,192-token prompt). */
+const PREFILL_MS_PER_TOKEN = (prefillSeconds(8192, 0, false) / (8192 / PROMPT_BLOCK_TOKENS)) * 1000;
+/** One decode step reads the weights once and every decoding request's KV cache. */
+const decodeStepMs = (sequences: number, kvTokens: number) => decodeStepSeconds(sequences, kvTokens, false) * 1000;
+export const STREAM_COSTS = { overheadMs: OVERHEAD_MS, prefillMsPerBlock: PREFILL_MS_PER_TOKEN } as const;
 const validInteger = (value: number, minimum: number) =>
   Number.isSafeInteger(value) && value >= minimum;
 
@@ -249,9 +264,12 @@ export function simulateStream(config: StreamConfig): StreamTrace {
     if (prefillTokens + decodeTokens === 0)
       throw new Error("simulation step has no work to perform");
     const startMs = clock;
-    const durationMs = OVERHEAD_MS +
-      prefillTokens * PREFILL_MS_PER_TOKEN +
-      decodeTokens * DECODE_MS_PER_TOKEN;
+    const kvTokens = decode.reduce((sum, entry) => {
+      const request = requests.find((r) => r.id === entry.id)!;
+      return sum + request.promptTokens * PROMPT_BLOCK_TOKENS + request.tokenMs.length;
+    }, 0);
+    const decodeMs = decodeTokens ? decodeStepMs(decode.length, kvTokens) : 0;
+    const durationMs = OVERHEAD_MS + prefillTokens * PREFILL_MS_PER_TOKEN + decodeMs;
     const endMs = startMs + durationMs;
     for (const entry of prefill) {
       const request = requests.find((r) => r.id === entry.id)!;
@@ -277,6 +295,7 @@ export function simulateStream(config: StreamConfig): StreamTrace {
       endMs,
       durationMs,
       overheadMs: OVERHEAD_MS,
+      decodeMs,
       prefill,
       decode,
       emitted,

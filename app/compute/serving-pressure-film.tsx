@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStudyPlayback } from "./use-study-playback";
 import { useFilmTime } from "./use-film-time";
-import { longestTokenGap, simulateStream, streamFilmFrame, STREAM_FILM_DURATION_MS, type StreamTrace } from "./stream-continuity-model";
+import { longestTokenGap, simulateStream, streamFilmFrame, STREAM_COSTS, STREAM_FILM_DURATION_MS, type StreamTrace } from "./stream-continuity-model";
+import { fmtMs } from "./calibration";
 import { servingPressureState } from "./serving-pressure-state";
 import "./serving-pressure-film.css";
 
@@ -12,9 +13,9 @@ const COLORS = [BLUE, "#95b6ff", AMBER, "#f3a0bc"];
 const number = (value: number, digits = 1) => value.toLocaleString("en-US", { maximumFractionDigits: digits });
 type Detail = "input" | "memory" | "execute" | "stream" | null;
 const DETAILS = {
-  input: ["New input competes with an existing answer", "Request 3 brings 128 input tokens at 40 ms; request 4 brings 32 at 46 ms. The baseline gives pending input priority. Chunked prefill limits new input per iteration after reserving decode work."],
-  memory: ["Admission needs room for the whole request", "Each request reserves ceiling((input + output) ÷ 16) pages until completion. Reducing the pool to 12 pages holds the long document outside the device. These are reservation slots, not a physical KV allocator or a cache-reuse experiment."],
-  execute: ["One iteration, two kinds of work", "The schematic follows the current iteration's input and output allocations. Duration = 4 ms overhead + 0.25 ms per input token + 1 ms per output token. Token emissions occur at iteration completion. Tile geometry is not a kernel profile."],
+  input: ["New input competes with an existing answer", "Request 3 brings an 8,192-token document at 40 ms; request 4 brings 2,048 tokens at 46 ms. The baseline gives pending input priority. Chunked prefill limits new input per iteration after reserving decode work."],
+  memory: ["Admission needs room for the whole request", "Each request reserves its prompt and answer in KV pages (about 1,024 prompt tokens per page) until completion. Reducing the pool to 12 pages holds the long document outside the device. These are reservation slots, not a physical KV allocator or a cache-reuse experiment."],
+  execute: ["One iteration, two kinds of work", `The schematic follows the current iteration's input and output allocations. Duration = ${fmtMs(STREAM_COSTS.overheadMs)} ms overhead + ${fmtMs(STREAM_COSTS.prefillMsPerBlock)} ms per 64 input tokens (compute-bound) + one decode step that reads the 8 GB of weights and every live answer\'s KV cache (memory-bound), all calibrated for Qwen3-4B on one H100. Token emissions occur at iteration completion. Tile geometry is not a kernel profile.`],
   stream: ["The gap is the user's interruption", "Every mark is one emitted token of request 1. The highlighted gap is the longest interval between two emissions. It is not time to first token, overall latency, or a measured production SLO."],
 } as const;
 
@@ -27,7 +28,8 @@ function MachineLane({ trace, time, top, focus, narrate, onInspect }: {
   const answer = state.requests[0];
   const document = state.requests[2];
   const gap = longestTokenGap(answer.tokenMs)!;
-  const horizon = 300;
+  // calibrated runs finish by ~450 ms (an 8,192-token document on one H100)
+  const horizon = 500;
   const tx = (value: number) => 208 + Math.min(1, value / horizon) * 590;
   const stalled = !answer.done && answer.count > 0 && state.decode === 0 && state.prefill > 0;
   const atCompare = ["whole", "chunked", "gap", "first-token"].includes(focus);
@@ -54,7 +56,7 @@ function MachineLane({ trace, time, top, focus, narrate, onInspect }: {
           <path d={read ? "M8 8l4 3 7-7" : "M6 5h16M6 10h12"} fill="none" stroke={AMBER} opacity={document.arrived ? active || read ? 1 : .5 : .2} />
         </g>;
       })}
-      <text x="28" y="154" className="sp-small" fill={document.waiting ? RED : undefined}>{!document.arrived ? "Arrives at 40 ms" : document.waiting ? "Waiting for memory" : `${document.inputDone} / 128 input tokens read`}</text>
+      <text x="28" y="154" className="sp-small" fill={document.waiting ? RED : undefined}>{!document.arrived ? "Arrives at 40 ms" : document.waiting ? "Waiting for memory" : `${(document.inputDone * 64).toLocaleString("en-US")} / 8,192 input tokens read`}</text>
       {state.requests[3].arrived && <text x="28" y="178" className="sp-small" fill="#f3a0bc">+ request 4 · 32 input tokens</text>}
     </g>
     <path d="M180 106H211m-5-4 5 4-5 4M291 106H329m-5-4 5 4-5 4" fill="none" stroke={AMBER} strokeOpacity={state.prefill ? .8 : .22} />
@@ -120,7 +122,7 @@ export function ServingPressureFilm({ onInspectTrace }: { onInspectTrace: (selec
   const narrate = frame.focus === "interference" ? (film.time < 12_500 ? "whole" : "chunked") : null;
   const blocked = pages === 12;
   const title = frame.focus === "streams" ? "Requests 1 and 2 are streaming their answers"
-    : frame.focus === "entry" ? "Request 3's 128-token document arrives while request 1 is streaming"
+    : frame.focus === "entry" ? "Request 3's 8,192-token document arrives while request 1 is streaming"
     : blocked ? "The KV pool is full: request 3 waits outside, both streams keep going"
     : frame.focus === "whole" || narrate === "whole" ? "Baseline: request 1's stream stops while the whole document is read"
     : frame.focus === "chunked" || narrate === "chunked" ? `Chunked prefill: the document is read ${budget} tokens at a time, between decode steps`
@@ -168,7 +170,7 @@ export function ServingPressureFilm({ onInspectTrace }: { onInspectTrace: (selec
           <MachineLane trace={pair.whole} time={frame.serviceMs} top={20} focus={frame.focus} narrate={narrate} onInspect={inspect} />
           <path d="M28 303H810" stroke="#2d4350" />
           <MachineLane trace={pair.chunked} time={frame.serviceMs} top={328} focus={frame.focus} narrate={narrate} onInspect={inspect} />
-          {[0, 100, 200, 300].map(time => <text key={time} x={208 + time / 300 * 590} y="600" textAnchor="middle" className="sp-small">{time} ms</text>)}
+          {[0, 100, 200, 300, 400, 500].map(time => <text key={time} x={208 + time / 500 * 590} y="600" textAnchor="middle" className="sp-small">{time} ms</text>)}
         </svg>
       </div></div>
       <aside className="sp-consequence" aria-label="What the scheduling change means for the request">
@@ -178,14 +180,14 @@ export function ServingPressureFilm({ onInspectTrace }: { onInspectTrace: (selec
           {settled ? <>
             <div className="sp-result-bars">{values.map((value, index) => <div key={index} data-active={frame.focus === (index ? "chunked" : "whole")}><span data-sp-target={index ? "chunked" : "whole"}>{index ? "Chunked" : "Baseline"}</span><strong style={{ color: index ? GREEN : BLUE }}>{number(value, 2)}<small> ms</small></strong><i style={{ width: `${100 * value / Math.max(...values)}%`, background: index ? GREEN : BLUE }} /></div>)}</div>
             <p className="sp-payoff" data-hero={!firstToken && values[0] !== values[1]} style={{ color: firstToken ? AMBER : VIOLET }}>{values[0] === values[1] ? "No stream-gap reduction" : firstToken ? `Cost: request 3's first token arrives ${number(Math.abs(values[1] - values[0]), 2)} ms later` : <>Δ {number(Math.abs(values[1] - values[0]), 2)} ms <small>shorter worst pause in request 1&rsquo;s stream</small></>}</p>
-            <p className="sp-reason">{blocked ? "Both policies keep decoding while the long document waits outside the full KV pool." : firstToken ? "Cause: request 3's input now shares every step with request 1's stream." : `Cause: request 3's input runs in ${budget}-token chunks, so request 1 keeps decoding.`}</p>
+            <p className="sp-reason">{blocked ? "Both policies keep decoding while the long document waits outside the full KV pool." : firstToken ? "Cause: request 3's input now shares every step with request 1's stream." : `Cause: request 3's input runs in ${(budget * 64).toLocaleString("en-US")}-token chunks, so request 1 keeps decoding.`}</p>
           </> : <div className="sp-live-answer">{[stateWhole, stateChunked].map((state, index) => { const request = state.requests[0], paused = !request.done && state.prefill > 0 && state.decode === 0; return <div key={index}><span>{index ? "Chunked" : "Baseline"}</span><strong style={{ color: paused ? RED : index ? GREEN : BLUE }}>{request.count}<small> / 24 tokens</small></strong><span>{paused ? `${number(request.sinceLast)} ms since its last token` : request.done ? "Answer complete" : "Generating the answer"}</span></div>; })}</div>}
           <div className="sp-two-effects"><button type="button" aria-pressed={!firstToken && settled} onClick={() => seek(26000)}>Inspect the stream gap <span>↗</span></button><button type="button" aria-pressed={firstToken} onClick={() => seek(31000)}>Inspect the first-token tradeoff <span>↗</span></button></div>
         </>}
       </aside>
       {settled && !detail && links.length > 0 && <svg className="sp-result-links" aria-hidden="true">{links.map(link => <path key={link.policy} d={link.path} fill="none" stroke={link.policy === "whole" ? BLUE : GREEN} strokeWidth="1.3" />)}</svg>}
     </div>
-    <div className="sp-controls"><label>Input + output tokens per chunked iteration<select value={budget} onChange={event => { setBudget(Number(event.target.value) as 16 | 32 | 64); seek(26000); }}><option value={16}>16-token chunks</option><option value={32}>32-token chunks</option><option value={64}>64-token chunks</option></select></label><label>KV reservation pool<select value={pages} onChange={event => { setPages(Number(event.target.value) as 12 | 24); seek(26000); }}><option value={24}>24 KV pages · document fits</option><option value={12}>12 KV pages · document waits</option></select></label></div>
+    <div className="sp-controls"><label>Input + output tokens per chunked iteration<select value={budget} onChange={event => { setBudget(Number(event.target.value) as 16 | 32 | 64); seek(26000); }}><option value={16}>1,024-token chunks</option><option value={32}>2,048-token chunks</option><option value={64}>4,096-token chunks</option></select></label><label>KV reservation pool<select value={pages} onChange={event => { setPages(Number(event.target.value) as 12 | 24); seek(26000); }}><option value={24}>24 KV pages · document fits</option><option value={12}>12 KV pages · document waits</option></select></label></div>
     <div className="sp-transport"><button type="button" disabled={player.reduced} aria-label={player.running ? "Pause serving film" : "Play serving film"} onClick={() => { setDetail(null); if (player.finished || film.time >= STREAM_FILM_DURATION_MS) replay(); else player.toggle(); }}>{player.running ? "Ⅱ" : "▷"}</button><input aria-label="Scrub serving film" type="range" min={0} max={STREAM_FILM_DURATION_MS} step={10} value={film.time} onChange={event => seek(Number(event.target.value))} /><time>{number(film.time / 1000)} / 36 s</time><button type="button" onClick={replay} disabled={player.reduced}>↺ Replay</button></div>
     <nav className="sp-moments" aria-label="Serving film moments">{[[0, "Answer in flight"], [5000, "Document arrives"], [18500, "Baseline interruption"], [22500, "Interleave the work"], [26000, "Compare the gap"], [31000, "Expose the tradeoff"]].map(([at, label]) => <button type="button" key={label} onClick={() => seek(Number(at))}>{label}</button>)}</nav>
     <footer className="sp-footer"><span>Execution tiles are schematic; token events come from the shared trace.</span><button type="button" onClick={() => { player.pause(); onInspectTrace({ tokenBudget: budget, capacityPages: pages, filmMs: film.time }); }}>Inspect iterations, reservations & export ↗</button></footer>

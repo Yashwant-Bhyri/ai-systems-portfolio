@@ -31,7 +31,7 @@ for (const capacityPages of [12, 24]) for (const tokenBudget of [16, 32, 64]) {
     for (const ms of [36000, 31000, 26000, 22500, 18500, 10000, 8000, 5000, 0]) {
       const frame = streamFilmFrame(ms, pair);
       for (const trace of Object.values(pair)) assert.deepEqual(servingPressureState(trace, frame.serviceMs), servingPressureState(trace, streamFilmFrame(ms, pair).serviceMs));
-      assert.ok(frame.serviceMs <= 300, "shared visual axis contains every supported configuration");
+      assert.ok(frame.serviceMs <= 500, "shared visual axis contains every supported configuration");
     }
   });
 }
