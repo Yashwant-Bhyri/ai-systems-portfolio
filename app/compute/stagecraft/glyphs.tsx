@@ -125,7 +125,7 @@ export function GlyphCacheRoute() {
     {[0, 1].map(k => <g key={k}><rect x={154} y={k ? 76 : 12} width={70} height={32} rx={5} className="g-box" />
       {[0, 1, 2, 3, 4, 5].map(j => <rect key={j} x={161 + j * 10} y={(k ? 76 : 12) + 11} width={7} height={10} rx={1.5} className={k ? "g-m" : j < 4 ? "g-c" : "g-m"} opacity={k ? .4 : .9} />)}</g>)}
     <circle r={3.5} className="g-a"><animateMotion path="M30 60C80 60 90 28 150 28" dur={D(1.8)} repeatCount="indefinite" /></circle>
-    <text x={14} y={112} className="g-t">warm prefix · −20 ms</text>
+    <text x={14} y={112} className="g-t">warm prefix · first token sooner</text>
   </svg>;
 }
 

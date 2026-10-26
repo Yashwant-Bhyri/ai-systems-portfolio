@@ -20,9 +20,9 @@ for (const retained of [true, false])
           assert.equal(new Set(r.blockTable).size, 8);
           assert.equal(r.blockTable.length, 8);
           assert.equal(r.allocated.length + r.reuse, 8);
-          assert.equal(r.firstToken - r.prefillEnd, 2);
-          assert.equal(r.complete - r.prefillEnd, 64);
-          assert.equal(r.prefillEnd - r.start, r.prefillBlocks * 10);
+          assert.equal(r.firstToken - r.prefillEnd, s.decodeMsPerToken);
+          assert.equal(r.complete - r.prefillEnd, 32 * s.decodeMsPerToken);
+          assert.equal(r.prefillEnd - r.start, r.prefillBlocks * s.prefillMsPerBlock);
           assert.equal(r.start, r.newBlocks > r.headroom ? r.release : 0);
           for (let t = -1; t <= s.horizon; t += 0.5) {
             const f = cacheRouteState(s, key, t);
@@ -54,25 +54,26 @@ for (const retained of [true, false])
           assert.equal(end.retained, 4);
           assert.equal(end.free, 8);
           assert.equal(end.owned, 0);
-          assert.equal(end.workMs, r.prefillBlocks * 10 + 64);
+          assert.equal(end.workMs, r.prefillBlocks * s.prefillMsPerBlock + 32 * s.decodeMsPerToken);
         }
         assert.equal(s.delta, s.cold.firstToken - s.warm.firstToken);
-        assert.equal(s.delta, s.workAvoided * 10 - s.warm.start);
+        assert.equal(s.delta, s.workAvoided * s.prefillMsPerBlock - s.warm.start);
       });
     }
 test("routing crossover separates saved work from first-token latency", () => {
   const light = cacheRoutingStudy();
-  assert.equal(light.warm.firstToken, 42);
-  assert.equal(light.cold.firstToken, 62);
-  assert.equal(light.delta, 20);
-  const hot = cacheRoutingStudy({ retained: true, occupied: 8, releaseMs: 80 });
+  // calibrated: 20 ms per 1,024-token page of prefill, 5 ms per output token (Qwen3-4B, one H100)
+  assert.equal(light.warm.firstToken, 65);
+  assert.equal(light.cold.firstToken, 125);
+  assert.equal(light.delta, 60);
+  const hot = cacheRoutingStudy({ retained: true, occupied: 8, releaseMs: 100 });
   assert.equal(hot.workAvoided, 4);
-  assert.equal(hot.delta, -40);
+  assert.equal(hot.delta, -20);
   assert.equal(hot.winner, "cold");
-  const tie = cacheRoutingStudy({ retained: true, occupied: 8, releaseMs: 40 });
+  const tie = cacheRoutingStudy({ retained: true, occupied: 8, releaseMs: 80 });
   assert.equal(tie.delta, 0);
   assert.equal(tie.winner, "tie");
-  assert.equal(hot.crossover, 40);
+  assert.equal(hot.crossover, 80);
   const available = cacheRoutingStudy({
     retained: true,
     occupied: 4,
@@ -90,7 +91,7 @@ test("routing crossover separates saved work from first-token latency", () => {
   assert.equal(evicted.delta, 0);
   assert.deepEqual(
     cacheRoutingSweep(hot.config).map((p) => p.warm),
-    Array.from({ length: 11 }, (_, i) => 22 + 10 * i),
+    Array.from({ length: 11 }, (_, i) => 45 + 10 * i),
   );
 });
 
@@ -109,15 +110,18 @@ test("reuse references the existing pages and never releases a different request
       [3, 1, true],
     ],
   );
-  const complete = cacheRouteState(s, "warm", s.warm.complete);
-  assert.equal(complete.retained, 4);
-  assert.equal(complete.free, 4);
-  assert.equal(complete.owned, 4);
+  // while the warm request streams, the other request's pages stay resident and untouched
+  const during = cacheRouteState(s, "warm", 99);
   assert.deepEqual(
-    complete.pages.filter((p) => p.kind === "resident").map((p) => p.id),
+    during.pages.filter((p) => p.kind === "resident").map((p) => p.id),
     [4, 5, 6, 7],
   );
-  assert.equal(cacheRouteState(s, "warm", 100).free, 8);
+  assert.equal(during.owned, 12);
+  assert.equal(cacheRouteState(s, "warm", 100).pages.filter((p) => p.kind === "resident").length, 0);
+  const complete = cacheRouteState(s, "warm", s.warm.complete);
+  assert.equal(complete.retained, 4);
+  assert.equal(complete.free, 8);
+  assert.equal(complete.owned, 0);
   const releasedAtArrival = cacheRoutingStudy({
     retained: true,
     occupied: 8,
@@ -129,13 +133,13 @@ test("reuse references the existing pages and never releases a different request
 
 test("allocated capacity is not presented as already-computed KV", () => {
   const s = cacheRoutingStudy();
-  assert.equal(cacheRouteState(s, "cold", 9).pages[0].ready, false);
-  assert.equal(cacheRouteState(s, "cold", 10).pages[0].ready, true);
-  assert.equal(cacheRouteState(s, "cold", 10).pages[1].ready, false);
-  const first = cacheRouteState(s, "cold", 62);
+  assert.equal(cacheRouteState(s, "cold", 19).pages[0].ready, false);
+  assert.equal(cacheRouteState(s, "cold", 20).pages[0].ready, true);
+  assert.equal(cacheRouteState(s, "cold", 20).pages[1].ready, false);
+  const first = cacheRouteState(s, "cold", 125);
   assert.equal(first.emitted, 1);
   assert.equal(first.pages[6].ready, false);
-  const fullOutputPage = cacheRouteState(s, "cold", 92);
+  const fullOutputPage = cacheRouteState(s, "cold", 200);
   assert.equal(fullOutputPage.emitted, 16);
   assert.equal(fullOutputPage.pages[6].ready, true);
   assert.equal(fullOutputPage.pages[7].ready, false);
@@ -194,14 +198,14 @@ test("sensitivity sweep holds the crossover and the cold-route win, then restore
   const s = cacheRoutingStudy();
   assert.equal(cacheRoutingFrame(30000, s).probeReleaseMs, 20);
   for (const t of [33000, 34000, 35000])
-    assert.equal(cacheRoutingFrame(t, s).probeReleaseMs, 40);
+    assert.equal(cacheRoutingFrame(t, s).probeReleaseMs, s.crossover ?? 80);
   for (const t of [38000, 39000, 40000])
-    assert.equal(cacheRoutingFrame(t, s).probeReleaseMs, 80);
+    assert.equal(cacheRoutingFrame(t, s).probeReleaseMs, 100);
   assert.equal(cacheRoutingFrame(41500, s).probeReleaseMs, 20);
   assert.equal(cacheRoutingFrame(41500, s).chart, false);
   assert.equal(s.config.releaseMs, 20);
   assert.equal(
-    cacheRoutingStudy({ ...s.config, releaseMs: 80 }).winner,
+    cacheRoutingStudy({ ...s.config, releaseMs: 100 }).winner,
     "cold",
   );
 });

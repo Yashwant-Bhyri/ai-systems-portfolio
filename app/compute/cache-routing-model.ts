@@ -1,4 +1,11 @@
-/** A bounded admission/locality experiment, not hardware telemetry. */
+import { STEP_OVERHEAD, decodeBytes, bandwidth, prefillSeconds } from "./calibration.ts";
+
+/**
+ * A bounded admission/locality experiment on calibrated costs (calibration.ts):
+ * Qwen3-4B on one H100, KV pages of 1,024 tokens. Prefill per page and decode per
+ * token are rounded to whole milliseconds. Derived from published specs, not telemetry.
+ */
+export const BLOCK_TOKENS = 1024;
 export const CACHE_ROUTING_DURATION = 44000;
 export const CACHE_ROUTING_MOMENTS = [
   0, 6500, 12500, 18000, 24000, 30000, 44000,
@@ -26,8 +33,10 @@ const CAPACITY = 12,
   PREFIX = 4,
   SUFFIX = 2,
   OUTPUT = 2;
-const PREFILL_MS = 10,
-  TOKEN_MS = 2,
+/** One 1,024-token page of prompt, compute-bound. */
+const PREFILL_MS = Math.round((prefillSeconds(6 * BLOCK_TOKENS, 0, false) / 6) * 1000),
+  /** One output token at a ~6k-token context, memory-bound, plus the step overhead. */
+  TOKEN_MS = Math.round((STEP_OVERHEAD + decodeBytes(6 * BLOCK_TOKENS, false) / bandwidth()) * 1000),
   OUTPUT_TOKENS = 32;
 export type CacheRoute = "warm" | "cold";
 export type CachePage = {
@@ -93,7 +102,7 @@ export function cacheRoutingStudy(
     status: "illustrative",
     config: { ...config },
     capacity: CAPACITY,
-    blockTokens: 16,
+    blockTokens: BLOCK_TOKENS,
     promptBlocks: PREFIX + SUFFIX,
     outputBlocks: OUTPUT,
     prefillMsPerBlock: PREFILL_MS,
@@ -200,6 +209,9 @@ export function cacheRouteState(
   };
 }
 
+/** The crossover for a full warm replica: the four prefix pages of prefill it avoids. */
+export const PROBE_TIE = PREFIX * PREFILL_MS;
+export const PROBE_COLD = Math.min(100, PROBE_TIE + 20);
 const clamp = (x: number) => Math.max(0, Math.min(1, x));
 const mix = (a: number, b: number, t: number) => a + (b - a) * clamp(t);
 export function cacheRoutingFrame(ms: number, study: CacheRoutingStudy) {
@@ -242,18 +254,19 @@ export function cacheRoutingFrame(ms: number, study: CacheRoutingStudy) {
     chart: time >= 30000 && time < 41500,
     // A separate, explicitly labelled sensitivity sweep. Never advances the
     // original request's events or mutates its selected configuration.
+    // Hold at the crossover (where reuse and waiting cancel), then past it, where the cold route wins.
     probeReleaseMs:
       time < 31000 || time >= 41500
         ? study.config.releaseMs
         : time < 33000
-          ? mix(study.config.releaseMs, 40, (time - 31000) / 2000)
+          ? mix(study.config.releaseMs, PROBE_TIE, (time - 31000) / 2000)
           : time < 35000
-            ? 40
+            ? PROBE_TIE
             : time < 38000
-              ? mix(40, 80, (time - 35000) / 3000)
+              ? mix(PROBE_TIE, PROBE_COLD, (time - 35000) / 3000)
               : time < 40000
-                ? 80
-                : mix(80, study.config.releaseMs, (time - 40000) / 1500),
+                ? PROBE_COLD
+                : mix(PROBE_COLD, study.config.releaseMs, (time - 40000) / 1500),
     warm: cacheRouteState(study, "warm", service),
     cold: cacheRouteState(study, "cold", service),
   };

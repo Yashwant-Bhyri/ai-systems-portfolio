@@ -1079,12 +1079,14 @@ export function CacheRouting({ active = true }: { active?: boolean }) {
         <summary>Inspect placement assumptions and the event record</summary>
         <p>
           Two alternative placements for one request, not duplicated execution.
-          Each replica has 12 pages of 16 token slots. The input has four prefix
-          pages and two suffix pages; two further pages reserve the maximum
-          32-token answer up front. Prefill costs 10 ms per uncached input page
-          and decode costs 2 ms per output token. These declared teaching costs
-          are not GPU measurements. The first output token follows prefill by 2
-          ms.
+          Each replica holds 12 KV pages of {study.blockTokens.toLocaleString("en-US")} prompt
+          tokens. The input has four prefix pages and two suffix pages; two further
+          pages reserve the 32-token answer up front. Prefill costs{" "}
+          {study.prefillMsPerBlock} ms per uncached page and decode{" "}
+          {study.decodeMsPerToken} ms per output token: Qwen3-4B on one H100,
+          from the calibrated roofline (published specs, not GPU measurements),
+          rounded to whole milliseconds. The first output token follows prefill
+          by {study.decodeMsPerToken} ms.
         </p>
         <p>
           Request R holds four or eight pages on A until its declared release.
