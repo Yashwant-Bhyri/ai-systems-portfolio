@@ -53,6 +53,8 @@ import { TaskLanding } from "./stagecraft/task-landing";
 import { FleetModule } from "./stagecraft/fleet-module";
 import { ModuleArc } from "./stagecraft/module-arc";
 import { FLEET_ARC } from "./arc-scenes/fleet-arc";
+import { InsideScan } from "./stagecraft/scan/inside-scan";
+import { CapabilityTerrain } from "./stagecraft/scan/capability-terrain";
 import { useTr } from "../exhibit/i18n";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 import {
@@ -62,6 +64,8 @@ import {
   GlyphCurves,
   GlyphExperiment,
   GlyphFleet,
+  GlyphInside,
+  GlyphTerrain,
   GlyphFrontier,
   GlyphLatency,
   GlyphReplay,
@@ -165,6 +169,8 @@ const TRAINING_VIEWS = [
   { name: "Regression audit", detail: "Follow gains and losses", symbol: "⇄" },
   { name: "Where the 96 tasks land", detail: "Base vs RL checkpoint", symbol: "⁘" },
   { name: "Elastic RL on 64 GPUs", detail: "Rollout and training roles per GPU", symbol: "≋" },
+  { name: "Inside the model", detail: "Base vs RL checkpoint, token × layer", symbol: "▦" },
+  { name: "Capability terrain", detail: "96 tasks × six checkpoints", symbol: "⛰" },
 ];
 const RESEARCH = [
   {
@@ -409,7 +415,7 @@ const TRAINING_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "What did the model learn?", short: "Post-training", techniques: ["SFT + LoRA", "Correctness RL", "More thought", "Lean RL", "Elastic RL"] },
 ];
 /** Modules without a scripted demonstration stay on stage this long before the show moves on. */
-const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 24000, tasks: 22000 };
+const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 24000, tasks: 22000, inside: 40000, terrain: 36000 };
 /** The next module's ring fills over this long once the current one has told its story. */
 const COUNTDOWN = 5200;
 
@@ -541,6 +547,8 @@ export function ComputeLabStudy({
   const railItems: RailItem[] = training
     ? [
         { key: "film", title: "The experiment", term: "base → SFT → RL → 4× thought → lean RL", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "inside", title: "Inside the model", term: "base → RL checkpoint · 36 layers × 50 tokens", value: "7 of 50", unit: "words the base model would have written differently", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
+        { key: "terrain", title: "Capability terrain", term: "96 tasks × six checkpoints", value: `+${simulateLab(3, 4).correct - simulateLab(0, 1).correct}`, unit: "tasks raised above the line, base → lean RL", Glyph: GlyphTerrain, onOpen: () => openView(6), current: mode === "explore" && view === 6 },
         { key: "map", title: "Capability map", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thought`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thought", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thought", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thought`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
@@ -1080,6 +1088,10 @@ export function ComputeLabStudy({
                 </>
               ) : view === 3 ? (
                 <TaskLanding budget={budget} active={mode === "explore"} />
+              ) : view === 5 ? (
+                <InsideScan active={mode === "explore" && view === 5} />
+              ) : view === 6 ? (
+                <CapabilityTerrain active={mode === "explore" && view === 6} />
               ) : view === 4 ? (
                 <ModuleArc active={mode === "explore" && view === 4} {...FLEET_ARC}><FleetModule active={mode === "explore"} /></ModuleArc>
               ) : (

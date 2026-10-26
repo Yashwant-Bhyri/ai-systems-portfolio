@@ -492,4 +492,4 @@
   .ls-workload-switch { position: static; width: fit-content; margin: 10px 16px 2px; }
 }
 /* The fleet scene has its own clock and no thought allowance: no context row above it. */
-.rs-exhibit[data-training][data-view="4"] > .rs-context-bar { display: none; }
+.rs-exhibit[data-training]:is([data-view="4"], [data-view="5"], [data-view="6"]) > .rs-context-bar { display: none; }

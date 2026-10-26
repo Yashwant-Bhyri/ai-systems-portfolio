@@ -349,3 +349,31 @@ export function GlyphFrontier() {
     <text x={24} y={22} className="g-t">pass@1 ↑</text><text x={224} y={116} className="g-t" textAnchor="end">← GPU-s / correct</text>
   </svg>;
 }
+
+/* ── Post-training · Brain-Scan family ────────────────────────────────── */
+
+export function GlyphInside() {
+  // A token × layer field; a scan column lights up as it passes, one word flips.
+  const cols = 22, rows = 7;
+  return <svg viewBox={VB}>
+    {Array.from({ length: cols * rows }, (_, i) => {
+      const c = i % cols, r = Math.floor(i / cols);
+      const v = 0.12 + 0.1 * r + ([5, 11, 16].includes(c) ? 0.35 : 0) * (r > 3 ? 1 : 0.4);
+      return <rect key={i} x={12 + c * 10} y={12 + r * 11} width={8} height={9} rx={1} className="g-r" opacity={Math.min(0.95, v)} />;
+    })}
+    <rect x={12} y={8} width={2} height={84} className="g-ink"><animate attributeName="x" values="12;224;224" keyTimes="0;.85;1" dur={D(4.4)} repeatCount="indefinite" /></rect>
+    {[5, 11, 16].map((c) => <rect key={c} x={12 + c * 10} y={100} width={8} height={3} className="g-r" opacity={0}>
+      <animate attributeName="opacity" values="0;0;1;1" keyTimes={`0;${(0.85 * c) / 21};${(0.85 * c) / 21 + 0.02};1`} dur={D(4.4)} repeatCount="indefinite" />
+    </rect>)}
+  </svg>;
+}
+
+export function GlyphTerrain() {
+  // Ridge rows, front to back, rising one after another.
+  const ridge = (k: number) => Array.from({ length: 25 }, (_, i) => `${i ? "L" : "M"}${14 + i * 9} ${30 + k * 14 - Math.max(0, Math.sin(i * 0.5 + k) * (6 + k * 3)) - (i < 8 + k * 3 ? 8 + k * 2 : 0)}`).join("");
+  return <svg viewBox={VB}>
+    {[0, 1, 2, 3, 4].map((k) => <path key={k} d={ridge(4 - k)} className="g-line g-r-s" strokeWidth={1.6} opacity={0}>
+      <animate attributeName="opacity" values="0;0;.95;.95;0" keyTimes={`0;${k * 0.14};${k * 0.14 + 0.1};.92;1`} dur={D(4.6)} repeatCount="indefinite" />
+    </path>)}
+  </svg>;
+}
