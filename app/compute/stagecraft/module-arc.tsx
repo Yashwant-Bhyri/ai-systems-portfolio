@@ -14,7 +14,13 @@ import "./module-arc.css";
  * the impact has been shown does the arc tell the laboratory it is done.
  */
 export type SceneProps = { t: number };
-export type ArcBeat = { label: string; title: string; ms: number; Scene: ComponentType<SceneProps> };
+export type ArcBeat = {
+  label: string; title: string; ms: number;
+  /** A scene drawn from the arc's clock… */
+  Scene?: ComponentType<SceneProps>;
+  /** …or an existing self-clocked film, told whether it is on screen. */
+  render?: (on: boolean) => ReactNode;
+};
 
 const LABELS = ["Problem", "How it works", "In our system", "Impact"] as const;
 const REDUCED = "(prefers-reduced-motion: reduce)";
@@ -109,7 +115,7 @@ export function ModuleArc({
         ))}
         <span className="ma-title" key={beat}>{tr(timed ? timed.title : systemTitle)}</span>
       </nav>
-      {timed && <div className="ma-scene" key={beat}><timed.Scene t={shownT} /></div>}
+      {timed && <div className="ma-scene" key={beat} data-film={timed.render ? true : undefined}>{timed.render ? timed.render(live) : timed.Scene && <timed.Scene t={shownT} />}</div>}
       <div className="ma-system" hidden={beat !== 2}>{children}</div>
     </div>
   );

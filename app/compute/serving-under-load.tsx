@@ -17,9 +17,9 @@ import { GlossaryBoard } from "./stagecraft/glossary-board";
 import { useStageHold } from "./stagecraft/stage-hold";
 import { ModuleArc } from "./stagecraft/module-arc";
 import { PRESSURE_ARC } from "./arc-scenes/pressure-arc";
+import { SPEC_ARC } from "./arc-scenes/spec-arc";
 import { createPortal } from "react-dom";
 import { useSlot } from "./stagecraft/use-slot";
-import { DraftFilm } from "./stagecraft/draft-film";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 
 /* Each investigation's own switches, performed: the counterexample is one click away, so show it. */
@@ -27,9 +27,6 @@ const DEMOS: Record<string, readonly CursorStep[]> = {
   pressure: [
     { target: ".sp-controls label:nth-of-type(2) select", action: "select", value: "12", label: "Smaller KV pool", hold: 7000 },
     { target: ".sp-controls label:nth-of-type(2) select", action: "select", value: "24", label: "Back to 24 pages", hold: 6000 },
-  ],
-  draftSwitch: [
-    { target: ".df-switch button:nth-of-type(2)", label: "Round by round", hold: 600 },
   ],
   draft: [
     { target: "[aria-label='Draft agreement'] button:nth-of-type(2)", label: "Every guess right", hold: 6500 },
@@ -91,7 +88,6 @@ export function ServingUnderLoad() {
   const [view, setView] = useState<"pressure" | "loop" | "continuity" | "glossary">(
     "pressure",
   );
-  const [draftDetail, setDraftDetail] = useState(false);
   const railSlot = useSlot("inference-serving-rail");
   const labNav = useLabNav();
   // Deep links (#inference-study/draft) arrive as an event from the laboratory.
@@ -109,7 +105,7 @@ export function ServingUnderLoad() {
     revision: number;
   }>({ revision: 0 });
   const root = useRef<HTMLDivElement>(null);
-  const pressureHost = useRef<HTMLDivElement>(null), draftHost = useRef<HTMLDivElement>(null), draftSwitchHost = useRef<HTMLDivElement>(null),
+  const pressureHost = useRef<HTMLDivElement>(null), draftHost = useRef<HTMLDivElement>(null),
     cacheHost = useRef<HTMLDivElement>(null), overlapHost = useRef<HTMLDivElement>(null);
   const continuityButton = useRef<HTMLButtonElement>(null);
   const returnButton = useRef<HTMLButtonElement>(null);
@@ -323,21 +319,12 @@ export function ServingUnderLoad() {
               </p>
             }
           >
-            <div ref={draftSwitchHost} className="gc-host">
-              {/* After two loops of the agents film, the cursor opens the accounting view. */}
-              <GhostCursor root={draftSwitchHost} script={DEMOS.draftSwitch} enabled={view === "loop" && explorer === "draft" && !draftDetail} startDelay={36000} />
-              <div className="df-switch" role="group" aria-label="Speculative decoding view">
-                <button type="button" aria-pressed={!draftDetail} onClick={() => setDraftDetail(false)}>Draft and target, as agents</button>
-                <button type="button" aria-pressed={draftDetail} onClick={() => setDraftDetail(true)}>Round-by-round accounting</button>
+            <ModuleArc active={view === "loop" && explorer === "draft"} {...SPEC_ARC}>
+              <div ref={draftHost} className="gc-host">
+                <GhostCursor root={draftHost} script={DEMOS.draft} enabled={view === "loop" && explorer === "draft"} startDelay={9000} />
+                <DraftVerification active={view === "loop" && explorer === "draft"} />
               </div>
-              {!draftDetail && <DraftFilm active={view === "loop" && explorer === "draft" && !draftDetail} />}
-            </div>
-            <div ref={draftHost} className="gc-host" hidden={!draftDetail}>
-              <GhostCursor root={draftHost} script={DEMOS.draft} enabled={view === "loop" && explorer === "draft" && draftDetail} startDelay={9000} />
-              <DraftVerification
-                active={view === "loop" && explorer === "draft" && draftDetail}
-              />
-            </div>
+            </ModuleArc>
           </Suspense>
         </RetainedLabPanel>
         <RetainedLabPanel

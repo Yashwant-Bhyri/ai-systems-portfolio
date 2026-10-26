@@ -147,9 +147,9 @@ aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 .df-film { position: relative; padding: 8px 0 18px; border-bottom: 1px solid var(--vx-line, rgba(255,255,255,.08)); margin-bottom: 18px; }
 .df-svg { display: block; width: 100%; height: auto; }
 .df-word { font: 400 38px ui-sans-serif, -apple-system, system-ui, sans-serif; fill: #f2f4ee; letter-spacing: 0; white-space: pre; }
-.df-small { font: 400 15px var(--font-geist-mono), monospace; fill: #8a96a3; letter-spacing: .02em; }
-.df-kicker { font: 500 13px var(--font-geist-mono), monospace; fill: var(--active-accent, #ffc267); letter-spacing: .08em; }
-.df-label { font: 500 16px var(--font-geist-sans), sans-serif; fill: #c9d2db; }
+.df-small { font: 400 21px var(--font-geist-mono), monospace; fill: #8a96a3; letter-spacing: .02em; }
+.df-kicker { font: 500 18px var(--font-geist-mono), monospace; fill: var(--active-accent, #ffc267); letter-spacing: .08em; }
+.df-label { font: 500 22px var(--font-geist-sans), sans-serif; fill: #c9d2db; }
 .df-mark { font: 500 26px var(--font-geist-sans), sans-serif; }
 .df-call { font: 500 20px var(--font-geist-mono), monospace; fill: var(--active-accent, #ffc267); }
 .df-caption { margin: 0 0 0 7.5%; color: #e6ebf0; font: 450 18px/1.4 var(--font-geist-sans), sans-serif; letter-spacing: -.01em; min-height: 1.4em; }
@@ -207,8 +207,8 @@ aside.cx-spot.is-lit, div.cx-spot.is-lit { opacity: 1; }
 .df-agent { fill: rgba(255,255,255,.02); stroke-width: 1.2; }
 .df-agent-draft { stroke: rgba(255,194,103,.55); }
 .df-agent-target { stroke: rgba(180,200,220,.45); }
-.df-agent-name { fill: #eef2f6; font: 500 19px var(--font-geist-sans), sans-serif; }
-.df-agent-meta { fill: #8f9cab; font: 400 13px var(--font-geist-mono), monospace; }
+.df-agent-name { fill: #eef2f6; font: 500 24px var(--font-geist-sans), sans-serif; }
+.df-agent-meta { fill: #9aa6b2; font: 400 19px var(--font-geist-mono), monospace; }
 .df-link { fill: none; stroke-linecap: round; }
 .df-link-draft { stroke: #ffc267; stroke-width: 1.4; stroke-dasharray: 3 6; }
 .df-link-verify { stroke: #c9d6e2; stroke-width: 2.4; }

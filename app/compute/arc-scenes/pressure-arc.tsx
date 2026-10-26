@@ -52,7 +52,7 @@ function Lanes({ trace, now, chunked }: { trace: StreamTrace; now: number; chunk
               if (right <= a) return null;
               return <rect key={i} x={x(a) + 0.5} y={52} width={Math.max(0.5, (right - a) * PX - 1)} height={62} rx={2} fill={col} opacity={col === C.ov ? 0.9 : 0.92} />;
             })}
-            {docTokens && vis >= s.endMs && <text x={x((s.startMs + s.endMs) / 2)} y={44} textAnchor="middle" className="ma-l" fill={C.doc}>{docTokens}</text>}
+            {docTokens && vis >= s.endMs && <text x={x((s.startMs + s.endMs) / 2)} y={44} textAnchor="middle" className="ma-l" style={{ fill: C.doc }}>{docTokens}</text>}
           </g>
         );
       })}
@@ -63,7 +63,7 @@ function Lanes({ trace, now, chunked }: { trace: StreamTrace; now: number; chunk
         <g opacity={gapShown}>
           <path d={`M${x(gap.a)} 162V154H${x(gap.b)}V162`} fill="none" stroke={chunked ? C.dec : C.red} strokeWidth={2} />
           <rect x={x(gap.a) + 2} y={178} width={(gap.b - gap.a) * PX - 4} height={32} fill={chunked ? C.dec : C.red} opacity={0.1} />
-          <text x={(x(gap.a) + x(gap.b)) / 2} y={144} textAnchor="middle" className="ma-n" fill={chunked ? C.dec : C.red}>
+          <text x={(x(gap.a) + x(gap.b)) / 2} y={144} textAnchor="middle" className="ma-n" style={{ fill: chunked ? C.dec : C.red }}>
             {chunked ? `worst gap ${(gap.b - gap.a).toFixed(2)} ms` : `${gap.b - gap.a} ms without a token`}
           </text>
         </g>
@@ -78,7 +78,7 @@ function Lanes({ trace, now, chunked }: { trace: StreamTrace; now: number; chunk
           {now >= firstToken && (
             <g>
               <path d={`M${x(firstToken)} 284l7 10-7 10-7-10z`} fill={C.doc} />
-              <text x={x(firstToken) + 12} y={299} className="ma-l" fill={C.doc}>first token · {(r3.ttftMs ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} ms after arrival</text>
+              <text x={x(firstToken) + 12} y={299} className="ma-l" style={{ fill: C.doc }}>first token · {(r3.ttftMs ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} ms after arrival</text>
             </g>
           )}
         </g>
@@ -112,7 +112,7 @@ function Mechanism({ t }: SceneProps) {
   const rule = prog(t, 200, 900);
   return <svg viewBox="0 0 1100 460" role="img" aria-label="Chunked prefill: each step decodes every live answer first, then reads at most 16 input tokens">
     <Lanes trace={CHUNKED} now={now} chunked />
-    <text opacity={rule} x={X0} y={448} className="ma-k" fill={C.dec}>The rule: each step decodes every live answer first, then reads at most 16 input tokens.</text>
+    <text opacity={rule} x={X0} y={448} className="ma-k" style={{ fill: C.dec }}>The rule: each step decodes every live answer first, then reads at most 16 input tokens.</text>
   </svg>;
 }
 

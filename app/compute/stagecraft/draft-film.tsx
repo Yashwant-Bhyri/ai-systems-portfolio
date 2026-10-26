@@ -16,7 +16,7 @@ const CTX = "The cache stores";
 const R1 = [" the", " keys", " and", " weights", " here"], OK1 = 3, FIX1 = " values";
 const R2 = [" in", " the", " output", " buffer", " too"], FIX2 = " for";
 const X0 = 440, Y = 250, DUR = 18000;
-const DRAFT = { x: 40, y: 92, w: 330, h: 104 }, TARGET = { x: 40, y: 330, w: 330, h: 150 };
+const DRAFT = { x: 30, y: 92, w: 380, h: 112 }, TARGET = { x: 30, y: 322, w: 380, h: 160 };
 const C = { acc: "#ffc267", ink: "#f2f4ee", ok: "#9fe3a8", fail: "#ff8176", slate: "#5e6a76", dim: "#8a96a3" };
 
 const BEATS: readonly [number, string][] = [
@@ -170,18 +170,18 @@ export function DraftFilm({ active }: { active: boolean }) {
         <text ref={fixLab} y={Y - 96} className="df-small" opacity={0}>{tr("the large model's own word")}</text>
         <g ref={draftCard} opacity={0.5}>
           <rect x={DRAFT.x} y={DRAFT.y} width={DRAFT.w} height={DRAFT.h} rx={12} className="df-agent df-agent-draft" />
-          {[0, 1, 2, 3].map((k) => <rect key={k} x={DRAFT.x + 20} y={DRAFT.y + 22 + k * 15} width={56} height={8} rx={2} fill={C.acc} opacity={0.35 + k * 0.12} />)}
-          <text x={DRAFT.x + 96} y={DRAFT.y + 40} className="df-agent-name">{tr("Draft model")}</text>
-          <text x={DRAFT.x + 96} y={DRAFT.y + 64} className="df-agent-meta">{tr("Draft model · small, fast")}</text>
-          <text x={DRAFT.x + 96} y={DRAFT.y + 86} className="df-agent-meta">{tr("guesses k = 5 tokens")}</text>
+          {[0, 1, 2, 3].map((k) => <rect key={k} x={DRAFT.x + 18} y={DRAFT.y + 26 + k * 16} width={48} height={8} rx={2} fill={C.acc} opacity={0.35 + k * 0.12} />)}
+          <text x={DRAFT.x + 84} y={DRAFT.y + 40} className="df-agent-name">{tr("Draft model")}</text>
+          <text x={DRAFT.x + 84} y={DRAFT.y + 68} className="df-agent-meta">{tr("small and fast")}</text>
+          <text x={DRAFT.x + 84} y={DRAFT.y + 94} className="df-agent-meta">{tr("guesses 5 words ahead")}</text>
         </g>
         <g ref={targetCard} opacity={0.5}>
           <rect x={TARGET.x} y={TARGET.y} width={TARGET.w} height={TARGET.h} rx={12} className="df-agent df-agent-target" />
-          {Array.from({ length: 10 }, (_, k) => <rect key={k} x={TARGET.x + 20} y={TARGET.y + 18 + k * 12} width={56} height={7} rx={2} fill="#9fb4c8" opacity={0.3 + k * 0.06} />)}
-          <text x={TARGET.x + 96} y={TARGET.y + 42} className="df-agent-name">{tr("Target model")}</text>
-          <text x={TARGET.x + 96} y={TARGET.y + 66} className="df-agent-meta">{tr("Target model · decides every word")}</text>
-          <text x={TARGET.x + 96} y={TARGET.y + 88} className="df-agent-meta">{tr("checks all five in one pass")}</text>
-          <text x={TARGET.x + 96} y={TARGET.y + 110} className="df-agent-meta">{tr("writes its own word on a miss")}</text>
+          {Array.from({ length: 10 }, (_, k) => <rect key={k} x={TARGET.x + 18} y={TARGET.y + 22 + k * 12} width={48} height={7} rx={2} fill="#9fb4c8" opacity={0.3 + k * 0.06} />)}
+          <text x={TARGET.x + 84} y={TARGET.y + 42} className="df-agent-name">{tr("Target model")}</text>
+          <text x={TARGET.x + 84} y={TARGET.y + 72} className="df-agent-meta">{tr("decides every word")}</text>
+          <text x={TARGET.x + 84} y={TARGET.y + 100} className="df-agent-meta">{tr("checks five in one pass")}</text>
+          <text x={TARGET.x + 84} y={TARGET.y + 128} className="df-agent-meta">{tr("writes its own on a miss")}</text>
         </g>
         {[0, 1, 2, 3, 4].map((i) => <path key={i} ref={(e) => { draftLinks.current[i] = e; }} className="df-link df-link-draft" opacity={0} />)}
         <path ref={beam} className="df-link df-link-verify" opacity={0} />

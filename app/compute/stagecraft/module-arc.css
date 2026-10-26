@@ -14,6 +14,7 @@
 .ma-title { margin-left: 14px; color: #dfe6ec; font: 500 15px/1.25 var(--font-geist-sans), sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: ts-fade .5s cubic-bezier(.2,.75,.2,1) both; }
 .ma-root[data-beat="2"] .ma-title { display: none; }
 .ma-scene { position: relative; padding: 18px 24px 22px; animation: ts-fade .55s cubic-bezier(.2,.75,.2,1) both; }
+.ma-scene[data-film] { padding: 0; }
 .ma-scene > svg { display: block; width: 100%; height: auto; max-height: calc(100svh - 300px); }
 
 /* scene vocabulary */
@@ -56,3 +57,8 @@
   .ma-hero strong { font-size: 42px; }
   .ma-bar { grid-template-columns: 96px 1fr 96px; }
 }
+.ma-word { font: 400 22px/1 var(--font-geist-mono), monospace; letter-spacing: 0; }
+/* Inside an arc the impact beat carries the result; the film takes the full width. */
+.ma-scene .df-film { display: block; border: 0; margin: 0; padding: 18px 20px 20px; }
+.ma-scene .df-result-card { display: none; }
+.ma-scene .df-caption { margin-left: 2%; font-size: 20px; }
