@@ -49,7 +49,8 @@ export function tileProjection(row: number, terms: number) {
 export const EXECUTION_DURATION = 42000;
 export const EXECUTION_MOMENTS = [0, 8200, 14500, 24000, 33000, 40000] as const;
 export const LOAD_LEVELS = [
-  0.4, 0.55, 0.7, 0.85, 1, 1.1, 1.2, 1.35, 1.5,
+  // the top level must exceed the optimised capacity (FP8 kernels: ~1.55× the baseline)
+  0.4, 0.55, 0.7, 0.85, 1, 1.15, 1.3, 1.5, 1.7,
 ] as const;
 
 /** This study isolates token rates. It must not quietly count a cache change. */

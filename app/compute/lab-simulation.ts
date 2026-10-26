@@ -1,9 +1,12 @@
 /**
- * Synthetic lab v1. No model is run and no physical GPU timing is measured.
- * All values are generated from these explicit assumptions, not perturbed paper results.
- * Literature informs the mechanisms, never the numerical outputs of this simulator.
+ * Calibrated lab v2. No model is run and no physical GPU timing is measured.
+ * Timings come from calibration.ts: Qwen3-4B's published architecture on an H100's
+ * published peak FLOP/s and bandwidth, through a stated roofline with stated
+ * efficiency factors. Correctness stays synthetic: it needs real model runs.
  */
-export const LAB_VERSION = "synthetic-lab-v1";
+import { STEP_OVERHEAD, bandwidth, kvBytesPerToken, prefillSeconds, weightBytes } from "./calibration.ts";
+
+export const LAB_VERSION = "calibrated-lab-v2";
 export const BUDGETS = [1, 2, 4, 8] as const;
 export const POLICIES = [
   {
@@ -133,15 +136,21 @@ export function simulateLab(
       (cache.get(task.prefixGroup) ?? Infinity) <= start;
     const inputTokens = workload === "shared-prefix" ? 8192 : 2048;
     const computedInputTokens = cacheHit ? 384 : inputTokens;
+    // Calibrated batch-1 roofline (calibration.ts): Qwen3-4B on one H100 per worker.
+    // Prefill is compute-bound; a cache hit skips the shared prefix but still attends to it.
     const prefill =
-      computedInputTokens * (mechanisms.fastKernels ? 0.00095 : 0.0012);
+      STEP_OVERHEAD + prefillSeconds(computedInputTokens, inputTokens - computedInputTokens, mechanisms.fastKernels);
     if (mechanisms.reuse && workload === "shared-prefix") {
       cache.set(
         task.prefixGroup,
         Math.min(cache.get(task.prefixGroup) ?? Infinity, start + prefill),
       );
     }
-    const decode = tokens * (mechanisms.fastKernels ? 0.00225 : 0.0028);
+    // Decode is memory-bound: every step reads the weights and the request's growing KV cache.
+    // The prefill emits the first token; the remaining tokens − 1 steps are summed in closed form.
+    const steps = Math.max(0, tokens - 1), kvb = kvBytesPerToken(mechanisms.fastKernels);
+    const stepA = STEP_OVERHEAD + (weightBytes(mechanisms.fastKernels) + (inputTokens + 1) * kvb) / bandwidth();
+    const decode = steps * stepA + ((kvb / bandwidth()) * steps * (steps - 1)) / 2;
     const gpuSeconds = prefill + decode;
     const finish = start + gpuSeconds;
     available[worker] = finish;
@@ -235,7 +244,7 @@ export const LAB_ASSUMPTIONS = [
   ],
   [
     "GPU timing assumptions",
-    "Static: 1.2 ms/input token and 2.8 ms/output token. Optimized: 0.95 ms/input token and 2.25 ms/output token. These are declared simulation constants, not calibrated hardware measurements.",
+    "Calibrated roofline, batch 1, one H100 SXM5 per worker (calibration.ts). Prefill is compute-bound: 2 × 4.02 B FLOPs per token plus causal attention, at 50% of 989 TFLOPS (BF16) or 55% of 1,979 TFLOPS (FP8). Decode is memory-bound: each step reads the weights (8.04 GB BF16, 4.02 GB FP8) and the request's KV cache (144 KiB per token BF16) at 80% of 3.35 TB/s, plus 1.5 ms per step. Derived from published specs, not measured on hardware.",
   ],
   [
     "Workload / cache",

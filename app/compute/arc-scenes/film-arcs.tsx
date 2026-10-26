@@ -1,6 +1,8 @@
 "use client";
 
 import { inferenceStoryRuns } from "../lab-story-data";
+import { STEP_OVERHEAD, fmtMs, prefillSeconds, rateCard } from "../calibration";
+import { BATCHING } from "../batching-result";
 import type { LabRun, Workload } from "../lab-simulation";
 import { ease, prog } from "../../exhibit/engine";
 import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
@@ -92,33 +94,40 @@ function Reuse({ t }: SceneProps) {
   </svg>;
 }
 
-/* ── Faster prefill & decode ──────────────────────────────────────────── */
-const IN = 12, OUT = 8, FX = 270, FPX = 21;
-const RATES = { base: { pre: 1.2, dec: 2.8 }, fast: { pre: 0.95, dec: 2.25 } };
-function RateRow({ y, now, r, title }: { y: number; now: number; r: { pre: number; dec: number }; title: string }) {
-  const pre = IN * r.pre, end = pre + OUT * r.dec;
-  const pk = Math.min(1, now / pre);
+/* ── Faster prefill & decode (FP8) ─────────────────────────────────────
+   Real proportions from the calibration: an 8,192-token prompt is read in one
+   compute-bound pass; each output token is a memory-bound step. */
+const IN = 8192, OUT = 32, FX = 270;
+const RATE_ROWS = [false, true].map((fast) => {
+  const pre = (STEP_OVERHEAD + prefillSeconds(IN, 0, fast)) * 1000;
+  const dec = rateCard(fast).outputMs;
+  return { fast, pre, dec, end: pre + OUT * dec, card: rateCard(fast) };
+});
+const FPX = (1060 - FX) / RATE_ROWS[0].end;
+function RateRow({ y, now, r, title }: { y: number; now: number; r: (typeof RATE_ROWS)[number]; title: string }) {
+  const pk = Math.min(1, now / r.pre);
+  const cells = 64, cw = (r.pre * FPX - 12) / 16;
   return <g>
     <text x={0} y={y + 22} className="ma-k">{title}</text>
-    <text x={0} y={y + 42} className="ma-l">{r.pre} ms per input token</text>
-    <text x={0} y={y + 60} className="ma-l">{r.dec} ms per output token</text>
-    <rect x={FX} y={y + 6} width={Math.max(0, Math.min(now, pre) * FPX - 2)} height={44} rx={4} fill={C.doc} opacity={0.25} />
-    {Array.from({ length: IN }, (_, i) => <rect key={i} x={FX + 6 + (i % 6) * ((pre * FPX - 16) / 6)} y={y + 12 + Math.floor(i / 6) * 17} width={(pre * FPX - 16) / 6 - 4} height={13} rx={2} fill={C.doc} opacity={0.2 + 0.75 * pk} />)}
+    <text x={0} y={y + 42} className="ma-l">{fmtMs(r.card.inputMs)} ms per input token</text>
+    <text x={0} y={y + 60} className="ma-l">{fmtMs(r.dec)} ms per output token</text>
+    <rect x={FX} y={y + 6} width={Math.max(0, Math.min(now, r.pre) * FPX - 2)} height={50} rx={4} fill={C.doc} opacity={0.22} />
+    {Array.from({ length: cells }, (_, i) => <rect key={i} x={FX + 6 + (i % 16) * cw} y={y + 11 + Math.floor(i / 16) * 10.5} width={Math.max(1, cw - 2)} height={8} rx={1.5} fill={C.doc} opacity={0.15 + 0.8 * Math.min(1, Math.max(0, pk * cells - i))} />)}
     {Array.from({ length: OUT }, (_, i) => {
-      const a = pre + i * r.dec, b = a + r.dec, k = prog(now, a, b);
-      return k > 0 && <rect key={i} x={FX + a * FPX + 1} y={y + 6} width={Math.max(0, k * r.dec * FPX - 3)} height={44} rx={3} fill={C.b} opacity={0.88} />;
+      const a = r.pre + i * r.dec, b = a + r.dec, k = prog(now, a, b);
+      return k > 0 && <rect key={i} x={FX + a * FPX + 1} y={y + 6} width={Math.max(0, k * r.dec * FPX - 2)} height={50} rx={2} fill={C.b} opacity={0.88} />;
     })}
-    {now >= end && <text x={FX + end * FPX} y={y - 6} textAnchor="end" className="ma-n" style={{ fill: C.ink }}>done in {fmt(end, 1)} ms</text>}
+    {now >= r.end && <text x={FX + r.end * FPX} y={y - 6} textAnchor="end" className="ma-n" style={{ fill: C.ink }}>done in {fmt(r.end, 0)} ms</text>}
   </g>;
 }
 function Rates({ t }: SceneProps) {
-  const now = sweep(t, RATES_MS, IN * RATES.base.pre + OUT * RATES.base.dec);
-  return <svg viewBox="0 0 1100 400" role="img" aria-label="The same 12 input and 8 output tokens at the baseline and the faster declared rates">
-    <RateRow y={50} now={now} r={RATES.base} title="Baseline kernels" />
-    <RateRow y={200} now={now} r={RATES.fast} title="Faster kernels" />
-    <g transform={`translate(${FX} 372)`}>
-      <rect width={14} height={14} rx={2} fill={C.doc} /><text x={22} y={12} className="ma-l">12 input tokens, read together (prefill)</text>
-      <rect x={380} width={14} height={14} rx={2} fill={C.b} /><text x={402} y={12} className="ma-l">8 output tokens, one at a time (decode)</text>
+  const now = sweep(t, RATES_MS, RATE_ROWS[0].end);
+  return <svg viewBox="0 0 1100 400" role="img" aria-label="The same 8,192-token prompt and 32 output tokens with BF16 and with FP8 weights and KV on one H100">
+    <RateRow y={50} now={now} r={RATE_ROWS[0]} title="BF16 weights and KV" />
+    <RateRow y={200} now={now} r={RATE_ROWS[1]} title="FP8 weights and KV" />
+    <g transform={`translate(${FX} 352)`}>
+      <rect width={14} height={14} rx={2} fill={C.doc} /><text x={22} y={12} className="ma-l">8,192 input tokens, read in one pass (compute-bound)</text>
+      <rect y={24} width={14} height={14} rx={2} fill={C.b} /><text x={22} y={36} className="ma-l">32 output tokens, one step each: every step re-reads the weights (memory-bound)</text>
     </g>
   </svg>;
 }
@@ -144,7 +153,7 @@ function TwoWorkloads({ metric, label, digits = 0, from, to }: { metric: (r: Lab
 function Ladder({ t }: SceneProps) {
   const k = ease.out(prog(t, 500, 2400));
   const runs = RUNS["shared-prefix"];
-  const names = ["baseline", "+ continuous batching", "+ prefix reuse", "+ faster kernels"];
+  const names = ["paired baseline", "+ first free worker", "+ prefix reuse", "+ FP8 kernels"];
   const max = runs[0].correctCost!;
   return <svg viewBox="0 0 560 150" role="img" aria-label="GPU-seconds per correct answer after each technique">
     <text x={0} y={14} className="ma-l">GPU-s per correct answer, one shared document</text>
@@ -156,6 +165,20 @@ function Ladder({ t }: SceneProps) {
   </svg>;
 }
 
+const BATCHED = { serial: BATCHING.serialPerCorrect, batched: BATCHING.batchedPerCorrect };
+function Batched({ t }: SceneProps) {
+  const k = ease.out(prog(t, 600, 2400));
+  const rows: [string, number, string][] = [["one request per worker (this lab)", BATCHED.serial, "#9cc5f5"], ["every running request in each step", BATCHED.batched, C.b]];
+  return <svg viewBox="0 0 560 130" role="img" aria-label="GPU-seconds per correct answer when requests share each engine step">
+    <text x={0} y={14} className="ma-l">going further: GPU-s per correct answer, iteration-level batching</text>
+    {rows.map(([l, v, c], i) => <g key={l} transform={`translate(0 ${34 + i * 40})`}>
+      <text x={0} y={14} className="ma-l">{l}</text>
+      <rect x={0} y={20} width={(v / BATCHED.serial) * 470 * k} height={12} rx={2} fill={c} opacity={0.88} />
+      <text x={560} y={31} textAnchor="end" className="ma-l" style={{ fill: C.ink }}>{fmt(v, 2)}</text>
+    </g>)}
+  </svg>;
+}
+
 const BATCH_MS = 11500, REUSE_MS = 11000, RATES_MS = 10500;
 
 export type FilmArc = { name: string; mechanism: ArcBeat; impact: (workload: Workload) => ArcBeat };
@@ -163,14 +186,14 @@ export type FilmArc = { name: string; mechanism: ArcBeat; impact: (workload: Wor
 export const FILM_ARCS: Record<number, FilmArc> = {
   1: {
     name: "Continuous batching",
-    mechanism: { label: "How it works", title: "Continuous batching: a free worker takes the next request at once", ms: BATCH_MS, Scene: Batching },
+    mechanism: { label: "How it works", title: "Continuous batching, first step: a free worker takes the next request at once", ms: BATCH_MS, Scene: Batching },
     impact: (w) => {
       const [a, b] = [RUNS[w][0], RUNS[w][1]];
       return { label: "Impact", title: "Less waiting, the same GPU work", ms: 8500, Scene: makeImpact({
         from: a.p95, to: b.p95, unit: "s", digits: w === "interactive" ? 1 : 0, what: "p95 response time across the 96 requests",
-        cause: `Requests no longer wait for a partner to finish; the GPU work is unchanged at ${fmt(b.gpuSeconds)} GPU-s.`,
+        cause: `Requests no longer wait for a partner to finish; each still runs alone on its H100, so the GPU work is unchanged at ${fmt(b.gpuSeconds)} GPU-s. Sharing each step across requests is what cuts the work (below).`,
         base: "Fixed pairs", optimized: "First free worker",
-        Figure: TwoWorkloads({ metric: (r) => r.p95, label: "p95 response, s", from: 0, to: 1, digits: 0 }),
+        Figure: Batched,
       }) };
     },
   },
@@ -179,23 +202,25 @@ export const FILM_ARCS: Record<number, FilmArc> = {
     mechanism: { label: "How it works", title: "Prefix reuse: read a shared document once, keep its KV pages, reference them after", ms: REUSE_MS, Scene: Reuse },
     impact: (w) => {
       const [a, b] = [RUNS[w][1], RUNS[w][2]];
-      return { label: "Impact", title: w === "interactive" ? "Nothing shared, nothing to reuse" : "Repeated reading removed", ms: 8500, Scene: makeImpact({
-        from: a.gpuSeconds, to: b.gpuSeconds, unit: "GPU-s", digits: 0, what: "GPU work for the 96 requests",
-        cause: w === "interactive" ? "Every request brings a different document, so no prefix is ready to reuse; the work is unchanged." : "The shared document is prefilled once; later requests reference its KV pages and prefill only their own question.",
+      const pre = (r: LabRun) => r.tasks.reduce((x, t) => x + t.prefill, 0);
+      const share = (100 * (pre(a) - pre(b))) / a.gpuSeconds;
+      return { label: "Impact", title: w === "interactive" ? "Nothing shared, nothing to reuse" : "Prompt reading nearly gone; answers still cost what they cost", ms: 8500, Scene: makeImpact({
+        from: pre(a), to: pre(b), unit: "GPU-s of prompt reading", digits: 1, what: "Prefill work for the 96 requests",
+        cause: w === "interactive" ? "Every request brings a different document, so no prefix is ready to reuse; the work is unchanged." : `The shared document is prefilled once per group; later requests reference its KV pages and read only their 384-token question. That is ${share.toFixed(1)}% of all GPU time here: the ~5,600-token answers dominate. Reuse pays most when prompts are long and answers short.`,
         base: "Read every time", optimized: "Read once, reuse",
-        Figure: TwoWorkloads({ metric: (r) => r.gpuSeconds, label: "GPU-s", from: 1, to: 2 }),
+        Figure: TwoWorkloads({ metric: (r) => r.tasks.reduce((x, t) => x + t.prefill, 0), label: "GPU-s of prompt reading", from: 1, to: 2, digits: 1 }),
       }) };
     },
   },
   3: {
     name: "Faster prefill & decode",
-    mechanism: { label: "How it works", title: "Faster kernels: the same tokens, less time per token", ms: RATES_MS, Scene: Rates },
+    mechanism: { label: "How it works", title: "FP8 weights and KV: every decode step moves half the bytes", ms: RATES_MS, Scene: Rates },
     impact: (w) => {
       const [a, b] = [RUNS[w][2], RUNS[w][3]];
       return { label: "Impact", title: "The same answers, cheaper per answer", ms: 8500, Scene: makeImpact({
         from: a.correctCost!, to: b.correctCost!, unit: "GPU-s per correct answer", digits: 2, what: "Cost of each correct answer",
-        cause: `Declared rates fall from ${RATES.base.pre} to ${RATES.fast.pre} ms per input token and from ${RATES.base.dec} to ${RATES.fast.dec} ms per output token; tokens and answers are unchanged.`,
-        base: "Baseline kernels", optimized: "Faster kernels",
+        cause: `Decode reads the weights every step: 8.04 GB in BF16, 4.02 GB in FP8, so an output token falls from ${fmtMs(rateCard(false).outputMs)} to ${fmtMs(rateCard(true).outputMs)} ms on one H100. Same tokens, same answers.`,
+        base: "BF16", optimized: "FP8 weights and KV",
         Figure: Ladder,
       }) };
     },

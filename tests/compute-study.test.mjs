@@ -98,7 +98,7 @@ test("six linked result views declare their synthetic evidence boundary", async 
   assert.match(source, /type="range"/);
   assert.match(
     JSON.stringify(LAB_ASSUMPTIONS),
-    /not calibrated hardware measurements/,
+    /not measured on hardware/,
   );
 });
 test("MiMo transcription preserves Table 5 values and branching lineage", () => {
@@ -304,7 +304,9 @@ test("s1 research fixture reconciles pinned raw samples and remains separate fro
     new URL("../app/compute/lab-simulation.ts", import.meta.url),
     "utf8",
   );
-  assert.doesNotMatch(simulator, /^import /m);
+  // The simulator may read the hardware calibration, never the research fixture.
+  assert.doesNotMatch(simulator, /s1-reference/);
+  assert.match(simulator, /from "\.\/calibration\.ts"/);
 });
 test("AUC uses actual unequal x intervals, not nominal budget weighting", () => {
   assert.equal(

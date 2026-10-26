@@ -1,5 +1,6 @@
 "use client";
 
+import { fmtMs, rateCard } from "./calibration.ts";
 import {
   useEffect,
   useId,
@@ -194,7 +195,7 @@ export function RequestReplayExplorer({
       : metric === "decode"
         ? mechanism === "reuse"
           ? "Prefix reuse leaves the answer's output tokens unchanged."
-          : "Cause: output tokens run at 2.25 ms instead of 2.80 ms."
+          : `Cause: FP8 weights and KV halve the bytes each step reads: ${fmtMs(rateCard(false).outputMs)} → ${fmtMs(rateCard(true).outputMs)} ms per output token.`
         : mechanism === "rates"
           ? "Cause: input and output tokens run faster; no prefix is reused."
           : after.cacheHit

@@ -1,5 +1,6 @@
 "use client";
 
+import { fmtMs, rateCard } from "./calibration.ts";
 import {
   useEffect,
   useId,
@@ -651,7 +652,7 @@ export function RuntimeGainsReveal({
                 study.hits
                   ? "Reuse the context; compute the suffix"
                   : "Different inputs still need full prefill",
-                "Every token costs less: input 1.20 → 0.95 ms, output 2.80 → 2.25 ms",
+                `Every token costs less: input ${fmtMs(rateCard(false).inputMs)} → ${fmtMs(rateCard(true).inputMs)} ms, output ${fmtMs(rateCard(false).outputMs)} → ${fmtMs(rateCard(true).outputMs)} ms`,
                 "Every request contributes to the bill",
                 study.hits
                   ? "Two savings, one bill"

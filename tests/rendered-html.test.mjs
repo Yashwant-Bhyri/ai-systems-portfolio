@@ -64,11 +64,14 @@ test("server-renders the recruiter-first portfolio", async () => {
   assert.match(html, /src="\/brands\/cuhk\.png"/);
   assert.match(html, /href="#projects">Projects/);
   assert.match(html, /Real-time AI-Native Interviewing Platform/);
-  assert.match(html, /End-to-End Multimodal AI Production System/);
+  // Filmora is set aside (round 6); each compute project shows its architecture and a poster here.
+  assert.doesNotMatch(html, /href="#filmora"/);
+  assert.match(html, /id="inference-poster"/);
+  assert.match(html, /id="post-training-poster"/);
+  assert.match(html, /href="\/inference"/);
   assert.match(html, /Medical AI Clinician-Support Product/);
   assert.match(html, /Open-Source, Research &amp; R&amp;D Experience/);
   assert.match(html, /PRODUCTION-GRADE SOFTWARE PRODUCT/);
-  assert.match(html, /AI APPLICATION ENGINEERING INTERNSHIP/);
   assert.match(html, /MEDICAL AI R&amp;D PROJECT/);
   assert.match(html, /250\+ completed interviews/);
   assert.match(html, /IMPLEMENTATION SIGNAL/);
@@ -86,12 +89,21 @@ test("removes the rejected imitation Antigravity walkthrough route", async () =>
 });
 
 test("renders both compute projects as complete, navigable flagship chapters", async () => {
-  const response = await render();
-  const html = await response.text();
-  for (const id of ["inference", "post-training"]) {
-    assert.match(html, new RegExp(`href="#${id}"`));
-    assert.match(html, new RegExp(`id="${id}"`));
-    assert.match(html, new RegExp(`id="${id}-microscope"`));
+  // Two levels: the main page holds each project's architecture; its own route holds
+  // architecture → component microscope → results laboratory.
+  const main = await (await render()).text();
+  const deep = await Promise.all(["/inference/", "/post-training/"].map(async (path) => {
+    const response = await render(path);
+    assert.equal(response.status, 200, path);
+    return response.text();
+  }));
+  const html = deep.join("\n");
+  for (const [i, id] of ["inference", "post-training"].entries()) {
+    assert.match(main, new RegExp(`href="#${id}"`));
+    assert.match(main, new RegExp(`id="${id}"`));
+    assert.doesNotMatch(main, new RegExp(`id="${id}-microscope"`));
+    assert.match(deep[i], new RegExp(`id="${id}-microscope"`));
+    assert.match(deep[i], new RegExp(`id="${id}-study"`));
   }
   assert.match(html, /Paged KV cache/);
   assert.match(html, /Speculative decode/);
@@ -105,13 +117,13 @@ test("renders both compute projects as complete, navigable flagship chapters", a
   assert.match(html, /Pause architecture animation/);
   assert.match(html, /Three requests share one GPU batch; each keeps its own KV pages\./);
   assert.match(html, /First change the policy\. Then give it more room to think\./);
-  assert.match(html, /cx-project-preview/);
+  assert.match(main, /cx-project-preview/);
   assert.match(html, /Illustrative replay/);
   // The laboratory names its two branches and the techniques under each (round-4 copy).
   assert.match(html, /Same intelligence, cheaper execution/);
   assert.match(html, /Serving under load/);
   assert.match(html, /Speculative decoding/);
-  assert.match(html, /Go deeper/);
+  assert.match(html, /ts-landing/); // the laboratory opens on both pathways
   assert.match(html, /Illustrative, not measured/);
   assert.match(html, /What did the model learn/);
   assert.match(html, /Watch the experiment/);

@@ -1,6 +1,8 @@
 import { inferenceStoryRuns } from "../compute/lab-story-data";
 import { compareTasks, simulateLab } from "../compute/lab-simulation";
 import { latencyDistribution } from "../compute/load-latency-model";
+import { BATCHING } from "../compute/batching-result";
+import { fmtMs, rateCard } from "../compute/calibration";
 
 /** Every number on the posters comes from the lab model the laboratory uses. */
 const runs = inferenceStoryRuns("shared-prefix");
@@ -43,15 +45,15 @@ const PCT = Math.round(100 * (1 - COST.kernels / COST.base));
 export const INFERENCE_LEDGER: LedgerSpec = {
   domain: "inference", mode: "shrink",
   title: "Inference optimization engine",
-  claim: `The same model gives the same answers for ${PCT}% less GPU work, because the runtime stopped repeating itself.`,
+  claim: `Qwen3-4B on H100s, same answers, ${PCT}% less GPU work per correct answer. Costs come from a roofline calibrated on published specs.`,
   cta: "Explore the engine in depth",
   scale: COST.base, start: COST.base, end: COST.kernels, digits: 2,
-  unit: "GPU-seconds per correct answer, 96 requests over one shared document",
+  unit: "GPU-seconds per correct answer, 96 requests over one shared document, one request per H100 at a time",
   slices: [
-    { key: "film", title: "Prefix reuse", delta: `−${f(COST.batching - COST.reuse)} GPU-s`, cause: "a shared document is read once, its KV pages kept", from: COST.kernels, to: COST.kernels + (COST.batching - COST.reuse), color: "#63d4df" },
-    { key: "film", title: "Faster kernels", delta: `−${f(COST.reuse - COST.kernels)} GPU-s`, cause: "the same tokens, less time per token", from: COST.kernels + (COST.batching - COST.reuse), to: COST.base, color: "#ffc267" },
+    { key: "film", title: "FP8 weights and KV", delta: `−${f(COST.reuse - COST.kernels)} GPU-s`, cause: `half the bytes per decode step: ${fmtMs(rateCard(false).outputMs)} → ${fmtMs(rateCard(true).outputMs)} ms a token`, from: COST.kernels, to: COST.reuse, color: "#ffc267" },
+    { key: "film", title: "Prefix reuse", delta: `−${f(COST.batching - COST.reuse)} GPU-s`, cause: "prompt reading −89%; answers dominate", from: COST.reuse, to: COST.base, color: "#63d4df" },
   ],
-  note: { title: "Continuous batching", text: `changed the waiting, not the work: p95 response ${f(COST.p95Base, 0)} → ${f(COST.p95Batching, 0)} s` },
+  note: { title: "Continuous batching", text: `a free worker starts the next request at once: p95 ${f(COST.p95Base, 0)} → ${f(COST.p95Batching, 0)} s. Sharing each step across requests goes further: ${f(BATCHING.batchedPerCorrect)} GPU-s per correct answer in the serving simulator.` },
   measuresTitle: "Under load",
   measures: UNDER_LOAD,
   also: ALSO,

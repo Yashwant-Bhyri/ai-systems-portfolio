@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { registerHooks } from "node:module";
+import { STEP_OVERHEAD, bandwidth, kvBytesPerToken, prefillSeconds, weightBytes } from "../app/compute/calibration.ts";
+// Expected costs come from the calibrated roofline itself, not from pinned constants.
+const prefillOf = (input, computed, fast) => STEP_OVERHEAD + prefillSeconds(computed, input - computed, fast);
+const decodeOf = (input, tokens, fast) => {
+  const steps = Math.max(0, tokens - 1), kvb = kvBytesPerToken(fast), bw = bandwidth();
+  return steps * (STEP_OVERHEAD + (weightBytes(fast) + (input + 1) * kvb) / bw) + ((kvb / bw) * steps * (steps - 1)) / 2;
+};
+
 import { readFileSync } from "node:fs";
 registerHooks({
   resolve(specifier, context, next) {
@@ -53,7 +61,7 @@ for (const workload of ["shared-prefix", "interactive"]) {
       );
     });
     close(study.cohort[1].decode, study.cohort[2].decode);
-    close(study.requestReuseSaved, workload === "shared-prefix" ? 9.3696 : 0);
+    close(study.requestReuseSaved, workload === "shared-prefix" ? prefillOf(8192, 8192, false) - prefillOf(8192, 384, false) : 0);
   });
   test(`${workload}: each intervention settles for four seconds before the next begins`, () => {
     for (const [i, start] of [

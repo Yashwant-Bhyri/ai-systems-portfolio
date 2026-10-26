@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { registerHooks } from "node:module";
+import { STEP_OVERHEAD, bandwidth, kvBytesPerToken, prefillSeconds, weightBytes } from "../app/compute/calibration.ts";
+// Expected costs come from the calibrated roofline itself, not from pinned constants.
+const prefillOf = (input, computed, fast) => STEP_OVERHEAD + prefillSeconds(computed, input - computed, fast);
+const decodeOf = (input, tokens, fast) => {
+  const steps = Math.max(0, tokens - 1), kvb = kvBytesPerToken(fast), bw = bandwidth();
+  return steps * (STEP_OVERHEAD + (weightBytes(fast) + (input + 1) * kvb) / bw) + ((kvb / bw) * steps * (steps - 1)) / 2;
+};
+
 
 // Match the bundler's extensionless local TS resolution without a test dependency.
 registerHooks({
@@ -125,8 +133,12 @@ test("fast execution changes rates, not the remaining token work", () => {
         next.tasks[i].computedInputTokens,
       );
       assert.equal(old.tasks[i].cacheHit, next.tasks[i].cacheHit);
-      close(next.tasks[i].prefill / old.tasks[i].prefill, 0.00095 / 0.0012);
-      close(next.tasks[i].decode / old.tasks[i].decode, 0.00225 / 0.0028);
+      const t = old.tasks[i];
+      close(old.tasks[i].prefill, prefillOf(t.inputTokens, t.computedInputTokens, false));
+      close(next.tasks[i].prefill, prefillOf(t.inputTokens, t.computedInputTokens, true));
+      close(old.tasks[i].decode, decodeOf(t.inputTokens, t.tokens, false));
+      close(next.tasks[i].decode, decodeOf(t.inputTokens, t.tokens, true));
+      assert.ok(next.tasks[i].prefill < old.tasks[i].prefill && next.tasks[i].decode < old.tasks[i].decode);
     }
   }
 });

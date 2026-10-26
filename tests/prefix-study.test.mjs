@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { registerHooks } from "node:module";
+import { STEP_OVERHEAD, bandwidth, kvBytesPerToken, prefillSeconds, weightBytes } from "../app/compute/calibration.ts";
+// Expected costs come from the calibrated roofline itself, not from pinned constants.
+const prefillOf = (input, computed, fast) => STEP_OVERHEAD + prefillSeconds(computed, input - computed, fast);
+const decodeOf = (input, tokens, fast) => {
+  const steps = Math.max(0, tokens - 1), kvb = kvBytesPerToken(fast), bw = bandwidth();
+  return steps * (STEP_OVERHEAD + (weightBytes(fast) + (input + 1) * kvb) / bw) + ((kvb / bw) * steps * (steps - 1)) / 2;
+};
+
 import { simulateLab, TASKS } from "../app/compute/lab-simulation.ts";
 
 registerHooks({
@@ -96,10 +104,8 @@ for (const workload of ["interactive", "shared-prefix"]) {
       assert.equal(task.correct, reference.correct);
       assert.equal(task.tokens, reference.tokens);
       assert.equal(task.decode, reference.decode);
-      close(
-        task.prefill / task.computedInputTokens,
-        reference.prefill / reference.computedInputTokens,
-      );
+      close(task.prefill, prefillOf(task.inputTokens, task.computedInputTokens, false));
+      close(reference.prefill, prefillOf(reference.inputTokens, reference.computedInputTokens, false));
       if (task.cacheHit) {
         const group = TASKS[task.id].prefixGroup;
         assert.ok(
@@ -125,8 +131,8 @@ for (const workload of ["interactive", "shared-prefix"]) {
       assert.equal(study.coldReads, 6);
       assert.equal(study.savedTokens, 7808);
       assert.ok(study.readyAt <= study.request.start);
-      close(study.savedWork, 9.3696);
-      close(study.totalSaved, 843.264);
+      close(study.savedWork, prefillOf(8192, 8192, false) - prefillOf(8192, 384, false));
+      close(study.totalSaved, 90 * (prefillOf(8192, 8192, false) - prefillOf(8192, 384, false)));
     } else {
       assert.equal(study.hits, 0);
       assert.equal(study.savedTokens, 0);
