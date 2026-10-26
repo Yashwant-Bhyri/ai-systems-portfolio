@@ -178,3 +178,42 @@ export function makeImpact(spec: ImpactSpec): ComponentType<SceneProps> {
   }
   return Impact;
 }
+
+/**
+ * A beat shown over a film chapter: the film holds while it plays, then
+ * carries on. Used for a technique's "how it works" before its chapter and its
+ * impact after it.
+ */
+export function FilmInterlude({ beat, kicker, live, onDone }: { beat: ArcBeat; kicker: string; live: boolean; onDone: () => void }) {
+  const tr = useTr();
+  const [t, setT] = useState(0);
+  const reduced = useSyncExternalStore(subscribeReduced, () => matchMedia(REDUCED).matches, () => false);
+  const done = useRef(onDone);
+  useEffect(() => { done.current = onDone; });
+  useEffect(() => {
+    if (!live || reduced) return;
+    let raf = 0;
+    const start = performance.now() - t;
+    const tick = (now: number) => {
+      const next = now - start;
+      if (next >= beat.ms) { setT(beat.ms); done.current(); return; }
+      setT(next);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // resumes from `t`; restarting on every frame would reset the clock
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, reduced, beat]);
+  return (
+    <div className="ma-interlude" role="region" aria-label={`${tr(kicker)}: ${tr(beat.title)}`}>
+      <header>
+        <span><i>{tr(kicker)}</i> · {tr(beat.label)}</span>
+        <strong>{tr(beat.title)}</strong>
+        <button type="button" onClick={onDone}>{tr(beat.label === "Impact" ? "Continue ▸" : "Skip to our system ▸")}</button>
+        <b className="ma-progress" style={{ transform: `scaleX(${Math.min(1, (reduced ? beat.ms : t) / beat.ms)})` }} />
+      </header>
+      <div className="ma-scene">{beat.Scene && <beat.Scene t={reduced ? beat.ms : t} />}</div>
+    </div>
+  );
+}

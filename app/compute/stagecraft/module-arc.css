@@ -62,3 +62,18 @@
 .ma-scene .df-film { display: block; border: 0; margin: 0; padding: 18px 20px 20px; }
 .ma-scene .df-result-card { display: none; }
 .ma-scene .df-caption { margin-left: 2%; font-size: 20px; }
+
+/* Interludes over a film chapter */
+.lf-stage .ls-story[data-interlude] { position: relative; }
+.ls-story[data-interlude] .ls-workload-switch { visibility: hidden; }
+.ma-interlude { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; background: rgb(9,13,18); animation: ts-fade .5s cubic-bezier(.2,.75,.2,1) both; }
+.ma-interlude header { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: 6px 18px; padding: 16px 24px 14px; border-bottom: 1px solid rgba(230,237,244,.07); }
+.ma-interlude header span { color: var(--active-accent); font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: .08em; text-transform: uppercase; }
+.ma-interlude header span i { font-style: normal; color: #eef2f6; }
+.ma-interlude header strong { color: #f1f4f7; font: 500 20px/1.25 var(--font-geist-sans), sans-serif; letter-spacing: -.01em; }
+.vx-shell .ma-interlude header button { padding: 0; border: 0; background: none; color: #8b97a3; font: 450 12px/1 var(--font-geist-mono), monospace; cursor: pointer; }
+.vx-shell .ma-interlude header button:hover { color: #eef2f6; }
+.ma-interlude header .ma-progress { top: auto; bottom: -1px; }
+.ma-interlude .ma-scene { flex: 0 0 auto; display: flex; align-items: flex-start; justify-content: center; padding-top: 26px; }
+.ma-interlude .ma-scene > svg { max-height: min(520px, calc(100svh - 330px)); }
+.ma-interlude .ma-impact { min-height: 0; width: 100%; }

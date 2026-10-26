@@ -1,6 +1,8 @@
 "use client";
 
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { FilmInterlude } from "./stagecraft/module-arc";
+import { FILM_ARCS } from "./arc-scenes/film-arcs";
 import { useTr } from "../exhibit/i18n";
 import { createPortal } from "react-dom";
 import { useSlot } from "./stagecraft/use-slot";
@@ -68,9 +70,11 @@ export function LabStory({
   const [undo, setUndo] = useState(false),
     [budget, setBudget] = useState(4),
     [workload, setWorkload] = useState<Workload>("shared-prefix");
+  // A technique chapter is framed by "how it works" before it and its impact after it; the film holds meanwhile.
+  const [interludes, setInterludes] = useState<{ step: number; kind: "mechanism" | "impact" }[]>([]);
   const { ref, ...playback } = useStudyPlayback(training ? 6 : 5, 0, {
     // Hovering or pinning an inspection explains; it never stops the film.
-    held: undo,
+    held: undo || interludes.length > 0,
     finite: true,
     interval: 12000,
     durations: training
@@ -84,6 +88,21 @@ export function LabStory({
         ],
   });
   const steps = training ? TRAINING_STORY : INFERENCE_STORY;
+  const [seenStep, setSeenStep] = useState(playback.step);
+  if (seenStep !== playback.step) {
+    const prev = seenStep, next = playback.step;
+    setSeenStep(next);
+    if (!training)
+      setInterludes([
+        ...(FILM_ARCS[prev] && next === prev + 1 ? [{ step: prev, kind: "impact" as const }] : []),
+        ...(FILM_ARCS[next] ? [{ step: next, kind: "mechanism" as const }] : []),
+      ]);
+  }
+  const interlude = interludes[0];
+  const interludeBeat = useMemo(
+    () => (interlude ? (interlude.kind === "mechanism" ? FILM_ARCS[interlude.step].mechanism : FILM_ARCS[interlude.step].impact(workload)) : null),
+    [interlude, workload],
+  );
   const slotId = training ? "training-chapters-slot" : "inference-chapters-slot";
   const slot = useSlot(slotId);
   // When the last chapter ends, hand over to whatever comes next (the second branch).
@@ -203,6 +222,7 @@ export function LabStory({
       data-cycling={playback.cycling}
       data-held={!!active || undo}
       data-adapter={training && index === 1}
+      data-interlude={interlude ? true : undefined}
       data-directed-execution={!training && index === 3}
       onKeyDown={(e) => {
         if (e.key === "Escape") {
@@ -211,6 +231,15 @@ export function LabStory({
         }
       }}
     >
+      {interlude && interludeBeat && (
+        <FilmInterlude
+          key={`${interlude.step}-${interlude.kind}-${workload}`}
+          beat={interludeBeat}
+          kicker={FILM_ARCS[interlude.step].name}
+          live={playback.inViewport && playback.playing}
+          onDone={() => setInterludes((q) => q.slice(1))}
+        />
+      )}
       {!training && (
         <div className="ls-workload-switch" role="group" aria-label="Story workload">
           {([["shared-prefix", "One shared document"], ["interactive", "Different documents"]] as const).map(([value, label]) => (
