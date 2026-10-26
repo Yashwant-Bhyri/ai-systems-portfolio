@@ -1,0 +1,122 @@
+"use client";
+
+import { cacheRoutingStudy } from "../cache-routing-model";
+import { ease, prog } from "../../exhibit/engine";
+import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
+
+/* Cache-aware routing, as a full circle. Pages, waits and first-token times are
+   the lab's cache-routing model: 12 KV pages per replica, a 4-block shared
+   prefix, 2 blocks of question, 10 ms of prefill per block, 20 ms until pages free. */
+const S = cacheRoutingStudy();
+const C = { prefix: "#63d4df", q: "#ffc267", other: "#4a5662", free: "rgba(255,255,255,.03)", wait: "#ff8f86", ink: "#eef2f6", out: "#b8e986" };
+const PROBLEM_MS = 11000, MECH_MS = 12500, HORIZON = 70;
+const T0 = 740, TPX = 4.6; // timeline: 0..70 ms
+const tx = (ms: number) => T0 + ms * TPX;
+
+function Replica({ y, title, note, pages, highlight }: { y: number; title: string; note: string; pages: (string | null)[]; highlight?: number[] }) {
+  return <g transform={`translate(270 ${y})`}>
+    <rect width={400} height={150} rx={12} fill="rgba(255,255,255,.02)" stroke="#3f4a55" />
+    <text x={18} y={30} className="ma-k">{title}</text>
+    <text x={18} y={50} className="ma-l">{note}</text>
+    {pages.map((p, i) => (
+      <rect key={i} x={18 + (i % 6) * 62} y={64 + Math.floor(i / 6) * 40} width={54} height={32} rx={4}
+        fill={p ?? C.free} stroke={highlight?.includes(i) ? "#eef2f6" : "#3f4a55"} strokeWidth={highlight?.includes(i) ? 2 : 1} />
+    ))}
+  </g>;
+}
+
+function Timeline({ now, warm, ghost }: { now: number; warm: boolean; ghost?: boolean }) {
+  const row = (r: typeof S.warm, y: number, label: string, faint: boolean) => {
+    const vis = (a: number, b: number) => Math.max(0, Math.min(b, now) - a);
+    return <g opacity={faint ? 0.35 : 1}>
+      <text x={T0 - 16} y={y + 18} textAnchor="end" className="ma-l">{label}</text>
+      {r.start > 0 && <rect x={tx(0)} y={y} width={vis(0, r.start) * TPX} height={26} rx={3} fill="none" stroke={C.wait} strokeDasharray="4 3" />}
+      <rect x={tx(r.start)} y={y} width={vis(r.start, r.prefillEnd) * TPX} height={26} rx={3} fill={C.q} opacity={0.85} />
+      {now >= r.firstToken && <g><path d={`M${tx(r.firstToken)} ${y - 2}l7 15-7 15-7-15z`} fill={C.out} /><text x={tx(r.firstToken) + 12} y={y + 18} className="ma-l" style={{ fill: C.out }}>{r.firstToken} ms</text></g>}
+    </g>;
+  };
+  return <g>
+    <text x={T0} y={120} className="ma-l">time to first token</text>
+    <path d={`M${tx(0)} 222H${tx(HORIZON)}`} className="ma-axis" />
+    {[0, 20, 40, 60].map((v) => <text key={v} x={tx(v)} y={242} textAnchor="middle" className="ma-l">{v}</text>)}
+    {warm ? row(S.warm, 140, "A", false) : row(S.cold, 140, "B", false)}
+    {ghost && row(S.cold, 180, "B", true)}
+    <path d={`M${tx(Math.min(now, HORIZON))} 128V226`} stroke="#eef2f6" strokeOpacity={0.35} />
+  </g>;
+}
+
+function Request({ k }: { k: number }) {
+  return <g transform="translate(0 170)" opacity={k}>
+    <text x={0} y={0} className="ma-k">New request</text>
+    {Array.from({ length: 6 }, (_, i) => <rect key={i} x={i * 34} y={14} width={30} height={30} rx={4} fill={i < 4 ? C.prefix : C.q} opacity={0.9} />)}
+    <text x={0} y={66} className="ma-l" style={{ fill: C.prefix }}>shared prefix · 4 blocks</text>
+    <text x={0} y={86} className="ma-l" style={{ fill: C.q }}>its own question · 2</text>
+  </g>;
+}
+
+const route = (t: number) => ease.io(prog(t, 900, 1900));
+const sim = (t: number, ms: number) => ease.io(prog(t, 2000, ms - 2400)) * HORIZON;
+const A_FULL = [C.prefix, C.prefix, C.prefix, C.prefix, ...Array(8).fill(C.other)];
+
+function Problem({ t }: SceneProps) {
+  const r = route(t), now = sim(t, PROBLEM_MS);
+  const filled = Math.min(8, Math.floor((now / 60) * 6) + (now >= 60 ? 2 : 0));
+  const B = Array.from({ length: 12 }, (_, i) => (i < filled ? (i < 4 ? C.prefix : i < 6 ? C.q : C.out) : null));
+  return <svg viewBox="0 0 1100 420" role="img" aria-label="Least-loaded routing sends the request to the empty replica, which recomputes the whole prompt; first token at 62 ms">
+    <Request k={1} />
+    <Replica y={30} title="Replica A · warm" note="already holds the prefix · no free pages" pages={A_FULL} />
+    <Replica y={230} title="Replica B · cold" note={filled ? "recomputing the whole prompt" : "empty · no prefix"} pages={B} highlight={now > 0 && now < 60 ? [Math.min(5, filled)] : undefined} />
+    <path d={`M210 199C240 199 240 ${305} ${210 + 60 * r} 305`} fill="none" stroke={C.q} strokeWidth={2} opacity={r} />
+    <text x={210} y={404} className="ma-l" opacity={r}>router: least-loaded → B</text>
+    <Timeline now={now} warm={false} />
+  </svg>;
+}
+
+function Mechanism({ t }: SceneProps) {
+  const r = route(t), now = sim(t, MECH_MS);
+  const released = now >= S.warm.release;
+  const pre = Math.max(0, Math.min(2, Math.floor(((now - S.warm.start) / 20) * 2)));
+  const A = A_FULL.map((c, i) => (i >= 4 && i < 8 ? (released ? (i - 4 < pre ? C.q : i - 4 < (now >= S.warm.prefillEnd ? 4 : pre) ? C.out : null) : c) : c));
+  return <svg viewBox="0 0 1100 420" role="img" aria-label="Cache-aware routing sends the request to the replica holding its prefix, reuses four pages, waits 20 ms for space, prefills two blocks; first token at 42 ms">
+    <Request k={1} />
+    <Replica y={30} title="Replica A · warm" note={!released && now > 0 ? "waiting for pages to free" : now > 0 ? "reusing 4 prefix pages" : "already holds the prefix · no free pages"} pages={A} highlight={now > 0 ? [0, 1, 2, 3] : undefined} />
+    <Replica y={230} title="Replica B · cold" note="empty · no prefix" pages={Array(12).fill(null)} />
+    <path d={`M210 199C240 199 240 ${105} ${210 + 60 * r} 105`} fill="none" stroke={C.prefix} strokeWidth={2} opacity={r} />
+    <text x={210} y={404} className="ma-l" opacity={r}>router: where the prefix lives → A</text>
+    <Timeline now={now} warm ghost />
+  </svg>;
+}
+
+/** First token vs. the wait for free pages: where routing to the warm replica stops paying. */
+function Crossover({ t }: SceneProps) {
+  const k = ease.out(prog(t, 400, 2400));
+  const W = (ms: number) => cacheRoutingStudy({ retained: true, occupied: 8, releaseMs: ms }).warm.firstToken;
+  const px = (ms: number) => 40 + ms * 7.5, py = (v: number) => 120 - v * 1.2;
+  const pts = Array.from({ length: 13 }, (_, i) => i * 5).filter((ms) => ms <= 60 * k);
+  return <svg viewBox="0 0 560 150" role="img" aria-label="First token time against the wait for free pages; the warm replica wins while the wait is under 40 ms">
+    <text x={0} y={12} className="ma-l">first token (ms) vs. wait for free pages (ms)</text>
+    <path d={`M40 120H${px(60)}M40 120V20`} className="ma-axis" />
+    <path d={`M${px(0)} ${py(S.cold.firstToken)}H${px(60) }`} stroke="#9cc5f5" strokeDasharray="4 3" fill="none" />
+    <text x={px(60) + 6} y={py(S.cold.firstToken) + 4} className="ma-l" style={{ fill: "#9cc5f5" }}>cold</text>
+    <path d={pts.map((ms, i) => `${i ? "L" : "M"}${px(ms)} ${py(W(ms))}`).join("")} stroke={C.prefix} strokeWidth={2} fill="none" />
+    {k >= 1 && <><circle cx={px(S.crossover ?? 40)} cy={py(S.cold.firstToken)} r={5} fill="#c7a6ff" /><text x={px(S.crossover ?? 40)} y={py(S.cold.firstToken) - 12} textAnchor="middle" className="ma-l" style={{ fill: "#c7a6ff" }}>crossover · {S.crossover} ms</text></>}
+    {[0, 20, 40, 60].map((v) => <text key={v} x={px(v)} y={138} textAnchor="middle" className="ma-l">{v}</text>)}
+  </svg>;
+}
+
+export const CACHE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string } = {
+  problem: { label: "Problem", title: "Least-loaded routing recomputes a prefix another replica already holds", ms: PROBLEM_MS, Scene: Problem },
+  mechanism: { label: "How it works", title: "Cache-aware routing: go where the prefix lives, even if that means a short wait", ms: MECH_MS, Scene: Mechanism },
+  systemTitle: "Warm prefix versus memory pressure, in our cache model",
+  impact: {
+    label: "Impact", title: "A faster first token, until the wait for space outgrows the reuse", ms: 9000,
+    Scene: makeImpact({
+      from: S.cold.firstToken, to: S.warm.firstToken, unit: "ms", digits: 0,
+      what: "Time to the first token for the same request",
+      cause: `${S.warm.reuse} of ${S.promptBlocks} prompt blocks were already cached on replica A, so only ${S.warm.prefillBlocks} needed prefill, even after waiting ${S.warm.release} ms for free pages.`,
+      base: "Least-loaded (cold)", optimized: "Cache-aware (warm)",
+      cost: { what: "Cost: waiting for free KV pages on the warm replica", from: 0, to: S.warm.start, unit: "ms", digits: 0 },
+      Figure: Crossover,
+    }),
+  },
+};

@@ -18,6 +18,8 @@ import { useStageHold } from "./stagecraft/stage-hold";
 import { ModuleArc } from "./stagecraft/module-arc";
 import { PRESSURE_ARC } from "./arc-scenes/pressure-arc";
 import { SPEC_ARC } from "./arc-scenes/spec-arc";
+import { CACHE_ARC } from "./arc-scenes/cache-arc";
+import { OVERLAP_ARC } from "./arc-scenes/overlap-arc";
 import { createPortal } from "react-dom";
 import { useSlot } from "./stagecraft/use-slot";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
@@ -339,10 +341,12 @@ export function ServingUnderLoad() {
               </p>
             }
           >
-            <div ref={cacheHost} className="gc-host">
-              <GhostCursor root={cacheHost} script={DEMOS.cache} enabled={view === "loop" && explorer === "cache"} startDelay={46000} />
-              <CacheRouting active={view === "loop" && explorer === "cache"} />
-            </div>
+            <ModuleArc active={view === "loop" && explorer === "cache"} {...CACHE_ARC}>
+              <div ref={cacheHost} className="gc-host">
+                <GhostCursor root={cacheHost} script={DEMOS.cache} enabled={view === "loop" && explorer === "cache"} startDelay={46000} />
+                <CacheRouting active={view === "loop" && explorer === "cache"} />
+              </div>
+            </ModuleArc>
           </Suspense>
         </RetainedLabPanel>
         <RetainedLabPanel
@@ -357,12 +361,14 @@ export function ServingUnderLoad() {
               </p>
             }
           >
-            <div ref={overlapHost} className="gc-host">
-              <GhostCursor root={overlapHost} script={DEMOS.overlap} enabled={view === "loop" && explorer === "overlap"} startDelay={30000} />
-              <SchedulingOverlap
-                active={view === "loop" && explorer === "overlap"}
-              />
-            </div>
+            <ModuleArc active={view === "loop" && explorer === "overlap"} {...OVERLAP_ARC}>
+              <div ref={overlapHost} className="gc-host">
+                <GhostCursor root={overlapHost} script={DEMOS.overlap} enabled={view === "loop" && explorer === "overlap"} startDelay={30000} />
+                <SchedulingOverlap
+                  active={view === "loop" && explorer === "overlap"}
+                />
+              </div>
+            </ModuleArc>
           </Suspense>
         </RetainedLabPanel>
         <RetainedLabPanel
