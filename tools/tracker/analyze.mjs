@@ -45,7 +45,9 @@ export function frameIssues(s, { minPx = 10 } = {}) {
 export function gaps(s, cell = 16) {
   // only the part of the root that is on screen
   const top = Math.max(0, s.root.y), bottom = Math.min(s.vh, s.root.y + s.root.h);
-  const R0 = { x: s.root.x, y: top, w: s.root.w, h: Math.max(cell, bottom - top) };
+  // a stage mostly off screen says nothing about its spacing
+  if (bottom - top < 120) return { covered: null, largestEmpty: 0, rect: null, offscreen: true };
+  const R0 = { x: s.root.x, y: top, w: s.root.w, h: bottom - top };
   const cols = Math.max(1, Math.floor(R0.w / cell)), rows = Math.max(1, Math.floor(R0.h / cell));
   const grid = Array.from({ length: rows }, () => new Uint8Array(cols));
   const rootArea = area(R0);
