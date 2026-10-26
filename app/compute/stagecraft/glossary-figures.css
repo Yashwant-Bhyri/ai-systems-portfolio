@@ -1,0 +1,21 @@
+/* Serving glossary figures (400 × 120, drawn at about 1:1 on the board). */
+.gb-glyph { height: 118px; }
+.gb-glyph svg.gf { overflow: visible; }
+.gf-t { fill: #93a0ae; font: 400 11px/1 var(--font-geist-mono), monospace; }
+.gf-code { fill: #c3ced9; font: 400 11.5px/1 var(--font-geist-mono), monospace; }
+.gf-k { fill: #e3e9ef; font: 500 12.5px/1 var(--font-geist-sans), sans-serif; }
+.gf-n { fill: #eef2f6; font: 500 14px/1 var(--font-geist-mono), monospace; letter-spacing: -.02em; }
+.gf-big { fill: var(--active-accent); font: 500 28px/1 var(--font-geist-mono), monospace; letter-spacing: -.03em; }
+.gf-red { fill: #ff8f86; }
+.gf-green { fill: #b8e986; }
+.gf-wire { fill: none; stroke: #4c5864; stroke-width: 1.5; }
+.gf-wire.gf-ok { stroke: #b8e986; stroke-width: 2; }
+.gf-wire.gf-cut { stroke: #ff8f86; stroke-width: 1.5; stroke-dasharray: 4 4; }
+.gf-slot { fill: rgba(255,255,255,.03); stroke: #3f4a55; stroke-width: 1; }
+.gf-hatch { fill: rgba(255,255,255,.05); stroke: #5e6a76; stroke-width: 1; stroke-dasharray: 3 3; }
+.gf-trace { fill: none; stroke: var(--active-accent); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.gf-box { fill: rgba(255,255,255,.025); stroke: #46525e; stroke-width: 1; }
+.gf-box-lit { fill: color-mix(in srgb, var(--active-accent) 10%, transparent); stroke: var(--active-accent); stroke-width: 1.5; }
+.gf-warm { fill: none; stroke: var(--active-accent); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.lb-stage .gb-glyph { height: 96px; }
+@media (max-width: 760px) { .gb-glyph { height: auto; aspect-ratio: 400 / 120; } }

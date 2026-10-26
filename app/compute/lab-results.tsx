@@ -28,6 +28,7 @@ import {
   type Workload,
 } from "./lab-simulation";
 import { reductionPercent } from "./study-math";
+import { useStageHold } from "./stagecraft/stage-hold";
 import { useStudyPlayback } from "./use-study-playback";
 import { LabStory } from "./lab-story";
 import { FigurePresentation } from "./figure-presentation";
@@ -105,12 +106,25 @@ const LATENCY_DEMO: readonly CursorStep[] = [
   { target: ".ll-percentiles button:nth-child(2)", label: "p95 · the slow tail", hold: 4200 },
 ]
 
-/** Bring the laboratory block flush with the viewport; a no-op when it already is. */
+/**
+ * Bring what the visitor just opened into view. The one-screen block aligns
+ * flush with the viewport; the flow layouts glide only when the stage's top
+ * is off screen, and land it just below the sticky reel, never under it.
+ */
 function alignBlock(inside: Element | null) {
-  const block = inside?.closest(".lab-block") ?? inside;
-  if (!block) return;
-  const top = block.getBoundingClientRect().top;
-  if (Math.abs(top) < 4) return;
+  const block = inside?.closest(".lab-block");
+  const stage = inside?.closest(".lf-stage");
+  let top: number;
+  if (block) {
+    top = block.getBoundingClientRect().top;
+    if (Math.abs(top) < 4) return;
+  } else if (stage) {
+    // Site header (78) plus, on top, the condensed reel that sits over the stage once the glide ends.
+    const cover = stage.closest(".lab-flow-top") ? 78 + 152 + 8 : 90;
+    const rect = stage.getBoundingClientRect();
+    if (rect.top >= cover - 4 && rect.top < window.innerHeight * 0.45) return;
+    top = rect.top - cover;
+  } else return;
   // Page snapping would fight the glide; lift it until the glide ends.
   const html = document.documentElement, snap = html.style.scrollSnapType;
   html.style.scrollSnapType = "none";
@@ -401,6 +415,7 @@ export function ComputeLabStudy({
       null,
     );
   const exhibitRef = useRef<HTMLElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const tr = useTr();
   const labNav = useLabNav();
   // In the top orientation the reel condenses once the visitor scrolls into the stage.
@@ -417,6 +432,7 @@ export function ComputeLabStudy({
     return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", onScroll); };
   }, [ref]);
   const condensed = labNav === "top" && scrolledIn;
+  useStageHold(stageRef, `${inferencePart}|${mode}|${view}|${labNav}`);
   const replayHost = useRef<HTMLDivElement>(null),
     latencyHost = useRef<HTMLDivElement>(null);
   const tourRef = useRef<InferenceTourHandle>(null);
@@ -606,7 +622,7 @@ export function ComputeLabStudy({
       </div>
       <div className={block ? "lb-body" : "lf-body"}>
         {labNav !== "dock" && navNode}
-        <div className={block ? "lb-stage" : "lf-stage"}>
+        <div ref={stageRef} className={block ? "lb-stage" : "lf-stage"}>
           {!block && (training || inferencePart === "cheaper") && mode === "watch" && <div className="lf-chapters">{chapterSlot}</div>}
       <RetainedLabPanel
         active={training || inferencePart === "cheaper"}
