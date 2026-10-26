@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from "react";
+import { createPortal } from "react-dom";
 import { useTr } from "../../exhibit/i18n";
 import "./title-show.css";
 
@@ -189,6 +190,120 @@ export function TitleShow({
           </div>
         </div>
       </div>
+    </aside>
+  );
+}
+
+/* ── The quiet rail (round 6, second pass) ──────────────────────────────
+   The column took width from the modules and kept moving beside them. Now the
+   titles sit in a narrow, dim rail. When a module starts, its tile steps out to
+   the centre of the stage, holds a moment, and returns to the rail; then the
+   module has the stage. Hovering the rail opens the full list over the stage
+   (an overlay, so nothing beneath moves). */
+export function TitleRail({
+  items, pathways, current, now, next, phase, countdownMs, onOpen, onLanding,
+}: {
+  items: readonly ShowItem[];
+  pathways: readonly Pathway[];
+  current: string;
+  now: string;
+  next: string;
+  phase: "running" | "done" | "taken";
+  countdownMs: number;
+  onOpen: (key: string) => void;
+  onLanding?: () => void;
+}) {
+  const tr = useTr();
+  const root = useRef<HTMLElement>(null);
+  const intro = useRef<HTMLDivElement>(null);
+  const cur = items.find((i) => i.key === current) ?? items[0];
+  const nxt = items.find((i) => i.key === next) ?? items[0];
+  const [shown, setShown] = useState<{ item: ShowItem; accent: string } | null>(null);
+
+  // A new module: its tile steps out of the rail to the stage's centre, then goes back.
+  const lastKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (lastKey.current === current) return;
+    const first = lastKey.current === null;
+    lastKey.current = current;
+    if (first || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    setShown({ item: cur, accent: root.current ? getComputedStyle(root.current).getPropertyValue("--active-accent") : "#ffc267" });
+    const id = window.setTimeout(() => setShown(null), 2300);
+    return () => window.clearTimeout(id);
+  }, [current, cur]);
+  useLayoutEffect(() => {
+    const card = intro.current, rail = root.current;
+    if (!card || !rail || !shown) return;
+    const tile = rail.querySelector<HTMLElement>(`[data-rail-key="${shown.item.key}"]`);
+    const stage = rail.closest(".lf-body")?.querySelector<HTMLElement>(".lf-stage");
+    if (!tile || !stage) return;
+    // measure the card where it really sits (fixed at 0, 0), never mid-animation
+    card.getAnimations().forEach((an) => an.cancel());
+    const a = tile.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    const c = { left: 0, top: 0, width: card.offsetWidth, height: card.offsetHeight };
+    // the card lives on <body> at (0, 0): centre it on the stage across, on the screen down
+    const cx = s.left + s.width / 2 - c.width / 2 - c.left, cy = window.innerHeight / 2 + 30 - c.height / 2 - c.top;
+    const fromRail = `translate(${a.left - c.left}px, ${a.top - c.top}px) scale(${a.width / c.width}, ${a.height / c.height})`;
+    card.animate([
+      // out to the centre, hold, back to the rail; each leg eased on its own
+      { transform: fromRail, opacity: 0.4, offset: 0, easing: "cubic-bezier(.2,.75,.2,1)" },
+      { transform: `translate(${cx}px, ${cy}px)`, opacity: 1, offset: 0.24 },
+      { transform: `translate(${cx}px, ${cy}px)`, opacity: 1, offset: 0.72, easing: "cubic-bezier(.5,0,.75,0)" },
+      { transform: fromRail, opacity: 0, offset: 1 },
+    ], { duration: 2300, fill: "both" });
+  }, [shown]);
+
+  return (
+    <aside ref={root} className="tr-rail" aria-label={tr("Laboratory modules")}>
+      <div className="tr-strip">
+        {pathways.map((p, pi) => (
+          <div key={p.n} className="tr-group" data-on={cur.pathway === pi || undefined}>
+            <i className="tr-path">{p.n}</i>
+            {items.filter((i) => i.pathway === pi).map((i) => (
+              <button key={i.key} type="button" className="tr-tile" data-rail-key={i.key} data-on={i === cur || undefined} data-next={(i === nxt && phase !== "running") || undefined}
+                onClick={() => onOpen(i.key)} aria-label={tr(i.title)} aria-current={i === cur ? "step" : undefined}>
+                <span className="ts-glyph" aria-hidden="true">{i.Glyph && <i.Glyph />}</span>
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+      {/* the full list, over the stage, while the rail is hovered or focused */}
+      <div className="tr-panel">
+        {onLanding && <button type="button" className="ts-back" onClick={onLanding}>{tr("Both pathways")}</button>}
+        {pathways.map((p, pi) => (
+          <div key={p.n} className="tr-panel-group">
+            <span className="ts-pathname"><i>{p.n}</i>{tr(p.short)}</span>
+            {items.filter((i) => i.pathway === pi).map((i) => (
+              <button key={i.key} type="button" className="tr-row" data-on={i === cur || undefined} onClick={() => onOpen(i.key)}>
+                <strong>{tr(i.title)}</strong>
+                {i.value && <small>{i.value}</small>}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+      <span className="tr-now" aria-live="polite">{tr(now)}</span>
+      {phase !== "running" && (
+        <button type="button" className="tr-next" data-phase={phase} onClick={() => onOpen(nxt.key)}>
+          <svg className="ts-ring" viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="8" />
+            <circle key={`${nxt.key}-${phase}`} cx="10" cy="10" r="8" className="ts-ring-run" style={{ animationDuration: `${countdownMs}ms` }} />
+          </svg>
+          <span><small>{tr(phase === "done" ? "Next" : "Open next")}</small>{tr(nxt.title)}</span>
+        </button>
+      )}
+      {shown && createPortal(
+        <div ref={intro} className="tr-intro" aria-hidden="true" style={{ ["--active-accent" as string]: shown.accent }}>
+          <span className="ts-glyph">{shown.item.Glyph && <shown.item.Glyph />}</span>
+          <div>
+            <small>{pathways[shown.item.pathway].n} · {tr(pathways[shown.item.pathway].short)}</small>
+            <strong>{tr(shown.item.title)}</strong>
+            {shown.item.value && <span className="ts-value"><mark>{shown.item.value}</mark>{shown.item.unit && <small>{tr(shown.item.unit)}</small>}</span>}
+          </div>
+        </div>,
+        document.body,
+      )}
     </aside>
   );
 }

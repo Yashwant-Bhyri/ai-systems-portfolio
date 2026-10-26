@@ -47,7 +47,7 @@ import "./stagecraft/legibility.css";
 import { ModuleBar, type RailItem } from "./stagecraft/side-rail";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { LabNavSwitcher, useLabNav } from "./stagecraft/lab-nav";
-import { LabLanding, TitleShow, type Pathway, type Rects, type ShowItem } from "./stagecraft/title-show";
+import { LabLanding, TitleRail, type Pathway, type ShowItem } from "./stagecraft/title-show";
 import { SERVING_RAIL } from "./serving-rail-meta";
 import { INFERENCE_STORY, TRAINING_STORY } from "./lab-story-data";
 import { TaskLanding } from "./stagecraft/task-landing";
@@ -442,7 +442,6 @@ export function ComputeLabStudy({
   const stageRef = useRef<HTMLDivElement>(null);
   // Title show: the landing (inference only), the flight from it, and which module is telling its story.
   const [landingPhase, setLandingPhase] = useState<"on" | "leaving" | "off">(training ? "off" : "on");
-  const [flyFrom, setFlyFrom] = useState<Rects | null>(null);
   const [servingKey, setServingKey] = useState("pressure");
   const [chapter, setChapter] = useState("");
   const [status, setStatus] = useState<{ key: string; phase: "running" | "done" | "taken" }>({ key: "", phase: "running" });
@@ -620,8 +619,7 @@ export function ComputeLabStudy({
   const openKeyRef = useRef(openKey);
   const currentRef = useRef(currentKey);
   useEffect(() => { openKeyRef.current = openKey; currentRef.current = currentKey; });
-  const startShow = (key: string, from: Rects) => {
-    setFlyFrom(from);
+  const startShow = (key: string) => {
     setLandingPhase("leaving");
     openKey(key);
     window.setTimeout(() => setLandingPhase((p) => (p === "leaving" ? "off" : p)), 480);
@@ -675,7 +673,7 @@ export function ComputeLabStudy({
     </div>
   ) : show ? (
     <div className="lf-nav">
-      <TitleShow
+      <TitleRail
         items={showItems}
         pathways={pathways}
         current={currentKey}
@@ -683,7 +681,6 @@ export function ComputeLabStudy({
         next={nextKey}
         phase={phase}
         countdownMs={COUNTDOWN}
-        from={flyFrom}
         onOpen={openKey}
         onLanding={training ? undefined : () => setLandingPhase("on")}
       />

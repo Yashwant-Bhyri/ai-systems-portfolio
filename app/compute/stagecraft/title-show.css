@@ -17,21 +17,21 @@
 .vx-shell :is(.ts-card, .ts-row, .ts-pinned, .ts-next, .ts-path-head, .ts-back) { font: inherit; color: inherit; text-align: left; cursor: pointer; border: 0; background: none; padding: 0; }
 
 /* glyph palette (the reel's) */
-:is(.ts-show, .ts-landing) .ts-glyph :is(.g-t, .g-code) { display: none; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-n { fill: #eef2f6; font: 500 17px/1 var(--font-geist-mono), monospace; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-hi { fill: var(--active-accent); }
-:is(.ts-show, .ts-landing) .ts-glyph .g-axis { fill: none; stroke: #3a4550; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-line { fill: none; stroke: #4c5864; stroke-width: 1.3; stroke-linecap: round; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-box { fill: rgba(255,255,255,.025); stroke: #4a5662; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-ring-s { fill: none; stroke: #6f7d8b; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-a { fill: var(--active-accent); } :is(.ts-show, .ts-landing) .ts-glyph .g-a-s { stroke: var(--active-accent); }
-:is(.ts-show, .ts-landing) .ts-glyph .g-b { fill: #8fb4ff; } :is(.ts-show, .ts-landing) .ts-glyph .g-b-s { stroke: #8fb4ff; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-g { fill: #b8e986; } :is(.ts-show, .ts-landing) .ts-glyph .g-g-s { stroke: #b8e986; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-r { fill: #ff8f86; } :is(.ts-show, .ts-landing) .ts-glyph .g-r-s { stroke: #ff8f86; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-c { fill: #63d4df; } :is(.ts-show, .ts-landing) .ts-glyph .g-c-s { stroke: #63d4df; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-m { fill: #5e6a76; } :is(.ts-show, .ts-landing) .ts-glyph .g-m-s { stroke: #5e6a76; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-ink { fill: #e9edf2; }
-:is(.ts-show, .ts-landing) .ts-glyph .g-sel { fill: none; stroke: var(--active-accent); stroke-width: 1.5; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph :is(.g-t, .g-code) { display: none; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-n { fill: #eef2f6; font: 500 17px/1 var(--font-geist-mono), monospace; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-hi { fill: var(--active-accent); }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-axis { fill: none; stroke: #3a4550; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-line { fill: none; stroke: #4c5864; stroke-width: 1.3; stroke-linecap: round; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-box { fill: rgba(255,255,255,.025); stroke: #4a5662; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-ring-s { fill: none; stroke: #6f7d8b; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-a { fill: var(--active-accent); } :is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-a-s { stroke: var(--active-accent); }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-b { fill: #8fb4ff; } :is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-b-s { stroke: #8fb4ff; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-g { fill: #b8e986; } :is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-g-s { stroke: #b8e986; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-r { fill: #ff8f86; } :is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-r-s { stroke: #ff8f86; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-c { fill: #63d4df; } :is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-c-s { stroke: #63d4df; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-m { fill: #5e6a76; } :is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-m-s { stroke: #5e6a76; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-ink { fill: #e9edf2; }
+:is(.ts-show, .ts-landing, .tr-rail, .tr-intro) .ts-glyph .g-sel { fill: none; stroke: var(--active-accent); stroke-width: 1.5; }
 
 /* ── Landing ────────────────────────────────────────────────────────────── */
 .ts-landing { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.32fr); gap: 18px; min-height: min(calc(100svh - 190px), 760px); }
@@ -131,3 +131,44 @@
 @media (prefers-reduced-motion: reduce) {
   .ts-shadow[data-drift] .ts-drift, .lab-flow-show .lf-stage, .ts-fade { animation: none; }
 }
+
+/* ── Quiet rail ─────────────────────────────────────────────────────────── */
+.lab-flow-show .lf-body:not([data-landing]):has(.tr-rail) { grid-template-columns: 58px minmax(0, 1fr); gap: 14px; }
+.tr-rail { position: relative; height: 100%; }
+.tr-strip { display: flex; flex-direction: column; gap: 14px; height: 100%; padding: 4px 0; opacity: .55; transition: opacity .4s; }
+.tr-rail:is(:hover, :has(:focus-visible)) .tr-strip { opacity: 1; }
+.tr-group { display: flex; flex-direction: column; gap: 4px; }
+.tr-path { color: #6f7c89; font: 500 10.5px/1 var(--font-geist-mono), monospace; font-style: normal; padding: 0 0 2px 6px; }
+.tr-group[data-on] .tr-path { color: var(--active-accent); }
+.vx-shell .tr-tile { position: relative; display: block; width: 52px; height: 30px; padding: 3px 4px !important; border: 0; border-radius: 5px; background: none; cursor: pointer;
+  filter: grayscale(1) brightness(.8); opacity: .6; transition: filter .3s, opacity .3s, background .3s; }
+.tr-tile .ts-glyph { width: 100%; height: 100%; }
+.vx-shell .tr-tile[data-on] { filter: none; opacity: 1; background: color-mix(in srgb, var(--active-accent) 12%, transparent); box-shadow: inset 2px 0 0 var(--active-accent); }
+.vx-shell .tr-tile[data-next] { filter: none; opacity: .9; animation: tr-pulse 1.6s ease-in-out infinite; }
+@keyframes tr-pulse { 50% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--active-accent) 45%, transparent); } }
+.tr-panel { position: absolute; left: 58px; top: 0; z-index: 40; width: 300px; max-height: calc(100svh - 110px); overflow: auto; padding: 12px 14px; border-radius: 10px;
+  background: rgba(8,11,15,.97); box-shadow: 0 24px 60px -20px rgba(0,0,0,.9), inset 0 0 0 1px rgba(230,237,244,.08);
+  opacity: 0; transform: translateX(-8px); pointer-events: none; transition: opacity .25s, transform .25s; }
+.tr-rail:is(:hover, :has(:focus-visible)) .tr-panel { opacity: 1; transform: none; pointer-events: auto; }
+.tr-panel-group { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
+.vx-shell .tr-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 7px 8px !important; border: 0; border-radius: 6px; background: none; color: #c9d2db; text-align: left; cursor: pointer; }
+.vx-shell .tr-row:hover, .vx-shell .tr-row[data-on] { background: rgba(255,255,255,.04); color: #f3f6f9; }
+.tr-row strong { font: 500 13.5px/1.25 var(--font-geist-sans), sans-serif; }
+.tr-row small { color: var(--active-accent); font: 500 11.5px/1 var(--font-geist-mono), monospace; white-space: nowrap; }
+.tr-now { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.vx-shell .tr-next { position: fixed; left: 24px; bottom: 22px; z-index: 45; display: flex; align-items: center; gap: 10px; max-width: 300px; padding: 10px 14px 10px 12px !important; border: 0; border-radius: 22px;
+  background: rgba(10,14,19,.95); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 40%, transparent), 0 16px 40px -18px rgba(0,0,0,.9);
+  color: #eef2f6; text-align: left; cursor: pointer; animation: ts-fade .4s both; }
+.tr-next span { display: flex; flex-direction: column; gap: 2px; font: 500 13px/1.2 var(--font-geist-sans), sans-serif; }
+.tr-next small { color: var(--active-accent); font: 500 10.5px/1 var(--font-geist-mono), monospace; letter-spacing: .06em; }
+.tr-next[data-phase="done"] .ts-ring-run { animation: ts-ring linear forwards; }
+.tr-intro { position: fixed; left: 0; top: 0; z-index: 60; display: flex; align-items: center; gap: 22px; width: 560px; padding: 26px 30px; border-radius: 14px; pointer-events: none;
+  background: radial-gradient(120% 90% at 20% 0%, color-mix(in srgb, var(--active-accent) 12%, transparent), rgba(10,14,19,.97) 70%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 40%, transparent), 0 40px 90px -30px rgba(0,0,0,.95); transform-origin: 0 0; }
+.tr-intro .ts-glyph { width: 200px; height: 100px; }
+.tr-intro div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tr-intro small { color: #9aa6b2; font: 500 11.5px/1 var(--font-geist-mono), monospace; }
+.tr-intro strong { color: #f3f6f9; font: 500 26px/1.15 var(--font-geist-sans), sans-serif; letter-spacing: -.02em; }
+.tr-intro .ts-value mark { font-size: 22px; }
+.tr-intro :is(.g-t, .g-code) { display: none; }
+@media (max-width: 900px) { .tr-rail { display: none; } .lab-flow-show .lf-body:has(.tr-rail) { grid-template-columns: 1fr; } }
