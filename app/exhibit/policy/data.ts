@@ -1,4 +1,4 @@
-import { FAMILIES, simulateLab } from "../../compute/lab-simulation";
+import { FAMILIES, simulateLab } from "../../compute/lab-simulation.ts";
 
 /** Every number in the Policy wing comes from the shared 96-task model, computed once. */
 export type Checkpoint = {
@@ -60,6 +60,15 @@ export const CONSTELLATION = [0, 1, 2, 3].flatMap((policy) =>
     return { policy, budget, pass1: slow.accuracy, slow: slow.correctCost ?? 0, fast: fast.correctCost ?? 0 };
   }),
 );
+
+/** GPU-s per correct answer at the frontier's ends, and an axis that holds every point. */
+export const FRONTIER_COST = {
+  start: FRONTIER[0].slow,
+  policy: FRONTIER[FRONTIER.length - 1].slow,
+  runtime: FRONTIER[FRONTIER.length - 1].fast,
+  axisMax: Math.ceil(Math.max(...FRONTIER.map((p) => p.slow), ...CONSTELLATION.map((p) => p.slow)) / 5) * 5 + 5,
+};
+export const f2 = (v: number) => v.toFixed(2);
 
 export const FAMILY_NAMES = FAMILIES;
 export const familyOf = (task: number) => Math.floor(task / 32);

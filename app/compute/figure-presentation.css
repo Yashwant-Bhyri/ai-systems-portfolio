@@ -98,7 +98,7 @@
 .fp-plot .rs-plot {
   width: 100%;
   min-width: 850px;
-  max-height: 440px;
+  max-height: 520px;
   display: block;
 }
 .fp-presentation[data-phase="1"] .fp-plot {

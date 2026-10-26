@@ -127,7 +127,7 @@
 .em-machine[data-focus="compute"] .em-lens:not([data-part="compute"]),
 .em-machine[data-focus="output"] .em-lens:not([data-part="output"]),
 .em-machine[data-focus="time"] .em-lens:not([data-part="time"]) {
-  opacity: 0.58;
+  opacity: 0.72;
 }
 .em-math-disclosure {
   margin-top: 12px;

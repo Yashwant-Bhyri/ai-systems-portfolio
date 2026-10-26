@@ -137,7 +137,7 @@ export function DraftFilm({ active }: { active: boolean }) {
         attrs(b, { x: roundX[r] + 5 * 16 + 4, "fill-opacity": 0.85 * ease.out(prog(t, r ? 13.5 : 8.6, r ? 13.9 : 9.0)) * (r && !round2 ? 0 : 1) });
       });
       if (callTxt.current) callTxt.current.textContent = tr(round2 ? "round 2: one call for one word" : "4 words · 1 call of the large model");
-      attrs(callTxt.current, { opacity: round2 ? prog(t, 14.2, 14.8) : prog(t, 9.0, 9.6) });
+      attrs(callTxt.current, { x: (round2 ? roundX[1] : roundX[0]) + 5 * 16 + bw + 28, opacity: round2 ? prog(t, 14.2, 14.8) : prog(t, 9.0, 9.6) });
       let b = 0;
       for (let k = 0; k < BEATS.length; k++) if (ms >= BEATS[k][0]) b = k;
       if (b !== lastBeat) { lastBeat = b; setBeat(b); }
@@ -191,7 +191,7 @@ export function DraftFilm({ active }: { active: boolean }) {
           {[0, 1, 2, 3, 4].map((i) => <rect key={i} ref={(e) => { blocksA.current[i] = e; }} y={428} width={150} height={30} rx={5} fill={C.slate} fillOpacity={0} />)}
           {[0, 1].map((i) => <rect key={i} ref={(e) => { blocksB.current[i] = e; }} y={488} width={150} height={30} rx={5} fill={C.acc} fillOpacity={0} />)}
           {Array.from({ length: 10 }, (_, i) => <rect key={i} ref={(e) => { ticks.current[i] = e; }} y={492} width={12} height={22} rx={3} fill={C.acc} fillOpacity={0} />)}
-          <text ref={callTxt} x={1480} y={570} className="df-call" textAnchor="end" />
+          <text ref={callTxt} x={1150} y={510} className="df-call" />
         </g>
       </svg>
       <p className="df-caption" aria-live="polite">{tr(BEATS[beat][1])}</p>

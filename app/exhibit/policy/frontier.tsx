@@ -3,7 +3,7 @@
 import { useCallback, useRef } from "react";
 import { attrs, ease, lerp, prog, useSceneFrame } from "../engine";
 import type { RoomProps } from "../shell";
-import { CONSTELLATION, FRONTIER } from "./data";
+import { CONSTELLATION, FRONTIER, FRONTIER_COST, f2 } from "./data";
 import { Surface, TALL_W, VB } from "./parts";
 import { useTr } from "../i18n";
 
@@ -11,7 +11,7 @@ import { useTr } from "../i18n";
 
 const WIDE = { vb: VB, p: { x0: 150, x1: 1150, y0: 620, y1: 70 }, head: [1230, 130] as const, axis: "GPU-SECONDS PER CORRECT ANSWER ← CHEAPER" };
 const TALL = { vb: { w: TALL_W, h: 1000 }, p: { x0: 84, x1: 570, y0: 560, y1: 90 }, head: [24, 680] as const, axis: "GPU-S / CORRECT" };
-const CMAX = 46, AMIN = 20, AMAX = 100;
+const CMAX = FRONTIER_COST.axisMax, AMIN = 20, AMAX = 100;
 const STEP = 1000, T_PATH = 1200, T_SHIFT = 6900, T_RING = 9200;
 const last = FRONTIER[FRONTIER.length - 1], first = FRONTIER[0];
 
@@ -57,7 +57,7 @@ export function PolicyFrontier({ active, mode, clock, tall }: RoomProps) {
     return pt.slow > 32 ? [X(pt.slow) + 16, Y(pt.pass1) + 6, "start"] : [X(pt.slow) - 16, Y(pt.pass1) + 6, "end"];
   };
   return (
-    <Surface vb={L.vb} label="Accuracy against GPU-seconds per correct answer: from 28 of 96 at 43.69 to 82 of 96 at 14.94">
+    <Surface vb={L.vb} label={`Accuracy against GPU-seconds per correct answer: from 28 of 96 at ${f2(FRONTIER_COST.start)} to 82 of 96 at ${f2(FRONTIER_COST.runtime)}`}>
       <g ref={field} opacity={0}>
         <path d={`M${P.x0} ${P.y1}V${P.y0}H${P.x1}`} fill="none" stroke="var(--ex-line-2)" />
         {[40, 60, 80, 100].map((a) => (

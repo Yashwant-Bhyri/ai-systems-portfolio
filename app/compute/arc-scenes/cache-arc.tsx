@@ -11,7 +11,7 @@ import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-
 const S = cacheRoutingStudy();
 const C = { prefix: "#63d4df", q: "#ffc267", other: "#4a5662", free: "rgba(255,255,255,.03)", wait: "#ff8f86", ink: "#eef2f6", out: "#b8e986" };
 const PROBLEM_MS = 11000, MECH_MS = 12500, HORIZON = Math.ceil((S.cold.firstToken + 10) / 20) * 20;
-const T0 = 740, TPX = 320 / HORIZON; // timeline: 0..HORIZON ms
+const T0 = 740, TPX = 280 / HORIZON; // timeline: 0..HORIZON ms
 const tx = (ms: number) => T0 + ms * TPX;
 
 function Replica({ y, title, note, pages, highlight }: { y: number; title: string; note: string; pages: (string | null)[]; highlight?: number[] }) {
@@ -30,19 +30,20 @@ function Timeline({ now, warm, ghost }: { now: number; warm: boolean; ghost?: bo
   const row = (r: typeof S.warm, y: number, label: string, faint: boolean) => {
     const vis = (a: number, b: number) => Math.max(0, Math.min(b, now) - a);
     return <g opacity={faint ? 0.35 : 1}>
-      <text x={T0 - 16} y={y + 18} textAnchor="end" className="ma-l">{label}</text>
-      {r.start > 0 && <rect x={tx(0)} y={y} width={vis(0, r.start) * TPX} height={26} rx={3} fill="none" stroke={C.wait} strokeDasharray="4 3" />}
-      <rect x={tx(r.start)} y={y} width={vis(r.start, r.prefillEnd) * TPX} height={26} rx={3} fill={C.q} opacity={0.85} />
-      {now >= r.firstToken && <g><path d={`M${tx(r.firstToken)} ${y - 2}l7 15-7 15-7-15z`} fill={C.out} /><text x={tx(r.firstToken) + 12} y={y + 18} className="ma-l" style={{ fill: C.out }}>{r.firstToken} ms</text></g>}
+      <text x={T0 - 16} y={y + 26} textAnchor="end" className="ma-k">{label}</text>
+      {r.start > 0 && <rect x={tx(0)} y={y} width={vis(0, r.start) * TPX} height={40} rx={4} fill="none" stroke={C.wait} strokeDasharray="4 3" />}
+      <rect x={tx(r.start)} y={y} width={vis(r.start, r.prefillEnd) * TPX} height={40} rx={4} fill={C.q} opacity={0.85} />
+      {now >= r.firstToken && <g><path d={`M${tx(r.firstToken)} ${y - 3}l9 23-9 23-9-23z`} fill={C.out} /><text x={tx(r.firstToken) + 14} y={y + 28} className="ma-n" style={{ fill: C.out }}>{r.firstToken} ms</text></g>}
     </g>;
   };
   return <g>
-    <text x={T0} y={120} className="ma-l">time to first token</text>
-    <path d={`M${tx(0)} 222H${tx(HORIZON)}`} className="ma-axis" />
-    {[0, 40, 80, 120].filter((v) => v <= HORIZON).map((v) => <text key={v} x={tx(v)} y={242} textAnchor="middle" className="ma-l">{v}</text>)}
+    <text x={T0} y={112} className="ma-k">time to first token</text>
+    <path d={`M${tx(0)} 262H${tx(HORIZON)}`} className="ma-axis" />
+    {[0, 40, 80, 120].filter((v) => v <= HORIZON).map((v) => <text key={v} x={tx(v)} y={284} textAnchor="middle" className="ma-l">{v}</text>)}
+    <text x={tx(HORIZON)} y={306} textAnchor="end" className="ma-l">ms</text>
     {warm ? row(S.warm, 140, "A", false) : row(S.cold, 140, "B", false)}
-    {ghost && row(S.cold, 180, "B", true)}
-    <path d={`M${tx(Math.min(now, HORIZON))} 128V226`} stroke="#eef2f6" strokeOpacity={0.35} />
+    {ghost && row(S.cold, 200, "B", true)}
+    {now < HORIZON - 0.5 && <path d={`M${tx(now)} 128V266`} stroke="#eef2f6" strokeOpacity={0.35} />}
   </g>;
 }
 
@@ -63,7 +64,7 @@ function Problem({ t }: SceneProps) {
   const r = route(t), now = sim(t, PROBLEM_MS);
   const filled = Math.min(8, Math.floor((now / S.cold.prefillEnd) * 6) + (now >= S.cold.prefillEnd ? 2 : 0));
   const B = Array.from({ length: 12 }, (_, i) => (i < filled ? (i < 4 ? C.prefix : i < 6 ? C.q : C.out) : null));
-  return <svg viewBox="0 0 1100 420" role="img" aria-label="Least-loaded routing sends the request to the empty replica, which recomputes the whole prompt; first token at 62 ms">
+  return <svg viewBox="0 0 1100 420" role="img" aria-label={`Least-loaded routing sends the request to the empty replica, which recomputes the whole prompt; first token at ${S.cold.firstToken} ms`}>
     <Request k={1} />
     <Replica y={30} title="Replica A · warm" note="already holds the prefix · no free pages" pages={A_FULL} />
     <Replica y={230} title="Replica B · cold" note={filled ? "recomputing the whole prompt" : "empty · no prefix"} pages={B} highlight={now > 0 && now < 60 ? [Math.min(5, filled)] : undefined} />
@@ -78,7 +79,7 @@ function Mechanism({ t }: SceneProps) {
   const released = now >= S.warm.release;
   const pre = Math.max(0, Math.min(2, Math.floor((now - S.warm.start) / S.prefillMsPerBlock)));
   const A = A_FULL.map((c, i) => (i >= 4 && i < 8 ? (released ? (i - 4 < pre ? C.q : i - 4 < (now >= S.warm.prefillEnd ? 4 : pre) ? C.out : null) : c) : c));
-  return <svg viewBox="0 0 1100 420" role="img" aria-label="Cache-aware routing sends the request to the replica holding its prefix, reuses four pages, waits 20 ms for space, prefills two blocks; first token at 42 ms">
+  return <svg viewBox="0 0 1100 420" role="img" aria-label={`Cache-aware routing sends the request to the replica holding its prefix, reuses four pages, waits ${S.warm.start} ms for space, prefills ${S.warm.prefillBlocks} blocks; first token at ${S.warm.firstToken} ms`}>
     <Request k={1} />
     <Replica y={30} title="Replica A · warm" note={!released && now > 0 ? "waiting for pages to free" : now > 0 ? "reusing 4 prefix pages" : "already holds the prefix · no free pages"} pages={A} highlight={now > 0 ? [0, 1, 2, 3] : undefined} />
     <Replica y={230} title="Replica B · cold" note="empty · no prefix" pages={Array(12).fill(null)} />

@@ -185,6 +185,8 @@
   color: #90a6b9;
 }
 .ls-scene-scroll {
+  /* the scene takes the free height and starts under its label; a tall result column no longer pushes it to the bottom */
+  flex: 1 0 auto;
   overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: #465c6d transparent;

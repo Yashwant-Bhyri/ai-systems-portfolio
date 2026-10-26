@@ -17,6 +17,7 @@ export const COST = {
 const base = simulateLab(0, 2, false, "shared-prefix"), rlStatic = simulateLab(2, 2, false, "shared-prefix"), rlFast = simulateLab(2, 2, true, "shared-prefix");
 export const LAB = {
   correctBase: base.correct, correctRl: rlFast.correct,
+  costBase: base.correctCost!, costRl: rlFast.correctCost!,
   replay: [rlStatic.tasks[6].gpuSeconds, rlFast.tasks[6].gpuSeconds] as const,
   p95: [p95(rlStatic), p95(rlFast)] as const,
   gantt: { before: rlStatic.tasks.map((t) => [t.start, t.finish] as const), after: rlFast.tasks.map((t) => [t.start, t.finish] as const) },
@@ -31,7 +32,7 @@ export const UNDER_LOAD: readonly (PosterCard & { a: number; b: number })[] = [
 ];
 const f = (v: number, d = 2) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 export const ALSO: readonly { key: string; title: string; value: string }[] = [
-  { key: "composition", title: "Policy × runtime", value: `${LAB.correctBase} → ${LAB.correctRl} correct, cheaper per answer` },
+  { key: "composition", title: "Policy × runtime", value: `${LAB.correctBase} → ${LAB.correctRl} correct, ${f(LAB.costBase)} → ${f(LAB.costRl)} GPU-s each` },
   { key: "replay", title: "Execution replay", value: `${f(LAB.replay[0])} → ${f(LAB.replay[1])} GPU-s for request 7` },
   { key: "latency", title: "Queue & latency", value: `${f(LAB.p95[0], 0)} → ${f(LAB.p95[1], 0)} s p95 response` },
   { key: "map", title: "Serving overview", value: "ten mechanisms on one clock" },

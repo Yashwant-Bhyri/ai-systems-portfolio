@@ -150,7 +150,7 @@ export function SchedulingReveal({
                   : frame.focus === "baseline"
                     ? "Baseline: a free worker waits for its partner"
                     : frame.focus === "optimized"
-                      ? "Continuous batching: the next request starts immediately"
+                      ? "Free-worker scheduling: the next request starts immediately"
                       : `Same ${n(study.work)} worker-s of work; request 7 waits ${n(study.baseline[FOLLOWED].start - study.optimized[FOLLOWED].start)} s less`}
         </h3>
         <time>{n(frame.time)} s</time>

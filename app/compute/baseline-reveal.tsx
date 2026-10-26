@@ -192,6 +192,8 @@ export function BaselineReveal({
   const selected =
     frame.beat === 1 ? 0 : frame.beat === 2 ? 1 : frame.beat === 3 ? 2 : -1;
   const x = (duration: number) => 40 + (duration / q.latency) * 668;
+  // a calibrated prefill is a sliver beside long decode; label it just before, when there is room
+  const sliver = (i: number, total: number) => i === 1 && x(total) - 40 < 70 && x(starts[i]) > 140;
   const starts = [0, q.queueSeconds, q.queueSeconds + q.prefill];
   const totals = [q.queueSeconds, q.prefill, q.decode];
   const partial = [frame.wait, frame.prefill, frame.decode];
@@ -413,11 +415,12 @@ export function BaselineReveal({
                   fill={COLORS[i]}
                   opacity={selected < 0 || selected === i ? 0.85 : 0.23}
                 />
-                <text x={x(starts[i]) + 5} y="374" className="bo-small">
+                <text x={sliver(i, total) ? x(starts[i]) - 5 : x(starts[i]) + 5} y="374" textAnchor={sliver(i, total) ? "end" : undefined} className="bo-small">
                   {["Waiting", "Prefill", "Decode"][i]}
                 </text>
                 <text
-                  x={x(starts[i]) + 5}
+                  x={sliver(i, total) ? x(starts[i]) - 5 : x(starts[i]) + 5}
+                  textAnchor={sliver(i, total) ? "end" : undefined}
                   y="435"
                   className="bo-mono"
                   fill={COLORS[i]}

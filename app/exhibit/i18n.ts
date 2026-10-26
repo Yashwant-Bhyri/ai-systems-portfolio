@@ -380,6 +380,7 @@ const ZH: Record<string, string> = {
   "GPU-SECONDS PER CORRECT ANSWER ← CHEAPER": "每个正确答案的 GPU 秒 ← 更省",
   "PASS@1 ↑": "PASS@1 ↑",
   "GPU-S / CORRECT": "GPU 秒 / 正确答案",
+  "SOLVED OF 96": "96 题中解出",
   "post-training ↑ pass@1": "后训练 ↑ pass@1",
   "serving ← GPU-s / correct": "推理服务 ← GPU 秒 / 正确答案",
   // runtime receipts

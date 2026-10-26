@@ -5,6 +5,7 @@ import { PolicyAudit } from "./audit";
 import { PolicyBase } from "./base";
 import { PolicyFleet } from "./fleet";
 import { PolicyFrontier } from "./frontier";
+import { FRONTIER_COST, f2 } from "./data";
 import { PolicyGrpo } from "./grpo";
 import { PolicyLean } from "./lean";
 import { PolicyMap } from "./map";
@@ -88,9 +89,9 @@ const ROOMS: Room[] = [
     id: "frontier", label: "Frontier",
     kicker: "Frontier · policy × runtime",
     title: <>Training moves it up. <em>Serving moves it left.</em></>,
-    metric: { value: <>14.94</>, label: "GPU-s / correct · was 43.69" },
-    duration: 11000, beats: [1200, 6900, 9200], zh: { label: "前沿", kicker: "前沿 · 策略 × 运行时", title: <>训练让它向上，<em>推理服务让它向左。</em></>, metricLabel: "GPU 秒 / 正确答案 · 原为 43.69" },
-    dev: { rows: [["start", "base · 29.2% · 43.69"], ["policy", "lean 4× · 85.4% · 28.89"], ["+ runtime", "85.4% · 14.94"], ["workload", "shared-prefix"]], source: "simulateLab(p, b, optimized, \"shared-prefix\")" },
+    metric: { value: <>{f2(FRONTIER_COST.runtime)}</>, label: `GPU-s / correct at 3× the accuracy · base ${f2(FRONTIER_COST.start)}` },
+    duration: 11000, beats: [1200, 6900, 9200], zh: { label: "前沿", kicker: "前沿 · 策略 × 运行时", title: <>训练让它向上，<em>推理服务让它向左。</em></>, metricLabel: `GPU 秒 / 正确答案 · 准确率约为 3 倍 · 基础模型 ${f2(FRONTIER_COST.start)}` },
+    dev: { rows: [["start", `base · 29.2% · ${f2(FRONTIER_COST.start)}`], ["policy", `lean 4× · 85.4% · ${f2(FRONTIER_COST.policy)}`], ["+ runtime", `85.4% · ${f2(FRONTIER_COST.runtime)}`], ["workload", "shared-prefix"]], source: "simulateLab(p, b, optimized, \"shared-prefix\")" },
     Scene: PolicyFrontier,
   },
 ];

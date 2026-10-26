@@ -230,6 +230,9 @@ export function CapabilityShiftPlot({
 }
 
 const CURVES = POLICIES.map((_, i) => BUDGETS.map((b) => simulateLab(i, b)));
+// the cost axis reaches the most expensive run, in whole 6 GPU-s ticks
+const X_MAX = Math.ceil(Math.max(...CURVES.flat().map((run) => run.meanCost)) / 6) * 6;
+const X_TICKS = Array.from({ length: X_MAX / 6 + 1 }, (_, i) => i * 6);
 export function LabScalingPlot({
   policy,
   budget,
@@ -240,12 +243,12 @@ export function LabScalingPlot({
   onSelect: (p: number, b: number) => void;
 }) {
   const id = useId(),
-    px = (v: number) => 86 + (v / 36) * 950,
-    py = (v: number) => 311 - v * 2.5;
+    px = (v: number) => 86 + (v / X_MAX) * 950,
+    py = (v: number) => 397 - v * 3.36;
   const focus = CURVES[policy].find((run) => run.budget === budget)!;
   return (
     <svg
-      viewBox="0 0 1140 394"
+      viewBox="0 0 1140 480"
       className="rs-plot"
       role="group"
       aria-labelledby={`${id}-title`}
@@ -294,18 +297,18 @@ export function LabScalingPlot({
           </text>
         </g>
       ))}
-      {[0, 6, 12, 18, 24, 30, 36].map((v) => (
+      {X_TICKS.map((v) => (
         <g key={v}>
-          <path d={`M${px(v)} 61V311`} stroke="#1e2d39" />
-          <text x={px(v)} y="335" textAnchor="middle" className="rs-tick">
+          <path d={`M${px(v)} 61V397`} stroke="#1e2d39" />
+          <text x={px(v)} y="421" textAnchor="middle" className="rs-tick">
             {v}
           </text>
         </g>
       ))}
       <text
         x="22"
-        y="190"
-        transform="rotate(-90 22 190)"
+        y="229"
+        transform="rotate(-90 22 229)"
         textAnchor="middle"
         className="rs-axis"
       >
@@ -390,7 +393,7 @@ export function LabScalingPlot({
           opacity=".65"
         />
       </g>
-      <text x="570" y="368" textAnchor="middle" className="rs-axis">
+      <text x="570" y="454" textAnchor="middle" className="rs-axis">
         GPU-seconds per task
       </text>
     </svg>

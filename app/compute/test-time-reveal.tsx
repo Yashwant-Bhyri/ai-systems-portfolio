@@ -9,6 +9,9 @@ import "./cinematic-film.css";
 const BUDGETS = [1, 2, 4, 8];
 const RUNS = BUDGETS.map((budget) => simulateLab(2, budget));
 const BASE = BUDGETS.map((budget) => simulateLab(0, budget));
+// the cost axis reaches the most expensive run, in whole 10 GPU-s ticks
+const X_MAX = Math.ceil(Math.max(...RUNS.concat(BASE).map((r) => r.meanCost)) / 10) * 10;
+const X_TICKS = Array.from({ length: X_MAX / 10 + 1 }, (_, i) => i * 10);
 const MOMENTS = [1200, 5400, 9600, 13800];
 const CASE = [
   {
@@ -170,7 +173,7 @@ export function TestTimeReveal({
     id = useId();
   const sequenceProgress = clamp01((film.time - MOMENTS[index]) / 3300);
   const verdictReady = sequenceProgress >= 0.9;
-  const x = (cost: number) => 58 + (cost / 36) * 460;
+  const x = (cost: number) => 58 + (cost / X_MAX) * 460;
   const y = (accuracy: number) => 259 - ((accuracy - 20) / 80) * 218;
   const path = (runs: typeof RUNS) =>
     runs
@@ -223,7 +226,7 @@ export function TestTimeReveal({
             <text x="58" y="19" className="ls-small">
               Accuracy (%)
             </text>
-            {[0, 10, 20, 30].map((v) => (
+            {X_TICKS.map((v) => (
               <text
                 key={v}
                 x={x(v)}

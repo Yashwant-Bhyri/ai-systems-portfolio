@@ -61,7 +61,7 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
         const x = Math.min(1, v / 1.1);
         return [Math.round(120 + 123 * x), Math.round(40 + 120 * x), Math.round(80 + 108 * x)];
       },
-      ground: 0x120d13, light: 0xf3a0bc,
+      ground: 0x120d13, light: 0xf3a0bc, zoom: 1.25,
     });
     const svg = labels.current;
     svg?.querySelectorAll<SVGTextElement>("text[data-row]").forEach((el) => {
@@ -70,7 +70,7 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
       el.setAttribute("x", String(p.x + 10));
       el.setAttribute("y", String(p.y + 4));
     });
-    const ends = [r.project(0, 0.62), r.project(ORDER.length - 1, 0.62)];
+    const ends = [r.project(0, 0.54), r.project(ORDER.length - 1, 0.54)];
     svg?.querySelector("[data-easy]")?.setAttribute("x", String(ends[0].x));
     svg?.querySelector("[data-easy]")?.setAttribute("y", String(ends[0].y + 18));
     svg?.querySelector("[data-hard]")?.setAttribute("x", String(ends[1].x));

@@ -36,7 +36,7 @@ const TITLES = [
 ];
 const ROWS = [
   "Baseline serving",
-  "+ Continuous batching",
+  "+ Free-worker scheduling",
   "+ Prefix reuse",
   "+ Faster prefill & decode",
 ];
@@ -325,13 +325,13 @@ export function RuntimeGainsReveal({
       <header className="rg-heading">
         <h3>
           {beat === 1
-            ? `Continuous batching: request 7 waits ${n(q[1].queueSeconds)} s instead of ${n(q[0].queueSeconds)} s`
+            ? `Step 1, free-worker scheduling: request 7 waits ${n(q[1].queueSeconds)} s instead of ${n(q[0].queueSeconds)} s`
             : beat === 2
               ? study.hits
-                ? `Prefix reuse: request 7's input drops from ${n(q[1].prefill)} to ${n(q[2].prefill)} GPU-s`
-                : "Prefix reuse: no shared prefix, no saving"
+                ? `Step 2, prefix reuse: request 7's input drops from ${n(q[1].prefill)} to ${n(q[2].prefill)} GPU-s`
+                : "Step 2, prefix reuse: no shared prefix, no saving"
               : beat === 3
-                ? `Faster prefill & decode: ${n(q[2].gpuSeconds)} → ${n(q[3].gpuSeconds)} GPU-s for request 7`
+                ? `Step 3, faster prefill & decode: ${n(q[2].gpuSeconds)} → ${n(q[3].gpuSeconds)} GPU-s for request 7`
                 : beat === 5
                   ? `All ${study.n} requests: ${n(study.cohort[0].total)} → ${n(study.cohort[3].total)} GPU-s per correct answer`
                   : TITLES[beat]}

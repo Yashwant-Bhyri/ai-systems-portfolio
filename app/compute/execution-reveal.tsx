@@ -45,7 +45,7 @@ const MOMENTS = [
 ];
 const TITLES = [
   "Request 7 on faster prefill & decode rates",
-  "Worker release",
+  "Done sooner: the faster run frees its worker",
   "Delivery time for twelve requests",
   "How many requests fit the same compute allowance?",
   "1,000 requests at once: which runtime clears the queue first?",

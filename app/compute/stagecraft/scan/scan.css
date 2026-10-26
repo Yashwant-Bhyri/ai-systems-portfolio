@@ -1,13 +1,14 @@
 /* Brain-Scan family: relief, flat field and answer ribbon on one scan. */
 .sc-root { --sc-accent: #6cfade; display: flex; flex-direction: column; gap: 10px; padding: 18px 24px 20px; background: #0b0d10; }
 .sc-rose { --sc-accent: #f3a0bc; background: radial-gradient(90% 60% at 50% 30%, rgba(243,160,188,.06), transparent 70%), #0c0a0e; }
-.sc-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.sc-head { display: flex; align-items: flex-end; justify-content: flex-start; gap: 48px; } /* counter beside the title: the top-right corner belongs to the fixed contact dock */
 .sc-kicker { color: var(--sc-accent); font: 500 12px/1 var(--font-geist-mono), monospace; letter-spacing: .04em; }
 .sc-head h3 { margin: 8px 0 0; max-width: 46ch; color: #f1f4f7; font: 500 22px/1.25 var(--font-geist-sans), sans-serif; letter-spacing: -.015em; }
 .sc-count { display: flex; align-items: baseline; gap: 10px; text-align: right; }
 .sc-count b { color: var(--sc-accent); font: 500 44px/1 var(--font-geist-mono), monospace; letter-spacing: -.03em; }
-.sc-count small { max-width: 22ch; color: #9aa6b2; font: 400 12px/1.35 var(--font-geist-mono), monospace; text-align: left; }
+.sc-count small { max-width: 32ch; color: #9aa6b2; font: 400 12px/1.35 var(--font-geist-mono), monospace; text-align: left; }
 .sc-stage { position: relative; height: clamp(250px, 34svh, 340px); }
+.sc-stage.sc-terrain { height: clamp(320px, 50svh, 480px); }
 .sc-relief { position: absolute; inset: 0; }
 .sc-relief canvas { display: block; }
 .sc-labels { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }

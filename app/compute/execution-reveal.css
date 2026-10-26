@@ -588,9 +588,6 @@
 .es-film .es-scenes {
   min-height: 440px;
 }
-.es-film[data-beat="1"] .em-svg > [data-lane] {
-  opacity: 0.65;
-}
 .em-svg > [data-lane] {
   transition: opacity 300ms ease-out;
 }

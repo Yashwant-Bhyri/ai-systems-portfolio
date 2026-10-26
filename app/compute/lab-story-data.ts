@@ -1,4 +1,5 @@
 import { compareTasks, simulateLab, type Workload } from "./lab-simulation";
+import { FRONTIER_COST, f2 } from "../exhibit/policy/data.ts";
 
 export const INFERENCE_STORY = [
   {
@@ -120,7 +121,7 @@ export const TRAINING_STORY = [
     verb: "FRONTIER",
     title: `Training moves it up (+${PT.lean - PT.base} tasks); serving moves it left`,
     detail:
-      "Five moves, each with what was done and what it bought: 28 → 82 solved, then 43.69 → 14.94 GPU-seconds per correct answer.",
+      `Five moves, each with what was done and what it bought: 28 → 82 solved; the lean policy costs ${f2(FRONTIER_COST.policy)} GPU-seconds per correct answer, and the serving runtime takes it to ${f2(FRONTIER_COST.runtime)} (the base model: ${f2(FRONTIER_COST.start)}, for a third of the answers).`,
     mechanism: "Policy × runtime",
     inspect:
       "Accuracy against GPU-seconds per correct answer on the shared-document workload. Each post-training move changes the policy; the final move changes only the serving runtime.",

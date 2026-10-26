@@ -20,6 +20,8 @@ export type ReliefSpec = {
   smoothRows?: boolean;
   ground?: number;
   light?: number;
+  /** Camera zoom: a wide, shallow field fills more of its stage. */
+  zoom?: number;
 };
 
 export function mountRelief(host: HTMLElement, spec: ReliefSpec) {
@@ -33,6 +35,8 @@ export function mountRelief(host: HTMLElement, spec: ReliefSpec) {
   const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 100);
   camera.position.set(-0.9, 5.9, 11.2);
   camera.lookAt(0.15, 0.15, -0.2);
+  camera.zoom = spec.zoom ?? 1;
+  camera.updateProjectionMatrix();
   const SUB = spec.sub ?? 2;
   const cols = spec.cols * SUB, rows = spec.rows - 1;
   const geo = new THREE.PlaneGeometry(W, D, cols, rows);

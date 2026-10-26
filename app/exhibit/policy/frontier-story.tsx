@@ -3,19 +3,21 @@
 import { useCallback, useRef } from "react";
 import { attrs, ease, lerp, prog, useSceneFrame } from "../engine";
 import type { RoomProps } from "../shell";
-import { CONSTELLATION, FRONTIER } from "./data";
+import { CONSTELLATION, FRONTIER, FRONTIER_COST, f2 } from "./data";
 import { Surface, TALL_W, VB } from "./parts";
 import { useTr } from "../i18n";
 
 /* The frontier, told hop by hop: each move names what was done and what it bought.
    Training moves the point up; serving moves every point left. */
 
+// GPU-s per correct answer for each hop, read from the frontier itself
+const hop = (a: number, b: number) => `${f2(a)} → ${f2(b)}`;
 const HOPS = [
-  { verb: "SFT · LoRA", did: "Imitate verified traces", gain: "+18 solved", cost: "43.69 → 28.11" },
-  { verb: "GRPO", did: "Reward what passes the tests", gain: "+11 −2", cost: "28.11 → 30.88" },
-  { verb: "4× thought", did: "Search four times, keep the verified", gain: "+27 solved", cost: "30.88 → 39.12" },
-  { verb: "Lean RL", did: "Penalize wasted tokens", gain: "same 82", cost: "39.12 → 28.89" },
-  { verb: "Serving", did: "Reuse prefixes, batch, fuse kernels", gain: "same 82", cost: "28.89 → 14.94" },
+  { verb: "SFT · LoRA", did: "Imitate verified traces", gain: "+18 solved", cost: hop(FRONTIER[0].slow, FRONTIER[1].slow) },
+  { verb: "GRPO", did: "Reward what passes the tests", gain: "+11 −2", cost: hop(FRONTIER[1].slow, FRONTIER[2].slow) },
+  { verb: "4× thought", did: "Search four times, keep the verified", gain: "+27 solved", cost: hop(FRONTIER[2].slow, FRONTIER[3].slow) },
+  { verb: "Lean RL", did: "Penalize wasted tokens", gain: "same 82", cost: hop(FRONTIER[3].slow, FRONTIER[4].slow) },
+  { verb: "Serving", did: "Reuse prefixes, batch, fuse kernels", gain: "same 82", cost: hop(FRONTIER_COST.policy, FRONTIER_COST.runtime) },
 ] as const;
 
 const WIDE = {
@@ -26,7 +28,7 @@ const TALL = {
   vb: { w: TALL_W, h: 1180 }, p: { x0: 70, x1: 570, y0: 560, y1: 70 },
   ledger: { x: 24, y: 660, row: 100 },
 };
-const CMAX = 46, AMIN = 20, AMAX = 100;
+const CMAX = FRONTIER_COST.axisMax, AMIN = 20, AMAX = 100;
 const T0 = 1000, HOP = 2600, T_SHIFT = T0 + 4 * HOP + 400, T_RING = T_SHIFT + 2000;
 export const FRONTIER_STORY_MS = T_RING + 3200;
 const first = FRONTIER[0], last = FRONTIER[FRONTIER.length - 1];
@@ -80,13 +82,13 @@ export function PolicyFrontierStory({ active, clock, tall }: RoomProps) {
   };
 
   return (
-    <Surface vb={L.vb} label="Five moves from 28 to 82 of 96 solved, then serving cuts GPU-seconds per correct answer from 43.69 to 14.94">
+    <Surface vb={L.vb} label={`Five moves from 28 to 82 of 96 solved; serving then cuts GPU-seconds per correct answer from ${f2(FRONTIER_COST.policy)} to ${f2(FRONTIER_COST.runtime)}`}>
       <g ref={field} opacity={0}>
         <path d={`M${P.x0} ${P.y1}V${P.y0}H${P.x1}`} fill="none" stroke="var(--ex-line-2)" />
         {[40, 60, 80, 100].map((a) => (
           <g key={a}><path d={`M${P.x0} ${Y(a)}H${P.x1}`} stroke="var(--ex-line)" /><text x={P.x0 - 12} y={Y(a) + 5} className="ex-ann" textAnchor="end">{a}%</text></g>
         ))}
-        {[0, 10, 20, 30, 40].map((c) => <text key={c} x={X(c)} y={P.y0 + 26} className="ex-ann" textAnchor="middle">{c}</text>)}
+        {Array.from({ length: Math.floor(CMAX / 10) + 1 }, (_, k) => k * 10).map((c) => <text key={c} x={X(c)} y={P.y0 + 26} className="ex-ann" textAnchor="middle">{c}</text>)}
         <text x={P.x1} y={P.y0 + 56} className="ex-m" textAnchor="end">{tr("GPU-S / CORRECT")} ←</text>
         <text x={P.x0} y={P.y1 - 22} className="ex-m">{tr("PASS@1 ↑")}</text>
         {CONSTELLATION.map((pt, i) => <circle key={i} cx={X(pt.slow)} cy={Y(pt.pass1)} r={2.6} fill="var(--ex-ink-3)" opacity={0.35} />)}
@@ -122,8 +124,10 @@ export function PolicyFrontierStory({ active, clock, tall }: RoomProps) {
         ))}
       </g>
       <g ref={hero} opacity={0} transform={tall ? `translate(${P.x0 + 10} ${Y(74)})` : `translate(${P.x0 + 40} ${Y(75)})`}>
-        <text className="ex-m">{tr("GPU-S / CORRECT")}</text>
-        <text y={50} className="ex-num-xl" style={{ fontSize: 44 }}>{first.slow.toFixed(2)} <tspan fill="var(--ex-amber)">→ {last.fast.toFixed(2)}</tspan></text>
+        {/* three times the correct answers, for about the same GPU time per correct answer */}
+        <text className="ex-m">{tr("SOLVED OF 96")}</text>
+        <text y={50} className="ex-num-xl" style={{ fontSize: 44 }}>28 <tspan fill="var(--ex-amber)">→ 82</tspan></text>
+        <text y={84} className="ex-m">{tr("GPU-S / CORRECT")} {f2(first.slow)} → {f2(last.fast)}</text>
       </g>
     </Surface>
   );

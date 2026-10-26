@@ -49,6 +49,15 @@ function Lanes({ lane, now, overlapped }: { lane: OverlapLane; now: number; over
       <text x={0} y={0} className="ma-l">GPU idle so far</text>
       <text x={0} y={36} className="ma-big" style={{ fill: idleSoFar > 6 ? C.idle : C.gpu }}>{Math.round(idleSoFar)}<tspan className="ma-l" dx={8}>ms</tspan></text>
     </g>
+    {/* overlapped: the space the baseline still needed is the saving, so mark it */}
+    {overlapped && now >= lane.finish - 0.05 && (
+      <g>
+        <path d={`M${x(S.baseline.finish)} 96V350`} stroke={C.idle} strokeOpacity={0.55} strokeDasharray="4 4" />
+        <text x={x(S.baseline.finish) - 8} y={300} textAnchor="end" className="ma-l" style={{ fill: C.idle }}>baseline finished here · {S.baseline.finish} ms</text>
+        <path d={`M${x(lane.finish)} 224V214H${x(S.baseline.finish)}V224`} fill="none" stroke={C.gpu} strokeWidth={2} />
+        <text x={(x(lane.finish) + x(S.baseline.finish)) / 2} y={248} textAnchor="middle" className="ma-n" style={{ fill: C.gpu }}>{S.baseline.finish - lane.finish} ms sooner</text>
+      </g>
+    )}
     {overlapped && lane.steps.slice(0, -1).map((s, i) => now >= lane.steps[i + 1].prepare.end && (
       <path key={i} d={`M${x(lane.steps[i + 1].prepare.end)} 156C${x(lane.steps[i + 1].prepare.end)} 190 ${x(s.gpu.end)} 180 ${x(s.gpu.end)} 208`} fill="none" stroke={C.prep} strokeOpacity={0.6} strokeWidth={1.3} />
     ))}

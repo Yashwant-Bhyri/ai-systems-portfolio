@@ -12,6 +12,11 @@ import "./compute/stagecraft/microscope.css";
 import "./compute/stagecraft/quiet.css";
 import { GhostCursor, type CursorStep } from "./compute/stagecraft/ghost-cursor";
 import { useTr } from "./exhibit/i18n";
+import { COST } from "./posters/poster-data";
+import { CACHE_DELTA } from "./compute/serving-rail-meta";
+
+const n0 = (v: number) => v.toLocaleString("en-US", { maximumFractionDigits: 0 });
+const n2 = (v: number) => v.toFixed(2);
 import "./compute/compute-polish.css";
 
 function usePresence() {
@@ -145,11 +150,11 @@ export function TrainingVisual(props:PlaybackProps){return <ComputeScene key={pr
 
 type ArchNode={step:number;spot:string;title:string;sub:string;glyph:string;term:string;chips:readonly string[];value:string;unit:string};
 const INFERENCE_NODES:readonly ArchNode[]=[
-  {step:0,spot:"schedule",title:"Schedule",sub:"Batch + token budget",glyph:"queue",term:"Continuous batching",chips:["admit every iteration","chunked prefill","token budget"],value:"1,081 → 1,006",unit:"s · p95 latency, scheduling alone"},
+  {step:0,spot:"schedule",title:"Schedule",sub:"Batch + token budget",glyph:"queue",term:"Continuous batching",chips:["admit every iteration","chunked prefill","token budget"],value:`${n0(COST.p95Base)} → ${n0(COST.p95Batching)}`,unit:"s · p95 latency, scheduling alone"},
   {step:1,spot:"reuse",title:"Reuse",sub:"Shared prefix + KV pages",glyph:"memory",term:"PagedAttention · prefix cache",chips:["16-token pages","GQA · 8 KV heads","copy-on-write prefix"],value:"7,808",unit:"tokens skipped per hit"},
-  {step:2,spot:"accelerate",title:"Accelerate",sub:"CUDA + TensorRT",glyph:"chip",term:"Fused attention kernels",chips:["FlashAttention tiles","CUDA graphs","FP8 weights"],value:"−4.74",unit:"GPU-s per correct answer"},
-  {step:5,spot:"distribute",title:"Distribute",sub:"Parallel execution",glyph:"parallel",term:"Tensor parallel × 2",chips:["all-reduce per layer","NVLink","cache-aware routing"],value:"−20",unit:"ms · warm route"},
-  {step:7,spot:"serve",title:"Serve",sub:"Stream + reclaim",glyph:"stream",term:"Token streaming over SSE",chips:["flush per token","disconnect → reclaim pages","TTFT · TPOT"],value:"36.61 → 19.29",unit:"GPU-s per correct answer"},
+  {step:2,spot:"accelerate",title:"Accelerate",sub:"CUDA + TensorRT",glyph:"chip",term:"Fused attention kernels",chips:["FlashAttention tiles","CUDA graphs","FP8 weights"],value:`−${n2(COST.reuse-COST.kernels)}`,unit:"GPU-s per correct answer"},
+  {step:5,spot:"distribute",title:"Distribute",sub:"Parallel execution",glyph:"parallel",term:"Tensor parallel × 2",chips:["all-reduce per layer","NVLink","cache-aware routing"],value:`−${Math.abs(CACHE_DELTA)}`,unit:"ms · warm route"},
+  {step:7,spot:"serve",title:"Serve",sub:"Stream + reclaim",glyph:"stream",term:"Token streaming over SSE",chips:["flush per token","disconnect → reclaim pages","TTFT · TPOT"],value:`${n2(COST.base)} → ${n2(COST.kernels)}`,unit:"GPU-s per correct answer"},
 ];
 const TRAINING_NODES:readonly ArchNode[]=[
   {step:0,spot:"curate",title:"Curate",sub:"Verified reasoning data",glyph:"queue",term:"Verified reasoning traces",chips:["unit tests · exact answers","dedupe","held-out split"],value:"96",unit:"held-out tasks · never trained on"},

@@ -79,7 +79,7 @@ function Lanes({ trace, now, chunked }: { trace: StreamTrace; now: number; chunk
           {now >= firstToken && (
             <g>
               <path d={`M${x(firstToken)} 284l7 10-7 10-7-10z`} fill={C.doc} />
-              <text x={x(firstToken) + 12} y={299} className="ma-l" style={{ fill: C.doc }}>first token · {(r3.ttftMs ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} ms after arrival</text>
+              <text x={x(firstToken) + 8} y={330} textAnchor="end" className="ma-l" style={{ fill: C.doc }}>first token · {(r3.ttftMs ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} ms after arrival</text>
             </g>
           )}
         </g>
