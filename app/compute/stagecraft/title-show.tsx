@@ -37,40 +37,69 @@ function collect(root: HTMLElement | null): Rects {
 }
 
 /* ── Landing: both pathways, every module, one page ─────────────────────── */
+/**
+ * The opening, about eight seconds: branch 01 lifts and then steps back;
+ * branch 02 lifts while a cursor walks its titles; then one line says where
+ * we begin, and branch 01 starts. A click anywhere chooses at once.
+ */
+const INTRO = { p1: 300, p2: 1900, walk: 2300, card: 520, line: 600, read: 2700 } as const;
+type IntroStep = "idle" | "p1" | "p2" | "line";
+
 export function LabLanding({
-  pathways, items, leaving, onStart, autoStartMs = 4200,
+  pathways, items, leaving, onStart,
 }: {
   pathways: readonly Pathway[];
   items: readonly ShowItem[];
   leaving: boolean;
   onStart: (key: string, from: Rects) => void;
-  autoStartMs?: number;
 }) {
   const tr = useTr();
   const root = useRef<HTMLDivElement>(null);
-  const [armed, setArmed] = useState(false);
+  const [step, setStep] = useState<IntroStep>("idle");
+  const [hot, setHot] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const start = (key: string) => onStart(key, collect(root.current));
   const startRef = useRef(start);
   useEffect(() => { startRef.current = start; });
-  // The first pathway chooses itself once the landing has been on screen for a moment.
+  const second = items.filter((i) => i.pathway === 1);
+  const total = INTRO.walk + second.length * INTRO.card + INTRO.line + INTRO.read;
   useEffect(() => {
     const el = root.current;
     if (!el || leaving) return;
-    let id = 0;
+    let timers: number[] = [];
+    const clear = () => { timers.forEach((t) => window.clearTimeout(t)); timers = []; };
+    const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
+    const centre = (key: string) => {
+      const card = el.querySelector<HTMLElement>(`.ts-card[data-show-key="${key}"]`), box = el.getBoundingClientRect();
+      if (!card) return null;
+      const r = card.getBoundingClientRect();
+      return { x: r.left - box.left + r.width * 0.62, y: r.top - box.top + r.height * 0.42 };
+    };
+    const run = () => {
+      clear();
+      at(INTRO.p1, () => { setStep("p1"); emitIntro(pathways[0], 1); });
+      at(INTRO.p2, () => { setStep("p2"); emitIntro(pathways[1], 2); });
+      second.forEach((item, i) => at(INTRO.walk + i * INTRO.card, () => { setHot(item.key); setCursor(centre(item.key)); }));
+      const lineAt = INTRO.walk + second.length * INTRO.card + INTRO.line;
+      at(lineAt - INTRO.line, () => { setHot(null); setCursor(null); });
+      at(lineAt, () => { setStep("line"); window.dispatchEvent(new CustomEvent("lab:meter", { detail: null })); });
+      at(lineAt + INTRO.read, () => startRef.current(items.find((i) => i.pathway === 0)!.key));
+    };
     const io = new IntersectionObserver(([e]) => {
-      window.clearTimeout(id);
-      setArmed(e.isIntersecting);
-      if (e.isIntersecting) id = window.setTimeout(() => startRef.current(items.find((i) => i.pathway === 0)!.key), autoStartMs);
+      if (e.isIntersecting) run();
+      else { clear(); setStep("idle"); setHot(null); setCursor(null); }
     }, { threshold: 0.55 });
     io.observe(el);
-    return () => { io.disconnect(); window.clearTimeout(id); };
-  }, [leaving, autoStartMs, items]);
+    return () => { io.disconnect(); clear(); };
+    // second is derived from items
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leaving, items, pathways]);
   return (
-    <div ref={root} className="ts-landing" data-leaving={leaving || undefined} data-armed={armed || undefined} style={{ ["--ts-auto" as string]: `${autoStartMs}ms` }}>
+    <div ref={root} className="ts-landing" data-leaving={leaving || undefined} data-step={step} data-armed={step !== "idle" || undefined} style={{ ["--ts-auto" as string]: `${total}ms` }}>
       {pathways.map((p, pi) => {
         const own = items.filter((i) => i.pathway === pi);
         return (
-          <section key={p.n} className="ts-path" data-first={pi === 0 || undefined}>
+          <section key={p.n} className="ts-path" data-first={pi === 0 || undefined} data-lift={(step === "p1" && pi === 0) || (step === "p2" && pi === 1) || undefined}>
             <button type="button" className="ts-path-head" onClick={() => start(own[0].key)}>
               <i>{p.n}</i>
               <strong>{tr(p.title)}</strong>
@@ -79,7 +108,7 @@ export function LabLanding({
             </button>
             <div className="ts-cards" data-count={own.length}>
               {own.map((item, i) => (
-                <button key={item.key} type="button" className="ts-card" data-show-key={item.key} data-lead={(pi === 0 && i === 0) || undefined} onClick={() => start(item.key)}>
+                <button key={item.key} type="button" className="ts-card" data-show-key={item.key} data-lead={(pi === 0 && i === 0) || undefined} data-hot={hot === item.key || undefined} onClick={() => start(item.key)}>
                   <span className="ts-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
                   <strong>{tr(item.title)}</strong>
                   {item.value && <span className="ts-value"><mark>{item.value}</mark>{item.unit && <small>{tr(item.unit)}</small>}</span>}
@@ -90,8 +119,22 @@ export function LabLanding({
           </section>
         );
       })}
+      {cursor && (
+        <span className="ts-cursor" aria-hidden="true" style={{ transform: `translate(${cursor.x}px, ${cursor.y}px)` }}>
+          <svg viewBox="0 0 22 22" width="22" height="22"><path d="M3 2l15 8-6.5 1.8L9 18z" fill="#f4f7fa" stroke="#0b1016" strokeWidth="1.3" strokeLinejoin="round" /></svg>
+        </span>
+      )}
+      {step === "line" && (
+        <p className="ts-opening">
+          {tr("First: how we serve the same intelligence with")} <em>{tr("cheaper execution")}</em>
+        </p>
+      )}
     </div>
   );
+}
+
+function emitIntro(p: Pathway, n: number) {
+  window.dispatchEvent(new CustomEvent("lab:meter", { detail: { text: `Branch ${p.n} · ${p.title}`, step: n, total: 2, tone: "neutral" } }));
 }
 
 /* ── The show: a fixed left column beside the stage ────────────────────── */

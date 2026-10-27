@@ -413,7 +413,7 @@ function TaskReadout({
 
 const INFERENCE_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "Same intelligence, cheaper execution", short: "Cheaper execution", techniques: ["Free-worker scheduling", "Prefix reuse (KV cache)", "Faster prefill & decode rates"] },
-  { n: "02", title: "Serving under load", short: "Serving under load", techniques: ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"] },
+  { n: "02", title: "Optimized serving under load", short: "Optimized serving under load", techniques: ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"] },
 ];
 const TRAINING_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "What did the model learn?", short: "Post-training", techniques: ["SFT + LoRA", "Correctness RL", "More thought", "Lean RL", "Elastic RL"] },
@@ -562,7 +562,7 @@ export function ComputeLabStudy({
       ]
     : [
         { key: "film", title: "The experiment", term: "free-worker scheduling → prefix reuse → faster rates", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
-        { key: "composition", title: "Policy × runtime", term: "training lifts accuracy · serving cuts cost · both at once", value: `${simulateLab(0, budget, false, workload).correct} → ${rlFast.correct}`, unit: `of 96 correct · ${Math.round(reductionPercent(simulateLab(0, budget, false, workload).correctCost!, rlFast.correctCost!)!)}% less GPU-s per correct answer`, Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "composition", title: "Policy × runtime", term: "training lifts accuracy · serving cuts cost · both at once", value: `${simulateLab(0, budget, false, workload).correct} → ${rlFast.correct}`, unit: (() => { const pct = Math.round(reductionPercent(simulateLab(0, budget, false, workload).correctCost!, rlFast.correctCost!)!); return `of 96 correct · ${Math.abs(pct)}% ${pct >= 0 ? "less" : "more"} GPU-s per correct answer`; })(), Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "replay", title: "Execution replay", term: "any of the 96 requests", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "latency", title: "Queue & latency", term: "arrival → completion, ranked", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ];
@@ -730,7 +730,7 @@ export function ComputeLabStudy({
           <div className="br-fork" role="group" aria-label={tr("Two branches of inference optimization")}>
             {([
               ["cheaper", "01", "Same intelligence, cheaper execution", ["Free-worker scheduling", "Prefix reuse (KV cache)", "Faster prefill & decode rates"]],
-              ["load", "02", "Serving under load", ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"]],
+              ["load", "02", "Optimized serving under load", ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"]],
             ] as const).map(([key, n, title, techniques]) => (
               <button
                 key={key}
@@ -1260,7 +1260,7 @@ export function ComputeLabStudy({
         <RetainedLabPanel
           active={inferencePart === "load"}
           id="inference-serving-lab"
-          label="Serving under load"
+          label="Optimized serving under load"
         >
           <Suspense
             fallback={

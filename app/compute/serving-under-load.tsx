@@ -416,7 +416,7 @@ export function ServingUnderLoad() {
         <GlossaryBoard items={GLOSSARY.map((g) => (g.key === "kv" ? { ...g, onOpen: () => show("loop", "cache"), openLabel: "Open the KV capacity study ↗" } : g))} />
       </RetainedLabPanel>
       {railSlot && createPortal(labNav === "bar"
-        ? <ModuleBar label="Serving under load" items={railItems} />
+        ? <ModuleBar label="Optimized serving under load" items={railItems} />
         : <ExplorationReel
             label={labNav === "side" ? "Go deeper" : "Go deeper · serving under load"}
             items={railItems}

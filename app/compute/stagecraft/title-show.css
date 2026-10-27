@@ -172,3 +172,23 @@
 .tr-intro .ts-value mark { font-size: 22px; }
 .tr-intro :is(.g-t, .g-code) { display: none; }
 @media (max-width: 900px) { .tr-rail { display: none; } .lab-flow-show .lf-body:has(.tr-rail) { grid-template-columns: 1fr; } }
+
+/* ── The opening: one branch at a time, then the line that starts the show ── */
+.ts-landing { position: relative; }
+.ts-path { transition: transform .7s cubic-bezier(.2,.75,.2,1), filter .7s, opacity .7s, box-shadow .7s, border-color .7s; transform-origin: 50% 40%; }
+.ts-landing[data-step]:not([data-step="idle"]) .ts-path:not([data-lift]) { filter: blur(2.5px) grayscale(.7) brightness(.7); opacity: .5; }
+.ts-path[data-lift] { transform: scale(1.018); border-color: color-mix(in srgb, var(--active-accent) 55%, transparent); box-shadow: 0 24px 70px rgba(0,0,0,.5), 0 0 0 1px color-mix(in srgb, var(--active-accent) 30%, transparent), 0 0 60px color-mix(in srgb, var(--active-accent) 12%, transparent); z-index: 2; }
+.ts-landing[data-step="line"] .ts-path { filter: blur(5px) grayscale(.8) brightness(.45); opacity: .35; }
+.ts-card { transition: box-shadow .35s, background .35s, transform .35s cubic-bezier(.2,.75,.2,1); }
+.ts-card[data-hot] { transform: translateY(-4px) scale(1.035); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 70%, transparent), 0 14px 40px rgba(0,0,0,.45), 0 0 34px color-mix(in srgb, var(--active-accent) 18%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--active-accent) 10%, transparent), transparent) !important; z-index: 2; }
+.ts-cursor { position: absolute; left: 0; top: 0; z-index: 9; pointer-events: none; transition: transform .42s cubic-bezier(.2,.75,.2,1); filter: drop-shadow(0 3px 6px rgba(0,0,0,.6)); }
+.ts-opening {
+  position: absolute; z-index: 10; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(980px, 90%); margin: 0; text-align: center;
+  font: 450 clamp(30px, 3.2vw, 46px)/1.2 var(--font-geist-sans), sans-serif; letter-spacing: -.025em; color: #f2f5f8;
+  animation: ts-opening 2.7s cubic-bezier(.2,.75,.2,1) both;
+}
+.ts-opening em { color: var(--active-accent); font-style: italic; }
+@keyframes ts-opening { 0% { opacity: 0; transform: translate(-50%, -44%); } 18%, 82% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -54%); } }
+.cs-study.lab-flow-show .ts-landing { flex: 1 1 auto; min-height: 0; }
+@media (prefers-reduced-motion: reduce) { .ts-path, .ts-card, .ts-cursor { transition: none; } .ts-opening { animation: none; } }
