@@ -64,3 +64,42 @@ Rebuilt by re-reading all messages in the session transcript. Status: **Done** �
 - Number formatting inside Astra components: separators, minus signs, percent precision, round ticks (m5–m10).
 - Architecture sections are a few px taller than 900 (M35, Astra's section).
 - Light and developer modes for the lab.
+
+## Round 9 (2026-10-27): fit, focus, communication
+Target viewport: the user's MacBook (3024×1964 Retina, which "looks like" 1512×982); Chrome at 100% shows about **1512×860**. Also verify at 1440×900 and 1280×800.
+
+| # | Ask | Status |
+|---|---|---|
+| 1 | The results lab behaves like the architecture and microscope pages: it fills the screen and stays pinned, with nothing important below the fold | Open |
+| 2 | Remove the gap above "Inference optimization" that pushes the content down | Open |
+| 3 | Every module fits one full screen. Track the page start and cutoff, and measure each component's use of the central 75% | Open |
+| 4 | No tiny words, and no robotic letter-spaced labels | Open |
+| 5 | Highlighted numbers get a focus mode: dim or desaturate the rest; baseline, optimized, Δ and cause shine vividly | Open |
+| 6 | Guides are not text blocks at the bottom. Use a one-line live meter in the most visible place ("draft model drafting…") | Open |
+| 7 | Lab intro: branch 1 expands, then blurs; branch 2, renamed **Optimized serving under load**, expands and the cursor walks its titles (3–4 s) and returns. Then the opening line "First: how we serve the same intelligence with *cheaper execution*" | Open |
+| 8 | Serving arcs: the "In our system" beats overflow the page with wasted space, so make them fit | Open |
+| 9 | Problem beat is labelled **Problem / Bottleneck**. State the bottleneck centrally and highlight it (e.g. "12 calls for 12 tokens: serialized computation, a bottleneck at scale") | Open |
+| 10 | How it works shows **Optimized solution** on top and names the real draft model | Open |
+| 11 | Use the empty right space: a tracker of where we started and where we ended up (baseline → now) | Open |
+| 12 | No vague wording | Open |
+| 13 | Cache routing "In our system": the request-C panel is small and diffuse, with no focus | Open |
+| 14 | CPU/GPU overlap "In our system" is the gold standard; redo the others like it | Open |
+| 15 | Impact beats state what you learn, not just three numbers | Open |
+| 16 | Serving glossary: start empty; each of the nine cards (3×3) expands for about 1 s under the cursor, then settles. This ends "serving under load" | Open |
+| 17 | Cheaper execution feels repetitive and has no problem intro. Open with "the same intelligence at cheaper execution depends on N things", then pick one | Open |
+| 18 | Film spacing: fit one screen. Prefix reuse has floating text blocks; use focus and blur instead | Open |
+| 19 | Policy × runtime: annotate the curve itself (base → RL checkpoint: SFT + correctness RL; KV reuse + execution rate), with gains in pp and GPU-s, in focus mode | Open |
+| 20 | Replay: per-request differences look small. Show where it matters (latency), plus a paired baseline-vs-optimized cluster plot with median and mean | Open |
+| 21 | Post-training intro: the goal is a smarter model on math and coding (accuracy, then efficiency) | Open |
+| 22 | Show how the agent learns first: a reasoning trace and a reward critiquing it, like speculative's How it works | Open |
+| 23 | Starting point and SFT+LoRA pages: too much text; the "6-value calculation" box does nothing. Keep the six output coordinates, frozen matrices and loss graph | Open |
+| 24 | GRPO title text is unreadable as data; show it visually. Iterations: pink deepens and the curve tightens | Open |
+| 25 | "Give it more thought": label budgets as thinking budget, not accuracy. The request text is bad; keep the app → payment-provider graph. The guide at the bottom gets missed | Open |
+| 26 | Lean RL is undefined; give it a short mechanism | Open |
+| 27 | Capability terrain loops: say what changes, and place it after SFT/GRPO are explained | Open |
+| 28 | Frontier: highlight the orange (runtime) dots with their gains; replace "moves it up / moves it left" | Open |
+| 29 | Inside the model: context for what improved it | Open |
+| 30 | "What did the model learn": arrows from each step to its result (e.g. where 69.8 came from) | Open |
+| 31 | Where the 96 tasks land: reimagine the graph | Open |
+| 32 | Elastic RL: explain elastic RL and the QwenGyre idea; impact communicated | Open |
+| 33 | Regression audit: communicate, not just represent | Open |

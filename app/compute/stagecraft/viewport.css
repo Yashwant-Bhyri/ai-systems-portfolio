@@ -1,0 +1,86 @@
+/* The results laboratory in the show layout is one screen, like the architecture
+   and microscope pages: it snaps flush under the site header, nothing it needs
+   sits below the fold, and the page beneath only moves when you scroll on. */
+
+.cs-study.lab-flow.lab-flow-show {
+  --lv-header: var(--vx-header-height, 76px);
+  height: 100svh;
+  min-height: 600px;
+  padding: calc(var(--lv-header) + 8px) 0 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  scroll-margin-top: 0;
+}
+
+/* Head: the path and the title, tight. It reaches just below the floating
+   contact button (fixed, top right) so the module bar never sits under it. */
+.cs-study.lab-flow-show .lb-head { flex: 0 0 auto; display: flex; align-items: flex-start; min-height: 52px; padding-right: 170px; }
+.lab-flow-show .lb-head .rs-chapter-path { font-size: 11px; letter-spacing: 0; }
+.cs-study.lab-flow-show .lb-head h2 { font-size: 24px; line-height: 1.15; }
+
+/* Body: the rail and the stage share all the height that is left. */
+.cs-study.lab-flow-show .lf-body { flex: 1 1 auto; min-height: 0; margin-top: 8px; align-items: stretch; grid-template-rows: minmax(0, 1fr); }
+.cs-study.lab-flow-show .lf-body[data-landing] { display: flex; flex-direction: column; }
+.cs-study.lab-flow-show .lf-nav { position: relative; top: auto; height: 100%; }
+.cs-study.lab-flow-show .lf-stage { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.lab-flow-show .lf-stage > .lf-chapters { flex: 0 0 auto; }
+.lab-flow-show .lf-fit { flex: 0 0 auto; min-height: 0; }
+
+/* ── The experiment (film) in one screen ─────────────────────────────────
+   Each chapter is heading → figure → transport. The invariants line, the
+   moment list and the method note live in the deep record; in the show they
+   pushed the figure below the fold. The figure takes whatever height is left:
+   room − heading (≈56) − transport (≈40) − breathing (≈24). */
+.lab-flow-show .lf-fit { --lf-figure: calc(var(--lf-room) - 124px); }
+.lab-flow-show .lf-fit :is(.sq-invariants, .es-invariants, .bo-moments, .sq-moments, .pr-moments, .es-moments, .rg-moments, .bo-method, .sq-method, .pr-method, .es-method, .rg-footer, .xs-parameter-slot:empty) { display: none; }
+.lab-flow-show .lf-fit :is(.bo-heading, .sq-heading, .rg-heading, .es-direction, .pr-comparison-heading) { padding: 12px 26px 6px; min-height: 0; flex-wrap: wrap; align-items: baseline; column-gap: 18px; row-gap: 2px; }
+.lab-flow-show .lf-fit :is(.bo-heading, .rg-heading) > div { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 18px; }
+.lab-flow-show .lf-fit :is(.bo-heading, .sq-heading, .rg-heading, .es-direction, .pr-comparison-heading) :is(h3, h4) { margin: 0; font-size: 23px; line-height: 1.25; max-width: none; }
+.lab-flow-show .lf-fit :is(.bo-transport, .sq-transport, .pr-transport, .es-transport, .rg-transport) { padding-block: 4px; min-height: 0; }
+.lab-flow-show .lf-fit :is(.bo-machine, .rg-chart, .sq-scroll > svg, .pr-scroll > svg) { max-height: var(--lf-figure); }
+.lab-flow-show .lf-fit :is(.bo-stage, .rg-stage, .sq-stage, .pr-stage) { max-height: calc(var(--lf-figure) + 8px); }
+.lab-flow-show .lf-fit .xs-outcome-nav { padding-block: 0; }
+.lab-flow-show .lf-fit .xs-sequence { min-height: 0; height: calc(var(--lf-figure) - 32px); }
+.lab-flow-show .lf-fit .xs-visual svg { max-height: calc(var(--lf-figure) - 48px); }
+/* Scheduling's ledger: the chart and the result, without the extra navigation. */
+.lab-flow-show .lf-fit .sq-ledger { margin-block: 6px; padding: 14px 18px; overflow: hidden; }
+.lab-flow-show .lf-fit .sq-ledger > svg { margin-top: 10px; max-height: calc(var(--lf-figure) - 290px); }
+.lab-flow-show .lf-fit .sq-ledger-result { min-height: 0; padding-block: 8px; }
+.lab-flow-show .lf-fit .sq-comparison-nav { display: none; }
+.lab-flow-show .lf-fit .em-inspection { display: none; }
+
+/* ── Post-training film in one screen ─────────────────────────────────── */
+.lab-flow-show .lf-fit .ls-training .ls-theater { min-height: 0; }
+.lab-flow-show .lf-fit .ls-training .ls-topline { padding: 4px 22px; min-height: 0; }
+.lab-flow-show .lf-fit .ls-training .ls-topline > span { display: none; }
+.lab-flow-show .lf-fit .ls-training .ls-topline { justify-content: flex-end; border-bottom: 0; position: absolute; right: 0; top: 4px; z-index: 3; }
+.lab-flow-show .lf-fit .ls-training { position: relative; }
+.lab-flow-show .lf-fit .ls-training .ls-story-heading { min-height: 0; padding: 12px 26px 8px; padding-right: 420px; }
+.lab-flow-show .lf-fit .ls-training .ls-story-heading > div { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 14px; }
+.lab-flow-show .lf-fit .ls-training .ls-story-heading h3 { margin: 0; font-size: 23px; }
+.lab-flow-show .lf-fit .ls-training .ls-footer { padding: 4px 20px; }
+.lab-flow-show .lf-fit :is(.ar-moments, .ar-method, .pf-behavior) { display: none; }
+
+/* ── Explorers in one screen ──────────────────────────────────────────── */
+/* The workload switch rides at the top right of the explorer's own first row. */
+.lab-flow-show .lf-fit .rs-exhibit { position: relative; }
+.lab-flow-show .lf-fit .rs-context-bar { position: absolute; z-index: 4; top: 6px; right: 12px; min-height: 0; padding: 0; border: 0; background: none; }
+.lab-flow-show .lf-fit .rs-context-bar > :not(.rs-segmented) { display: none; }
+.lab-flow-show .lf-fit :is(.ll-tools, .rr-tools) { padding: 8px 320px 8px 24px; min-height: 0; }
+.lab-flow-show .lf-fit :is(.ll-tools, .rr-tools) > span { display: none; }
+
+/* Queue & latency: heading, plot, transport. */
+.lab-flow-show .lf-fit :is(.ll-moments, .ll-inspect-request, .ll-accounting) { display: none; }
+.lab-flow-show .lf-fit .ll-heading { padding: 8px 24px 4px; }
+.lab-flow-show .lf-fit .ll-stage { min-height: 0; }
+.lab-flow-show .lf-fit .ll-plot { max-height: calc(var(--lf-room) - 220px); }
+.lab-flow-show .lf-fit .ll-result { margin-block: 6px; padding-block: 14px; }
+.lab-flow-show .lf-fit .ll-transport { padding-block: 6px; }
+
+/* Serving overview: heading, chapters, diagram. */
+.lab-flow-show .lf-fit :is(.slo-topline, .slo-hardware-notes) { display: none; }
+.lab-flow-show .lf-fit .slo-header { padding-block: 10px 6px; }
+.lab-flow-show .lf-fit .slo-header p { display: none; }
+.lab-flow-show .lf-fit .slo-context-controls { padding-block: 4px; min-height: 0; }
+.lab-flow-show .lf-fit .sa-diagram { max-height: calc(var(--lf-room) - 200px); margin-inline: auto; }

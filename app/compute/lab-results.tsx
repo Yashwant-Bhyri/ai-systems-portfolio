@@ -29,6 +29,8 @@ import {
 } from "./lab-simulation";
 import { reductionPercent } from "./study-math";
 import { useStageHold } from "./stagecraft/stage-hold";
+import { useStageFit } from "./stagecraft/stage-fit";
+import "./stagecraft/viewport.css";
 import { useStudyPlayback } from "./use-study-playback";
 import { LabStory } from "./lab-story";
 import { FigurePresentation } from "./figure-presentation";
@@ -122,7 +124,7 @@ const LATENCY_DEMO: readonly CursorStep[] = [
  * is off screen, and land it just below the sticky reel, never under it.
  */
 function alignBlock(inside: Element | null) {
-  const block = inside?.closest(".lab-block");
+  const block = inside?.closest(".lab-block, .lab-flow-show");
   const stage = inside?.closest(".lf-stage");
   let top: number;
   if (block) {
@@ -440,6 +442,7 @@ export function ComputeLabStudy({
     );
   const exhibitRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const fitRef = useRef<HTMLDivElement>(null);
   // Title show: the landing (inference only), the flight from it, and which module is telling its story.
   const [landingPhase, setLandingPhase] = useState<"on" | "leaving" | "off">(training ? "off" : "on");
   const [servingKey, setServingKey] = useState("pressure");
@@ -449,6 +452,7 @@ export function ComputeLabStudy({
   const [filmRun, setFilmRun] = useState(0);
   const tr = useTr();
   const labNav = useLabNav();
+  useStageFit(stageRef, fitRef, labNav === "show");
   // In the top orientation the reel condenses once the visitor scrolls into the stage.
   const [scrolledIn, setScrolledIn] = useState(false);
   useEffect(() => {
@@ -749,6 +753,7 @@ export function ComputeLabStudy({
         {labNav !== "dock" && !landingOn && navNode}
         <div ref={stageRef} className={block ? "lb-stage" : "lf-stage"} hidden={landingOn}>
           {!block && (training || inferencePart === "cheaper") && mode === "watch" && <div className="lf-chapters">{chapterSlot}</div>}
+        <div ref={fitRef} className="lf-fit">
       <RetainedLabPanel
         active={training || inferencePart === "cheaper"}
         id={`${domain}-cost-lab`}
@@ -1265,6 +1270,7 @@ export function ComputeLabStudy({
           </Suspense>
         </RetainedLabPanel>
       )}
+        </div>
         </div>
         {labNav === "dock" && navNode}
       </div>
