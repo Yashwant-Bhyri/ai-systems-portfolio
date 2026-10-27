@@ -30,6 +30,7 @@ import {
 import { reductionPercent } from "./study-math";
 import { useStageHold } from "./stagecraft/stage-hold";
 import { useStageFit } from "./stagecraft/stage-fit";
+import { FocusCaption, StageMeter } from "./stagecraft/stage-meter";
 import "./stagecraft/viewport.css";
 import { useStudyPlayback } from "./use-study-playback";
 import { LabStory } from "./lab-story";
@@ -724,6 +725,7 @@ export function ComputeLabStudy({
         <h2 id={`${domain}-study-title`}>
           {training ? tr("What did the model learn?") : tr("Inference optimization")}
         </h2>
+        {show && <StageMeter moduleKey={`${currentKey}|${chapter}`} />}
         {!training && (
           <div className="br-fork" role="group" aria-label={tr("Two branches of inference optimization")}>
             {([
@@ -753,6 +755,7 @@ export function ComputeLabStudy({
         {labNav !== "dock" && !landingOn && navNode}
         <div ref={stageRef} className={block ? "lb-stage" : "lf-stage"} hidden={landingOn}>
           {!block && (training || inferencePart === "cheaper") && mode === "watch" && <div className="lf-chapters">{chapterSlot}</div>}
+        {show && <FocusCaption moduleKey={`${currentKey}|${chapter}`} stage={stageRef} />}
         <div ref={fitRef} className="lf-fit">
       <RetainedLabPanel
         active={training || inferencePart === "cheaper"}
