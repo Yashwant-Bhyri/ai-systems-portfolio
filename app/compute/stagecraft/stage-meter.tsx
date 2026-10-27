@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./focus.css";
 
 /**
@@ -63,17 +63,18 @@ export function StageMeter({ moduleKey }: { moduleKey: string }) {
 }
 
 /** Focus: dims the stage and states the result in large type at its top. */
-export function FocusCaption({ moduleKey, stage }: { moduleKey: string; stage: React.RefObject<HTMLElement | null> }) {
+export function FocusCaption({ moduleKey }: { moduleKey: string }) {
   const f = useLabEvent<NonNullable<FocusDetail>>("lab:focus", moduleKey);
+  const own = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = stage.current;
+    const el = own.current?.closest<HTMLElement>(".lf-stage") ?? document.querySelector<HTMLElement>(".lab-flow-show .lf-stage:not([hidden])");
     if (!el) return;
     if (f) el.dataset.focus = "on"; else delete el.dataset.focus;
     return () => { delete el.dataset.focus; };
-  }, [f, stage]);
-  if (!f) return null;
+  }, [f]);
+  if (!f) return <div ref={own} hidden />;
   return (
-    <div className="sm-focus" role="status" key={f.headline}>
+    <div ref={own} className="sm-focus" role="status" key={f.headline}>
       <strong>✦ {f.headline}</strong>
       {f.parts?.length ? (
         <span className="sm-parts">

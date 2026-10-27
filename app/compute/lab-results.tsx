@@ -755,7 +755,7 @@ export function ComputeLabStudy({
         {labNav !== "dock" && !landingOn && navNode}
         <div ref={stageRef} className={block ? "lb-stage" : "lf-stage"} hidden={landingOn}>
           {!block && (training || inferencePart === "cheaper") && mode === "watch" && <div className="lf-chapters">{chapterSlot}</div>}
-        {show && <FocusCaption moduleKey={`${currentKey}|${chapter}`} stage={stageRef} />}
+        {show && <FocusCaption moduleKey={`${currentKey}|${chapter}`} />}
         <div ref={fitRef} className="lf-fit">
       <RetainedLabPanel
         active={training || inferencePart === "cheaper"}
