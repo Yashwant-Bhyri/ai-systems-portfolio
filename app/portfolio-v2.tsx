@@ -1466,7 +1466,7 @@ function HighlightedStageAnnotation({
   return <>{segments}</>;
 }
 
-function StageSignalConsole({ step, active }: { step: StoryStep; active: boolean }) {
+function StageSignalConsole({ step }: { step: StoryStep }) {
   const reducedMotion = useReducedMotion();
   const [cursor, setCursor] = useState(reducedMotion ? step.annotation.length : 0);
   const tickerItems = useMemo(() => Array.from(new Set([...step.signals, ...step.stack])).map((label) => ({ label })), [step.signals, step.stack]);
@@ -1504,7 +1504,7 @@ function StageSignalConsole({ step, active }: { step: StoryStep; active: boolean
       <SignalTicker
         items={tickerItems}
         label={`${step.label} technologies and engineering capabilities`}
-        active={active}
+        active
         reducedMotion={reducedMotion}
       />
     </section>
@@ -1606,7 +1606,6 @@ function SystemWalkthrough({
           <StageSignalConsole
             key={`${name}-${step.label}`}
             step={step}
-            active={controller.playing}
           />
         ) : null}
         <div className="vx-visual-window">
@@ -2312,7 +2311,7 @@ function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
           ? <MiniMicroscope id={id} accent="rose" brand="ADVANCED POST-TRAINING" steps={TRAINING_STEPS} Visual={TrainingVisual} proof={TRAINING_PROOF} conclusion={TRAINING_CONCLUSION} />
           : <MiniMicroscope id={id} accent="amber" brand="INFERENCE OPTIMIZATION ENGINE" steps={INFERENCE_STEPS} Visual={InferenceVisual} proof={INFERENCE_PROOF} conclusion={INFERENCE_CONCLUSION} /> },
         { key: "results", label: "Results laboratory", href: `${href}#${id}-study`, node: <LabPreview training={training} /> },
-        { key: "poster", label: "The result on one page", href, node: <ProjectPoster domain={domain} /> },
+        { key: "poster", label: "The result on one page", href, node: <ProjectPoster domain={domain} live /> },
       ]}
     />
   );

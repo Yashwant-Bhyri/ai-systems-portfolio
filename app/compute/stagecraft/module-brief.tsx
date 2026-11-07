@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTr } from "../../exhibit/i18n";
 import { highlight } from "./stage-meter";
-import { ReelRow, type ShowItem } from "./title-show";
+import type { ShowItem } from "./title-show";
 import { POLICIES, simulateLab } from "../lab-simulation";
 import { latencyDistribution } from "../load-latency-model";
 import { CACHE_DELTA, OVERLAP, PRESSURE_GAP } from "../serving-rail-meta";
 import "./module-brief.css";
 
 /**
- * Before a module opens for the first time the whole screen blurs, the reel walks to
- * its title, and three centred lines say what this is: what we are dealing with, the
- * exact goal, and the impact with its number. Once per visit; any click or key ends it.
+ * Before a module opens for the first time the whole screen blurs and its title card
+ * steps out of the rail to the middle, saying what we are dealing with, the goal, and
+ * the impact with its number. It then returns to the rail. Once per visit; a click or key ends it.
  */
 export type Brief = { dealing: string; goal: string; impact: string; title?: string };
 
@@ -58,37 +58,109 @@ export function moduleBriefs(training: boolean, budget: number): Record<string, 
   };
 }
 
-const ROW = [500, 1300, 2200] as const;
-const END = 6000;
+const END = 5600, OUT = 760, BACK = 520;
+const EASE = "cubic-bezier(.65,0,.35,1)";
 
-export function ModuleBrief({ title, brief, path, items, onDone }: { title: string; brief: Brief; path: string; items: readonly ShowItem[]; onDone: () => void }) {
+export function ModuleBrief({ item, brief, path, onDone }: { item: ShowItem; brief: Brief; path: string; onDone: () => void }) {
   const tr = useTr();
   const done = useRef(onDone);
   useEffect(() => { done.current = onDone; });
+  const card = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(0);
-  const here = Math.max(0, items.findIndex((i) => i.title === title));
-  const [open, setOpen] = useState(Math.max(0, here - 1));
+  const [leaving, setLeaving] = useState(false);
+  // From the rail's own title card to the middle of the screen, colour fading in; then back.
+  const fromRail = () => {
+    const c = card.current, tile = document.querySelector<HTMLElement>(`[data-rail-key="${item.key}"]`);
+    if (!c || !tile) return "translateY(12px) scale(.96)";
+    const a = tile.getBoundingClientRect();
+    const t = c.style.transform;
+    c.style.transform = "none";
+    const b = c.getBoundingClientRect();
+    c.style.transform = t;
+    return `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width}, ${a.height / b.height})`;
+  };
+  useLayoutEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    card.current?.animate([
+      { transform: fromRail(), filter: "grayscale(1) blur(1px)", opacity: 0.5 },
+      { transform: "none", filter: "none", opacity: 1 },
+    ], { duration: OUT, easing: EASE, fill: "backwards" });
+    // the card is measured once, where it rests
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timers = ROW.map((ms, i) => window.setTimeout(() => setShown(i + 1), reduced ? 0 : ms));
-    timers.push(window.setTimeout(() => setOpen(here), reduced ? 0 : 120));
+    const timers = [OUT - 100, OUT + 500, OUT + 1100].map((ms, i) => window.setTimeout(() => setShown(i + 1), reduced ? 0 : ms));
+    timers.push(window.setTimeout(() => {
+      setLeaving(true);
+      card.current?.animate([{ transform: "none", opacity: 1 }, { transform: fromRail(), opacity: 0 }], { duration: BACK, easing: EASE, fill: "forwards" });
+    }, reduced ? 2800 : END - BACK));
     timers.push(window.setTimeout(() => done.current(), reduced ? 3200 : END));
     const end = () => done.current();
     window.addEventListener("keydown", end);
     return () => { timers.forEach((t) => window.clearTimeout(t)); window.removeEventListener("keydown", end); };
-  }, [here]);
+    // see above
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return createPortal(
-    <div className="mb-veil" role="dialog" aria-label={`${tr(title)}: ${tr("what this is")}`} onClick={() => done.current()}>
-      <div className="mb-reel"><ReelRow items={items} open={open} /></div>
-      <div className="mb-card">
-        <span className="mb-path">{tr(path)}</span>
-        <h3>{tr(brief.title ?? title)}</h3>
-        <p className="mb-context" data-on={shown > 0 || undefined}>{tr(brief.dealing)}</p>
-        <p className="mb-goal" data-on={shown > 1 || undefined}>{tr("The goal:")} {tr(brief.goal).charAt(0).toLowerCase() + tr(brief.goal).slice(1)}</p>
-        <p className="mb-impact" data-on={shown > 2 || undefined}>{shown > 2 && highlight(tr(brief.impact))}</p>
+    <div className="mb-veil" data-leaving={leaving || undefined} role="dialog" aria-label={`${tr(item.title)}: ${tr("what this is")}`} onClick={() => done.current()}>
+      <div ref={card} className="mb-card">
+        <span className="ts-glyph rl-glyph mb-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
+        <div className="mb-text">
+          <span className="mb-path">{tr(path)}</span>
+          <h3>{tr(brief.title ?? item.title)}</h3>
+          <p className="mb-context" data-on={shown > 0 || undefined}>{tr(brief.dealing)}</p>
+          <p className="mb-goal" data-on={shown > 1 || undefined}>{tr(brief.goal)}</p>
+          <p className="mb-impact" data-on={shown > 2 || undefined}>{shown > 2 && highlight(tr(brief.impact))}</p>
+        </div>
       </div>
-      <b className="mb-time" style={{ animationDuration: `${END}ms` }} aria-hidden="true" />
       <span className="mb-skip">{tr("Click anywhere to start")}</span>
+    </div>,
+    document.body,
+  );
+}
+
+/** A line across the whole blurred screen: the turns of the three-minute version. */
+export function LineCard({ text }: { text: string }) {
+  const tr = useTr();
+  return createPortal(<div className="mb-veil mb-line" aria-live="polite"><p>{highlight(tr(text))}</p></div>, document.body);
+}
+
+/**
+ * The end of a short version: stop and study this part in detail, or go on. Going on is
+ * the default and starts by itself after a moment, unless there is nothing left on this page.
+ */
+export type ChoiceOption = { title: string; detail: string; href?: string; onPick?: () => void };
+const CHOICE_MS = 14000;
+export function ChoiceCard({ headline, study, onward, auto }: { headline: string; study: ChoiceOption; onward: ChoiceOption; auto: boolean }) {
+  const tr = useTr();
+  const go = useRef(onward.onPick);
+  useEffect(() => { go.current = onward.onPick; });
+  useEffect(() => {
+    if (!auto) return;
+    const id = window.setTimeout(() => go.current?.(), CHOICE_MS);
+    return () => window.clearTimeout(id);
+  }, [auto]);
+  const option = (o: ChoiceOption, primary: boolean) => {
+    const body = (
+      <>
+        <strong>{tr(o.title)}</strong>
+        <span>{tr(o.detail)}</span>
+        {primary && auto && (
+          <svg className="ts-ring" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" /><circle cx="10" cy="10" r="8" className="ts-ring-run" style={{ animation: `ts-ring ${CHOICE_MS}ms linear forwards` }} /></svg>
+        )}
+      </>
+    );
+    return o.href
+      ? <a key={o.title} className="mc-option" data-primary={primary || undefined} href={o.href}>{body}</a>
+      : <button key={o.title} type="button" className="mc-option" data-primary={primary || undefined} onClick={o.onPick}>{body}</button>;
+  };
+  return createPortal(
+    <div className="mb-veil mc-veil" role="dialog" aria-label={tr("Where to next")}>
+      <div className="mc-card">
+        <p className="mc-head">{highlight(tr(headline))}</p>
+        <div className="mc-options">{option(study, false)}{option(onward, true)}</div>
+      </div>
     </div>,
     document.body,
   );

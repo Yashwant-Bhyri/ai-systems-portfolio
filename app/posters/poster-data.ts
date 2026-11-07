@@ -25,7 +25,7 @@ export const LAB = {
 
 export type PosterCard = { key: string; title: string; from: string; to: string; unit: string; cause: string };
 export const UNDER_LOAD: readonly (PosterCard & { a: number; b: number })[] = [
-  { key: "pressure", title: "Prefill / decode scheduling", from: PRESSURE_GAP.whole.toFixed(0), to: PRESSURE_GAP.chunked.toFixed(1), unit: "ms worst pause in a live answer", cause: "an 8,192-token prompt is read in slices beside the answers", a: PRESSURE_GAP.whole, b: PRESSURE_GAP.chunked },
+  { key: "pressure", title: "Chunked prefill", from: PRESSURE_GAP.whole.toFixed(0), to: PRESSURE_GAP.chunked.toFixed(1), unit: "ms worst pause in a live answer", cause: "an 8,192-token prompt is read in slices beside the answers", a: PRESSURE_GAP.whole, b: PRESSURE_GAP.chunked },
   { key: "draft", title: "Speculative decoding", from: "12", to: "3", unit: "serial large-model calls", cause: "a small model drafts, the large one checks in one pass", a: 12, b: 3 },
   { key: "cache", title: "Cache-aware routing", from: `${CACHE.cold.firstToken}`, to: `${CACHE.warm.firstToken}`, unit: "ms to the first token", cause: "the request goes where its prefix is cached", a: CACHE.cold.firstToken, b: CACHE.warm.firstToken },
   { key: "overlap", title: "CPU / GPU overlap", from: `${OVERLAP.baseline.finish}`, to: `${OVERLAP.overlapped.finish}`, unit: "ms for four decode steps", cause: "the CPU prepares the next step during this one", a: OVERLAP.baseline.finish, b: OVERLAP.overlapped.finish },
@@ -35,7 +35,7 @@ export const ALSO: readonly { key: string; title: string; value: string }[] = [
   { key: "composition", title: "Policy × runtime", value: `${LAB.correctBase} → ${LAB.correctRl} correct, ${f(LAB.costBase)} → ${f(LAB.costRl)} GPU-s each` },
   { key: "replay", title: "Execution replay", value: `${f(LAB.replay[0])} → ${f(LAB.replay[1])} GPU-s for request 7` },
   { key: "latency", title: "Queue & latency", value: `${f(LAB.p95[0], 0)} → ${f(LAB.p95[1], 0)} s p95 response` },
-  { key: "map", title: "Serving overview", value: "ten mechanisms on one clock" },
+  { key: "map", title: "System map", value: "ten mechanisms on one clock" },
   { key: "glossary", title: "Serving glossary", value: "nine terms, each with its number" },
 ];
 /** The deep route for each project: architecture → component microscope → laboratory. */

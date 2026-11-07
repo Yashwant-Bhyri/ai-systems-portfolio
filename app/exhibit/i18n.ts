@@ -94,6 +94,8 @@ const ZH: Record<string, string> = {
   "gains beside negative flips": "提升与负向翻转并列",
   "gained / regressed": "提升 / 退化",
   "Prefill / decode scheduling": "预填充 / 解码调度",
+  "Chunked prefill": "分块预填充",
+  "System map": "系统全图",
   "chunked prefill keeps streams alive": "分块预填充让流不中断",
   "ms longest token gap": "毫秒 · 最长 token 间隔",
   "Serving system overview": "推理系统总览",

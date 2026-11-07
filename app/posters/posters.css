@@ -134,3 +134,11 @@
 @media (prefers-reduced-motion: reduce) {
   .pa-slice, .pa-keep, .pa-slice-card, .pa-note, .pb-card { transition: none; animation: none; }
 }
+
+/* Live on the project's second page: one result at a time comes forward. */
+.pa[data-spotting] .pa-slice:not([data-spot]) .pa-slice-card, .pa[data-spotting] .pa-measure:not([data-spot]) { opacity: .42; transition: opacity .5s; }
+.pa[data-spotting] .pa-slice[data-spot] { filter: brightness(1.2); }
+.pa[data-spotting] .pa-slice[data-spot] .pa-slice-card { opacity: 1; }
+.pa[data-spotting] .pa-measure[data-spot] { opacity: 1; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 50%, transparent); border-radius: 8px; transition: opacity .5s, background .5s, box-shadow .5s; }
+.pa[data-spotting] .pa-measure[data-spot] .pa-mini i { animation: pa-regrow .9s cubic-bezier(.65,0,.35,1); transform-origin: 0 50%; }
+@keyframes pa-regrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }

@@ -34,48 +34,47 @@ function collect(root: HTMLElement | null): Rects {
   return m;
 }
 
-/* ── The reel: tiles share a row, the open one grows, a cursor walks them ── */
-const GROW = 3.4;
-export function ReelRow({ items, open, cursor = true, onOpen }: { items: readonly ShowItem[]; open: number; cursor?: boolean; onOpen?: (key: string) => void }) {
+/* ── The title cards: well-arranged rows; the open card takes the room ──
+   Rows of three, then two or three. The open card and its row grow, in full colour;
+   the rest stay soft and grey. The motion is the reel's: slow grow, colour fading in. */
+export function rowsFor(n: number, wide = false): number[] {
+  if (wide || n === 7 || n === 8) { const top = Math.ceil(n / 2); return [top, n - top]; }
+  const out: number[] = [];
+  for (let left = n; left > 0; left -= 3) out.push(Math.min(3, left));
+  return out;
+}
+export function TileGrid({ items, open, wide = false, onOpen }: { items: readonly ShowItem[]; open: number; wide?: boolean; onOpen?: (key: string) => void }) {
   const tr = useTr();
-  const row = useRef<HTMLDivElement>(null);
-  const pointer = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const r = row.current, c = pointer.current;
-    if (!r || !c) return;
-    const n = items.length, gap = 10, width = r.clientWidth;
-    const unit = (width - gap * (n - 1)) / (n - 1 + GROW);
-    c.style.transform = `translate3d(${Math.max(0, open) * (unit + gap) + (unit * GROW) / 2 + 18}px, ${r.offsetTop + 54}px, 0)`;
-  }, [open, items.length]);
+  const counts = rowsFor(items.length, wide);
   return (
-    <div className="rl-reel ts-reel" data-auto={cursor && open >= 0}>
-      <div ref={row} className="rl-row">
-        {items.map((item, i) => {
-          const lit = i === open;
-          return (
-            <button key={item.key} type="button" className="rl-tile" data-lit={lit} data-show-key={item.key} tabIndex={onOpen ? 0 : -1} style={{ flexGrow: lit ? GROW : 1 }} onClick={() => onOpen?.(item.key)}>
-              <span className="rl-num">{i + 1}</span>
-              <span className="rl-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
-              <strong className="rl-title">{tr(item.title)}</strong>
-              <span className="rl-detail" aria-hidden={!lit}>
-                {item.value && <span className="rl-value"><mark>{item.value}</mark>{item.unit && <small>{tr(item.unit)}</small>}</span>}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      <div ref={pointer} className="gc-cursor rl-cursor" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 2.5l15 9.2-6.6 1.4 3.9 7.6-2.6 1.3-3.9-7.6L4.9 19z" /></svg>
-        <i className="gc-ring" />
-      </div>
+    <div className="tg-grid">
+      {counts.map((count, r) => {
+        const from = counts.slice(0, r).reduce((a, c) => a + c, 0);
+        const row = items.slice(from, from + count);
+        const here = open >= from && open < from + count;
+        return (
+          <div key={from} className="tg-row" style={{ flexGrow: here ? 1.5 : 1 }}>
+            {row.map((item, k) => {
+              const lit = from + k === open;
+              return (
+                <button key={item.key} type="button" className="tg-tile" data-lit={lit} data-show-key={item.key} tabIndex={onOpen ? 0 : -1} style={{ flexGrow: lit ? 2.1 : 1 }} onClick={() => onOpen?.(item.key)}>
+                  <span className="rl-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
+                  <strong>{tr(item.title)}</strong>
+                  <span className="tg-detail" aria-hidden={!lit}>{item.value && <span className="rl-value"><mark>{item.value}</mark>{item.unit && <small>{tr(item.unit)}</small>}</span>}</span>
+                </button>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-/* ── Landing: the branches as reels, told over the blur ─────────────────── */
+/* ── Landing: the branches side by side, told over the blur ──────────────── */
 /**
- * A line in large type, then each branch sharpens while its reel walks through its
- * modules. A click on any tile starts there; "Skip" starts at the first module.
+ * A line in large type, then each branch sharpens while its title cards light up in
+ * turn. A click on any card starts there; "Skip" starts at the first module.
  */
 export type IntroStep = { kind: "line"; text: string; ms: number } | { kind: "path"; index: number };
 const LIFT = 500, CARD = 850, SETTLE = 300;
@@ -134,7 +133,7 @@ export function LabLanding({
     return () => { io.disconnect(); clear(); };
   }, [leaving, script, threshold]);
   return (
-    <div ref={root} className="ts-landing" data-leaving={leaving || undefined} data-step={now.kind}>
+    <div ref={root} className="ts-landing" data-leaving={leaving || undefined} data-step={now.kind} data-single={pathways.length === 1 || undefined}>
       {pathways.map((p, pi) => {
         const own = items.filter((i) => i.pathway === pi);
         const lift = now.kind === "path" && now.index === pi;
@@ -144,7 +143,7 @@ export function LabLanding({
               <i>{p.n}</i>
               <strong>{tr(p.title)}</strong>
             </button>
-            <ReelRow items={own} open={lift ? open : 0} cursor={lift} onOpen={start} />
+            <TileGrid items={own} open={lift ? open : -1} wide={pathways.length === 1} onOpen={start} />
           </section>
         );
       })}
@@ -260,7 +259,7 @@ export function TitleShow({
    Nothing here floats over the stage, so it can never sit on a scrubber. Beneath
    the titles: stay on this module, dive into it, or go on to the next one. */
 export function TitleRail({
-  items, pathways, current, next, phase, countdownMs, last, onOpen, onLanding, onStay, onKeepPlaying, onDive,
+  items, pathways, current, next, phase, countdownMs, last, afterLast, onOpen, onLanding, onStay, onKeepPlaying, onDive,
 }: {
   items: readonly ShowItem[];
   pathways: readonly Pathway[];
@@ -270,6 +269,8 @@ export function TitleRail({
   countdownMs: number;
   /** The module on stage is the last one. */
   last: boolean;
+  /** Where the visitor goes after the last module. */
+  afterLast?: { title: string; href: string };
   onOpen: (key: string) => void;
   onLanding?: () => void;
   onStay: () => void;
@@ -288,7 +289,7 @@ export function TitleRail({
           <div key={p.n} className="tr-group" data-on={cur.pathway === pi || undefined}>
             <i className="tr-path">{p.n}<span className="tr-label"> {tr(p.short)}</span></i>
             {items.filter((i) => i.pathway === pi).map((i) => (
-              <button key={i.key} type="button" className="tr-tile" data-on={i === cur || undefined} title={tr(i.title)}
+              <button key={i.key} type="button" className="tr-tile" data-rail-key={i.key} data-on={i === cur || undefined} title={tr(i.title)}
                 onClick={() => onOpen(i.key)} aria-label={tr(i.title)} aria-current={i === cur ? "step" : undefined}>
                 <span className="ts-glyph" aria-hidden="true">{i.Glyph && <i.Glyph />}</span>
                 <span className="tr-label">{tr(i.title)}</span>
@@ -303,13 +304,22 @@ export function TitleRail({
           ? <button type="button" className="tr-act" onClick={onKeepPlaying} title={tr("Keep playing")}><b aria-hidden="true">▷</b><span className="tr-label">{tr("Keep playing")}</span></button>
           : <button type="button" className="tr-act" onClick={onStay} title={tr("Stay on this one")}><b aria-hidden="true">Ⅱ</b><span className="tr-label">{tr("Stay on this one")}</span></button>}
         <button type="button" className="tr-act" onClick={onDive} title={tr("Dive deeper")}><b aria-hidden="true">⌕</b><span className="tr-label">{tr("Dive deeper")}</span></button>
-        {!last && (
-          <button type="button" className="tr-act tr-go" data-phase={phase} onClick={() => onOpen(nxt.key)} title={`${tr("Next")}: ${tr(nxt.title)}`}>
+        {last && afterLast && (
+          <a className="tr-next" href={afterLast.href}>
+            <svg className="ts-ring" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" /></svg>
+            <span><small>{tr("Next project")}</small>{tr(afterLast.title)}</span>
+          </a>
+        )}
+        {!last && phase !== "done" && (
+          <button type="button" className="tr-act" onClick={() => onOpen(nxt.key)} title={`${tr("Next")}: ${tr(nxt.title)}`}><b aria-hidden="true">▸</b><span className="tr-label">{tr("Next")}</span></button>
+        )}
+        {!last && phase === "done" && (
+          <button type="button" className="tr-next" data-phase={phase} onClick={() => onOpen(nxt.key)}>
             <svg className="ts-ring" viewBox="0 0 20 20" aria-hidden="true">
               <circle cx="10" cy="10" r="8" />
-              <circle key={`${nxt.key}-${phase}`} cx="10" cy="10" r="8" className="ts-ring-run" style={{ animationDuration: `${countdownMs}ms` }} />
+              <circle key={nxt.key} cx="10" cy="10" r="8" className="ts-ring-run" style={{ animationDuration: `${countdownMs}ms` }} />
             </svg>
-            <span className="tr-label"><small>{tr("Next")}</small>{tr(nxt.title)}</span>
+            <span><small>{tr("Next")}</small>{tr(nxt.title)}</span>
           </button>
         )}
       </div>

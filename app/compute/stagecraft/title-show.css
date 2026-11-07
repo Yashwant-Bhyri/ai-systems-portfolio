@@ -170,16 +170,14 @@
 }
 @media (max-width: 900px) { .tr-rail { display: none; } .lab-flow-show .lf-body:has(.tr-rail) { grid-template-columns: 1fr; } }
 
-/* ── The opening: the branches as reels; one line or one reel in focus at a time ── */
-.ts-landing { position: relative; display: flex; flex-direction: column; gap: 16px; }
+/* ── The opening: the branches side by side, one line or one branch in focus ── */
+.ts-landing { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.ts-landing[data-single] { grid-template-columns: minmax(0, 1fr); }
 .cs-study.lab-flow-show .ts-landing { flex: 1 1 auto; min-height: 0; }
-.ts-path { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border: 1px solid rgba(230,237,244,.07); border-radius: 12px; background: none; transition: border-color .4s, filter .6s, opacity .6s; }
-.ts-path-head { display: flex; align-items: baseline; gap: 12px; padding: 0 !important; }
+.ts-path { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid rgba(230,237,244,.07); border-radius: 12px; transition: border-color .5s, filter .6s, opacity .6s; }
+.ts-path-head { flex: 0 0 auto; display: flex; align-items: baseline; gap: 12px; padding: 0 !important; }
 .ts-path-head i { color: var(--active-accent); font: 500 20px/1 var(--font-geist-mono), monospace; font-style: normal; }
 .ts-path-head strong { color: #f1f4f7; font: 500 20px/1.25 var(--font-geist-sans), sans-serif; letter-spacing: -.01em; }
-.ts-reel { flex: 1 1 auto; min-height: 0; margin: 0; display: flex; }
-.ts-reel .rl-row { flex: 1 1 auto; height: auto; }
-.ts-reel .rl-glyph { height: auto; flex: 1 1 88px; min-height: 0; }
 .ts-landing[data-step="path"] .ts-path:not([data-lift]) { filter: blur(6px) grayscale(.8) brightness(.45); opacity: .4; }
 .ts-path[data-lift] { border-color: color-mix(in srgb, var(--active-accent) 55%, transparent); }
 .ts-landing[data-step="line"] .ts-path { filter: blur(9px) grayscale(.85) brightness(.4); opacity: .4; }
@@ -194,8 +192,28 @@
 .vx-shell .ts-skip:hover { color: #fff; }
 @media (prefers-reduced-motion: reduce) { .ts-path { transition: none; } .ts-opening { animation: none; } }
 
-/* The Next pill: dark, round, its ring loading while the next module approaches. */
-.vx-shell .tr-go { margin-top: 8px; min-height: 48px; padding: 8px 12px 8px 8px !important; border-radius: 24px; background: rgba(10,14,19,.95); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 45%, transparent); }
-.vx-shell .tr-go:hover { background: rgba(20,26,33,.95); }
-.tr-go small { color: var(--active-accent); font: 500 12px/16px var(--font-geist-sans), sans-serif; }
-.tr-go .ts-ring { width: 24px; height: 24px; flex: 0 0 24px; }
+/* Title cards in rows. The transition is the reel's: a slow grow, colour fading in. */
+.tg-grid { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.tg-row { flex: 1 1 0; min-height: 0; display: flex; gap: 8px; transition: flex-grow .75s cubic-bezier(.65,0,.35,1); }
+.vx-shell .tg-tile { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px; overflow: hidden; border: 0; border-radius: 10px; color: #e9edf2; text-align: left; cursor: pointer;
+  background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,0)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+  transition: flex-grow .75s cubic-bezier(.65,0,.35,1), filter .6s, opacity .6s, box-shadow .5s, background .5s; }
+.vx-shell .tg-tile[data-lit="false"] { filter: blur(.6px) grayscale(1) brightness(.95); opacity: .62; }
+.vx-shell .tg-tile[data-lit="true"] { background: radial-gradient(120% 90% at 30% 0%, color-mix(in srgb, var(--active-accent) 9%, transparent), transparent 70%); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 34%, transparent); }
+.tg-tile .rl-glyph { flex: 1 1 0; min-height: 0; height: auto; margin: 0; }
+.tg-tile > strong { flex: 0 0 auto; max-width: 100%; font: 500 15px/20px var(--font-geist-sans), sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tg-detail { flex: 0 0 auto; display: block; max-width: 100%; height: 0; overflow: hidden; opacity: 0; transition: opacity .45s .15s; white-space: nowrap; }
+.tg-tile[data-lit="true"] .tg-detail { height: 22px; opacity: 1; }
+
+/* The Next pill, as it first was: dark and round, its ring loading once a module has told its story. */
+.vx-shell .tr-next { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 4px; padding: 10px 14px 10px 12px !important; border: 0; border-radius: 22px; box-sizing: border-box;
+  background: rgba(10,14,19,.95); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 40%, transparent), 0 16px 40px -18px rgba(0,0,0,.9);
+  color: #eef2f6; text-align: left; cursor: pointer; animation: ts-fade .4s both; }
+.tr-next span { display: flex; flex-direction: column; gap: 2px; min-width: 0; font: 500 13px/1.2 var(--font-geist-sans), sans-serif; }
+.tr-next small { color: var(--active-accent); font: 500 12px/1 var(--font-geist-mono), monospace; }
+.tr-next .ts-ring { flex: 0 0 20px; width: 20px; height: 20px; }
+.tr-next .ts-ring-run { animation: ts-ring linear forwards; }
+
+/* A title card steps out of the rail to the middle of the blurred screen, and back. */
+.mb-card { pointer-events: none; }
+.vx-shell a.tr-next { text-decoration: none; }

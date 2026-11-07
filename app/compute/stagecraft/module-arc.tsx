@@ -129,9 +129,9 @@ export function ModuleArc({
   // The highlights run sends an arc straight to one beat.
   useEffect(() => {
     if (!active) return;
-    let last = -1;
+    let last = "";
     const goTo = (e: Event) => {
-      const d = (e as CustomEvent<{ id: number; beat: number }>).detail;
+      const d = (e as CustomEvent<{ id: string; beat: number }>).detail;
       if (d.id === last) return;
       last = d.id;
       setBeat(d.beat); setT(0); setExploring(false); setRun((n) => n + 1);

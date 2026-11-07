@@ -1,22 +1,38 @@
-/* The whole screen blurs; the reel walks to the title; three centred lines say what it is. */
-.mb-veil { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 48px; padding: 40px 48px; cursor: pointer;
+/* The whole screen blurs; a title card steps out of the rail and says what this is. */
+.mb-veil { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; padding: 40px 48px; cursor: pointer;
   background: rgba(5,8,12,.68); -webkit-backdrop-filter: blur(18px) saturate(.45); backdrop-filter: blur(18px) saturate(.45);
-  animation: mb-veil .4s cubic-bezier(.22,1,.36,1) both; }
+  animation: mb-veil .4s cubic-bezier(.22,1,.36,1) both; transition: opacity .5s; }
+.mb-veil[data-leaving] { opacity: 0; }
 @keyframes mb-veil { from { opacity: 0; } }
-.mb-reel { width: min(1320px, 100%); pointer-events: none; }
-.mb-reel .rl-row { height: 196px; }
-.mb-reel .rl-glyph { height: 96px; }
-.mb-card { width: min(1040px, 100%); display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
-.mb-path { color: var(--active-accent, #ffc267); font: 500 16px/24px var(--font-geist-sans), sans-serif; }
-.mb-card h3 { margin: 0 0 8px; color: #fff; font: 500 clamp(40px, 3.8vw, 56px)/1.08 var(--font-geist-sans), sans-serif; letter-spacing: -.03em; }
-.mb-card p { margin: 0; opacity: 0; transform: translateY(10px); transition: opacity .45s cubic-bezier(.22,1,.36,1), transform .45s cubic-bezier(.22,1,.36,1); text-wrap: balance; }
+.mb-card { width: min(1040px, 100%); box-sizing: border-box; display: grid; grid-template-columns: 300px minmax(0, 1fr); align-items: center; gap: 32px; padding: 32px; border-radius: 16px; transform-origin: 0 0;
+  background: radial-gradient(120% 90% at 30% 0%, color-mix(in srgb, var(--active-accent, #ffc267) 10%, transparent), rgba(10,14,19,.96) 70%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent, #ffc267) 40%, transparent), 0 32px 80px rgba(0,0,0,.6); }
+.mb-glyph { width: 100%; height: 150px; margin: 0; }
+.mb-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.mb-path { color: var(--active-accent, #ffc267); font: 500 15px/20px var(--font-geist-sans), sans-serif; }
+.mb-card h3 { margin: 0 0 4px; color: #fff; font: 500 clamp(32px, 3vw, 44px)/1.1 var(--font-geist-sans), sans-serif; letter-spacing: -.025em; }
+.mb-card p { margin: 0; opacity: 0; transform: translateY(8px); transition: opacity .4s cubic-bezier(.22,1,.36,1), transform .4s cubic-bezier(.22,1,.36,1); }
 .mb-card p[data-on] { opacity: 1; transform: none; }
-.mb-context { color: #b5c0cb; font: 400 clamp(18px, 1.5vw, 22px)/1.35 var(--font-geist-sans), sans-serif; }
-.mb-goal { color: #f1f4f7; font: 450 clamp(22px, 1.9vw, 28px)/1.3 var(--font-geist-sans), sans-serif; letter-spacing: -.015em; }
-.mb-impact { min-height: 1.4em; margin-top: 8px !important; color: #fff; font: 500 clamp(28px, 2.6vw, 38px)/1.3 var(--font-geist-sans), sans-serif; letter-spacing: -.022em; }
-.mb-time { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--active-accent, #ffc267); transform-origin: 0 50%; animation: mb-time linear both; }
-@keyframes mb-time { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.mb-context { color: #aab6c2; font: 400 17px/24px var(--font-geist-sans), sans-serif; }
+.mb-goal { color: #f1f4f7; font: 400 20px/28px var(--font-geist-sans), sans-serif; }
+.mb-impact { min-height: 40px; margin-top: 8px !important; color: #fff; font: 500 clamp(24px, 2.1vw, 30px)/1.3 var(--font-geist-sans), sans-serif; letter-spacing: -.02em; }
 .mb-skip { position: absolute; right: 28px; bottom: 20px; color: #93a0ae; font: 400 14px/20px var(--font-geist-sans), sans-serif; }
-@media (max-height: 760px) { .mb-veil { gap: 24px; } .mb-reel .rl-row { height: 160px; } }
-@media (max-width: 760px) { .mb-reel { display: none; } }
-@media (prefers-reduced-motion: reduce) { .mb-veil, .mb-time { animation: none; } .mb-card p { transition: none; } }
+.mb-line { pointer-events: none; }
+.mb-line p { width: min(1100px, 90%); margin: 0; color: #f6f8fa; text-align: center; text-wrap: balance; font: 450 clamp(34px, 3.5vw, 54px)/1.18 var(--font-geist-sans), sans-serif; letter-spacing: -.028em; animation: mb-line .5s cubic-bezier(.22,1,.36,1) both; }
+@keyframes mb-line { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (max-width: 760px) { .mb-card { grid-template-columns: 1fr; } .mb-glyph { height: 100px; } }
+@media (prefers-reduced-motion: reduce) { .mb-veil, .mb-line p { animation: none; } .mb-card p { transition: none; } }
+
+/* The fork at the end of a short version: study it, or go on. */
+.mc-veil { cursor: default; }
+.mc-card { width: min(1040px, 100%); display: flex; flex-direction: column; gap: 32px; animation: mb-line .5s cubic-bezier(.22,1,.36,1) both; }
+.mc-head { margin: 0; color: #f6f8fa; text-align: center; text-wrap: balance; font: 450 clamp(32px, 3.1vw, 46px)/1.2 var(--font-geist-sans), sans-serif; letter-spacing: -.026em; }
+.mc-options { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.mc-veil .mc-option { position: relative; display: flex; flex-direction: column; gap: 8px; min-height: 148px; padding: 24px 56px 24px 24px; box-sizing: border-box; border: 0; border-radius: 14px; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(230,237,244,.12); color: #fff; text-align: left; text-decoration: none; cursor: pointer; transition: background .16s; }
+.mc-veil .mc-option:hover, .mc-veil .mc-option:focus-visible { background: rgba(255,255,255,.08); }
+.mc-veil .mc-option[data-primary] { background: radial-gradient(120% 90% at 30% 0%, color-mix(in srgb, var(--active-accent, #ffc267) 12%, transparent), rgba(10,14,19,.9) 70%); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent, #ffc267) 50%, transparent); }
+.mc-option strong { font: 500 24px/1.25 var(--font-geist-sans), sans-serif; letter-spacing: -.015em; }
+.mc-option span { color: #b5c0cb; font: 400 16px/24px var(--font-geist-sans), sans-serif; }
+.mc-option .ts-ring { position: absolute; top: 24px; right: 20px; width: 24px; height: 24px; }
+@media (max-width: 760px) { .mc-options { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .mc-card { animation: none; } }

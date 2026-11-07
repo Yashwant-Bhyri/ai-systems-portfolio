@@ -6,7 +6,7 @@ import { DEPTH } from "./poster-data";
 import "./posters.css";
 
 /** Plays once the poster is on screen, then loops slowly; reduced motion shows the final frame. */
-function usePhase(steps: readonly number[], loop: number) {
+function usePhase(steps: readonly number[], loop: number, threshold = 0.45) {
   const root = useRef<HTMLElement>(null);
   const [phase, setPhase] = useState(0);
   useEffect(() => {
@@ -19,10 +19,10 @@ function usePhase(steps: readonly number[], loop: number) {
       timers = steps.map((ms, i) => window.setTimeout(() => setPhase(i + 1), ms));
       timers.push(window.setTimeout(() => { setPhase(0); timers.push(window.setTimeout(run, 400)); }, loop));
     };
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) run(); else { timers.forEach(clearTimeout); setPhase(0); } }, { threshold: 0.45 });
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) run(); else { timers.forEach(clearTimeout); setPhase(0); } }, { threshold });
     io.observe(el);
     return () => { io.disconnect(); timers.forEach(clearTimeout); };
-  }, [steps, loop]);
+  }, [steps, loop, threshold]);
   return { root, phase };
 }
 
@@ -43,8 +43,18 @@ export type LedgerSpec = {
 };
 
 const A_STEPS = [700, 1900, 3300, 4300] as const;
-export function LedgerPoster({ spec }: { spec: LedgerSpec }) {
-  const { root, phase } = usePhase(A_STEPS, 16000);
+export function LedgerPoster({ spec, live = false }: { spec: LedgerSpec; live?: boolean }) {
+  const { root, phase } = usePhase(A_STEPS, live ? 15000 : 16000, live ? 0.02 : 0.45);
+  // Once the bar is built, the page walks its results one at a time, so it never sits still.
+  const [spot, setSpot] = useState(-1);
+  const spots = spec.slices.length + spec.measures.length;
+  useEffect(() => {
+    if (!live || phase < A_STEPS.length) return;
+    let n = 0;
+    const first = window.setTimeout(() => setSpot(0), 400);
+    const id = window.setInterval(() => { n += 1; setSpot(n % spots); }, 1300);
+    return () => { window.clearTimeout(first); window.clearInterval(id); setSpot(-1); };
+  }, [live, phase, spots]);
   const pct = (v: number) => `${(100 * v) / spec.scale}%`;
   const shrink = spec.mode === "shrink";
   const keepTo = shrink ? spec.end : spec.start;
@@ -52,7 +62,7 @@ export function LedgerPoster({ spec }: { spec: LedgerSpec }) {
   // grow: the number climbs slice by slice; shrink: it lands once the slices have fallen
   const shown = shrink ? (phase >= 4 ? spec.end : spec.start) : spec.slices.reduce((v, sl, i) => (phase >= i + 2 ? sl.to : v), spec.start);
   return (
-    <section ref={root} id={`${spec.domain === "inference" ? "inference" : "post-training"}-poster`} className={`pa pa-${spec.mode} vx-page vx-accent-${spec.domain === "inference" ? "amber" : "rose"}`} data-vx-page data-phase={phase}>
+    <section ref={root} data-live={live || undefined} data-spotting={spot >= 0 || undefined} id={`${spec.domain === "inference" ? "inference" : "post-training"}-poster`} className={`pa pa-${spec.mode} vx-page vx-accent-${spec.domain === "inference" ? "amber" : "rose"}`} data-vx-page data-phase={phase}>
       <header className="pa-head">
         <h2>{spec.title}</h2>
         <p>{spec.claim}</p>
@@ -64,7 +74,7 @@ export function LedgerPoster({ spec }: { spec: LedgerSpec }) {
           <div className="pa-bar" style={{ ["--pa-keep" as string]: pct(keepTo) }}>
             <i className="pa-keep" style={{ width: pct(keepTo) }} />
             {spec.slices.map((sl, i) => (
-              <a key={sl.title} className="pa-slice" data-i={i} href={href(sl.key)} style={{ left: pct(Math.min(sl.from, sl.to)), width: pct(Math.abs(sl.to - sl.from)), ["--pa-c" as string]: sl.color }}>
+              <a key={sl.title} className="pa-slice" data-i={i} data-spot={spot === i || undefined} href={href(sl.key)} style={{ left: pct(Math.min(sl.from, sl.to)), width: pct(Math.abs(sl.to - sl.from)), ["--pa-c" as string]: sl.color }}>
                 <span className="pa-slice-card" data-align={shrink && i === spec.slices.length - 1 ? "right" : undefined}><strong>{sl.title}</strong><em>{sl.delta}</em><small>{sl.cause}</small></span>
               </a>
             ))}
@@ -86,8 +96,8 @@ export function LedgerPoster({ spec }: { spec: LedgerSpec }) {
       </div>
       <div className="pa-load">
         <h3>{spec.measuresTitle}</h3>
-        {spec.measures.map((c) => (
-          <a key={c.key} className="pa-measure" href={href(c.key)}>
+        {spec.measures.map((c, i) => (
+          <a key={c.key} className="pa-measure" data-spot={spot === spec.slices.length + i || undefined} href={href(c.key)}>
             <strong>{c.title}</strong>
             <span className="pa-fromto">{c.from && <s>{c.from}</s>} {c.to}</span>
             {c.a !== undefined && c.b !== undefined && <span className="pa-mini"><i style={{ width: `${(100 * c.a) / Math.max(c.a, c.b)}%` }} /><i style={{ width: `${(100 * c.b) / Math.max(c.a, c.b)}%` }} /></span>}
@@ -105,8 +115,8 @@ export function LedgerPoster({ spec }: { spec: LedgerSpec }) {
 export function PosterLedger() {
   return <LedgerPoster spec={INFERENCE_LEDGER} />;
 }
-export function ProjectPoster({ domain }: { domain: "inference" | "training" }) {
-  return <LedgerPoster spec={domain === "inference" ? INFERENCE_LEDGER : TRAINING_LEDGER} />;
+export function ProjectPoster({ domain, live = false }: { domain: "inference" | "training"; live?: boolean }) {
+  return <LedgerPoster live={live} spec={domain === "inference" ? INFERENCE_LEDGER : TRAINING_LEDGER} />;
 }
 
 /* ── B · The machine ─────────────────────────────────────────────────── */

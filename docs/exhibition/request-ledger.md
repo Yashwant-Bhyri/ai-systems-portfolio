@@ -148,3 +148,16 @@ Target viewport stays 1512×860.
 | 18 | Project order: post-training, inference, medical AI, interview AI | Done. Home sections, project index, hero deck, nav and numbering. |
 | 19 | Project second page: three blocks on a curve (microscope, results, current page), one central and two muted, all live, auto-toggling, "click to explore" | Done. `project-second-page.tsx`: three live blocks on a curve, toggling every 11 s, holding on hover, with the call to explore. |
 | 20 | Microscope block runs through every component at 1.5–2× | Done. The real microscope at 1.8× its pace. |
+
+## Round 12 (2026-11-08): teach, then ask; the transition was misread
+| # | Ask | Status |
+|---|---|---|
+| 1 | Microscope keywords must keep rolling | Done. They roll when paused or when a step is chosen by hand. Tested on inference. |
+| 2 | Second page: tabs better arranged, three in one, not stacked horizontally | Done. One large block, two stacked beside it; each block carries its own tab. |
+| 3 | The result on one page is too inactive | Done. It walks its results one at a time. |
+| 4 | Results block: not one horizontal row; e.g. 3 + 2, highlighted card larger | Done. Rows of 3 + 2, 3 + 3, 4 + 3 or 4 + 4. |
+| 5 | Short version: 2.5–3 minutes, with a structure that teaches | Done. Post-training about 3 minutes; inference two runs of about 85 and 100 seconds. Problem → fix → result, with line cards at the turns. |
+| 6 | "Top reel" meant its clean colour-and-motion transition, not the reel itself | Done. Reel overlay removed. Title cards and glossary use its timing and colour. |
+| 7 | Bring back the original pill for moving between modules | Done in its style: appears once a module is finished, ring loading. It sits in the rail rather than floating, so it cannot cover a scrubber. **To confirm with Yash.** |
+| 8 | After a short version: study in detail, or go on to the next part | Done. A planned fork; going on starts by itself after 14 s where there is a next part on the page. |
+| 9 | Inference names: one or two are too big | Done. Prefill / decode scheduling → Chunked prefill; Serving system overview → System map. |
