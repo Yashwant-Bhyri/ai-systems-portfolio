@@ -31,8 +31,7 @@
 
 /* One line of large type and one line of numbers, directly on the dimmed picture. */
 .sm-focus {
-  --sm-ty: -50%;
-  position: absolute; z-index: 20; left: 50%; top: 50%; transform: translate(-50%, var(--sm-ty)); width: min(1040px, calc(100% - 48px));
+  position: absolute; z-index: 20; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(1040px, calc(100% - 48px));
   display: grid; justify-items: center; gap: 14px; text-align: center; pointer-events: none;
   animation: sm-focus-in .45s cubic-bezier(.22,1,.36,1) both;
 }
@@ -46,11 +45,7 @@
 .sm-parts > span[data-tone="delta"] { color: #d3b6ff; }
 .sm-parts > span[data-tone="problem"] { color: #ff8f86; }
 .sm-focus p { margin: 0; max-width: 62ch; font: 450 16px/1.4 var(--font-geist-sans), sans-serif; color: #d3dce4; text-wrap: balance; }
-@keyframes sm-focus-in { from { opacity: 0; transform: translate(-50%, calc(var(--sm-ty) + 12px)); } to { opacity: 1; transform: translate(-50%, var(--sm-ty)); } }
-.sm-focus[data-place="top"] { --sm-ty: 0%; top: 64px; }
-.sm-focus[data-place="bottom"] { --sm-ty: 0%; top: auto; bottom: 34px; }
-.sm-focus[data-place="left"] { --sm-ty: 0%; left: 31%; top: auto; bottom: 90px; width: min(760px, 58%); }
-.sm-focus[data-place="upper-left"] { --sm-ty: 0%; left: 34%; top: 210px; width: min(760px, 62%); }
+@keyframes sm-focus-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 12px)); } to { opacity: 1; transform: translate(-50%, -50%); } }
 .sm-focus[data-tone="problem"] { --hl: #ff8f86; }
 .sm-focus[data-tone="problem"] strong { color: #fff; }
 @media (prefers-reduced-motion: reduce) { .hl { animation: none; background-size: 100% 100%; color: #0b1016; } .sm-line, .sm-focus { animation: none; } }

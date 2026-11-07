@@ -126,6 +126,19 @@ export function ModuleArc({
   const lines = timed?.meter;
   let line = beat === 2 ? `${labels[2]}: ${systemTitle}` : timed?.title ?? "";
   if (lines) for (const [at, text] of lines) if (shownT >= at) line = text;
+  // The highlights run sends an arc straight to one beat.
+  useEffect(() => {
+    if (!active) return;
+    let last = -1;
+    const goTo = (e: Event) => {
+      const d = (e as CustomEvent<{ id: number; beat: number }>).detail;
+      if (d.id === last) return;
+      last = d.id;
+      setBeat(d.beat); setT(0); setExploring(false); setRun((n) => n + 1);
+    };
+    window.addEventListener("lab:arc-go", goTo);
+    return () => window.removeEventListener("lab:arc-go", goTo);
+  }, [active]);
   // Keep playing and dive deeper, from the rail.
   useEffect(() => {
     if (!active) return;

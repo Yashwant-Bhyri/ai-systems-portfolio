@@ -16,7 +16,7 @@ import "./scan.css";
 const SCAN = 15500;
 const T = TOKENS.length;
 
-export function InsideScan({ active }: { active: boolean }) {
+export function InsideScan({ active, fast = false }: { active: boolean; fast?: boolean }) {
   const tr = useTr();
   const scan = useMemo(() => buildLearnScan(), []);
   const relief = useRef<HTMLDivElement>(null);
@@ -29,6 +29,8 @@ export function InsideScan({ active }: { active: boolean }) {
   const playRef = useRef(true);
   useEffect(() => { playRef.current = playing; }, [playing]);
   const told = useRef(false);
+  const speed = useRef(1);
+  useEffect(() => { speed.current = fast ? 1.8 : 1; }, [fast]);
   const [time, setTime] = useState(0);
 
   useEffect(() => {
@@ -81,11 +83,12 @@ export function InsideScan({ active }: { active: boolean }) {
     };
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0, last = -1, prev = performance.now(), drawn = -1;
-    if (reduced) clock.current = SCAN;
+    clock.current = reduced ? SCAN : 0;
+    told.current = false;
     const tick = (now: number) => {
       const dt = Math.min(64, now - prev);
       prev = now;
-      if (playRef.current && clock.current < SCAN) clock.current = Math.min(SCAN, clock.current + dt);
+      if (playRef.current && clock.current < SCAN) clock.current = Math.min(SCAN, clock.current + dt * speed.current);
       if (clock.current !== drawn) {
         drawn = clock.current;
         const k = Math.min(T, (clock.current / SCAN) * T);

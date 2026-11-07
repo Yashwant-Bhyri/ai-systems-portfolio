@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { inferenceStoryRuns } from "../lab-story-data";
 import type { LabRun } from "../lab-simulation";
 import { ease, prog } from "../../exhibit/engine";
@@ -9,97 +8,115 @@ import type { ArcBeat, SceneProps } from "./module-arc";
 import "./flow-board.css";
 
 /**
- * The path of one request, from arrival to answer, and which stop each
- * technique works on. The whole path sets the map; a chapter then narrows onto
- * its stop, with everything else out of focus, and says what happens there, what
- * we changed, and what it bought. Every number is the lab's own.
+ * The serving system as one picture: requests queue, a scheduler hands them to two
+ * GPU workers, each worker reads the prompt and writes the answer, the KV cache and
+ * the weights feed them from memory. Everything is always visible; a lever only
+ * changes which parts are lit. Every number is the lab's own.
  */
 const R = inferenceStoryRuns("shared-prefix");
 const mean = (r: LabRun, k: "queueSeconds" | "prefill" | "decode") => r.tasks.reduce((a, t) => a + t[k], 0) / r.tasks.length;
 const f = (v: number, d = 0) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 
-const W = 196, GAP = 46, LEFT = 22, Y = 196, H = 118;
-const nodeX = (i: number) => LEFT + i * (W + GAP);
-export const STOPS = [
-  { name: "Request arrives", value: "96 requests", tone: "#8ea0b2" },
-  { name: "Waits for a worker", value: `${f(mean(R[0], "queueSeconds"))} s`, tone: "#ff8f86" },
-  { name: "Reads the prompt", value: `${f(mean(R[0], "prefill"), 3)} s`, tone: "#ffc267" },
-  { name: "Writes the answer", value: `${f(mean(R[0], "decode"), 1)} s`, tone: "#b8e986" },
-  { name: "Answer delivered", value: `${R[0].correct} of 96`, tone: "#8ea0b2" },
-] as const;
+const WAIT = `${f(mean(R[0], "queueSeconds"))} s`, READ = `${f(mean(R[0], "prefill"), 3)} s`, WRITE = `${f(mean(R[0], "decode"), 1)} s`;
+const TONE = { wait: "#ff8f86", read: "#ffc267", write: "#b8e986", quiet: "#8ea0b2" };
+export type FlowPart = "requests" | "queue" | "scheduler" | "prefill" | "decode" | "kv" | "weights" | "answers";
+type Box = { id: FlowPart; x: number; y: number; w: number; h: number; name: string; value?: string; tone: string; store?: boolean };
+const SIDE: Box[] = [
+  { id: "requests", x: 16, y: 168, w: 144, h: 104, name: "Requests", value: "96", tone: TONE.quiet },
+  { id: "queue", x: 196, y: 168, w: 152, h: 104, name: "Wait in the queue", value: WAIT, tone: TONE.wait },
+  { id: "scheduler", x: 384, y: 168, w: 152, h: 104, name: "Scheduler", value: "pairs", tone: TONE.wait },
+  { id: "answers", x: 1044, y: 168, w: 180, h: 104, name: "Answers", value: `${R[0].correct} of 96`, tone: TONE.quiet },
+];
+const STORES: Box[] = [
+  { id: "kv", x: 600, y: 188, w: 172, h: 64, name: "KV cache in memory", tone: TONE.read, store: true },
+  { id: "weights", x: 796, y: 188, w: 172, h: 64, name: "Weights in memory", tone: TONE.write, store: true },
+];
+const LANES = [{ y: 20, name: "GPU worker 1" }, { y: 300, name: "GPU worker 2" }] as const;
+const TASKS = (y: number): Box[] => [
+  { id: "prefill", x: 600, y: y + 28, w: 172, h: 84, name: "Read the prompt", value: READ, tone: TONE.read },
+  { id: "decode", x: 796, y: y + 28, w: 172, h: 84, name: "Write the answer", value: WRITE, tone: TONE.write },
+];
 export const LEVERS = [
-  { name: "Free-worker scheduling", where: "the wait for a worker", stops: [1], tone: "#ff8f86" },
-  { name: "Prefix reuse", where: "reading the prompt", stops: [2], tone: "#ffc267" },
-  { name: "Faster prefill & decode", where: "reading the prompt and writing the answer", stops: [2, 3], tone: "#b8e986" },
+  { n: 1, name: "Free-worker scheduling", short: "No worker idles while a request waits", where: "the scheduler and the queue", parts: ["queue", "scheduler"] as FlowPart[], tag: { x: 460, y: 156 }, tone: TONE.wait },
+  { n: 2, name: "Prefix reuse", short: "A shared document is read once", where: "reading the prompt", parts: ["kv", "prefill"] as FlowPart[], tag: { x: 686, y: 176 }, tone: TONE.read },
+  { n: 3, name: "Faster prefill & decode", short: "Half the bytes for every token", where: "reading and writing every token", parts: ["weights", "decode", "prefill"] as FlowPart[], tag: { x: 882, y: 176 }, tone: TONE.write },
 ] as const;
 
-/** `lit`: which stops are in focus (all of them when null). `levers`: how many techniques are attached. */
-export function FlowBoard({ t = 0, lit = null, levers = 0, zoom = false }: { t?: number; lit?: readonly number[] | null; levers?: number; zoom?: boolean }) {
-  const cx = lit ? (nodeX(lit[0]) + nodeX(lit[lit.length - 1]) + W) / 2 : 620;
-  const s = zoom && lit ? (lit.length > 1 ? 1.16 : 1.34) : 1;
-  const style: CSSProperties = { transform: `translate(${620 - cx * s}px, ${(Y + H / 2) * (1 - s) + (zoom && lit ? -8 : 0)}px) scale(${s})` };
-  const packet = ((t % 5200) / 5200) * (nodeX(4) + W / 2 - (nodeX(0) + W / 2)) + nodeX(0) + W / 2;
+function Node({ b, lit, dim }: { b: Box; lit: boolean; dim: boolean }) {
   return (
-    <svg className="fb-svg" viewBox={levers ? "0 -40 1240 396" : "0 170 1240 170"} role="img" aria-label="One request's path: it arrives, waits for a worker, reads the prompt, writes the answer, and is delivered">
-      <g className="fb-world" style={style}>
-        {STOPS.slice(0, -1).map((_, i) => {
-          const on = !lit || lit.includes(i) || lit.includes(i + 1);
-          return <path key={i} className="fb-link" data-dim={!on || undefined} d={`M${nodeX(i) + W + 4} ${Y + H / 2}H${nodeX(i + 1) - 10}l-9 -6m9 6l-9 6`} />;
-        })}
-        {!zoom && !levers && <circle cx={packet} cy={Y + H / 2} r={6} className="fb-packet" />}
-        {STOPS.map((stop, i) => {
-          const on = !lit || lit.includes(i);
-          return (
-            <g key={stop.name} className="fb-node" data-dim={!on || undefined} data-on={lit?.includes(i) || undefined} style={{ ["--fb-tone" as string]: stop.tone }}>
-              <rect x={nodeX(i)} y={Y} width={W} height={H} rx={12} />
-              <text x={nodeX(i) + W / 2} y={Y + 46} textAnchor="middle" className="fb-name">{stop.name}</text>
-              <text x={nodeX(i) + W / 2} y={Y + 86} textAnchor="middle" className="fb-value">{stop.value}</text>
-            </g>
-          );
-        })}
-        {LEVERS.slice(0, levers).map((lever) => {
-          // the third lever spans two stops, one row above the others, so no label sits on another
-          const a = nodeX(lever.stops[0]) + W / 2 + (lever.stops.length > 1 ? 76 : 0), b = nodeX(lever.stops[lever.stops.length - 1]) + W / 2;
-          const x = (a + b) / 2, y = lever.stops.length > 1 ? 16 : 72;
-          const bar = y + 28;
-          const on = !lit || lever.stops.some((st) => lit.includes(st));
-          return (
-            <g key={lever.name} className="fb-lever" data-dim={!on || undefined} style={{ ["--fb-tone" as string]: lever.tone }}>
-              <path d={a === b ? `M${a} ${y + 12}V${Y - 4}` : `M${a} ${Y - 4}V${bar}H${b}V${Y - 4}M${x} ${bar}V${y + 12}`} />
-              <text x={x} y={y} textAnchor="middle">{lever.name}</text>
-            </g>
-          );
-        })}
-      </g>
+    <g className="fb-node" data-on={lit || undefined} data-dim={dim || undefined} data-store={b.store || undefined} style={{ ["--fb-tone" as string]: b.tone }}>
+      <rect x={b.x} y={b.y} width={b.w} height={b.h} rx={10} />
+      <text x={b.x + b.w / 2} y={b.y + (b.value ? b.h / 2 - 8 : b.h / 2 + 6)} textAnchor="middle" className="fb-name">{b.name}</text>
+      {b.value && <text x={b.x + b.w / 2} y={b.y + b.h / 2 + 22} textAnchor="middle" className="fb-value">{b.value}</text>}
+    </g>
+  );
+}
+
+/** `lit`: the parts in focus (all when null). `tags`: how many lever numbers are attached to the picture. */
+export function FlowBoard({ lit = null, tags = 0 }: { t?: number; lit?: readonly FlowPart[] | null; tags?: number }) {
+  const on = (p: FlowPart) => !!lit && lit.includes(p);
+  const dim = (p: FlowPart) => !!lit && !lit.includes(p);
+  const link = (d: string, parts: FlowPart[], key: string, store = false) => {
+    const active = !lit || parts.every((p) => lit.includes(p));
+    return <path key={key} d={d} className="fb-link" data-dim={!active || undefined} data-flow={(lit && active) || undefined} data-store={store || undefined} markerEnd="url(#fb-arrow)" />;
+  };
+  return (
+    <svg className="fb-svg" viewBox="0 0 1240 440" role="img" aria-label="Requests wait in a queue; a scheduler gives each to one of two GPU workers; each worker reads the prompt, using the KV cache, and writes the answer, reading the weights from memory">
+      <defs><marker id="fb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#7a8896" /></marker></defs>
+      {LANES.map((l) => (
+        <g key={l.name} className="fb-lane" data-dim={(lit && !lit.includes("prefill") && !lit.includes("decode")) || undefined}>
+          <rect x={584} y={l.y} width={400} height={120} rx={14} />
+          <text x={600} y={l.y + 20}>{l.name}</text>
+        </g>
+      ))}
+      {link("M160 220H192", ["requests", "queue"], "a")}
+      {link("M348 220H380", ["queue", "scheduler"], "b")}
+      {link("M536 204C566 204 566 88 596 88", ["scheduler", "prefill"], "c")}
+      {link("M536 236C566 236 566 368 596 368", ["scheduler", "prefill"], "d")}
+      {LANES.flatMap((l) => [
+        link(`M772 ${l.y + 70}H792`, ["prefill", "decode"], `e${l.y}`),
+        link(`M968 ${l.y + 70}C1006 ${l.y + 70} 1006 ${l.y < 100 ? 204 : 236} 1040 ${l.y < 100 ? 204 : 236}`, ["decode", "answers"], `f${l.y}`),
+      ])}
+      {link("M686 188V136", ["kv", "prefill"], "g", true)}
+      {link("M686 252V304", ["kv", "prefill"], "h", true)}
+      {link("M882 188V136", ["weights", "decode"], "i", true)}
+      {link("M882 252V304", ["weights", "decode"], "j", true)}
+      {SIDE.concat(STORES).map((b) => <Node key={b.id} b={b} lit={on(b.id)} dim={dim(b.id)} />)}
+      {LANES.flatMap((l) => TASKS(l.y).map((b) => <Node key={`${b.id}${l.y}`} b={b} lit={on(b.id)} dim={dim(b.id)} />))}
+      {LEVERS.slice(0, tags).map((lever) => (
+        <g key={lever.n} className="fb-tag" data-dim={(lit && !lever.parts.some((p) => lit.includes(p))) || undefined} style={{ ["--fb-tone" as string]: lever.tone }}>
+          <circle cx={lever.tag.x + (lever.n === 1 ? 62 : 72)} cy={lever.tag.y + (lever.n === 1 ? 20 : 20)} r={15} />
+          <text x={lever.tag.x + (lever.n === 1 ? 62 : 72)} y={lever.tag.y + (lever.n === 1 ? 26 : 26)} textAnchor="middle">{lever.n}</text>
+        </g>
+      ))}
     </svg>
   );
 }
 
-/** One chapter's stop: what happens here, what we changed, what it bought. */
-type Zoom = { lit: readonly number[] | null; title: string; happens: string; changed: string; impact: string; note: string };
+/** One chapter's part of the system: what happens there, what we changed, what it bought. */
+type Zoom = { lit: readonly FlowPart[] | null; tags: number; title: string; happens: string; changed: string; impact: string; note: string };
 const ZOOMS: Record<number, Zoom> = {
-  0: { lit: null, title: "Start with today: where one request spends its time", happens: "Two workers serve requests in fixed pairs. Each request reads its whole prompt, then writes its answer.", changed: "Nothing yet. This is what the three levers are measured against.", impact: `*${f(R[0].correctCost!, 2)} GPU-s* per correct answer`, note: `slowest 5% wait ${f(R[0].p95)} s` },
-  1: { lit: [1], title: "Lever 1 works here: the wait for a worker", happens: "A request waits until both workers of a pair are free.", changed: "Any free worker takes the next request at once.", impact: `Slowest 5%: *${f(R[0].p95)} → ${f(R[1].p95)} s*`, note: "no GPU work saved, only idle gaps" },
-  2: { lit: [2], title: "Lever 2 works here: reading the prompt", happens: "Every request reads the whole shared document again.", changed: "Read it once, keep its KV pages, and reference them.", impact: `Prompt reading: *${f(mean(R[1], "prefill") * 1000)} → ${f(mean(R[2], "prefill") * 1000)} ms*`, note: "per request, on average" },
-  3: { lit: [2, 3], title: "Lever 3 works here: reading and writing tokens", happens: "Each output token reads all the weights from memory.", changed: "FP8 weights and KV: half the bytes for every token.", impact: `*${f(R[2].correctCost!, 2)} → ${f(R[3].correctCost!, 2)} GPU-s* per correct answer`, note: "same tokens, same answers" },
-  4: { lit: null, title: "All three levers together", happens: "The same 96 requests, on the same model.", changed: "Scheduling, prefix reuse and faster execution, combined.", impact: `*${f(R[0].correctCost!, 2)} → ${f(R[3].correctCost!, 2)} GPU-s* per correct answer`, note: `slowest 5%: ${f(R[0].p95)} → ${f(R[3].p95)} s · ${R[3].correct} of 96 still correct` },
+  0: { lit: null, tags: 0, title: "Start with today: the whole serving path", happens: "Two workers serve requests in fixed pairs, and every request reads its whole prompt", changed: "Nothing yet: this is what the three levers are measured against", impact: `*${f(R[0].correctCost!, 2)} GPU-s* per correct answer`, note: `slowest 5% wait ${f(R[0].p95)} s` },
+  1: { lit: LEVERS[0].parts, tags: 1, title: "Lever 1 works here: the scheduler and the queue", happens: "A request waits until both workers of a pair are free", changed: "Any free worker takes the next request at once", impact: `Slowest 5%: *${f(R[0].p95)} → ${f(R[1].p95)} s*`, note: "no GPU work saved, only idle gaps" },
+  2: { lit: LEVERS[1].parts, tags: 2, title: "Lever 2 works here: reading the prompt", happens: "Every request reads the whole shared document again", changed: "Read it once, keep its KV pages, and reference them", impact: `Prompt reading: *${f(mean(R[1], "prefill") * 1000)} → ${f(mean(R[2], "prefill") * 1000)} ms*`, note: "per request, on average" },
+  3: { lit: LEVERS[2].parts, tags: 3, title: "Lever 3 works here: every token, read and written", happens: "Each output token reads all the weights from memory", changed: "FP8 weights and KV: half the bytes for every token", impact: `*${f(R[2].correctCost!, 2)} → ${f(R[3].correctCost!, 2)} GPU-s* per correct answer`, note: "same tokens, same answers" },
+  4: { lit: null, tags: 3, title: "All three levers together", happens: "The same 96 requests, on the same model", changed: "Scheduling, prefix reuse and faster execution, combined", impact: `*${f(R[0].correctCost!, 2)} → ${f(R[3].correctCost!, 2)} GPU-s* per correct answer`, note: `slowest 5%: ${f(R[0].p95)} → ${f(R[3].p95)} s · ${R[3].correct} of 96 still correct` },
 };
-const ZOOM_MS = 7600;
+const ZOOM_MS = 7000;
 
 function zoomScene(n: number) {
   const z = ZOOMS[n];
   function Scene({ t }: SceneProps) {
-    const narrowed = t >= 900;
-    const rows = [["What happens here", z.happens, 1500], ["What we changed", z.changed, 2700]] as const;
+    const rows = [["What happens here", z.happens, 800], ["What we changed", z.changed, 2000]] as const;
     return (
       <div className="fb-zoom">
-        <FlowBoard t={t} lit={narrowed ? z.lit : null} levers={n === 4 ? 3 : n === 0 ? 0 : n} zoom={narrowed} />
+        <FlowBoard lit={t >= 300 ? z.lit : null} tags={z.tags} />
         <div className="fb-notes">
           {rows.map(([label, text, at]) => {
-            const k = ease.out(prog(t, at, at + 500));
-            return <p key={label} style={{ opacity: k, transform: `translateY(${(1 - k) * 10}px)` }}><small>{label}</small>{text}</p>;
+            const k = ease.out(prog(t, at, at + 400));
+            return <p key={label} style={{ opacity: k, transform: `translateY(${(1 - k) * 8}px)` }}><small>{label}</small>{text}</p>;
           })}
-          <p className="fb-impact" style={{ opacity: ease.out(prog(t, 3900, 4400)) }}><small>The impact</small><strong>{t >= 3900 ? highlight(z.impact) : null}</strong><em>{z.note}</em></p>
+          <p className="fb-impact" style={{ opacity: ease.out(prog(t, 3200, 3600)) }}><small>The impact</small><strong>{t >= 3200 ? highlight(z.impact) : null}</strong><em>{z.note}</em></p>
         </div>
       </div>
     );

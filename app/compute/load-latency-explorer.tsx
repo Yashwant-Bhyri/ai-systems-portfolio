@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "rea
 import type { LabRun } from "./lab-simulation";
 import { assertMatchedLoad, latencyDistribution, loadEvents, loadFilmFrame, loadState, LOAD_FILM_MS, LOAD_MOMENTS } from "./load-latency-model";
 import { useStudyPlayback } from "./use-study-playback";
+import { useFreezeMoments, type FreezeMoment } from "./stagecraft/stage-meter";
 import { useFilmTime } from "./use-film-time";
 import type { DirectedView, LoadViewState } from "./explorer-state";
 import "./load-latency-explorer.css";
@@ -181,6 +182,33 @@ export function LoadLatencyExplorer({ baseline, optimized, onPolicy, evidence, i
   const seek = (time: number) => { setSelected(null); film.seek(time); };
   const replay = () => { setSelected(null); film.seek(0); player.replay(); };
   const compareReady = !frame.tail || frame.sort === 1;
+  // The highlights run opens a figure at its best moment.
+  useEffect(() => {
+    const go = (e: Event) => localFilm.seek((e as CustomEvent<number>).detail);
+    window.addEventListener("lab:figure-seek", go);
+    return () => window.removeEventListener("lab:figure-seek", go);
+    // the film's seek is stable for one mounted figure
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Freeze on the two results: the widest gap in the queue, then the slow tail.
+  const moments = useMemo(() => {
+    const maxArrival = Math.max(...baseline.tasks.map(task => task.arrival)), maxFinish = Math.max(...runs.flatMap(run => run.tasks.map(task => task.finish)));
+    let best = { at: 0, a: 0, b: 0 };
+    for (let at = 0; at < LOAD_FILM_MS; at += 250) {
+      const f = loadFilmFrame(at, maxArrival, maxFinish);
+      if (f.tail || f.phase === "complete") continue;
+      const [a, b] = runs.map(run => loadState(run, f.elapsed).waiting.length);
+      if (a - b > best.a - best.b) best = { at, a, b };
+    }
+    const t = distributions.map(d => d.threshold.latency);
+    const out: FreezeMoment[] = [];
+    if (best.a - best.b > 0) out.push({ at: best.at, headline: `*${number(best.a - best.b, 0)} fewer requests waiting*`, parts: [{ label: "baseline", value: `${number(best.a, 0)} waiting`, tone: "baseline" }, { label: "optimized", value: `${number(best.b, 0)} waiting`, tone: "optimized" }], cause: "the same arrivals; each request frees its worker sooner" });
+    if (Math.abs(t[0] - t[1]) > 1e-6) out.push({ at: LOAD_FILM_MS - 1800, headline: `The slowest 5% are answered *${number(Math.abs(t[0] - t[1]), 0)} s sooner*`, parts: [{ label: "baseline", value: `${number(t[0], 0)} s`, tone: "baseline" }, { label: "optimized", value: `${number(t[1], 0)} s`, tone: "optimized" }] });
+    return out;
+    // the runs are fixed for one mounted explorer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useFreezeMoments(moments, localPlayer.readTime, localPlayer.running, localPlayer.pause, localPlayer.resume, "run");
   useEffect(() => {
     const node = stage.current;
     if (!node || !compareReady) return;

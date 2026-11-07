@@ -10,7 +10,7 @@ const OUT = new URL("./out/fit/", import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 const MODULES = {
   inference: ["setup", "replay", "composition", "latency", "film", "pressure", "draft", "cache", "overlap", "map", "glossary"],
-  "post-training": ["inside", "terrain", "curves", "tasks", "film", "fleet", "map", "audit"],
+  "post-training": ["inside", "terrain", "learn", "frontier", "curves", "tasks", "film", "fleet", "map", "audit"],
 };
 const SEC = { inference: "inference-study", "post-training": "post-training-study" };
 

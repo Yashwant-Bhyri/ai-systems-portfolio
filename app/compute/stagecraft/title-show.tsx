@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from "react";
 import { useTr } from "../../exhibit/i18n";
-import { Highlight, highlight } from "./stage-meter";
+import { highlight } from "./stage-meter";
 import "./title-show.css";
 
 /**
@@ -34,30 +34,68 @@ function collect(root: HTMLElement | null): Rects {
   return m;
 }
 
-/* ── Landing: both pathways, every module, one page ─────────────────────── */
+/* ── The reel: tiles share a row, the open one grows, a cursor walks them ── */
+const GROW = 3.4;
+export function ReelRow({ items, open, cursor = true, onOpen }: { items: readonly ShowItem[]; open: number; cursor?: boolean; onOpen?: (key: string) => void }) {
+  const tr = useTr();
+  const row = useRef<HTMLDivElement>(null);
+  const pointer = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const r = row.current, c = pointer.current;
+    if (!r || !c) return;
+    const n = items.length, gap = 10, width = r.clientWidth;
+    const unit = (width - gap * (n - 1)) / (n - 1 + GROW);
+    c.style.transform = `translate3d(${Math.max(0, open) * (unit + gap) + (unit * GROW) / 2 + 18}px, ${r.offsetTop + 54}px, 0)`;
+  }, [open, items.length]);
+  return (
+    <div className="rl-reel ts-reel" data-auto={cursor && open >= 0}>
+      <div ref={row} className="rl-row">
+        {items.map((item, i) => {
+          const lit = i === open;
+          return (
+            <button key={item.key} type="button" className="rl-tile" data-lit={lit} data-show-key={item.key} tabIndex={onOpen ? 0 : -1} style={{ flexGrow: lit ? GROW : 1 }} onClick={() => onOpen?.(item.key)}>
+              <span className="rl-num">{i + 1}</span>
+              <span className="rl-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
+              <strong className="rl-title">{tr(item.title)}</strong>
+              <span className="rl-detail" aria-hidden={!lit}>
+                {item.value && <span className="rl-value"><mark>{item.value}</mark>{item.unit && <small>{tr(item.unit)}</small>}</span>}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div ref={pointer} className="gc-cursor rl-cursor" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 2.5l15 9.2-6.6 1.4 3.9 7.6-2.6 1.3-3.9-7.6L4.9 19z" /></svg>
+        <i className="gc-ring" />
+      </div>
+    </div>
+  );
+}
+
+/* ── Landing: the branches as reels, told over the blur ─────────────────── */
 /**
- * The opening is a script told over the blurred landing: a line in large type,
- * then each branch lifts while its titles light up in turn. A click on any title
- * starts there; "Skip" starts at the first module.
+ * A line in large type, then each branch sharpens while its reel walks through its
+ * modules. A click on any tile starts there; "Skip" starts at the first module.
  */
 export type IntroStep = { kind: "line"; text: string; ms: number } | { kind: "path"; index: number };
-const LIFT = 800, CARD = 520, SETTLE = 350;
+const LIFT = 500, CARD = 850, SETTLE = 300;
 type Now = { kind: "idle" } | { kind: "line"; text: string; ms: number } | { kind: "path"; index: number };
 
 export function LabLanding({
-  pathways, items, leaving, script, onStart,
+  pathways, items, leaving, script, threshold = 0.55, onStart,
 }: {
   pathways: readonly Pathway[];
   items: readonly ShowItem[];
   leaving: boolean;
   script: readonly IntroStep[];
+  /** How much of the landing must be on screen before the script runs. */
+  threshold?: number;
   onStart: (key: string, from: Rects) => void;
 }) {
   const tr = useTr();
   const root = useRef<HTMLDivElement>(null);
   const [now, setNow] = useState<Now>({ kind: "idle" });
-  const [hot, setHot] = useState<string | null>(null);
-  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
+  const [open, setOpen] = useState(0);
   const start = (key: string) => onStart(key, collect(root.current));
   const startRef = useRef(start);
   useEffect(() => { startRef.current = start; });
@@ -71,24 +109,18 @@ export function LabLanding({
     let timers: number[] = [];
     const clear = () => { timers.forEach((t) => window.clearTimeout(t)); timers = []; };
     const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
-    const centre = (key: string) => {
-      const card = el.querySelector<HTMLElement>(`.ts-card[data-show-key="${key}"]`), box = el.getBoundingClientRect();
-      if (!card) return null;
-      const r = card.getBoundingClientRect();
-      return { x: r.left - box.left + r.width * 0.62, y: r.top - box.top + r.height * 0.42 };
-    };
     const run = () => {
       clear();
       let t = 200;
       for (const step of script) {
         if (step.kind === "line") {
-          at(t, () => { setHot(null); setCursor(null); setNow(step); });
+          at(t, () => setNow(step));
           t += step.ms;
         } else {
           const own = itemsRef.current.filter((i) => i.pathway === step.index);
-          at(t, () => { setHot(null); setCursor(null); setNow(step); });
+          at(t, () => { setOpen(0); setNow(step); });
           t += LIFT;
-          own.forEach((item, i) => at(t + i * CARD, () => { setHot(item.key); setCursor(centre(item.key)); }));
+          own.forEach((_, i) => at(t + i * CARD, () => setOpen(i)));
           t += own.length * CARD + SETTLE;
         }
       }
@@ -96,38 +128,26 @@ export function LabLanding({
     };
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) run();
-      else { clear(); setNow({ kind: "idle" }); setHot(null); setCursor(null); }
-    }, { threshold: 0.55 });
+      else { clear(); setNow({ kind: "idle" }); setOpen(0); }
+    }, { threshold });
     io.observe(el);
     return () => { io.disconnect(); clear(); };
-  }, [leaving, script]);
+  }, [leaving, script, threshold]);
   return (
-    <div ref={root} className="ts-landing" data-leaving={leaving || undefined} data-step={now.kind} data-single={pathways.length === 1 || undefined}>
+    <div ref={root} className="ts-landing" data-leaving={leaving || undefined} data-step={now.kind}>
       {pathways.map((p, pi) => {
         const own = items.filter((i) => i.pathway === pi);
+        const lift = now.kind === "path" && now.index === pi;
         return (
-          <section key={p.n} className="ts-path" data-first={pi === 0 || undefined} data-lift={(now.kind === "path" && now.index === pi) || undefined}>
+          <section key={p.n} className="ts-path" data-lift={lift || undefined}>
             <button type="button" className="ts-path-head" onClick={() => start(own[0].key)}>
               <i>{p.n}</i>
               <strong>{tr(p.title)}</strong>
             </button>
-            <div className="ts-cards" data-count={own.length}>
-              {own.map((item, i) => (
-                <button key={item.key} type="button" className="ts-card" data-show-key={item.key} data-lead={(pi === 0 && i === 0 && pathways.length > 1) || undefined} data-hot={hot === item.key || undefined} onClick={() => start(item.key)}>
-                  <span className="ts-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
-                  <strong>{hot === item.key ? <Highlight>{tr(item.title)}</Highlight> : tr(item.title)}</strong>
-                  {item.value && <span className="ts-value"><mark>{item.value}</mark>{item.unit && <small>{tr(item.unit)}</small>}</span>}
-                </button>
-              ))}
-            </div>
+            <ReelRow items={own} open={lift ? open : 0} cursor={lift} onOpen={start} />
           </section>
         );
       })}
-      {cursor && (
-        <span className="ts-cursor" aria-hidden="true" style={{ transform: `translate(${cursor.x}px, ${cursor.y}px)` }}>
-          <svg viewBox="0 0 22 22" width="22" height="22"><path d="M3 2l15 8-6.5 1.8L9 18z" fill="#f4f7fa" stroke="#0b1016" strokeWidth="1.3" strokeLinejoin="round" /></svg>
-        </span>
-      )}
       {now.kind === "line" && (
         <p key={now.text} className="ts-opening" style={{ animationDuration: `${now.ms}ms` }}>{highlight(tr(now.text))}</p>
       )}

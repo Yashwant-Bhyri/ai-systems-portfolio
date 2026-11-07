@@ -1,21 +1,25 @@
-/* One request's path; a chapter narrows onto its stop. */
-.fb-svg { display: block; width: 100%; height: auto; overflow: hidden; }
-.fb-world { transition: transform .8s cubic-bezier(.22,1,.36,1); }
-.fb-node rect { fill: rgba(255,255,255,.03); stroke: color-mix(in srgb, var(--fb-tone) 55%, transparent); stroke-width: 1.5; transition: fill .6s, stroke .6s; }
-.fb-node[data-on] rect { fill: color-mix(in srgb, var(--fb-tone) 14%, transparent); stroke: var(--fb-tone); stroke-width: 2; }
-.fb-node, .fb-link, .fb-lever { transition: opacity .5s cubic-bezier(.22,1,.36,1); }
-.fb-node[data-dim], .fb-link[data-dim], .fb-lever[data-dim] { opacity: .18; }
-.fb-name { fill: #e8edf2; font: 400 16px/1 var(--font-geist-sans), sans-serif; }
+/* The whole serving system at once; a lever only changes what is lit. */
+.fb-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.fb-node rect { fill: #0e141a; stroke: color-mix(in srgb, var(--fb-tone) 50%, transparent); stroke-width: 1.5; transition: fill .3s cubic-bezier(.22,1,.36,1), stroke .3s cubic-bezier(.22,1,.36,1); }
+.fb-node[data-store] rect { stroke-dasharray: 5 4; }
+.fb-node[data-on] rect { fill: color-mix(in srgb, var(--fb-tone) 18%, #0e141a); stroke: var(--fb-tone); stroke-width: 2; }
+.fb-node, .fb-link, .fb-lane, .fb-tag { transition: opacity .4s cubic-bezier(.22,1,.36,1); }
+.fb-node[data-dim], .fb-link[data-dim], .fb-lane[data-dim], .fb-tag[data-dim] { opacity: .3; }
+.fb-name { fill: #eef2f6; font: 400 17px/1 var(--font-geist-sans), sans-serif; }
 .fb-value { fill: var(--fb-tone); font: 500 24px/1 var(--font-geist-mono), monospace; letter-spacing: -.02em; }
-.fb-link { fill: none; stroke: #52606d; stroke-width: 1.6; }
-.fb-packet { fill: #fff; }
-.fb-lever path { fill: none; stroke: var(--fb-tone); stroke-width: 1.5; }
-.fb-lever text { fill: var(--fb-tone); font: 500 19px/1 var(--font-geist-sans), sans-serif; }
-.fb-zoom { display: flex; flex-direction: column; justify-content: center; gap: 24px; width: 100%; min-height: calc(var(--lf-room, 700px) - 130px); }
-.fb-zoom .fb-svg { max-height: calc(var(--lf-room, 700px) - 320px); }
-.fb-notes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr); gap: 32px; padding: 4px 8px 0; }
-.fb-notes p { margin: 0; display: flex; flex-direction: column; gap: 8px; color: #e8edf2; font: 400 18px/1.35 var(--font-geist-sans), sans-serif; }
+.fb-lane rect { fill: rgba(255,255,255,.02); stroke: rgba(230,237,244,.1); }
+.fb-lane text { fill: #93a0ae; font: 400 14px/1 var(--font-geist-sans), sans-serif; }
+.fb-link { fill: none; stroke: #5a6876; stroke-width: 1.6; }
+.fb-link[data-store] { stroke-dasharray: 4 4; }
+.fb-link[data-flow] { stroke: #eef2f6; stroke-dasharray: 8 6; animation: fb-flow .9s linear infinite; }
+@keyframes fb-flow { to { stroke-dashoffset: -14; } }
+.fb-tag circle { fill: var(--fb-tone); }
+.fb-tag text { fill: #0b1016; font: 500 17px/1 var(--font-geist-mono), monospace; }
+.fb-zoom { display: flex; flex-direction: column; justify-content: center; gap: 16px; width: 100%; min-height: calc(var(--lf-room, 700px) - 130px); }
+.fb-zoom .fb-svg { max-height: calc(var(--lf-room, 700px) - 290px); }
+.fb-notes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr); gap: 32px; padding: 0 8px; }
+.fb-notes p { margin: 0; display: flex; flex-direction: column; gap: 4px; color: #e8edf2; font: 400 17px/1.35 var(--font-geist-sans), sans-serif; }
 .fb-notes small { color: #93a0ae; font: 400 14px/20px var(--font-geist-sans), sans-serif; }
-.fb-impact strong { color: #fff; font: 500 25px/1.25 var(--font-geist-sans), sans-serif; letter-spacing: -.02em; }
+.fb-impact strong { color: #fff; font: 500 24px/1.25 var(--font-geist-sans), sans-serif; letter-spacing: -.02em; }
 .fb-impact em { color: #b5c0cb; font: 400 14px/20px var(--font-geist-sans), sans-serif; font-style: normal; }
-@media (prefers-reduced-motion: reduce) { .fb-world, .fb-node, .fb-link, .fb-lever { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .fb-node, .fb-link, .fb-lane, .fb-tag { transition: none; } .fb-link[data-flow] { animation: none; } }

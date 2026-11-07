@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } 
 import { FilmInterlude } from "./stagecraft/module-arc";
 import { FILM_ARCS } from "./arc-scenes/film-arcs";
 import { FLOW_ZOOMS } from "./stagecraft/flow-board";
+import { useFreezeMoments, type FreezeMoment } from "./stagecraft/stage-meter";
 import { LEARN_ARCS } from "./arc-scenes/learn-arcs";
 import { useTr } from "../exhibit/i18n";
 import { createPortal } from "react-dom";
@@ -42,7 +43,7 @@ import { EXECUTION_FILM_DURATION as EXECUTION_DURATION } from "./execution-direc
 import { ExhibitScene } from "./stagecraft/exhibit-host";
 import { PolicyGrpo } from "../exhibit/policy/grpo";
 import { PolicyLean } from "../exhibit/policy/lean";
-import { PolicyFrontierStory, FRONTIER_STORY_MS } from "../exhibit/policy/frontier-story";
+import { PolicyFrontierStory } from "../exhibit/policy/frontier-story";
 import "./lab-story.css";
 
 const SchedulingReveal = lazy(() =>
@@ -58,6 +59,26 @@ const ROOM_CHAPTERS = new Set([2, 4, 5]);
 /* Each framing scene plays once per visit: going back to a chapter goes straight to the chapter. */
 type Interlude = { step: number; kind: "flow" | "mechanism" | "impact" };
 const SEEN_FRAMES = new Set<string>();
+const fm = (v: number, d = 0) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+/** Each chapter freezes once on its result. Prefix reuse has its own focus moment. */
+function chapterMoments(training: boolean, step: number, duration: number, runs: readonly LabRun[]): FreezeMoment[] {
+  const at = duration * 0.86;
+  if (training) {
+    const [b, s, r, r4, l] = runs;
+    const tokens = (x: LabRun) => x.tokens / x.n;
+    if (step === 1) return [{ at, headline: `Imitating verified reasoning: *${b.correct} → ${s.correct} of 96*`, parts: [{ label: "base", value: `${b.accuracy.toFixed(1)}%`, tone: "baseline" }, { label: "after SFT + LoRA", value: `${s.accuracy.toFixed(1)}%`, tone: "optimized" }] }];
+    if (step === 2) return [{ at, headline: `Learning from outcomes: *${s.correct} → ${r.correct} of 96*`, parts: [{ label: "after SFT", value: `${s.accuracy.toFixed(1)}%`, tone: "baseline" }, { label: "after GRPO", value: `${r.accuracy.toFixed(1)}%`, tone: "optimized" }] }];
+    if (step === 3) return [{ at, headline: `More thinking budget, same weights: *${r.correct} → ${r4.correct} of 96*`, cause: `each task now costs ${fm(r4.meanCost - r.meanCost, 2)} GPU-s more` }];
+    if (step === 4) return [{ at, headline: `Same ${l.correct} tasks, *${Math.round(100 * (1 - tokens(l) / tokens(r4)))}% fewer tokens*`, parts: [{ label: "tokens per task before", value: fm(tokens(r4)), tone: "baseline" }, { label: "after lean RL", value: fm(tokens(l)), tone: "optimized" }] }];
+    return [];
+  }
+  const [a, b, , d] = runs;
+  if (step === 0) return [{ at, headline: `Today each correct answer costs *${fm(a.correctCost!, 2)} GPU-s*`, cause: `and the slowest 5% wait ${fm(a.p95)} s` }];
+  if (step === 1) return [{ at, headline: `Same GPU work, slowest 5% *${fm(a.p95 - b.p95)} s sooner*`, parts: [{ label: "fixed pairs", value: `${fm(a.p95)} s`, tone: "baseline" }, { label: "free worker", value: `${fm(b.p95)} s`, tone: "optimized" }] }];
+  if (step === 3) return [{ at: duration * 0.93, headline: `Same tokens, *${fm(runs[2].correctCost!, 2)} → ${fm(d.correctCost!, 2)} GPU-s* per correct answer` }];
+  if (step === 4) return [{ at, headline: `All three levers: *${fm(a.correctCost!, 2)} → ${fm(d.correctCost!, 2)} GPU-s* each`, parts: [{ label: "correct answers", value: `${d.correct} of 96`, tone: "delta" }, { label: "slowest 5%", value: `${fm(a.p95)} → ${fm(d.p95)} s`, tone: "optimized" }] }];
+  return [];
+}
 const frameKey = (training: boolean, f: Interlude) => `${training}-${f.step}-${f.kind}`;
 const unseen = (training: boolean, list: Interlude[]) => list.filter((f) => !SEEN_FRAMES.has(frameKey(training, f)));
 
@@ -80,13 +101,13 @@ export function LabStory({
     [workload, setWorkload] = useState<Workload>("shared-prefix");
   // A chapter is framed by where it works and how before it, and by its impact after it; the film holds meanwhile.
   const [interludes, setInterludes] = useState<Interlude[]>(() => unseen(training, training ? [] : [{ step: 0, kind: "flow" }]));
-  const { ref, ...playback } = useStudyPlayback(training ? 6 : 5, 0, {
+  const { ref, ...playback } = useStudyPlayback(5, 0, {
     // Hovering or pinning an inspection explains; it never stops the film.
     held: undo || interludes.length > 0,
     finite: true,
     interval: 12000,
     durations: training
-      ? [10000, ADAPTER_DURATION, 16800, 21000, 8000, FRONTIER_STORY_MS]
+      ? [10000, ADAPTER_DURATION, 16800, 21000, 8000]
       : [
           BASELINE_DURATION,
           SCHEDULING_DURATION,
@@ -95,12 +116,16 @@ export function LabStory({
           RUNTIME_GAINS_DURATION,
         ],
   });
-  const steps = training ? TRAINING_STORY : INFERENCE_STORY;
+  // The frontier has its own module near the top of post-training.
+  const steps = training ? TRAINING_STORY.slice(0, 5) : INFERENCE_STORY;
+  // In the highlights run a chapter plays without its framing scenes.
+  const [quiet, setQuiet] = useState(false);
   const [seenStep, setSeenStep] = useState(playback.step);
   if (seenStep !== playback.step) {
     const prev = seenStep, next = playback.step;
     setSeenStep(next);
-    if (training) setInterludes(unseen(true, LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" }] : []));
+    if (quiet) setInterludes([]);
+    else if (training) setInterludes(unseen(true, LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" }] : []));
     else
       setInterludes(unseen(false, [
         ...(FILM_ARCS[prev] && next === prev + 1 ? [{ step: prev, kind: "impact" as const }] : []),
@@ -135,6 +160,10 @@ export function LabStory({
   const runs = useMemo(
     () => (training ? trainingStoryRuns(budget) : inferenceStoryRuns(workload)),
     [training, budget, workload],
+  );
+  useFreezeMoments(
+    useMemo(() => chapterMoments(training, playback.step, playback.duration, runs), [training, playback.step, playback.duration, runs]),
+    playback.readTime, playback.running, playback.pause, playback.resume, playback.sceneKey,
   );
   const step = playback.step,
     index = undo ? (!training && step === 4 ? 0 : Math.max(0, step - 1)) : step;
@@ -197,6 +226,15 @@ export function LabStory({
     pauseRef.current = playback.pause;
     resumeRef.current = () => { if (playback.finished) playback.select(step); playback.resume(); };
   });
+  const goRef = useRef((step: number, at: number) => { void step; void at; });
+  useEffect(() => {
+    goRef.current = (n, at) => { setQuiet(true); setInterludes([]); setUndo(false); playback.select(n); playback.resume(); if (at) window.setTimeout(() => playback.seek(at), 60); };
+  });
+  useEffect(() => {
+    const go = (e: Event) => { const d = (e as CustomEvent<{ training: boolean; step: number; at?: number }>).detail; if (d.training === training) goRef.current(d.step, d.at ?? 0); };
+    window.addEventListener("lab:film-go", go);
+    return () => window.removeEventListener("lab:film-go", go);
+  }, [training]);
   useEffect(() => {
     const dive = () => { setInterludes([]); pauseRef.current(); };
     const resume = () => resumeRef.current();

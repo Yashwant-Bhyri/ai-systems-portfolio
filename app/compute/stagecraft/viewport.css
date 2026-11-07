@@ -285,3 +285,27 @@
 .cs-study.lab-flow-show .lb-head { align-items: center; gap: 12px; min-height: 44px; padding-left: 6px; }
 .cs-study.lab-flow-show .lb-head h2 { flex: 0 0 var(--tr-w); margin: 0; color: #aab6c2; font: 450 14.5px/1.2 var(--font-geist-sans), sans-serif; letter-spacing: 0; white-space: normal; }
 @media (max-width: 1380px) { .cs-study.lab-flow-show .lb-head h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .cs-study.lab-flow-show .lb-head { padding-left: calc(var(--tr-w) + 18px); } }
+
+/* ── Serving glossary: three rows of title cards, moving like the reel ─────── */
+.gr-root { height: var(--lf-room, 700px); box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; }
+.gr-row { flex: 1 1 0; min-height: 0; display: flex; gap: 8px; transition: flex-grow .7s cubic-bezier(.65,0,.35,1); }
+.vx-shell .gr-tile { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px; overflow: hidden; border: 0; border-radius: 10px; background: rgba(255,255,255,.02); box-shadow: inset 0 0 0 1px rgba(230,237,244,.06); color: #eef2f6; text-align: left; cursor: pointer; transition: flex-grow .7s cubic-bezier(.65,0,.35,1), opacity .4s, background .3s, box-shadow .3s; }
+.vx-shell .gr-tile[data-lit="false"] { opacity: .55; }
+.vx-shell .gr-tile[data-lit="true"] { background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 55%, transparent); }
+.gr-glyph { flex: 1 1 0; min-height: 0; width: 100%; display: block; }
+.gr-glyph svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.gr-tile > strong { flex: 0 0 auto; font: 500 15px/20px var(--font-geist-sans), sans-serif; }
+.gr-tile[data-lit="true"] > strong { font-size: 18px; line-height: 24px; }
+.gr-detail { flex: 0 0 auto; display: none; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; }
+.gr-tile[data-lit="true"] .gr-detail { display: flex; }
+.gr-detail em { color: #b5c0cb; font: 400 14px/20px var(--font-geist-sans), sans-serif; font-style: normal; }
+.gr-value mark { background: none; color: var(--active-accent); font: 500 18px/1 var(--font-geist-mono), monospace; }
+.gr-value small { color: #aab6c2; font: 400 13px/16px var(--font-geist-sans), sans-serif; }
+
+/* A standalone exhibit module fills the stage. */
+.lab-flow-show .lf-fit .ex-module .ex-embed-stage { height: calc(var(--lf-room) - 44px); }
+
+/* The chosen checkpoint's curve draws itself each time, from 1× to 8×. */
+.rs-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: rs-draw .9s cubic-bezier(.22,1,.36,1) forwards; }
+@keyframes rs-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .rs-draw { animation: none; stroke-dashoffset: 0; } }

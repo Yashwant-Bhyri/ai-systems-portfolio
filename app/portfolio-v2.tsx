@@ -29,6 +29,10 @@ import { COMPUTE_PROJECTS, INFERENCE_STEPS, TRAINING_STEPS, INFERENCE_PROOF, TRA
 import { InferenceOverview, TrainingOverview, InferenceVisual, TrainingVisual, ComputeProjectPreview } from "./compute-visuals";
 import { ComputeStudy } from "./compute-study";
 import { ProjectPoster } from "./posters/posters";
+import { ProjectSecondPage } from "./project-second-page";
+import { LabPreview } from "./compute/stagecraft/lab-preview";
+import { ConclusionBoard, conclusionFromProof, type ConclusionSpec } from "./conclusion-board";
+import { INFERENCE_CONCLUSION, TRAINING_CONCLUSION } from "./posters/conclusion-data";
 
 const assetPath = (path: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 
@@ -75,7 +79,7 @@ type ProjectAccent = "lime" | "violet" | "cyan" | "amber" | "rose";
 const ALL_PROJECTS = [
   {
     id: "antigravity",
-    number: "01",
+    number: "04",
     brand: "ANTIGRAVITY",
     category: "Real-time AI-Native Interviewing Platform",
     badge: "PRODUCTION-GRADE SOFTWARE PRODUCT",
@@ -97,7 +101,7 @@ const ALL_PROJECTS = [
   },
   {
     id: "mindscape",
-    number: "02",
+    number: "03",
     brand: "MINDSCAPE",
     category: "Medical AI Clinician-Support Product",
     badge: "MEDICAL AI R&D PROJECT",
@@ -114,7 +118,7 @@ const ALL_PROJECTS = [
   },
   {
     id: "research",
-    number: "06",
+    number: "05",
     brand: "RESEARCH ENGINEERING",
     category: "Open-Source, Research & R&D Experience",
     badge: "OPEN SOURCE · RESEARCH · R&D",
@@ -264,7 +268,9 @@ const ANTIGRAVITY_STEPS: readonly StoryStep[] = [
   },
 ];
 /** Filmora is set aside for another time (round 6); its chapter stays in the code. */
-const PROJECTS = ALL_PROJECTS.filter((p) => p.id !== "filmora");
+// Post-training leads, then inference, medical AI and the interview platform.
+const PROJECT_ORDER = ["post-training", "inference", "mindscape", "antigravity", "research"];
+const PROJECTS = ALL_PROJECTS.filter((p) => p.id !== "filmora").sort((a, b) => PROJECT_ORDER.indexOf(a.id) - PROJECT_ORDER.indexOf(b.id));
 
 const FILMORA_STEPS: readonly StoryStep[] = [
   {
@@ -1205,7 +1211,7 @@ function ProjectIndex() {
   return (
     <section id="projects" className="vx-project-index cx-expanded-index vx-section-shell vx-page" data-vx-page>
       <div className="vx-section-heading">
-        <span>SELECTED WORK / SIX CHAPTERS</span>
+        <span>SELECTED WORK / FIVE CHAPTERS</span>
         <h2 ref={headingRef} className={`vx-typed-h ${hook.done ? "is-done" : ""}`} aria-label="So, what did I build?">
           <span className="vx-typed-live" aria-hidden="true">
             <em className="vx-paint-target">{hook.visible}</em>
@@ -1460,26 +1466,7 @@ function HighlightedStageAnnotation({
   return <>{segments}</>;
 }
 
-/* Compute chapters: the step's keywords sit still and light one at a time, so the
-   definition above stays the thing being read. No hashes, no separators, no loop. */
-function KeywordStrip({ items, active }: { items: readonly string[]; active: boolean }) {
-  const reducedMotion = useReducedMotion();
-  const [lit, setLit] = useState(0);
-  useEffect(() => {
-    if (!active || reducedMotion || items.length < 2) return;
-    const timer = window.setInterval(() => setLit((i) => (i + 1) % items.length), 1900);
-    return () => window.clearInterval(timer);
-  }, [active, reducedMotion, items.length]);
-  return (
-    <ul className="vx-keyword-strip" aria-label="Technologies in this component">
-      {items.map((item, i) => (
-        <li key={item} data-lit={i === lit}>{item}</li>
-      ))}
-    </ul>
-  );
-}
-
-function StageSignalConsole({ step, active, calm = false }: { step: StoryStep; active: boolean; calm?: boolean }) {
+function StageSignalConsole({ step, active }: { step: StoryStep; active: boolean }) {
   const reducedMotion = useReducedMotion();
   const [cursor, setCursor] = useState(reducedMotion ? step.annotation.length : 0);
   const tickerItems = useMemo(() => Array.from(new Set([...step.signals, ...step.stack])).map((label) => ({ label })), [step.signals, step.stack]);
@@ -1514,95 +1501,13 @@ function StageSignalConsole({ step, active, calm = false }: { step: StoryStep; a
         </span>
         <b className="vx-stage-annotation-ghost" aria-hidden="true">{step.annotation}</b>
       </div>
-      {calm ? (
-        <KeywordStrip items={tickerItems.map((item) => item.label)} active={active} />
-      ) : (
-        <SignalTicker
-          items={tickerItems}
-          label={`${step.label} technologies and engineering capabilities`}
-          active={active}
-          reducedMotion={reducedMotion}
-        />
-      )}
+      <SignalTicker
+        items={tickerItems}
+        label={`${step.label} technologies and engineering capabilities`}
+        active={active}
+        reducedMotion={reducedMotion}
+      />
     </section>
-  );
-}
-
-const sentence = (label: string) => label.charAt(0) + label.slice(1).toLowerCase();
-
-function ProjectConclusion({
-  name,
-  metrics,
-  signals,
-  extra,
-}: {
-  name: string;
-  metrics: readonly ConclusionMetric[];
-  signals?: readonly SignalTickerEntry[];
-  extra?: React.ReactNode;
-}) {
-  const reducedMotion = useReducedMotion();
-  const [active, setActive] = useState(0);
-  const [completedCycle, setCompletedCycle] = useState(false);
-  const [railPaused, setRailPaused] = useState(false);
-
-  useEffect(() => {
-    if (reducedMotion) return;
-    const timer = window.setTimeout(() => {
-      setActive((current) => {
-        const next = (current + 1) % metrics.length;
-        if (current === metrics.length - 1) setCompletedCycle(true);
-        return next;
-      });
-    }, 2200);
-    return () => window.clearTimeout(timer);
-  }, [active, metrics.length, reducedMotion]);
-
-  const metric = metrics[active];
-
-  return (
-    <div className="vx-project-conclusion" data-complete={completedCycle || reducedMotion}>
-      <div className="vx-conclusion-heading">
-        <span>System conclusion</span>
-        <strong>What this system comes down to</strong>
-      </div>
-      <div className="vx-conclusion-focus" key={`${metric.label}-${active}`}>
-        <span>{active + 1} of {metrics.length} · {sentence(metric.label)}</span>
-        <strong>{metric.value}</strong>
-        <p>{metric.detail}</p>
-      </div>
-      <div className="vx-conclusion-rail" role="group" aria-label={`${name} conclusion signals`}>
-        {metrics.map((item, index) => (
-          <button
-            key={item.label}
-            type="button"
-            aria-pressed={index === active}
-            data-active={index === active}
-            onClick={() => {
-              setActive(index);
-              if (index === metrics.length - 1) setCompletedCycle(true);
-            }}
-          >
-            <i>{index + 1}</i>
-            <span>{sentence(item.label)}</span>
-            <b />
-          </button>
-        ))}
-      </div>
-      {signals && signals.length > 0 ? (
-        <div className="vx-conclusion-signal-rail" aria-label={`${name} complete engineering signal rail`}>
-          <span><i />Full system signal rail</span>
-          <button type="button" className="vx-signal-rail-toggle" disabled={reducedMotion} onClick={() => setRailPaused(p => !p)}>{reducedMotion ? "Reduced motion" : railPaused ? "▷ Play signal rail" : "Ⅱ Pause signal rail"}</button>
-          <SignalTicker
-            items={signals}
-            label={`${name} engineering signals across every component`}
-            active={!railPaused}
-            reducedMotion={reducedMotion}
-          />
-        </div>
-      ) : null}
-      {extra ? <div className="vx-conclusion-extra">{extra}</div> : null}
-    </div>
   );
 }
 
@@ -1614,6 +1519,7 @@ function SystemWalkthrough({
   accent,
   proof,
   conclusionExtra,
+  conclusion,
 }: {
   name: string;
   steps: readonly StoryStep[];
@@ -1622,24 +1528,19 @@ function SystemWalkthrough({
   accent: ProjectAccent;
   proof: readonly ConclusionMetric[];
   conclusionExtra?: React.ReactNode;
+  conclusion?: ConclusionSpec;
 }) {
   const isConclusion = controller.index === steps.length;
   const selectStage = (index: number) => {
     controller.choose(index);
     if ((accent === "amber" || accent === "rose") && controller.autoplayEnabled) controller.toggle();
   };
-  // Every technology and engineering capability the walkthrough demonstrated,
-  // deduplicated into one slow revision loop for the conclusion stage.
-  const systemSignals = useMemo(
-    () => Array.from(new Set(steps.flatMap((item) => [...item.signals, ...item.stack]))).map((label) => ({ label })),
-    [steps],
-  );
   const componentStep = steps[Math.min(controller.index, steps.length - 1)];
   const step: StoryStep = isConclusion
     ? {
         label: "Conclusion",
-        title: "The complete system, in six signals",
-        explanation: "Product, contribution, runtime, output, impact, and reliability take the stage one at a time for a fast final revision.",
+        title: "What the project did, and what it achieved",
+        explanation: "One sentence for the outcome, the measures behind it, and every piece of work beside what it bought.",
         annotation: "The completed walkthrough resolves its strongest product, runtime, output, impact, and reliability evidence into one recruiter-ready summary.",
         annotationHighlights: [],
         annotationSoftHighlights: ["recruiter-ready summary"],
@@ -1706,12 +1607,11 @@ function SystemWalkthrough({
             key={`${name}-${step.label}`}
             step={step}
             active={controller.playing}
-            calm={accent === "amber" || accent === "rose"}
           />
         ) : null}
         <div className="vx-visual-window">
           {isConclusion ? (
-            <ProjectConclusion name={name} metrics={proof} signals={systemSignals} extra={conclusionExtra} />
+            <ConclusionBoard spec={conclusion ?? conclusionFromProof(proof)} extra={conclusionExtra} />
           ) : (
             <Visual active={controller.index} playing={controller.playing}
               onInspect={() => { if (controller.autoplayEnabled) controller.toggle(); }}
@@ -1830,7 +1730,9 @@ function FlagshipChapter({
   architecturePath,
   children,
   part = "full",
+  conclusion,
 }: {
+  conclusion?: ConclusionSpec;
   id: string;
   number: string;
   brand: string;
@@ -1960,6 +1862,7 @@ function FlagshipChapter({
             accent={accent}
             proof={proof}
             conclusionExtra={children}
+            conclusion={conclusion}
           />
         </div>
       </section>}
@@ -2053,23 +1956,23 @@ function MindScapeChapter() {
 
 export function InferenceChapter({ part = "full" }: { part?: "overview" | "full" }) {
   return <FlagshipChapter part={part}
-    id="inference" number="03" brand="INFERENCE OPTIMIZATION ENGINE"
+    id="inference" number="02" brand="INFERENCE OPTIMIZATION ENGINE"
     category="LLM SERVING · GPU ACCELERATION · RUNTIME EFFICIENCY · 2026"
     title="From queued prompt to streamed token, every layer of execution matters."
     copy="I engineered ⟪LLM inference pipelines⟫ across KV-cache optimization, dynamic batching, memory management, quantization, GPU profiling, and kernel-level optimization. The work connects ⟪CUDA, TensorRT, and vLLM⟫ with distributed model serving, focusing on latency, throughput, and GPU memory efficiency."
     accent="amber" steps={INFERENCE_STEPS} Overview={InferenceOverview} Visual={InferenceVisual}
-    architecturePath={[0,1,2,5,7]} proof={INFERENCE_PROOF}
+    architecturePath={[0,1,2,5,7]} proof={INFERENCE_PROOF} conclusion={INFERENCE_CONCLUSION}
   />;
 }
 
 export function TrainingChapter({ part = "full" }: { part?: "overview" | "full" }) {
   return <FlagshipChapter part={part}
-    id="post-training" number="04" brand="ADVANCED POST-TRAINING"
+    id="post-training" number="01" brand="ADVANCED POST-TRAINING"
     category="ALIGNMENT · RL OPTIMIZATION · TEST-TIME SCALING · 2026"
     title="A foundation model learns to reason, then spends compute checking its work."
     copy="I developed a ⟪Qwen3-4B reasoning-model post-training pipeline⟫ using supervised reasoning fine-tuning and reinforcement-based preference optimization. The iterative loop combines ⟪SFT, GRPO-style policy updates, verifier-guided trajectories, and test-time compute scaling⟫ for mathematics, multi-step logic, and long-horizon software engineering."
     accent="rose" steps={TRAINING_STEPS} Overview={TrainingOverview} Visual={TrainingVisual}
-    architecturePath={[0,1,3,5,7]} proof={TRAINING_PROOF}
+    architecturePath={[0,1,3,5,7]} proof={TRAINING_PROOF} conclusion={TRAINING_CONCLUSION}
   />;
 }
 
@@ -2379,6 +2282,42 @@ function useExperienceMotion(shellRef: React.RefObject<HTMLElement | null>, redu
   }, [reducedMotion, shellRef]);
 }
 
+/** The real microscope, inside a block of the second page, running at about twice its pace. */
+function MiniMicroscope({ id, accent, brand, steps, Visual, proof, conclusion }: { id: string; accent: ProjectAccent; brand: string; steps: readonly StoryStep[]; Visual: VisualComponent; proof: readonly { label: string; value: string; detail: string }[]; conclusion: ConclusionSpec }) {
+  const reducedMotion = useReducedMotion();
+  const ref = useRef<HTMLElement>(null);
+  const controller = useAutoplaySequence(steps.length + 1, 11800 / 1.8, ref, reducedMotion, {});
+  return (
+    <section ref={ref} className={`vx-case-microscope-page vx-case-${id} vx-accent-${accent}`}>
+      <div className="vx-section-shell">
+        <SystemWalkthrough name={brand} steps={steps} controller={controller} Visual={Visual} accent={accent} proof={proof} conclusion={conclusion} />
+      </div>
+    </section>
+  );
+}
+
+function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
+  const training = domain === "training";
+  const id = training ? "post-training" : "inference";
+  const href = `/${id}`;
+  return (
+    <ProjectSecondPage
+      id={id}
+      accent={training ? "rose" : "amber"}
+      title={training ? "Advanced post-training" : "Inference optimization engine"}
+      line={training ? "One base model, made smarter on maths and coding, then made affordable" : "The same intelligence for less GPU time, and serving that holds under load"}
+      href={href}
+      blocks={[
+        { key: "microscope", label: "Component microscope", href: `${href}#${id}-microscope`, node: training
+          ? <MiniMicroscope id={id} accent="rose" brand="ADVANCED POST-TRAINING" steps={TRAINING_STEPS} Visual={TrainingVisual} proof={TRAINING_PROOF} conclusion={TRAINING_CONCLUSION} />
+          : <MiniMicroscope id={id} accent="amber" brand="INFERENCE OPTIMIZATION ENGINE" steps={INFERENCE_STEPS} Visual={InferenceVisual} proof={INFERENCE_PROOF} conclusion={INFERENCE_CONCLUSION} /> },
+        { key: "results", label: "Results laboratory", href: `${href}#${id}-study`, node: <LabPreview training={training} /> },
+        { key: "poster", label: "The result on one page", href, node: <ProjectPoster domain={domain} /> },
+      ]}
+    />
+  );
+}
+
 export function PortfolioV2() {
   const reducedMotion = useReducedMotion();
   const shellRef = useRef<HTMLElement>(null);
@@ -2392,20 +2331,20 @@ export function PortfolioV2() {
         <div className="vx-cursor-light" aria-hidden="true" />
         <header className="vx-header">
           <a href="#top" className="vx-brand" aria-label="Yashwant Bhyri, portfolio home"><span>YB</span><div><strong>Yashwant Bhyri</strong><small>{t.brand.subtitle}</small></div></a>
-          <nav aria-label="Portfolio navigation"><a href="#profile">{t.nav.profile}</a><a href="#projects">{t.nav.projects}</a><a href="#antigravity">{t.nav.antigravity}</a><a href="#mindscape">{t.nav.mindscape}</a><a href="#inference">Inference</a><a href="#post-training">Post-training</a><a href="#research">{t.nav.research}</a><a href="#contact">{t.nav.contact}</a></nav>
+          <nav aria-label="Portfolio navigation"><a href="#profile">{t.nav.profile}</a><a href="#projects">{t.nav.projects}</a><a href="#post-training">Post-training</a><a href="#inference">Inference</a><a href="#mindscape">{t.nav.mindscape}</a><a href="#antigravity">{t.nav.antigravity}</a><a href="#research">{t.nav.research}</a><a href="#contact">{t.nav.contact}</a></nav>
           <a className="vx-header-resume" href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">{t.resume}</a>
           <LangSwitch />
         </header>
         <Hero reducedMotion={reducedMotion} />
         <ProfileSection />
         <ProjectIndex />
-        <AntigravityChapter />
-        <MindScapeChapter />
-        {/* Two levels: the architecture and a poster here; microscope and laboratory on /inference and /post-training */}
-        <InferenceChapter part="overview" />
-        <ProjectPoster domain="inference" />
+        {/* Two levels: the architecture and a live second page here; microscope and laboratory on /post-training and /inference */}
         <TrainingChapter part="overview" />
-        <ProjectPoster domain="training" />
+        <ComputeSecondPage domain="training" />
+        <InferenceChapter part="overview" />
+        <ComputeSecondPage domain="inference" />
+        <MindScapeChapter />
+        <AntigravityChapter />
         <ResearchSection />
         <ContactSection />
         <ContactDock />

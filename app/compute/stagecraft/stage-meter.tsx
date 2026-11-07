@@ -25,8 +25,8 @@ export type FocusDetail = {
   parts?: readonly { label: string; value: string; tone?: Tone }[];
   /** Why it happened, one short clause. */
   cause?: string;
-  /** Where the caption sits on the stage (default top). */
-  place?: "top" | "center" | "bottom" | "left" | "upper-left";
+  /** Kept for older callers; the caption is always in the middle of the stage. */
+  place?: string;
   tone?: Tone;
 } | null;
 
@@ -57,8 +57,9 @@ function useLabEvent<T>(name: string, reset: string) {
 }
 
 /** The voice: one plain line at the head of the stage. */
-export function StageMeter({ moduleKey }: { moduleKey: string }) {
-  const m = useLabEvent<NonNullable<MeterDetail>>("lab:meter", moduleKey);
+export function StageMeter({ moduleKey, override }: { moduleKey: string; override?: NonNullable<MeterDetail> | null }) {
+  const heard = useLabEvent<NonNullable<MeterDetail>>("lab:meter", moduleKey);
+  const m = override ?? heard;
   return (
     <div className="sm-voice" data-on={m ? "true" : "false"} data-tone={m?.tone ?? "neutral"} aria-live="polite">
       {m && <span key={m.text} className="sm-line">{highlight(m.text.replace(/\.$/, ""))}</span>}
@@ -83,7 +84,7 @@ export function FocusCaption({ moduleKey }: { moduleKey: string }) {
   }, [f]);
   if (!f) return <div ref={own} hidden />;
   return (
-    <div ref={own} className="sm-focus" role="status" aria-label={plain(f.headline)} key={f.headline} data-place={f.place ?? "center"} data-tone={f.tone ?? "neutral"}>
+    <div ref={own} className="sm-focus" role="status" aria-label={plain(f.headline)} key={f.headline} data-tone={f.tone ?? "neutral"}>
       <strong>{highlight(f.headline)}</strong>
       {f.parts?.length ? (
         <span className="sm-parts">
@@ -95,4 +96,39 @@ export function FocusCaption({ moduleKey }: { moduleKey: string }) {
       {f.cause && <p>{f.cause}</p>}
     </div>
   );
+}
+
+/**
+ * Freeze a film on its result: at each moment the film pauses, the stage goes quiet
+ * and the caption reads the number, then the film carries on. Each moment plays once
+ * per run, and only in the show layout.
+ */
+export type FreezeMoment = NonNullable<FocusDetail> & { at: number; hold?: number };
+export function useFreezeMoments(moments: readonly FreezeMoment[], readTime: () => number, running: boolean, pause: () => void, resume: () => void, runKey: unknown) {
+  const passed = useRef(new Set<number>());
+  const [frozen, setFrozen] = useState(false);
+  const live = useRef({ moments, readTime, pause, resume });
+  useEffect(() => { live.current = { moments, readTime, pause, resume }; });
+  useEffect(() => { passed.current = new Set(); }, [runKey]);
+  useEffect(() => {
+    if (!running || frozen || !document.querySelector(".lab-flow-show")) return;
+    const id = window.setInterval(() => {
+      const { moments: list, readTime: read, pause: stop } = live.current;
+      const t = read();
+      const i = list.findIndex((m, k) => !passed.current.has(k) && t >= m.at);
+      if (i < 0) return;
+      // moments already behind the clock (a seek) count as seen; only the latest one plays
+      list.forEach((m, k) => { if (m.at <= t) passed.current.add(k); });
+      const latest = list.reduce((best, m, k) => (m.at <= t ? k : best), i);
+      stop();
+      emitFocus(list[latest]);
+      setFrozen(true);
+      window.setTimeout(() => {
+        emitFocus(null);
+        setFrozen(false);
+        live.current.resume();
+      }, list[latest].hold ?? 3400);
+    }, 120);
+    return () => window.clearInterval(id);
+  }, [running, frozen]);
 }

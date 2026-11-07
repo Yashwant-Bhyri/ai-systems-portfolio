@@ -31,7 +31,7 @@ function margin(policyIndex: number, budget: number, taskId: number) {
   return { m: ability - task.difficulty, regression };
 }
 
-export function CapabilityTerrain({ active }: { active: boolean }) {
+export function CapabilityTerrain({ active, fast = false }: { active: boolean; fast?: boolean }) {
   const tr = useTr();
   const relief = useRef<HTMLDivElement>(null);
   const labels = useRef<SVGSVGElement>(null);
@@ -41,6 +41,8 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
   // The land follows `k`: the clock raises it once; a chosen stage or a replay moves it from there.
   const goal = useRef<number | null>(null);
   const k = useRef(0);
+  const speed = useRef(1);
+  useEffect(() => { speed.current = fast ? 1.7 : 1; }, [fast]);
   const [run, setRun] = useState(0);
   const field = useMemo(() => STAGES.map((s) => ORDER.map((id) => {
     const { m, regression } = margin(s.policy, s.budget, id);
@@ -90,7 +92,7 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
     const tick = (now: number) => {
       const dt = Math.min(64, now - prev);
       prev = now;
-      if (goal.current === null) k.current = Math.min(END, k.current + (dt / RISE) * END);
+      if (goal.current === null) k.current = Math.min(END, k.current + (dt / RISE) * END * speed.current);
       else {
         // a chosen stage: the land settles there and stays
         const d = goal.current - k.current;

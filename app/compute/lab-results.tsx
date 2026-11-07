@@ -62,11 +62,15 @@ import { ModuleArc } from "./stagecraft/module-arc";
 import { FLEET_ARC } from "./arc-scenes/fleet-arc";
 import { InsideScan } from "./stagecraft/scan/inside-scan";
 import { CapabilityTerrain } from "./stagecraft/scan/capability-terrain";
+import { ExhibitScene } from "./stagecraft/exhibit-host";
+import { PolicyGrpo } from "../exhibit/policy/grpo";
+import { PolicyFrontierStory, FRONTIER_STORY_MS } from "../exhibit/policy/frontier-story";
 import { useTr } from "../exhibit/i18n";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 import {
   GlyphAudit,
   GlyphBigPicture,
+  GlyphHighlights,
   GlyphCapability,
   GlyphComposition,
   GlyphCurves,
@@ -147,17 +151,17 @@ function alignBlock(inside: Element | null) {
   window.setTimeout(() => { html.style.scrollSnapType = snap; }, 1400);
 }
 
-/* Post-training explorers tour themselves: every checkpoint, then every thought allowance. */
+/* Post-training explorers tour themselves, briskly: every checkpoint, then every thinking budget. */
 const TRAINING_DEMO: readonly CursorStep[] = [
-  { target: ".rs-policy-strip button:nth-of-type(1)", label: "Base checkpoint", hold: 4200 },
-  { target: ".rs-policy-strip button:nth-of-type(2)", label: "After SFT", hold: 4200 },
-  { target: ".rs-policy-strip button:nth-of-type(3)", label: "RL checkpoint", hold: 4600 },
-  { target: ".rs-policy-strip button:nth-of-type(4)", label: "Lean RL", hold: 4600 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(1)", label: "1× thinking budget", hold: 3800 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(3)", label: "4× thinking budget", hold: 3800 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(4)", label: "8× thinking budget", hold: 3800 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(2)", label: "Back to 2×", hold: 2600 },
-  { target: ".rs-policy-strip button:nth-of-type(3)", label: "RL checkpoint", hold: 2600 },
+  { target: ".rs-policy-strip button:nth-of-type(1)", label: "Base checkpoint", hold: 1500 },
+  { target: ".rs-policy-strip button:nth-of-type(2)", label: "After SFT", hold: 1500 },
+  { target: ".rs-policy-strip button:nth-of-type(3)", label: "RL checkpoint", hold: 1700 },
+  { target: ".rs-policy-strip button:nth-of-type(4)", label: "Lean RL", hold: 1700 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(1)", label: "1× thinking budget", hold: 1500 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(3)", label: "4× thinking budget", hold: 1500 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(4)", label: "8× thinking budget", hold: 1500 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(2)", label: "Back to 2×", hold: 1200 },
+  { target: ".rs-policy-strip button:nth-of-type(3)", label: "RL checkpoint", hold: 1200 },
 ]
 
 const INFERENCE_VIEWS = [
@@ -177,6 +181,8 @@ const TRAINING_VIEWS = [
   { name: "Elastic RL on 64 GPUs", detail: "Rollout and training roles per GPU", symbol: "≋" },
   { name: "Inside the model", detail: "Base vs RL checkpoint, token × layer", symbol: "▦" },
   { name: "Capability terrain", detail: "96 tasks × six checkpoints", symbol: "⛰" },
+  { name: "Learning from outcomes", detail: "GRPO, iteration by iteration", symbol: "↗" },
+  { name: "The frontier", detail: "Accuracy against GPU time per answer", symbol: "↖" },
 ];
 const RESEARCH = [
   {
@@ -424,17 +430,62 @@ const INFERENCE_INTRO: readonly IntroStep[] = [
   { kind: "line", text: "Inference optimization can be done in *two ways*", ms: 2800 },
   { kind: "path", index: 0 },
   { kind: "path", index: 1 },
-  { kind: "line", text: "First: how we serve the same intelligence with *cheaper execution*", ms: 3000 },
+  { kind: "line", text: "First, all of it in *under two minutes*", ms: 2400 },
 ];
 const TRAINING_INTRO: readonly IntroStep[] = [
   { kind: "line", text: "One base model, made *smarter* on maths and coding", ms: 3000 },
   { kind: "path", index: 0 },
-  { kind: "line", text: "First, look *inside the model*", ms: 2400 },
+  { kind: "line", text: "First, all of it in *under two minutes*", ms: 2400 },
 ];
+/**
+ * The highlights: the strongest moment of each module, one after another, on the
+ * real figures. Anyone can stop here; the modules after it are the depth.
+ */
+type Clip = { key: string; ms: number; line: string; beat?: number; film?: { step: number; at?: number }; seek?: number };
+const INFERENCE_CLIPS: readonly Clip[] = [
+  { key: "setup", ms: 17000, line: "All 96 requests: three levers, the same answers, less GPU time" },
+  { key: "replay", ms: 12000, line: "One request and all 96, before and after" },
+  { key: "composition", ms: 13000, line: "Training lifts accuracy, serving cuts the cost", seek: 3000 },
+  { key: "latency", ms: 12000, line: "What a queue feels like, and how much of it goes", seek: 12000 },
+  { key: "draft", ms: 9000, line: "Under load: a small model drafts, the large one checks", beat: 1 },
+  { key: "cache", ms: 9000, line: "Send each request to where its prompt is already cached", beat: 2 },
+  { key: "pressure", ms: 9000, line: "Long prompts no longer freeze a live answer", beat: 2 },
+  { key: "overlap", ms: 9000, line: "The CPU prepares the next step during this one", beat: 1 },
+  { key: "map", ms: 9000, line: "Every mechanism on one serving clock" },
+  { key: "glossary", ms: 11000, line: "And the vocabulary behind it" },
+];
+const TRAINING_CLIPS: readonly Clip[] = [
+  { key: "inside", ms: 10000, line: "Where training changed the way the model reasons" },
+  { key: "terrain", ms: 9000, line: "Each stage of training raises more of the 96 tasks" },
+  { key: "learn", ms: 11000, line: "It learns from outcomes: the tests decide which attempts survive" },
+  { key: "film", ms: 11000, line: "Give it more thought: same weights, more room to reason", film: { step: 3, at: 5000 } },
+  { key: "film", ms: 8000, line: "Then make thought count: the same answers in fewer tokens", film: { step: 4 } },
+  { key: "frontier", ms: 11000, line: "The frontier: three times the answers, for about the same GPU time each" },
+  { key: "fleet", ms: 10000, line: "Elastic RL: any free GPU takes any role", beat: 1 },
+  { key: "map", ms: 8000, line: "And task by task, what changed" },
+];
+/** A standalone exhibit on its own clock, as a module of the laboratory. */
+function ExhibitModule({ Scene, duration, label, active }: { Scene: React.ComponentProps<typeof ExhibitScene>["Scene"]; duration: number; label: string; active: boolean }) {
+  const { ref, ...p } = useStudyPlayback(1, 0, { finite: true, interval: duration, enabled: active });
+  const host = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (p.finished) host.current?.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true }));
+  }, [p.finished]);
+  return (
+    <section ref={ref} className="ex-module">
+      <div ref={host}>
+        <ExhibitScene Scene={Scene} label={label} readTime={p.readTime} playing={p.running} reduced={p.reduced} duration={duration} onSeek={p.seek} onToggle={() => (p.finished ? p.replay() : p.toggle())} />
+      </div>
+    </section>
+  );
+}
+
 /** Modules without a scripted demonstration stay on stage this long before the show moves on. */
 const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 40000, tasks: 22000 };
 /** The next module's ring fills over this long once the current one has told its story. */
-const COUNTDOWN = 5200;
+const COUNTDOWN = 3200;
+/** After the visitor last touched the stage, a finished or abandoned module moves on after this long. */
+const IDLE_MOVE_ON = 30000;
 
 export function ComputeLabStudy({
   domain,
@@ -466,6 +517,8 @@ export function ComputeLabStudy({
   // A module that has finished once is the visitor's on any later visit: it never hurries them on.
   const seen = useRef(new Set<string>());
   const [resumed, setResumed] = useState(0);
+  // The highlights run: which clip is on stage.
+  const [clip, setClip] = useState<number | null>(null);
   const [servingKey, setServingKey] = useState("pressure");
   const [chapter, setChapter] = useState("");
   const [status, setStatus] = useState<{ key: string; phase: "running" | "done" | "taken" }>({ key: "", phase: "running" });
@@ -550,6 +603,8 @@ export function ComputeLabStudy({
   const toStage = () =>
     requestAnimationFrame(() => alignBlock(document.getElementById(`${domain}-cost-lab`)));
   const openView = (i: number) => {
+    // Coming back to a figure starts it from its beginning, never from where its clock happened to stop.
+    if (!training && !(mode === "explore" && view === i)) setFigureRevisions((old) => old.map((r, k) => (k === i ? r + 1 : r)));
     setView(i);
     setFigureHandoff(null);
     playback.select(selected);
@@ -576,14 +631,16 @@ export function ComputeLabStudy({
   // In order of what a visitor should see first: the most striking pictures open, the detail follows.
   const railItems: RailItem[] = training
     ? [
-        { key: "inside", title: "Inside the model", term: "base → RL checkpoint · 36 layers × 50 tokens", value: "7 of 50", unit: "words the base model would have written differently", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
-        { key: "terrain", title: "Capability terrain", term: "96 tasks × six checkpoints", value: `+${simulateLab(3, 4).correct - simulateLab(0, 1).correct}`, unit: "tasks raised above the line, base → lean RL", Glyph: GlyphTerrain, onOpen: () => openView(6), current: mode === "explore" && view === 6 },
-        { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thinking budget", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thinking budget", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
-        { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
-        { key: "film", title: "How it learned", term: "base → SFT → RL → 4× thinking budget → lean RL", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "inside", title: "What changed inside the model", term: "base → RL checkpoint · 36 layers × 50 tokens", value: "7 of 50", unit: "words the base model would have written differently", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
+        { key: "terrain", title: "Skill gained at each step", term: "96 tasks × six checkpoints", value: `+${simulateLab(3, 4).correct - simulateLab(0, 1).correct}`, unit: "tasks raised above the line, base → lean RL", Glyph: GlyphTerrain, onOpen: () => openView(6), current: mode === "explore" && view === 6 },
+        { key: "learn", title: "Learning from outcomes", term: "GRPO: the tests decide", value: `${simulateLab(1, 1).correct} → ${simulateLab(2, 1).correct}`, unit: "of 96 tasks solved", Glyph: GlyphCapability, onOpen: () => openView(7), current: mode === "explore" && view === 7 },
+        { key: "frontier", title: "The frontier", term: "accuracy against GPU time per answer", value: "28 → 82", unit: "of 96 tasks solved", Glyph: GlyphFrontier, onOpen: () => openView(8), current: mode === "explore" && view === 8 },
+        { key: "curves", title: "Accuracy for GPU time", term: "1× · 2× · 4× · 8× thinking budget", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thinking budget", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "tasks", title: "Which tasks it can now solve", term: "easiest to hardest", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
+        { key: "film", title: "Training, step by step", term: "base → SFT → RL → 4× thinking budget → lean RL", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "fleet", title: "Elastic RL on 64 GPUs", term: "rollout ↔ training role per GPU · after QwenGyre", value: "4 → 7", unit: "RL steps in 14 min · 1.96×", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
-        { key: "map", title: "Capability map", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "audit", title: "Regression audit", term: "gains beside losses", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thinking budget`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "map", title: "Task by task", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "audit", title: "What got worse", term: "gains beside losses", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thinking budget`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
         { key: "setup", title: "The big picture", term: "96 requests · three levers", value: `${fmt(simulateLab(2, 2, false, "shared-prefix", { scheduler: "barrier", reuse: false, fastKernels: false }).p95, 0)} s`, unit: "the slowest 5% wait, today", Glyph: GlyphBigPicture, onOpen: openSetup, current: mode === "setup" },
@@ -592,6 +649,11 @@ export function ComputeLabStudy({
         { key: "latency", title: "Queue & latency", term: "arrival → completion, ranked", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
         { key: "film", title: "The experiment", term: "free-worker scheduling → prefix reuse → faster rates", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
       ];
+  // The highlights come first: a run through the strongest moments, then the modules for depth.
+  if (labNav === "show") railItems.unshift({
+    key: "highlights", title: "The two-minute version", term: "every module's best moment", value: training ? "8 moments" : "10 moments", unit: "one after another", Glyph: GlyphHighlights,
+    onOpen: () => setClip(0), current: clip !== null,
+  });
   // Deep links from the project overview: #inference-study/replay opens that module.
   const railRef = useRef(railItems);
   useEffect(() => { railRef.current = railItems; });
@@ -623,19 +685,21 @@ export function ComputeLabStudy({
     ...railItems.map((m) => ({ key: m.key, title: m.title, term: m.term, value: m.value, unit: m.unit, Glyph: m.Glyph, pathway: 0 })),
     ...(training ? [] : SERVING_RAIL.map((m) => ({ ...m, pathway: 1 }))),
   ];
-  const currentKey = !training && inferencePart === "load" ? servingKey : railItems.find((i) => i.current)?.key ?? railItems[0].key;
+  const currentKey = clip !== null ? "highlights" : !training && inferencePart === "load" ? servingKey : railItems.find((i) => i.current)?.key ?? railItems[0].key;
   const order = showItems.map((i) => i.key);
   const nextKey = order[(order.indexOf(currentKey) + 1) % order.length];
   const lastModule = order.indexOf(currentKey) === order.length - 1;
   const phase = status.key === currentKey ? status.phase : "running";
   const briefs = useMemo(() => moduleBriefs(training, budget), [training, budget]);
   const openSeq = useRef(0);
+  const touched = useRef(0);
   const reveal = (key: string, auto: boolean) => {
     const seq = ++openSeq.current;
     setLandingPhase((p) => (p === "on" ? "off" : p));
     if (key === "film" && currentKey !== "film") setFilmRun((n) => n + 1);
-    // Coming back to a module is for looking again: it stays until the visitor moves on.
-    if (!auto && seen.current.has(key)) setStatus({ key, phase: "taken" });
+    void auto;
+    setStatus({ key, phase: "running" });
+    touched.current = 0;
     if (!training && SERVING_RAIL.some((m) => m.key === key)) {
       setInferencePart("load");
       // The serving lab loads lazily; ask until it has mounted, unless the visitor has moved on.
@@ -647,7 +711,27 @@ export function ComputeLabStudy({
       railRef.current.find((item) => item.key === key)?.onOpen();
     }
   };
+  const clips = training ? TRAINING_CLIPS : INFERENCE_CLIPS;
+  const playClip = (c: Clip, n: number) => {
+    const seq = ++openSeq.current;
+    if (!training && SERVING_RAIL.some((m) => m.key === c.key)) {
+      setInferencePart("load");
+      [0, 400, 1400].forEach((ms) => window.setTimeout(() => { if (openSeq.current === seq) window.dispatchEvent(new CustomEvent("lab:serving-open", { detail: c.key })); }, ms));
+    } else {
+      if (!training) setInferencePart("cheaper");
+      railRef.current.find((item) => item.key === c.key)?.onOpen();
+    }
+    const send = () => {
+      if (openSeq.current !== seq) return;
+      if (c.beat !== undefined) window.dispatchEvent(new CustomEvent("lab:arc-go", { detail: { id: n, beat: c.beat } }));
+      if (c.film) window.dispatchEvent(new CustomEvent("lab:film-go", { detail: { training, ...c.film } }));
+      if (c.seek !== undefined) window.dispatchEvent(new CustomEvent("lab:figure-seek", { detail: c.seek }));
+    };
+    [260, 900, 1700, 3000].forEach((ms) => window.setTimeout(() => { if (ms === 260 || c.beat !== undefined) send(); }, ms));
+  };
   const openKey = (key: string, auto = false) => {
+    if (key === "highlights") { setLandingPhase((p) => (p === "on" ? "off" : p)); setBriefKey(null); setStatus({ key, phase: "running" }); setClip(0); return; }
+    setClip(null);
     if (show && briefs[key] && !briefed.current.has(key)) {
       briefed.current.add(key);
       pendingOpen.current = { key, auto };
@@ -684,29 +768,29 @@ export function ComputeLabStudy({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const done = () => setStatus((s) => (s.key === currentRef.current && s.phase === "taken" ? s : { key: currentRef.current, phase: "done" }));
-    const taken = () => setStatus({ key: currentRef.current, phase: "taken" });
+    const done = () => { if (currentRef.current !== "highlights") setStatus((s) => (s.key === currentRef.current && s.phase === "taken" ? s : { key: currentRef.current, phase: "done" })); };
     el.addEventListener("lab:module-round", done);
-    el.addEventListener("lab:module-taken", taken);
     const io = new IntersectionObserver(([e]) => setLabInView(e.isIntersecting), { threshold: 0.3 });
     io.observe(el);
-    return () => { el.removeEventListener("lab:module-round", done); el.removeEventListener("lab:module-taken", taken); io.disconnect(); };
+    return () => { el.removeEventListener("lab:module-round", done); io.disconnect(); };
   }, [ref]);
-  // Using any control on the stage (a scrubber, a pause, a tab) stops the show from moving on by itself.
+  // Using the stage holds the show while the visitor is there. Only "Stay on this one" holds it for good;
+  // a module that was used and then left alone moves on, so the show never just stops.
+  const [touchTick, setTouchTick] = useState(0);
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage || !show) return;
-    const take = (e: Event) => {
-      if (!e.isTrusted) return;
-      const t = e.target as HTMLElement | null;
-      if (!t?.closest?.("button, input, select, summary, [role='button'], [role='slider']")) return;
-      if (t.closest(".ma-interlude button")) return;
-      setStatus({ key: currentRef.current, phase: "taken" });
-    };
-    stage.addEventListener("pointerdown", take, true);
-    stage.addEventListener("keydown", take, true);
-    return () => { stage.removeEventListener("pointerdown", take, true); stage.removeEventListener("keydown", take, true); };
+    const touch = (e: Event) => { if (e.isTrusted) { touched.current = performance.now(); setTouchTick((n) => n + 1); } };
+    stage.addEventListener("pointerdown", touch, true);
+    stage.addEventListener("keydown", touch, true);
+    stage.addEventListener("input", touch, true);
+    return () => { stage.removeEventListener("pointerdown", touch, true); stage.removeEventListener("keydown", touch, true); stage.removeEventListener("input", touch, true); };
   }, [show]);
+  useEffect(() => {
+    if (!show || landingPhase === "on" || phase !== "running" || !touched.current) return;
+    const id = window.setTimeout(() => setStatus((s) => (s.key === currentKey && s.phase === "taken" ? s : { key: currentKey, phase: "done" })), IDLE_MOVE_ON);
+    return () => window.clearTimeout(id);
+  }, [show, landingPhase, phase, currentKey, touchTick]);
   useEffect(() => { if (phase === "done") seen.current.add(currentKey); }, [phase, currentKey]);
   useEffect(() => {
     const ms = DWELL[currentKey];
@@ -718,17 +802,42 @@ export function ComputeLabStudy({
     if (!show || landingPhase === "on" || phase !== "done" || !labInView || briefKey) return;
     // The show ends on its last module; it does not loop back to the start.
     if (lastModule) return;
-    const id = window.setTimeout(() => openKeyRef.current(nextKey, true), COUNTDOWN);
+    // A recent touch gives the visitor time before the show moves on.
+    const wait = Math.max(COUNTDOWN, touched.current ? IDLE_MOVE_ON / 3 - (performance.now() - touched.current) : 0);
+    const id = window.setTimeout(() => openKeyRef.current(nextKey, true), wait);
     return () => window.clearTimeout(id);
-  }, [show, landingPhase, phase, labInView, nextKey, briefKey, lastModule]);
+  }, [show, landingPhase, phase, labInView, nextKey, briefKey, lastModule, touchTick]);
+  // The clips run on their own clock; "Stay on this one" holds the current clip.
+  const playClipRef = useRef(playClip);
+  useEffect(() => { playClipRef.current = playClip; });
+  useEffect(() => {
+    if (clip === null || !show) return;
+    playClipRef.current(clips[clip], clip);
+    // the clip list is fixed for one laboratory
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clip, show]);
+  useEffect(() => {
+    if (clip === null || !show || phase === "taken" || !labInView) return;
+    const id = window.setTimeout(() => {
+      if (clip + 1 < clips.length) setClip(clip + 1);
+      else { setClip(null); seen.current.add("highlights"); openKeyRef.current(order[1], true); }
+    }, clips[clip].ms);
+    return () => window.clearTimeout(id);
+    // see above
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clip, show, phase, labInView]);
   const stayHere = () => setStatus({ key: currentKey, phase: "taken" });
   const keepPlaying = () => {
     setStatus({ key: currentKey, phase: "running" });
+    touched.current = 0;
     setResumed((n) => n + 1);
     window.dispatchEvent(new Event("lab:resume"));
   };
   const diveDeeper = () => {
-    setStatus({ key: currentKey, phase: "taken" });
+    // From the highlights, diving deeper leaves the run and stays in the module on stage.
+    const key = clip !== null ? clips[clip].key : currentKey;
+    setClip(null);
+    setStatus({ key, phase: "taken" });
     window.dispatchEvent(new Event("lab:dive"));
   };
   const landingOn = show && landingPhase === "on";
@@ -797,7 +906,7 @@ export function ComputeLabStudy({
         <h2 id={`${domain}-study-title`}>
           {training ? tr("What did the model learn?") : tr("Inference optimization")}
         </h2>
-        {show && <StageMeter moduleKey={`${currentKey}|${chapter}`} />}
+        {show && <StageMeter moduleKey={`${currentKey}|${chapter}|${clip}`} override={clip !== null ? { text: clips[clip].line, step: clip + 1, total: clips.length, tone: "neutral" } : null} />}
         {!training && (
           <div className="br-fork" role="group" aria-label={tr("Two branches of inference optimization")}>
             {([
@@ -829,13 +938,14 @@ export function ComputeLabStudy({
             title={showItems.find((i) => i.key === briefKey)?.title ?? ""}
             brief={briefs[briefKey]}
             path={pathways[showItems.find((i) => i.key === briefKey)?.pathway ?? 0].short}
+            items={showItems.filter((i) => i.pathway === (showItems.find((x) => x.key === briefKey)?.pathway ?? 0))}
             onDone={endBrief}
           />
         )}
         {labNav !== "dock" && !landingOn && navNode}
         <div ref={stageRef} className={block ? "lb-stage" : "lf-stage"} hidden={landingOn}>
           {!block && (training || inferencePart === "cheaper") && mode === "watch" && <div className="lf-chapters">{chapterSlot}</div>}
-        {show && <FocusCaption moduleKey={`${currentKey}|${chapter}`} />}
+        {show && <FocusCaption moduleKey={`${currentKey}|${chapter}|${clip}`} />}
         <div ref={fitRef} className="lf-fit">
       <RetainedLabPanel
         active={training || inferencePart === "cheaper"}
@@ -876,7 +986,7 @@ export function ComputeLabStudy({
         </div>
         {!training && (
           <RetainedLabPanel active={mode === "setup"} id={`${domain}-big-picture`} label="The big picture">
-            <BigPicture active={mode === "setup" && landingPhase === "off" && labInView && inferencePart === "cheaper"} />
+            <BigPicture key={clip === 0 ? "clip" : "module"} fast={clip !== null} active={mode === "setup" && landingPhase === "off" && labInView && inferencePart === "cheaper"} />
           </RetainedLabPanel>
         )}
         <RetainedLabPanel
@@ -1121,7 +1231,7 @@ export function ComputeLabStudy({
                         </p>
                       }
                     >
-                      <div ref={replayHost} className="gc-host">
+                      <div key={figureRevisions[1]} ref={replayHost} className="gc-host">
                       <GhostCursor root={replayHost} script={REPLAY_DEMO} enabled={mode === "explore" && view === 1} />
                       <RequestReplayExplorer
                         key={`${base.policyIndex}-${budget}-${workload}-${figureRevisions[1]}`}
@@ -1154,7 +1264,7 @@ export function ComputeLabStudy({
                         </p>
                       }
                     >
-                      <div ref={latencyHost} className="gc-host">
+                      <div key={figureRevisions[2]} ref={latencyHost} className="gc-host">
                       <GhostCursor root={latencyHost} script={LATENCY_DEMO} enabled={mode === "explore" && view === 2} startDelay={1000} restDelay={1800} />
                       <LoadLatencyExplorer
                         key={`${base.policyIndex}-${budget}-${workload}-${figureRevisions[2]}`}
@@ -1180,9 +1290,13 @@ export function ComputeLabStudy({
               ) : view === 3 ? (
                 <TaskLanding budget={budget} active={mode === "explore"} />
               ) : view === 5 ? (
-                <InsideScan active={mode === "explore" && view === 5 && landingPhase === "off" && !briefKey} />
+                <InsideScan fast={clip !== null} active={mode === "explore" && view === 5 && landingPhase === "off" && !briefKey} />
               ) : view === 6 ? (
-                <CapabilityTerrain active={mode === "explore" && view === 6 && !briefKey} />
+                <CapabilityTerrain fast={clip !== null} active={mode === "explore" && view === 6 && !briefKey} />
+              ) : view === 7 ? (
+                <ExhibitModule key="learn" Scene={PolicyGrpo} duration={16800} label="Learning from outcomes" active={mode === "explore" && view === 7 && !briefKey} />
+              ) : view === 8 ? (
+                <ExhibitModule key="frontier" Scene={PolicyFrontierStory} duration={FRONTIER_STORY_MS} label="The frontier" active={mode === "explore" && view === 8 && !briefKey} />
               ) : view === 4 ? (
                 <ModuleArc active={mode === "explore" && view === 4} {...FLEET_ARC}><FleetModule active={mode === "explore"} /></ModuleArc>
               ) : (

@@ -1,56 +1,7 @@
-/* Component microscope, compute chapters only: fewer frames, one sentence, one graphic.
-   The other chapters keep their established treatment. */
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console {
-  border: 0; background: none; box-shadow: none; padding: 4px 0 6px; margin: 2px 0 6px;
-  grid-template-rows: auto auto 26px;
-}
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console::before,
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console::after,
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-diagonal-sweep { display: none; }
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-micro-row { display: none; }
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console .vx-signal-ticker,
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console [class*="ticker"] { opacity: .55; }
-
-/* The three-box input → operation → output rail becomes one quiet line. */
-:is(.vx-case-inference, .vx-case-post-training) .vx-io-rail { min-height: 0; margin-top: 10px; grid-template-columns: auto 22px auto 22px auto; justify-content: start; gap: 10px; }
-:is(.vx-case-inference, .vx-case-post-training) .vx-io-rail > div { min-height: 0; padding: 0; border: 0; background: none; gap: 3px; }
-:is(.vx-case-inference, .vx-case-post-training) .vx-io-rail span { font-size: 9px; opacity: .8; }
-:is(.vx-case-inference, .vx-case-post-training) .vx-io-rail strong { color: #9fadba; font-weight: 450; font-size: 12px; }
-
-/* The story column: kicker, title, proof. The paragraph goes. */
-:is(.vx-case-inference, .vx-case-post-training) .vx-story-copy > p { display: none; }
-:is(.vx-case-inference, .vx-case-post-training) .vx-story-copy h3 { font-size: clamp(30px, 2.5vw, 42px); }
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-top em { display: none; }
-
-/* The scene: no evidence tag; options read as a switch, not a toolbar. */
-:is(.vx-case-inference, .vx-case-post-training) .cx-scene-options > span { visibility: hidden; }
-/* The cursor host must not break the scene's flex column. */
+/* Component microscope, compute chapters. The console, stage header and input → output
+   rail are the same as every other chapter's; only the scene helpers live here. */
 .cx-scene > .gc-host { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; }
-/* No expand button in the compute microscope: the graphic already fills its window. */
 :is(.vx-case-inference, .vx-case-post-training) .cx-replay-controls > button:first-child { display: none; }
-
-/* Top bar: the definition, then a still row of keywords lit one at a time. */
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-top { display: none; }
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console { grid-template-rows: auto auto; padding-top: 2px; }
-.vx-keyword-strip { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 4px 0 0; padding: 0; list-style: none; }
-.vx-keyword-strip li { position: relative; color: #6f7c89; font: 500 11px/1.6 var(--font-geist-mono), monospace; letter-spacing: .04em; transition: color .5s; }
-.vx-keyword-strip li::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px; background: var(--active-accent); transform: scaleX(0); transform-origin: left; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
-.vx-keyword-strip li[data-lit="true"] { color: var(--active-accent); }
-.vx-keyword-strip li[data-lit="true"]::after { transform: scaleX(1); }
-/* With the header gone, the grid is console · graphic · rail. */
-:is(.vx-case-inference, .vx-case-post-training) .vx-operational-stage { grid-template-rows: auto minmax(0, 1fr) auto; }
-:is(.vx-case-inference, .vx-case-post-training) .vx-proof-chip { border: 0; background: none; padding-left: 0; color: #9fadba; }
-:is(.vx-case-inference, .vx-case-post-training) .vx-visual-window { border-color: transparent; background: none; }
-
-/* The console keeps one height across steps and while the definition types in. */
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console { height: 92px; min-height: 92px; align-content: start; overflow: hidden; }
-:is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console .vx-stage-annotation { min-height: 2.9em; }
-.vx-keyword-strip { min-height: 1.6em; flex-wrap: nowrap; overflow: hidden; }
-@media (max-width: 760px) {
-  :is(.vx-case-inference, .vx-case-post-training) .vx-stage-signal-console { height: 168px; min-height: 168px; }
-  .vx-keyword-strip { flex-wrap: wrap; }
-}
-@media (max-width: 760px) {
-  :is(.vx-case-inference, .vx-case-post-training) .vx-story-copy { min-height: 215px; }
-  :is(.vx-case-inference, .vx-case-post-training) .vx-visual-window { min-height: 600px; }
-}
+/* The compute steps carry longer explanations: they stop above the controls rather than running under them. */
+:is(.vx-case-inference, .vx-case-post-training) .vx-story-copy > p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+:is(.vx-case-inference, .vx-case-post-training) .vx-story-copy .vx-proof-chip { display: none; }

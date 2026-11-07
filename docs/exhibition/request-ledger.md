@@ -124,3 +124,27 @@ Target viewport stays 1512×860.
 | 13 | Capability terrain: unclear whether it is running, replaying, or time to move on | Done. One pass, chosen stages, Raise it again, and a state line in the rail. Inside the model also runs once, with a scrubber. |
 | 14 | Component microscope: endless floating marquees and the pill; refer to the original. **Later, not this round** | Later |
 | 15 | Component microscope: the Conclusion stage is broken | Fixed. The conclusion was squeezed into a 38 px row by a grid rule of mine. Copy also made plain. |
+
+## Round 11 (2026-11-08): highlights first, a real conclusion, a live second page
+| # | Ask | Status |
+|---|---|---|
+| 1 | Microscope pill ("Model parallelism spreads weights…" with chips): compare with Antigravity and Medical AI, understand what it should be, redo it | Done. The compute microscopes now use the same signal console, stage header and input → output rail as Antigravity and Medical AI; my stripped-down version is gone. |
+| 2 | Conclusion: redo from scratch; genuinely conclude what was done and achieved | Done. New `ConclusionBoard`: one verdict sentence, the measures behind it, each piece of work beside what it bought, what it showed, and a link to the results. |
+| 3 | Title introductions: move like the top reel layout (big picture → replay → policy → queue → experiment), not the current graphic | Done. Intro and briefs use a reel (`ReelRow`): tiles share a row, the open one grows, a cursor walks them. |
+| 4 | Big picture: the three levers stay pinned, numbered, beside a smaller graph; say "same intelligence at scale, less GPU time" | Done. Levers numbered and pinned on the left with their results and a running tally; the graph sits on the right. |
+| 5 | Request flow: not sequential; the whole flowchart visible at once | Done. One whole system diagram: queue, scheduler, two workers, KV cache, weights, answers. Levers light parts of it; nothing is cropped. |
+| 6 | Module brief text: earlier version's look was better; give it a makeover | Done. Centred: title, what it is, the goal, the impact with its highlight, under the reel. |
+| 7 | Bring back the bottom-left loading pill's style for Next | Done. Dark round Next pill with a loading ring, now in the rail so it covers nothing. |
+| 8 | Returning to a module must restart it (or resume where left), never play its last 15 seconds | Done and tested. Explorers remount and restart on return; finished arcs restart; unfinished arcs resume. |
+| 9 | Freeze and highlight inside graphs wherever numbers or graphs appear (e.g. Δ fewer requests waiting) | Done for queue & latency, policy × runtime, film chapters, terrain, tasks, audit, replay clusters. The film freezes while the number reads. Not yet: inside the model, curves. |
+| 10 | Glossary titles move like the reel | Done. Three rows of title cards; the open card grows and its figure runs. |
+| 11 | When a component is done, go on to the next one | Done. Finished modules move on after 3.2 s. A used module moves on after 30 s idle. Only Stay on this one holds it. |
+| 12 | Compute curves: faster checkpoint transitions | Done. Holds cut from about 4 s to about 1.5 s. |
+| 13 | Rename the post-training titles | Done. See the rail; new names are my proposal and easy to change. |
+| 14 | Frontier moved far ahead, perhaps with compute curves; bring back the curve that keeps updating | Frontier done: its own module near the top. The updating curve: the chosen curve now redraws each time. **Yash to confirm this is the curve meant.** |
+| 15 | Blurred-screen text always in the same central place | Done. Always the middle of the stage. |
+| 16 | Learn from outcomes lifted near the top | Done. Its own module, third in the order, and in the highlights. |
+| 17 | A 1–2 minute highlights run first in both labs, individual modules after for depth | Done. The two-minute version: inference 10 clips, about 110 s; post-training 8 clips, about 78 s. Real figures, not recordings. |
+| 18 | Project order: post-training, inference, medical AI, interview AI | Done. Home sections, project index, hero deck, nav and numbering. |
+| 19 | Project second page: three blocks on a curve (microscope, results, current page), one central and two muted, all live, auto-toggling, "click to explore" | Done. `project-second-page.tsx`: three live blocks on a curve, toggling every 11 s, holding on hover, with the call to explore. |
+| 20 | Microscope block runs through every component at 1.5–2× | Done. The real microscope at 1.8× its pace. |

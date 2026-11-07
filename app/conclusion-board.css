@@ -1,0 +1,39 @@
+/* A conclusion that concludes: the verdict, the proof, the work beside what it bought. */
+.cb-root { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; padding: 20px 24px 16px; overflow: hidden; }
+.cb-verdict { margin: 0; color: #fff; font: 500 clamp(22px, 1.9vw, 29px)/1.32 var(--font-geist-sans), sans-serif; letter-spacing: -.02em; text-wrap: balance; }
+.cb-in { animation: cb-in .45s cubic-bezier(.22,1,.36,1) both; }
+@keyframes cb-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.cb-measures { margin: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 24px; padding-block: 12px; border-block: 1px solid rgba(230,237,244,.08); }
+.cb-measures > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cb-measures dt { color: #aab6c2; font: 400 13px/16px var(--font-geist-sans), sans-serif; }
+.cb-measures dd { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; font-variant-numeric: tabular-nums; }
+.cb-measures s { color: #9cc5f5; font: 500 20px/1.1 var(--font-geist-mono), monospace; text-decoration: none; letter-spacing: -.02em; }
+.cb-measures i { color: #6f7c89; font-style: normal; }
+.cb-measures b { color: var(--active-accent); font: 500 28px/1.1 var(--font-geist-mono), monospace; letter-spacing: -.03em; }
+.cb-measures small { flex-basis: 100%; color: #93a0ae; font: 400 12.5px/16px var(--font-geist-sans), sans-serif; }
+.cb-groups { flex: 1 1 auto; min-height: 0; display: grid; gap: 24px; }
+.cb-groups[data-count="2"] { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.cb-groups h4 { margin: 0 0 8px; color: var(--active-accent); font: 500 14px/20px var(--font-geist-sans), sans-serif; }
+.cb-groups ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.cb-groups li { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 1px; align-items: baseline; padding-bottom: 8px; border-bottom: 1px solid rgba(230,237,244,.06); }
+.cb-groups li strong { color: #f1f4f7; font: 500 14.5px/20px var(--font-geist-sans), sans-serif; }
+.cb-groups li b { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: #fff; font: 500 14.5px/20px var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.cb-groups li span { color: #93a0ae; font: 400 13px/18px var(--font-geist-sans), sans-serif; }
+.cb-groups[data-count="1"] ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.cb-groups[data-count="1"] li { grid-template-columns: minmax(0, 1fr); }
+.cb-groups[data-count="1"] li b { grid-column: 1; grid-row: 2; text-align: left; white-space: normal; font: 500 16px/22px var(--font-geist-sans), sans-serif; }
+.cb-learned { margin: 0; display: flex; flex-direction: column; gap: 4px; color: #eef2f6; font: 400 16px/24px var(--font-geist-sans), sans-serif; }
+.cb-learned small { color: #93a0ae; font: 400 13px/16px var(--font-geist-sans), sans-serif; }
+.cb-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+.cb-foot a { color: #fff; font: 500 14px/20px var(--font-geist-sans), sans-serif; text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--active-accent) 70%, transparent); }
+.cb-foot a i { font-style: normal; color: var(--active-accent); }
+.cb-foot small { margin-left: auto; color: #7f8c99; font: 400 12.5px/16px var(--font-geist-sans), sans-serif; }
+@media (max-width: 900px) { .cb-groups[data-count="2"], .cb-groups[data-count="1"] ul { grid-template-columns: 1fr; } .cb-measures { grid-auto-flow: row; } .cb-root { overflow: visible; height: auto; } }
+@media (prefers-reduced-motion: reduce) { .cb-in { animation: none; } }
+
+/* The conclusion owns the whole stage: no console, no input → output rail. */
+.vx-walkthrough[data-stage-kind="conclusion"] .vx-operational-stage { grid-template-rows: 38px minmax(0, 1fr); }
+.vx-walkthrough[data-stage-kind="conclusion"] .vx-io-rail { display: none; }
+.vx-walkthrough[data-stage-kind="conclusion"] .vx-visual-window { display: block; min-height: 0; overflow: hidden; }
+/* The walkthrough pauses its animations when not autoplaying; the conclusion's entrance is not optional. */
+.vx-walkthrough .cb-root .cb-in, .vx-walkthrough .cb-root .hl { animation-play-state: running !important; }

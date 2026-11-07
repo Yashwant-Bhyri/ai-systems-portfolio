@@ -331,10 +331,13 @@ export function LabScalingPlot({
               className="rs-emphasis"
             >
               <path
+                key={p === policy ? "drawn" : "rest"}
                 d={d}
                 stroke={POLICIES[p].color}
                 strokeWidth={p === policy ? 2.5 : 1.5}
                 fill="none"
+                pathLength={p === policy ? 1 : undefined}
+                className={p === policy ? "rs-draw" : undefined}
               />
               {p === policy ? (
                 <path

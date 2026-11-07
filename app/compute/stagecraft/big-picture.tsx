@@ -23,17 +23,22 @@ const f = (v: number, d = 0) => v.toLocaleString("en-US", { minimumFractionDigit
 
 /* The timeline: [from ms, line]. A lever's window is when its points move. */
 const LINES: readonly (readonly [number, string])[] = [
-  [800, "96 requests: how long each waits, its GPU time, and whether it was right"],
-  [4200, `Today the slowest 5% wait *${f(RUNS[0].p95)} seconds*`],
-  [8000, "Serving the same intelligence for less depends on *three things*"],
-  [10800, "*Free-worker scheduling*: no worker idles while a request waits"],
-  [14000, "*Prefix reuse*: a shared document is read once"],
-  [17000, "*Faster prefill & decode*: half the bytes for every token"],
-  [20400, `Not one answer changed: *${RUNS[3].correct} of 96 still correct*, at ${f(RUNS[0].correctCost!, 2)} → ${f(RUNS[3].correctCost!, 2)} GPU-s each`],
-  [24800, "Every request takes this path, and *each lever works on one stop*"],
+  [600, "96 requests: how long each waits, its GPU time, and whether it was right"],
+  [3600, `Today the slowest 5% wait *${f(RUNS[0].p95)} seconds*`],
+  [7000, "Serving the same intelligence for less depends on *three things*"],
+  [9000, "Each one moves the same points, and none of them changes an answer"],
+  [18800, `Not one answer changed: *${RUNS[3].correct} of 96 still correct*`],
+  [22000, "All of it happens on this path, and *each lever works on one part*"],
 ];
-const MOVES = [[11100, 13700], [14300, 16700], [17300, 19900]] as const;
-const FLOW_AT = 24600, FLOW_STEP = 2500, TOTAL = FLOW_AT + 1700 + FLOW_STEP * 3 + 1800;
+const MOVES = [[9400, 11900], [12200, 14700], [15000, 18200]] as const;
+const FLOW_AT = 21800, FLOW_STEP = 2600, TOTAL = FLOW_AT + 1200 + FLOW_STEP * 3 + 1800;
+/** What each lever has bought by the time its points have moved. */
+const mean = (r: (typeof RUNS)[number], k: "prefill") => r.tasks.reduce((a, q) => a + q[k], 0) / r.tasks.length;
+const RESULTS = [
+  `Slowest 5%: ${f(RUNS[0].p95)} → ${f(RUNS[1].p95)} s`,
+  `Prompt reading: ${f(mean(RUNS[1], "prefill") * 1000)} → ${f(mean(RUNS[2], "prefill") * 1000)} ms`,
+  `${f(RUNS[2].correctCost!, 2)} → ${f(RUNS[3].correctCost!, 2)} GPU-s per correct answer`,
+];
 
 function draw(c: HTMLCanvasElement, t: number) {
   const w = c.clientWidth, h = c.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -45,7 +50,7 @@ function draw(c: HTMLCanvasElement, t: number) {
   // the point of view keeps moving
   const yaw = -0.5 + 0.24 * Math.sin(t / 5200), pitch = 0.34 + 0.06 * Math.sin(t / 3700 + 1);
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const scale = Math.min(w * 0.42, h * 0.74);
+  const scale = Math.min(w * 0.5, h * 0.72);
   const project = (x: number, y: number, z: number) => {
     const X = (x - 0.5) * 1.5, Y = (y - 0.42) * 0.74, Z = (z - 0.5) * 0.92;
     const rx = X * cy + Z * sy, rz = -X * sy + Z * cy;
@@ -81,8 +86,8 @@ function draw(c: HTMLCanvasElement, t: number) {
   line([0, 0, 0.9], [0, 1, 0.9], "rgba(230,237,244,.3)");
   label(0.5, -0.12, 0.9, `GPU time per request, 0 to ${f(X_MAX)} GPU-s`, "#c9d2db", 15);
   label(-0.02, 1.06, 0.9, `Waiting, 0 to ${f(Y_MAX)} s`, "#c9d2db", 15);
-  label(1.02, 0.5, 0.9, "Correct answers", "#b8e986", 16, "left");
-  label(1.02, 0.5, 0.1, "Wrong answers", "#a9b6c2", 16, "left");
+  label(0.98, 1.03, 0.9, "Correct answers", "#b8e986", 16, "right");
+  label(0.98, 1.03, 0.1, "Wrong answers", "#a9b6c2", 16, "right");
   // the points move lever by lever; correct/wrong never changes
   const k = MOVES.map(([a, b]) => ease.io(prog(t, a, b)));
   const spot = prog(t, 4200, 4900) * (1 - prog(t, 7700, 8200));
@@ -110,7 +115,7 @@ function draw(c: HTMLCanvasElement, t: number) {
   g.globalAlpha = 1;
 }
 
-export function BigPicture({ active }: { active: boolean }) {
+export function BigPicture({ active, fast = false }: { active: boolean; fast?: boolean }) {
   const tr = useTr();
   const canvas = useRef<HTMLCanvasElement>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -118,6 +123,8 @@ export function BigPicture({ active }: { active: boolean }) {
   const [playing, setPlaying] = useState(true);
   const clock = useRef(0);
   const fired = useRef(false);
+  const rate = useRef(1);
+  useEffect(() => { rate.current = fast ? 1.7 : 1; }, [fast]);
   const seek = (v: number) => { clock.current = v; setT(v); if (canvas.current) draw(canvas.current, v); };
 
   useEffect(() => {
@@ -129,7 +136,7 @@ export function BigPicture({ active }: { active: boolean }) {
       const dt = Math.min(64, now - last);
       last = now;
       if (playing) {
-        clock.current = Math.min(TOTAL, clock.current + dt);
+        clock.current = Math.min(TOTAL, clock.current + dt * rate.current);
         setT(clock.current);
         if (clock.current >= TOTAL && !fired.current) {
           fired.current = true;
@@ -152,18 +159,50 @@ export function BigPicture({ active }: { active: boolean }) {
   }, []);
   useEffect(() => { if (active) emitMeter(null); }, [active]);
 
-  const flow = prog(t, FLOW_AT, FLOW_AT + 900);
-  const leverAt = (i: number) => FLOW_AT + 1700 + i * FLOW_STEP;
-  const levers = [0, 1, 2].filter((i) => t >= leverAt(i)).length;
-  const lit = levers ? LEVERS[levers - 1].stops : null;
+  const flow = prog(t, FLOW_AT, FLOW_AT + 700);
+  const leverAt = (i: number) => FLOW_AT + 1200 + i * FLOW_STEP;
+  const tags = [0, 1, 2].filter((i) => t >= leverAt(i)).length;
+  const lit = tags ? LEVERS[tags - 1].parts : null;
+  // The levers stay pinned from the moment they are named; the one at work is marked.
+  const named = t >= 7000 ? [0, 1, 2].filter((i) => t >= 7300 + i * 450) : [];
+  const moving = flow > 0.5 ? tags - 1 : MOVES.findIndex(([a, b]) => t >= a - 200 && t < b + 200);
+  const cost = (() => {
+    const k = MOVES.map(([a, b]) => ease.io(prog(t, a, b)));
+    let c = RUNS[0].correctCost!;
+    k.forEach((v, m) => { c += (RUNS[m + 1].correctCost! - RUNS[m].correctCost!) * v; });
+    return c;
+  })();
   const line = useMemo(() => { let cur = ""; for (const [at, text] of LINES) if (t >= at) cur = text; return cur; }, [t]);
-  const flowLine = levers ? `*${LEVERS[levers - 1].name}* works on ${LEVERS[levers - 1].where}` : null;
+  const flowLine = tags ? `*${LEVERS[tags - 1].name}* works on ${LEVERS[tags - 1].where}` : null;
   const shown = flowLine ?? line;
   return (
     <div ref={root} className="bp-root" data-flow={flow > 0.5 || undefined}>
-      <canvas ref={canvas} className="bp-canvas" style={{ opacity: 1 - flow }} role="img" aria-label="96 requests in a 3D graph of GPU time, waiting and correctness" />
-      {flow > 0 && <div className="bp-flow" style={{ opacity: flow }}><FlowBoard t={t} levers={levers} lit={lit} /></div>}
-      {shown && <p className="bp-line" key={shown}>{highlight(tr(shown))}</p>}
+      <aside className="bp-side">
+        <p className="bp-claim">{highlight(tr("The same intelligence, at scale, for *less GPU time*"))}</p>
+        <ol className="bp-levers" data-on={named.length > 0 || undefined}>
+          {LEVERS.map((lever, i) => (
+            <li key={lever.n} data-named={named.includes(i) || undefined} data-now={moving === i || undefined} style={{ ["--bp-tone" as string]: lever.tone }}>
+              <b>{lever.n}</b>
+              <div>
+                <strong>{tr(lever.name)}</strong>
+                <span>{tr(lever.short)}</span>
+                <em data-on={t >= MOVES[i][1] || undefined}>{RESULTS[i]}</em>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <dl className="bp-tally">
+          <div><dt>{tr("GPU time per correct answer")}</dt><dd>{f(cost, 2)}<small> GPU-s</small></dd></div>
+          <div><dt>{tr("Correct answers")}</dt><dd>{RUNS[3].correct}<small> of 96</small></dd></div>
+        </dl>
+      </aside>
+      <div className="bp-main">
+        {shown && <p className="bp-line" key={shown}>{highlight(tr(shown))}</p>}
+        <div className="bp-view">
+          <canvas ref={canvas} className="bp-canvas" style={{ opacity: 1 - flow }} role="img" aria-label="96 requests in a 3D graph of GPU time, waiting and correctness" />
+          {flow > 0 && <div className="bp-flow" style={{ opacity: flow }}><FlowBoard lit={lit} tags={tags} /></div>}
+        </div>
+      </div>
       <div className="bp-transport">
         <button type="button" onClick={() => { if (clock.current >= TOTAL) { seek(0); fired.current = false; setPlaying(true); } else setPlaying((p) => !p); }} aria-label={tr(playing && t < TOTAL ? "Pause" : "Play")}>{playing && t < TOTAL ? "Ⅱ" : "▷"}</button>
         <input type="range" min={0} max={TOTAL} step={100} value={t} aria-label={tr("Move through the opening")} onChange={(e) => seek(Number(e.target.value))} />
