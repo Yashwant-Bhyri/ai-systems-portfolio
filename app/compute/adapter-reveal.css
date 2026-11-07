@@ -508,3 +508,7 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* The live stats replace the formula only in the one-screen show. */
+.ar-show-stats { display: none; }
+.lab-flow-show .ar-show-stats { display: inline; }

@@ -6,6 +6,7 @@ import { ease, prog } from "../../exhibit/engine";
 import { useStageHold } from "./stage-hold";
 import { emitFocus, emitMeter, type Tone } from "./stage-meter";
 import "./module-arc.css";
+import "./system-board.css";
 
 /**
  * A module told as a full circle: the problem, how the technique works in

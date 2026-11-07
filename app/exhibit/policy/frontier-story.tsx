@@ -15,7 +15,7 @@ const hop = (a: number, b: number) => `${f2(a)} → ${f2(b)}`;
 const HOPS = [
   { verb: "SFT · LoRA", did: "Imitate verified traces", gain: "+18 solved", cost: hop(FRONTIER[0].slow, FRONTIER[1].slow) },
   { verb: "GRPO", did: "Reward what passes the tests", gain: "+11 −2", cost: hop(FRONTIER[1].slow, FRONTIER[2].slow) },
-  { verb: "4× thought", did: "Search four times, keep the verified", gain: "+27 solved", cost: hop(FRONTIER[2].slow, FRONTIER[3].slow) },
+  { verb: "4× thinking budget", did: "Reason longer with the same weights", gain: "+27 solved", cost: hop(FRONTIER[2].slow, FRONTIER[3].slow) },
   { verb: "Lean RL", did: "Penalize wasted tokens", gain: "same 82", cost: hop(FRONTIER[3].slow, FRONTIER[4].slow) },
   { verb: "Serving", did: "Reuse prefixes, batch, fuse kernels", gain: "same 82", cost: hop(FRONTIER_COST.policy, FRONTIER_COST.runtime) },
 ] as const;
@@ -41,6 +41,7 @@ export function PolicyFrontierStory({ active, clock, tall }: RoomProps) {
   const segs = useRef<(SVGPathElement | null)[]>([]);
   const dots = useRef<(SVGCircleElement | null)[]>([]);
   const fast = useRef<(SVGCircleElement | null)[]>([]);
+  const fastTags = useRef<(SVGTextElement | null)[]>([]);
   const shifts = useRef<(SVGPathElement | null)[]>([]);
   const tags = useRef<(SVGGElement | null)[]>([]);
   const rows = useRef<(SVGGElement | null)[]>([]);
@@ -56,6 +57,7 @@ export function PolicyFrontierStory({ active, clock, tall }: RoomProps) {
       const sh = ease.io(prog(t, T_SHIFT + i * 120, T_SHIFT + 1500 + i * 120));
       attrs(dots.current[i], { opacity: (i === 0 ? appear : appear > 0.98 ? 1 : 0) * (1 - 0.55 * sh) });
       attrs(fast.current[i], { cx: lerp(X(pt.slow), X(pt.fast), sh), opacity: sh > 0.01 ? (i === FRONTIER.length - 1 ? 1 : 0.7) : 0 });
+      attrs(fastTags.current[i], { opacity: sh > 0.95 ? (i === FRONTIER.length - 1 ? 1 : 0.85) : 0 });
       attrs(shifts.current[i], { d: `M${X(pt.slow) - 11} ${Y(pt.pass1)}H${lerp(X(pt.slow) - 11, X(pt.fast) + 11, sh)}`, opacity: sh > 0.01 ? 0.85 : 0 });
       if (i > 0) {
         const prev = FRONTIER[i - 1];
@@ -89,8 +91,8 @@ export function PolicyFrontierStory({ active, clock, tall }: RoomProps) {
           <g key={a}><path d={`M${P.x0} ${Y(a)}H${P.x1}`} stroke="var(--ex-line)" /><text x={P.x0 - 12} y={Y(a) + 5} className="ex-ann" textAnchor="end">{a}%</text></g>
         ))}
         {Array.from({ length: Math.floor(CMAX / 10) + 1 }, (_, k) => k * 10).map((c) => <text key={c} x={X(c)} y={P.y0 + 26} className="ex-ann" textAnchor="middle">{c}</text>)}
-        <text x={P.x1} y={P.y0 + 56} className="ex-m" textAnchor="end">{tr("GPU-S / CORRECT")} ←</text>
-        <text x={P.x0} y={P.y1 - 22} className="ex-m">{tr("PASS@1 ↑")}</text>
+        <text x={P.x1} y={P.y0 + 56} className="ex-m" textAnchor="end">{tr("GPU-s per correct answer")} ←</text>
+        <text x={P.x0} y={P.y1 - 22} className="ex-m">{tr("Tasks solved")} ↑</text>
         {CONSTELLATION.map((pt, i) => <circle key={i} cx={X(pt.slow)} cy={Y(pt.pass1)} r={2.6} fill="var(--ex-ink-3)" opacity={0.35} />)}
       </g>
       {FRONTIER.map((pt, i) => (
@@ -99,6 +101,7 @@ export function PolicyFrontierStory({ active, clock, tall }: RoomProps) {
           <path ref={(e) => { shifts.current[i] = e; }} fill="none" stroke="var(--ex-amber)" strokeWidth={2} strokeDasharray="2 7" strokeLinecap="round" opacity={0} />
           <circle ref={(e) => { dots.current[i] = e; }} cx={X(pt.slow)} cy={Y(pt.pass1)} r={8} fill="var(--ex-void)" stroke="var(--ex-rose)" strokeWidth={2.4} opacity={0} />
           <circle ref={(e) => { fast.current[i] = e; }} cx={X(pt.slow)} cy={Y(pt.pass1)} r={7} fill="var(--ex-amber)" opacity={0} />
+          <text ref={(e) => { fastTags.current[i] = e; }} x={i === FRONTIER.length - 1 ? X(pt.fast) + 26 : X(pt.fast)} y={i === FRONTIER.length - 1 ? Y(pt.pass1) + 34 : Y(pt.pass1) - 16} textAnchor={i === FRONTIER.length - 1 ? "start" : "middle"} className="ex-ann-acc" style={{ fill: "var(--ex-amber)", fontSize: i === FRONTIER.length - 1 ? 18 : 14 }} opacity={0} data-focus-spot>−{Math.round((100 * (pt.slow - pt.fast)) / pt.slow)}%{i === FRONTIER.length - 1 ? ` · ${f2(pt.fast)} GPU-s` : ""}</text>
         </g>
       ))}
       {FRONTIER.map((pt, i) => {
@@ -125,9 +128,9 @@ export function PolicyFrontierStory({ active, clock, tall }: RoomProps) {
       </g>
       <g ref={hero} opacity={0} transform={tall ? `translate(${P.x0 + 10} ${Y(74)})` : `translate(${P.x0 + 40} ${Y(75)})`}>
         {/* three times the correct answers, for about the same GPU time per correct answer */}
-        <text className="ex-m">{tr("SOLVED OF 96")}</text>
+        <text className="ex-m">{tr("Solved, of 96")}</text>
         <text y={50} className="ex-num-xl" style={{ fontSize: 44 }}>28 <tspan fill="var(--ex-amber)">→ 82</tspan></text>
-        <text y={84} className="ex-m">{tr("GPU-S / CORRECT")} {f2(first.slow)} → {f2(last.fast)}</text>
+        <text y={84} className="ex-m">{tr("GPU-s per correct answer")} {f2(first.slow)} → {f2(last.fast)}</text>
       </g>
     </Surface>
   );

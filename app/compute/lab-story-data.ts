@@ -69,7 +69,7 @@ export const TRAINING_STORY = [
   {
     name: "The starting point",
     verb: "BASE",
-    title: `Base model: ${PT.base} of 96 tasks solved (${PT.basePct}%)`,
+    title: `The base model solves ${PT.base} of 96 tasks`,
     detail:
       "One cohort, one starting policy. The outcome map is the reference we will carry forward.",
     mechanism: "Base policy",
@@ -79,7 +79,7 @@ export const TRAINING_STORY = [
   {
     name: "SFT + LoRA",
     verb: "SFT",
-    title: `SFT on verified traces: +${PT.sft - PT.base} tasks (${PT.base} → ${PT.sft})`,
+    title: `Imitating verified reasoning: ${PT.base} → ${PT.sft} tasks solved`,
     detail:
       "Supervised reasoning examples teach a pattern: decompose, solve, check. The policy changes; the allowance stays at 1×.",
     mechanism: "Supervised fine-tuning",
@@ -89,7 +89,7 @@ export const TRAINING_STORY = [
   {
     name: "Learn from outcomes",
     verb: "GRPO",
-    title: `RL on 8 attempts per prompt: +${PT.gained}, −${PT.lost} (${PT.sft} → ${PT.rl}); answers ${PT.longer}× longer`,
+    title: `Learning from outcomes: ${PT.sft} → ${PT.rl} tasks solved`,
     detail:
       "A verifier scores a group of trajectories. Relative rewards shift the policy toward useful attempts.",
     mechanism: "Relative policy optimization",
@@ -99,7 +99,7 @@ export const TRAINING_STORY = [
   {
     name: "Give it more thought",
     verb: "SEARCH",
-    title: `Same weights, 4× thinking: ${PT.rl} → ${PT.rl4} solved for +${PT.extra} GPU-s per task`,
+    title: `Four times the thinking budget, same weights: ${PT.rl} → ${PT.rl4} tasks solved`,
     detail:
       "At inference time, a larger allowance can recover problems the same policy missed. Watch the cost move too.",
     mechanism: "Inference-time search",
@@ -109,7 +109,7 @@ export const TRAINING_STORY = [
   {
     name: "Make thought count",
     verb: "REFINE",
-    title: `Lean RL keeps ${PT.lean} solved with ${PT.fewer}% fewer tokens per task`,
+    title: `Lean RL: the same ${PT.lean} tasks solved with ${PT.fewer}% fewer tokens`,
     detail:
       "Compare an efficiency-aware policy at the same allowance. Inspect what it keeps, what it gains and what it loses.",
     mechanism: "Efficiency-aware policy",
@@ -119,7 +119,7 @@ export const TRAINING_STORY = [
   {
     name: "The frontier",
     verb: "FRONTIER",
-    title: `Training moves it up (+${PT.lean - PT.base} tasks); serving moves it left`,
+    title: `From ${PT.base} to ${PT.lean} tasks solved, then ${Math.round((100 * (FRONTIER_COST.policy - FRONTIER_COST.runtime)) / FRONTIER_COST.policy)}% less GPU time per correct answer`,
     detail:
       `Five moves, each with what was done and what it bought: 28 → 82 solved; the lean policy costs ${f2(FRONTIER_COST.policy)} GPU-seconds per correct answer, and the serving runtime takes it to ${f2(FRONTIER_COST.runtime)} (the base model: ${f2(FRONTIER_COST.start)}, for a third of the answers).`,
     mechanism: "Policy × runtime",

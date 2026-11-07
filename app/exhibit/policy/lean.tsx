@@ -83,13 +83,13 @@ export function PolicyLean({ active, mode, clock, tall }: RoomProps) {
 
   return (
     <Surface ref={canvas} vb={L.vb} label="Lean RL keeps 82 of 96 tasks solved at 4× allowance while cutting tokens per task by 37 percent">
-      <text x={L.title[0]} y={L.title[1]} className="ex-m">{tr(tall ? "TOKENS / TASK" : "TOKENS PER TASK · 4× ALLOWANCE · GRPO (OUTLINE) → LENGTH-AWARE RL (FILLED)")}{tall ? " · 4×" : ""}</text>
+      <text x={L.title[0]} y={L.title[1]} className="ex-m">{tr(tall ? "Tokens per task" : "Tokens per task at a 4× budget: GRPO outlined, Lean RL filled")}{tall ? " · 4×" : ""}</text>
       {[0, 1, 2].map((b) => L.rule(b) && <path key={b} d={L.rule(b)} stroke="var(--ex-line-2)" />)}
       {FAMILY_NAMES.map((n, b) => (
         <text key={n} x={L.famLabel(b)[0]} y={L.famLabel(b)[1]} className="ex-m">{tr(n.toUpperCase())}</text>
       ))}
       <g transform={`translate(${L.read.x} ${L.read.y})`}>
-        {([["SOLVED", null, "82 → 82"], ["TOKENS / TASK", "tok", null], ["GPU-S / TASK", "cost", null], ["CHANGED TASKS", null, `+${f.gained.length} / −${f.lost.length}`]] as const).map(([label, key, fixed], i) => {
+        {([["Solved", null, "82 → 82"], ["Tokens per task", "tok", null], ["GPU-s per task", "cost", null], ["Tasks that changed", null, `+${f.gained.length} / −${f.lost.length}`]] as const).map(([label, key, fixed], i) => {
           const [cx, cy] = L.read.cells[i];
           return (
             <g key={label} transform={`translate(${cx} ${cy})`}>

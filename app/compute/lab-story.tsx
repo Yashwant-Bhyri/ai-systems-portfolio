@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } 
 import { FilmInterlude } from "./stagecraft/module-arc";
 import { FILM_ARCS } from "./arc-scenes/film-arcs";
 import { CHEAP_INTRO } from "./arc-scenes/film-intro";
+import { LEARN_ARCS, LEARN_INTRO } from "./arc-scenes/learn-arcs";
 import { useTr } from "../exhibit/i18n";
 import { createPortal } from "react-dom";
 import { useSlot } from "./stagecraft/use-slot";
@@ -72,14 +73,14 @@ export function LabStory({
     [budget, setBudget] = useState(4),
     [workload, setWorkload] = useState<Workload>("shared-prefix");
   // A technique chapter is framed by "how it works" before it and its impact after it; the film holds meanwhile.
-  const [interludes, setInterludes] = useState<{ step: number; kind: "intro" | "mechanism" | "impact" }[]>(training ? [] : [{ step: -1, kind: "intro" }]);
+  const [interludes, setInterludes] = useState<{ step: number; kind: "intro" | "mechanism" | "impact" }[]>([{ step: -1, kind: "intro" }]);
   const { ref, ...playback } = useStudyPlayback(training ? 6 : 5, 0, {
     // Hovering or pinning an inspection explains; it never stops the film.
     held: undo || interludes.length > 0,
     finite: true,
     interval: 12000,
     durations: training
-      ? [10000, ADAPTER_DURATION, 13500, 21000, 8000, FRONTIER_STORY_MS]
+      ? [10000, ADAPTER_DURATION, 16800, 21000, 8000, FRONTIER_STORY_MS]
       : [
           BASELINE_DURATION,
           SCHEDULING_DURATION,
@@ -93,7 +94,8 @@ export function LabStory({
   if (seenStep !== playback.step) {
     const prev = seenStep, next = playback.step;
     setSeenStep(next);
-    if (!training)
+    if (training) setInterludes(LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" as const }] : []);
+    else
       setInterludes([
         ...(FILM_ARCS[prev] && next === prev + 1 ? [{ step: prev, kind: "impact" as const }] : []),
         ...(FILM_ARCS[next] ? [{ step: next, kind: "mechanism" as const }] : []),
@@ -101,8 +103,11 @@ export function LabStory({
   }
   const interlude = interludes[0];
   const interludeBeat = useMemo(
-    () => (interlude ? (interlude.kind === "intro" ? CHEAP_INTRO : interlude.kind === "mechanism" ? FILM_ARCS[interlude.step].mechanism : FILM_ARCS[interlude.step].impact(workload)) : null),
-    [interlude, workload],
+    () => (!interlude ? null
+      : interlude.kind === "intro" ? (training ? LEARN_INTRO : CHEAP_INTRO)
+      : training ? LEARN_ARCS[interlude.step].mechanism
+      : interlude.kind === "mechanism" ? FILM_ARCS[interlude.step].mechanism : FILM_ARCS[interlude.step].impact(workload)),
+    [interlude, workload, training],
   );
   const slotId = training ? "training-chapters-slot" : "inference-chapters-slot";
   const slot = useSlot(slotId);
@@ -236,8 +241,8 @@ export function LabStory({
         <FilmInterlude
           key={`${interlude.step}-${interlude.kind}-${workload}`}
           beat={interludeBeat}
-          kicker={interlude.kind === "intro" ? "The problem" : FILM_ARCS[interlude.step].name}
-          doneLabel={interlude.kind === "intro" ? "Start with the baseline ▸" : undefined}
+          kicker={interlude.kind === "intro" ? (training ? "Post-training" : "The problem") : training ? LEARN_ARCS[interlude.step].name : FILM_ARCS[interlude.step].name}
+          doneLabel={interlude.kind === "intro" ? (training ? "Start with the base model ▸" : "Start with the baseline ▸") : training ? "Skip to the results ▸" : undefined}
           live={playback.inViewport && playback.playing}
           onDone={() => setInterludes((q) => q.slice(1))}
         />
@@ -264,6 +269,7 @@ export function LabStory({
           className="ls-switches"
           style={training && step === 3 ? { visibility: "hidden" } : undefined}
         >
+          {training && <span className="ls-switch-label">Thinking budget</span>}
           {training
             ? BUDGETS.map((b) => (
                 <button
@@ -276,7 +282,7 @@ export function LabStory({
                     select(Math.max(3, step));
                   }}
                 >
-                  {b}× thought
+                  {b}×
                 </button>
               ))
             : (["interactive", "shared-prefix"] as const).map((w) => (
@@ -302,7 +308,7 @@ export function LabStory({
           <div>
             <span className="ls-eyebrow">
               {undo
-                ? "PREVIOUS STATE"
+                ? "Previous state"
                 : `${String(step + 1).padStart(2, "0")} / ${story.verb}`}
             </span>
             <h3>
@@ -355,9 +361,9 @@ export function LabStory({
               <span>
                 {training
                   ? index === 3
-                    ? "HOW INFERENCE-TIME SEARCH CHANGES"
-                    : "HOW THE POLICY CHANGES"
-                  : "WHERE THE EFFICIENCY COMES FROM"}
+                    ? "How inference-time search changes"
+                    : "How the policy changes"
+                  : "Where the efficiency comes from"}
               </span>
               <small>
                 {training
@@ -522,7 +528,7 @@ export function LabStory({
         </div>
         <aside className="ls-outcomes" aria-label="Linked story outcomes">
           <div className="ls-figure-label">
-            <span>FULL-COHORT RESULT</span>
+            <span>Result on all 96 tasks</span>
             <small>Same 96 tasks</small>
           </div>
           <div className="ls-main-result" aria-live="off">
@@ -557,7 +563,7 @@ export function LabStory({
               </div>
               <AccuracyCostTrail runs={runs} index={runIndex} inspect={inspect} />
               <div className="ls-cohort-heading">
-                <span>PAIRED OUTCOMES</span>
+                <span>Task by task</span>
                 <small>
                   +{changes.gained.length} gained · −{changes.lost.length} lost
                 </small>
@@ -649,7 +655,7 @@ export function LabStory({
                   </span>
                   <strong>
                     {baseline.correct} <i>→</i> {run.correct} / 96{" "}
-                    <em>UNCHANGED</em>
+                    <em>Unchanged</em>
                   </strong>
                 </div>
               </div>
@@ -665,9 +671,9 @@ export function LabStory({
           <div>
             <span>
               {pinned
-                ? "PINNED INSPECTION"
+                ? "Pinned inspection"
                 : active
-                  ? "INSPECTING · STORY HELD"
+                  ? "Inspecting, story held"
                   : "THE MECHANISM, IN PLAIN SIGHT"}
             </span>
             <strong>{active?.title ?? steps[index].mechanism}</strong>

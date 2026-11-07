@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { emitMeter } from "./stagecraft/stage-meter";
 import {
   adapterOutput,
   adapterSnapshots,
@@ -144,6 +145,8 @@ export function AdapterReveal({
     `L${376 + direction.position * 43} ${lossY(f.loss)}`,
   ].join(" ");
   const prompt = "first_item([]) crashes. Fix it.";
+  const narrated = NARRATIVE[direction.beat][0];
+  useEffect(() => { emitMeter({ text: narrated, tone: "optimized" }); }, [narrated]);
   return (
     <section
       className="ar-root"
@@ -422,24 +425,29 @@ export function AdapterReveal({
                 );
               })}
               <path d="M24 256H616" stroke="#304354" />
-              <text x="28" y="280" className="ar-small">
-                SELECTED OUTPUT y{row + 1}
-              </text>
-              <text x="28" y="309" className="ar-formula">
-                Wx + B(Ax)
-              </text>
-              <text x="28" y="337" className="ar-small">
-                {fmt(output.base)} {signed(output.terms[0])}{" "}
-                {signed(output.terms[1])}
-              </text>
-              <text x="28" y="370" className="ar-value">
-                = {fmt(output.adapted)}
-              </text>
-              <text x="28" y="396" className="ar-small">
-                Two rank channels; one output.
-              </text>
+              <g className="ar-formula-block">
+                <text x="28" y="280" className="ar-small">
+                  Selected output y{row + 1}
+                </text>
+                <text x="28" y="309" className="ar-formula">
+                  Wx + B(Ax)
+                </text>
+                <text x="28" y="337" className="ar-small">
+                  {fmt(output.base)} {signed(output.terms[0])}{" "}
+                  {signed(output.terms[1])}
+                </text>
+                <text x="28" y="370" className="ar-value">
+                  = {fmt(output.adapted)}
+                </text>
+              </g>
+              <g className="ar-show-stats">
+                <text x="28" y="288" className="ar-small">Frozen weights changed</text>
+                <text x="28" y="322" className="ar-value">0 of 36</text>
+                <text x="28" y="356" className="ar-small">Adapter values learning</text>
+                <text x="28" y="390" className="ar-value">24</text>
+              </g>
               <text x="362" y="280" className="ar-small">
-                LOSS · ½ Σ ERROR²
+                Loss: squared error to the target
               </text>
               <path d="M376 307V360H560" fill="none" stroke="#3d5061" />
               <path

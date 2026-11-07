@@ -48,17 +48,22 @@ function baseDensity(x: number) {
   const g = (m: number, s: number) => Math.exp(-((x - m) ** 2) / (2 * s * s));
   return 0.5 * g(0.3, 0.12) + 0.35 * g(0.62, 0.1) + 0.2 * g(0.85, 0.06) + 0.05;
 }
-function updated(x: number) {
+/** The policy after `s` iterations' worth of updates: rewarded attempts grow and sharpen. */
+function updated(x: number, s = 1) {
   let v = baseDensity(x);
+  const width = 0.03 / (1 + 0.28 * s);
   for (let p = 0; p < G; p++) for (let k = 0; k < G; k++) {
     const a = ADV[p][k];
-    if (a) v += 0.035 * a * Math.exp(-((x - POS[p][k]) ** 2) / (2 * 0.03 * 0.03));
+    if (a) v += 0.035 * (0.6 + 0.65 * s) * a * Math.exp(-((x - POS[p][k]) ** 2) / (2 * width * width));
   }
   return Math.max(0.02, v);
 }
+const ITERATIONS = 4;
+const mix = (a: readonly number[], b: readonly number[], k: number) => a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(",");
+const LIGHT = [250, 214, 228], DEEP = [226, 62, 124];
 const f = flips(CK.sft, CK.rl);
 const gained = new Set(f.gained), lost = new Set(f.lost);
-const T_GEN = 600, T_VER = 3200, T_MEAN = 4400, T_ADV = 5800, T_UPD = 7400, T_FLIP = 9800, T_END = 12300;
+const T_GEN = 600, T_VER = 2400, T_MEAN = 3400, T_ADV = 4400, T_UPD = 5400, T_ITER = 1900, T_FLIP = T_UPD + ITERATIONS * T_ITER, T_END = T_FLIP + 3400;
 
 export function PolicyGrpo({ active, mode, clock, tall }: RoomProps) {
   const L = tall ? TALL : WIDE;
@@ -110,14 +115,19 @@ export function PolicyGrpo({ active, mode, clock, tall }: RoomProps) {
     stats.forEach((s, p) => {
       attrs(means.current[p], { width: L.mean.w * s.m * mp, fill: s.dead ? T.ink3 : T.rose, "fill-opacity": s.dead ? 0.4 : 0.8 });
       const tx = meanTxt.current[p];
-      if (tx) tx.textContent = mp > 0.05 ? `r̄ ${s.m.toFixed(3)}` : "";
+      if (tx) tx.textContent = mp > 0.05 ? `${Math.round(s.m * G)} of ${G} pass` : "";
       attrs(drops.current[p], { opacity: s.dead ? prog(t, T_MEAN + 600, T_MEAN + 1200) : 0 });
     });
 
     // the policy terrain: a ridge field that reshapes under the advantages
-    const morph = ease.io(prog(t, T_UPD, T_UPD + 2200));
+    const iterF = Math.max(0, Math.min(ITERATIONS, (t - T_UPD) / T_ITER));
+    const done = Math.floor(iterF);
+    const step = done + ease.io(iterF - done);
+    const deep = step / ITERATIONS;
     const N = 110, fu = new Float32Array(N + 1);
-    for (let s = 0; s <= N; s++) fu[s] = lerp(baseDensity(s / N), updated(s / N), morph);
+    for (let s = 0; s <= N; s++) fu[s] = step <= 0 ? baseDensity(s / N) : updated(s / N, step);
+    const iterText = vals.current.iter;
+    if (iterText) iterText.textContent = t < T_UPD ? "" : t >= T_FLIP ? `After ${ITERATIONS} iterations` : `Iteration ${Math.min(ITERATIONS, done + 1)} of ${ITERATIONS}`;
     for (let k = TER.lines - 1; k >= 0; k--) {
       const z = k / (TER.lines - 1), persp = 1 - z * 0.38;
       const cx = (TER.x0 + TER.x1) / 2, half = ((TER.x1 - TER.x0) / 2) * persp, yb = TER.y - z * TER.depth;
@@ -129,18 +139,20 @@ export function PolicyGrpo({ active, mode, clock, tall }: RoomProps) {
         if (s) ctx.lineTo(x, yb - h);
         else ctx.moveTo(x, yb - h);
       }
-      const a = (0.1 + 0.6 * (1 - z)) * prog(t, 0, 900);
-      if (mode === "dev" && z < 0.5) { ctx.strokeStyle = `rgba(${T.roseRgb},${(a * 0.18).toFixed(3)})`; ctx.lineWidth = 5; ctx.stroke(); }
-      ctx.strokeStyle = `rgba(${T.roseRgb},${a.toFixed(3)})`;
-      ctx.lineWidth = 1.2;
+      const a = (0.14 + 0.66 * (1 - z)) * prog(t, 0, 900);
+      const shade = mix(LIGHT, DEEP, deep);
+      if (mode === "dev" && z < 0.5) { ctx.strokeStyle = `rgba(${shade},${(a * 0.18).toFixed(3)})`; ctx.lineWidth = 5; ctx.stroke(); }
+      ctx.strokeStyle = `rgba(${shade},${a.toFixed(3)})`;
+      ctx.lineWidth = 1.2 + 0.5 * deep;
       ctx.stroke();
     }
     // update particles drop from scored rollouts into the policy at their positions
-    if (t > T_UPD - 300 && t < T_UPD + 2400) {
+    if (t > T_UPD - 300 && t < T_FLIP) {
+      const local = T_UPD + done * T_ITER;
       for (let p = 0; p < G; p++) for (let k = 0; k < G; k++) {
         const a = ADV[p][k];
         if (!a) continue;
-        const q = prog(t, T_UPD - 300 + (p + k) * 40, T_UPD + 900 + (p + k) * 40);
+        const q = prog(t, local - 300 + (p + k) * 40, local + 900 + (p + k) * 40);
         if (q <= 0 || q >= 1) continue;
         const x0 = LX + k * LANE + 20, y0 = LY + p * ROW + 14;
         const x1 = TER.x0 + POS[p][k] * (TER.x1 - TER.x0), y1 = TER.y - 40;
@@ -173,28 +185,29 @@ export function PolicyGrpo({ active, mode, clock, tall }: RoomProps) {
 
   return (
     <Surface ref={canvas} vb={L.vb} label="GRPO: eight rollouts per prompt are scored by a verifier and normalised within their group">
-      <text x={tall ? L.pl : LX} y={LY - 30} className="ex-m">{tr(tall ? "8 PROMPTS × 8 ATTEMPTS" : "8 PROMPTS × 8 ATTEMPTS · EACH SCORED BY ITS TESTS")}</text>
+      <text x={tall ? L.pl : LX} y={LY - 30} className="ex-m">{tr(tall ? "8 tasks × 8 attempts" : "8 tasks × 8 attempts, each scored by its tests")}</text>
       {R.map((_, p) => (
         <g key={p}>
-          <text x={L.pl} y={LY + p * ROW + 20} className="ex-m">p{p + 1}</text>
+          <text x={L.pl} y={LY + p * ROW + 20} className="ex-m">{p + 1}</text>
           <rect ref={(e) => { means.current[p] = e; }} x={L.mean.x} y={LY + p * ROW + 8} height={L.sk.h} rx={2} width={0} />
           <text ref={(e) => { meanTxt.current[p] = e; }} x={L.mean.tx} y={LY + p * ROW + 19} className="ex-m" />
-          <text ref={(e) => { drops.current[p] = e; }} x={L.mean.x} y={LY + p * ROW + (tall ? 32 : 36)} className="ex-ann" opacity={0}>{tall ? "σ = 0" : tr("no signal · dropped")}</text>
+          <text ref={(e) => { drops.current[p] = e; }} x={L.mean.x} y={LY + p * ROW + (tall ? 32 : 36)} className="ex-ann" opacity={0}>{tall ? "σ = 0" : tr("all the same: no signal")}</text>
           {R[p].map((_, k) => <rect key={k} ref={(e) => { marks.current[p * G + k] = e; }} y={LY + p * ROW + 8} width={tall ? 6 : 8} height={L.sk.h} rx={2} opacity={0} />)}
         </g>
       ))}
-      <text x={L.mean.x} y={LY - 30} className="ex-m">{tr(tall ? "MEAN" : "GROUP MEAN")}</text>
-      <text x={TER.x0} y={L.terLabel} className="ex-m">{tr(tall ? "ATTEMPTS THAT PASS GET MORE LIKELY" : "THE POLICY · ATTEMPTS THAT PASS THEIR TESTS BECOME MORE LIKELY")}</text>
-      <text x={L.field.x} y={L.field.y - 44} className="ex-m">{tr("EVAL · SFT → GRPO")}</text>
+      <text x={L.mean.x} y={LY - 30} className="ex-m">{tr(tall ? "Group" : "Group result")}</text>
+      <text x={TER.x0} y={L.terLabel} className="ex-m">{tr(tall ? "Attempts that pass get more likely" : "Policy: passing attempts become more likely")}</text>
+      <text ref={(e) => { vals.current.iter = e; }} x={TER.x1} y={L.terLabel} textAnchor="end" className="ex-m-ink" style={{ fill: "var(--ex-rose)", fontSize: 17 }} />
+      <text x={L.field.x} y={L.field.y - 44} className="ex-m">{tr("The 96 tasks, SFT → GRPO")}</text>
       <TaskField ref={field} x={L.field.x} y={L.field.y} cell={L.field.cell} gap={L.field.gap} />
       <g transform={`translate(${L.read.x} ${L.read.y})`}>
-        <text className="ex-m">{tr("SOLVED")}</text>
+        <text className="ex-m">{tr("Solved")}</text>
         <text ref={(e) => { vals.current.solved = e; }} y={40} className="ex-num-l" />
-        <text x={L.read.col} className="ex-m">PASS@1</text>
+        <text x={L.read.col} className="ex-m">{tr("First try right")}</text>
         <text ref={(e) => { vals.current.pass = e; }} x={L.read.col} y={40} className="ex-num-l" style={{ fill: "var(--ex-rose)" }} />
-        <text y={92} className="ex-m">{tr("TOKENS / TASK")}</text>
+        <text y={92} className="ex-m">{tr("Tokens per task")}</text>
         <text ref={(e) => { vals.current.tok = e; }} y={126} className="ex-num-l" style={{ fontSize: 26 }} />
-        <text x={L.read.col} y={92} className="ex-m">{tr("GPU-S / TASK")}</text>
+        <text x={L.read.col} y={92} className="ex-m">{tr("GPU-s per task")}</text>
         <text ref={(e) => { vals.current.cost = e; }} x={L.read.col} y={126} className="ex-num-l" style={{ fontSize: 26 }} />
         <text y={L.ann} className="ex-ann">+{f.gained.length} {tr("gained")} · −{f.lost.length} {tr("regressed")} · {tr("answers got longer")}</text>
       </g>

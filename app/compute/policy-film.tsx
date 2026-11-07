@@ -62,7 +62,7 @@ function PolicyInPractice({
   return (
     <div className="cf-practice pf-practice">
       <div className="cf-practice-heading">
-        <span>FROM THE UPDATE TO THE ANSWER</span>
+        <span>From the update to the answer</span>
         <small>Teaching scenario</small>
       </div>
       <div className="cf-user-question">
@@ -235,8 +235,8 @@ function AdapterFilm({
       </title>
       <text x="28" y="25" className="ls-overline">
         {base
-          ? "THE PRETRAINED WEIGHTS · BEFORE ADAPTATION"
-          : "SFT VIA A LOW-RANK UPDATE · W STAYS FROZEN"}
+          ? "The pretrained weights, before adaptation"
+          : "SFT through a low-rank update: W stays frozen"}
       </text>
       <Hotspot
         inspect={inspect}
@@ -381,14 +381,14 @@ function RewardFilm({
       </title>
       <text x="28" y="25" className="ls-overline">
         {efficiency
-          ? "REWARD USEFUL WORK · NOT LENGTH ALONE"
+          ? "Reward useful work, not length alone"
           : "SAMPLE → VERIFY → COMPARE → UPDATE"}
       </text>
       <text x="28" y="64" className="ls-small">
         ONE PROMPT
       </text>
       <text x="194" y="64" className="ls-small">
-        {efficiency ? "REWARD − COST" : "VERIFIER REWARD"}
+        {efficiency ? "Reward − cost" : "Verifier reward"}
       </text>
       <text x="339" y="64" className="ls-small">
         ADVANTAGE
@@ -641,7 +641,8 @@ export function PolicyFilm({
   onToggle: () => void;
 }) {
   const film = useFilmTime(readTime, playing, reduced, duration, onSeek);
-  const progress = film.time / duration;
+  // The starting point is the request itself: the mathematics belongs to the chapters that change the weights.
+  const progress = step === 0 ? 0.65 + 0.35 * (film.time / duration) : film.time / duration;
   const frame = Math.min(
     4,
     Math.max(0, ((clamp01(progress / 0.6) - 0.08) / 0.74) * 4),

@@ -190,3 +190,40 @@
 .lab-flow-show .lf-fit .rr-values strong { font-size: 18px; }
 .lab-flow-show .lf-fit .rr-delta { margin: 0; }
 .lab-flow-show .lf-fit .rr-delta .cx-hero-num { font-size: 22px; }
+
+/* ── Post-training film: one heading, the picture, its scrubber ───────── */
+.lab-flow-show .lf-fit .ls-training .ls-footer { display: none; }
+.lab-flow-show .lf-fit .ls-training .ls-topline { top: 8px; right: 12px; padding: 0; }
+.lab-flow-show .lf-fit .ls-switch-label { align-self: center; margin-right: 10px; color: #aab6c2; font: 450 13px/1 var(--font-geist-sans), sans-serif; white-space: nowrap; }
+.lab-flow-show .lf-fit .ls-eyebrow { display: none; }
+.lab-flow-show .lf-fit .ls-training .ls-story-heading { padding: 12px 26px 8px; padding-right: 400px; }
+.lab-flow-show .lf-fit .ls-training .ls-figure-label { min-height: 0; padding-block: 6px; font: 450 13.5px/1.2 var(--font-geist-sans), sans-serif; letter-spacing: 0; text-transform: none; }
+.lab-flow-show .lf-fit .ls-training .ls-figure-label small { display: none; }
+.lab-flow-show .lf-fit .ls-training .ls-mechanism > .ls-figure-label { display: none; }
+/* Chapter 1: the request and the result, no extra labels. */
+.lab-flow-show .lf-fit :is(.cf-lens-switch, .ls-task-control, .cf-practice-heading) { display: none; }
+.lab-flow-show .lf-fit .pf-scrub { padding-block: 4px; min-height: 0; }
+.lab-flow-show .lf-fit .pf-scrub > :not(input):not(button):not(time) { display: none; }
+.lab-flow-show .lf-fit .ls-outcomes { padding-block: 6px; }
+.lab-flow-show .lf-fit .ls-trail { max-height: 170px; }
+.lab-flow-show .lf-fit .ls-training .ls-scene { max-height: calc(var(--lf-room) - 130px); }
+/* Chapter 2: matrices, coordinates and loss; the surrounding text goes. */
+.lab-flow-show .lf-fit :is(.ar-heading, .ar-inspect, .ar-pan, .ar-caption) { display: none; }
+.lab-flow-show .lf-fit .ar-stage { min-height: 0; }
+.lab-flow-show .lf-fit .ar-formula-block { display: none; }
+.lab-flow-show .lf-fit .ar-diagram { max-height: calc(var(--lf-room) - 110px); margin-inline: auto; }
+.lab-flow-show .lf-fit .ar-transport { padding-block: 4px; min-height: 0; }
+/* Chapters 3, 5, 6: the exhibit rooms. */
+.lab-flow-show .lf-fit .ex-embed-stage { height: calc(var(--lf-room) - 96px); }
+.lab-flow-show .lf-fit .ex-embed-stage .pw-surface { height: 100%; }
+.lab-flow-show .lf-fit .ex-embed-transport { padding-block: 4px; min-height: 0; }
+/* Chapter 4: the curve and the application-to-provider diagram. */
+.lab-flow-show .lf-fit :is(.tt-heading, .tt-equation, .tt-checkpoint-key, .tt-search-contract, .tt-question, .tt-repo-trace, .tt-agent-decision, .tt-boundary, .tt-lens-label) { display: none; }
+.lab-flow-show .lf-fit .tt-agent-action > p { display: none; }
+.lab-flow-show .lf-fit .tt-dual-stage { align-items: center; }
+.lab-flow-show .lf-fit .tt-plot { max-height: calc(var(--lf-room) - 185px); }
+.lab-flow-show .lf-fit .tt-revelation { padding-block: 6px; min-height: 0; }
+.lab-flow-show .lf-fit .tt-revelation strong { font-size: 19px; }
+.lab-flow-show .lf-fit .tt-controls { padding-block: 4px; min-height: 0; }
+.lab-flow-show .lf-fit .tt-evidence { display: none; }
+.lab-flow-show .lf-fit .tt-revelation small { display: none; }

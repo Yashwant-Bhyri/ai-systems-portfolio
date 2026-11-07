@@ -32,8 +32,8 @@ export function GlossaryBoard({ items, active = true }: { items: readonly ReelIt
     const all = () => [...el.querySelectorAll<SVGSVGElement>(".gb-glyph > svg")];
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
       all().forEach((svg) => { svg.pauseAnimations(); svg.setCurrentTime(FIGURE_REST); });
-      setPlaced(items.length);
-      return;
+      const id = window.setTimeout(() => setPlaced(items.length), 0);
+      return () => window.clearTimeout(id);
     }
     if (!active) { all().forEach((svg) => svg.pauseAnimations()); return; }
     let timers: number[] = [];

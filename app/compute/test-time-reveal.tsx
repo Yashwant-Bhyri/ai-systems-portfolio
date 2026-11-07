@@ -197,7 +197,7 @@ export function TestTimeReveal({
           aria-label="Test-time compute scaling mathematics"
         >
           <div className="tt-lens-label">
-            <span>01 / THE COMPUTATION</span>
+            <span>The computation</span>
             <small>96-task cohort</small>
           </div>
           <svg
@@ -224,7 +224,7 @@ export function TestTimeReveal({
               </g>
             ))}
             <text x="58" y="19" className="ls-small">
-              Accuracy (%)
+              Tasks solved (%)
             </text>
             {X_TICKS.map((v) => (
               <text
@@ -238,7 +238,7 @@ export function TestTimeReveal({
               </text>
             ))}
             <text x="293" y="304" textAnchor="middle" className="ls-small">
-              Actual GPU-s / task
+              GPU-s per task
             </text>
             <path
               d={path(BASE)}
@@ -347,7 +347,7 @@ export function TestTimeReveal({
           aria-label="Practical repository assistant teaching scenario"
         >
           <div className="tt-lens-label">
-            <span>02 / THE REQUEST</span>
+            <span>The request</span>
             <small>Teaching scenario</small>
           </div>
           <div className="tt-question">
@@ -371,7 +371,7 @@ export function TestTimeReveal({
           </div>
           <div className="tt-agent-action" key={index}>
             <span>
-              ATTEMPT {index + 1} / {example.action}
+              Attempt {index + 1}: {example.action}
             </span>
             <p>{example.detail}</p>
             <div
@@ -417,7 +417,7 @@ export function TestTimeReveal({
         </section>
       </div>
       <div className="tt-revelation" key={`reveal-${index}`}>
-        <span>{BUDGETS[index]}× thought</span>
+        <span>{BUDGETS[index]}× thinking budget</span>
         <strong>
           {returning
             ? `Hold ${comparisonBudget}×. Compare policies next.`
