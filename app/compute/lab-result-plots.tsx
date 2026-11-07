@@ -402,7 +402,7 @@ export function LabScalingPlot({
           <g data-focus-spot>
             <defs><marker id={`${id}-arrow`} viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L8 4L0 8z" fill="#ffd6e4" /></marker></defs>
             <circle cx={a[0]} cy={a[1]} r={9} fill="none" stroke="#9cc5f5" strokeWidth="2" />
-            <text x={a[0] - 12} y={a[1] + 26} textAnchor="end" fill="#9cc5f5" fontSize="15">Base, {budget}× budget: {from.accuracy.toFixed(1)}%</text>
+            <text x={a[0] + 14} y={a[1] + 26} fill="#9cc5f5" fontSize="15">Base, {budget}× budget: {from.accuracy.toFixed(1)}%</text>
             <path d={`M${a[0] + 10} ${a[1] - 4}L${b[0] - 22} ${b[1] + 8}`} stroke="#ffd6e4" strokeWidth="2.5" markerEnd={`url(#${id}-arrow)`} fill="none" />
             <text x={b[0] + 26} y={b[1] + 30} fill="#ffd6e4" fontSize="17" fontWeight="500">+{gain.toFixed(1)} pp, {tasks >= 0 ? "+" : "−"}{Math.abs(tasks)} tasks</text>
             <text x={b[0] + 26} y={b[1] + 50} fill="#c9d2db" fontSize="14">from {how}</text>

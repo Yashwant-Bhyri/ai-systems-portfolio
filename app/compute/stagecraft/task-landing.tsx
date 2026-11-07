@@ -74,9 +74,9 @@ export function TaskLanding({ budget, active }: { budget: number; active: boolea
     const a = data.runs[0], b = data.runs[STEPS.length - 1];
     emitFocus({
       headline: `Training lifted ${b.correct - a.correct} tasks over the line`,
-      parts: [{ label: "base", value: `${a.correct} of 96`, tone: "baseline" }, { label: "after SFT and GRPO", value: `${b.correct} of 96`, tone: "optimized" }, { label: "median cost", value: `${(a.tokens / a.n / 1000).toFixed(1)}k → ${(b.tokens / b.n / 1000).toFixed(1)}k tokens`, tone: "delta" }],
+      parts: [{ label: "base", value: `${a.correct} of 96`, tone: "baseline" }, { label: "after SFT and GRPO", value: `${b.correct} of 96`, tone: "optimized" }, { label: "per answer", value: `${(a.tokens / a.n / 1000).toFixed(1)}k → ${(b.tokens / b.n / 1000).toFixed(1)}k tokens`, tone: "delta" }],
       cause: "the model got more able, and it now spends more tokens per answer to do it",
-      place: "bottom",
+      place: "upper-left",
     });
     const id = window.setTimeout(() => { emitFocus(null); root.current?.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true })); }, 6000);
     return () => { window.clearTimeout(id); emitFocus(null); };

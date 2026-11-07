@@ -179,7 +179,7 @@ export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; 
     bottleneck: { at: 8300, headline: "12 calls for 12 tokens: serialized computation", effect: "every token is a full pass over 8 GB of weights, and the next cannot start until this one ends, so latency grows with every token" },
   },
   mechanism: {
-    label: "Optimized solution", title: `Optimized solution: a draft model (${DRAFT_MODEL.name}) guesses ahead; Qwen3-4B checks every guess in one pass`, ms: 19000, render: (on) => <DraftFilm active={on} />,
+    label: "Optimized solution", title: "An EAGLE-3 draft head guesses ahead; Qwen3-4B checks every guess in one pass", ms: 19000, render: (on) => <DraftFilm active={on} />,
     meter: [[0, "The answer so far"], [2000, `Draft model (${DRAFT_MODEL.name}) is drafting the next words`], [3600, "Qwen3-4B verifies all drafted words in one pass"], [4800, "3 accepted, the 4th rejected: everything after it is dropped"], [6000, "Qwen3-4B writes its own word in place of the rejected one"], [7600, "4 words from 1 large-model call"], [10600, "Round 2: the first guess is wrong, so the draft is wasted"], [15600, "Speculation pays only when the guesses are good"]],
   },
   systemTitle: "Round by round, in our draft-verification model",

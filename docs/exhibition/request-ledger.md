@@ -70,36 +70,36 @@ Target viewport: the user's MacBook (3024×1964 Retina, which "looks like" 1512�
 
 | # | Ask | Status |
 |---|---|---|
-| 1 | The results lab behaves like the architecture and microscope pages: it fills the screen and stays pinned, with nothing important below the fold | Open |
-| 2 | Remove the gap above "Inference optimization" that pushes the content down | Open |
-| 3 | Every module fits one full screen. Track the page start and cutoff, and measure each component's use of the central 75% | Open |
-| 4 | No tiny words, and no robotic letter-spaced labels | Open |
-| 5 | Highlighted numbers get a focus mode: dim or desaturate the rest; baseline, optimized, Δ and cause shine vividly | Open |
-| 6 | Guides are not text blocks at the bottom. Use a one-line live meter in the most visible place ("draft model drafting…") | Open |
-| 7 | Lab intro: branch 1 expands, then blurs; branch 2, renamed **Optimized serving under load**, expands and the cursor walks its titles (3–4 s) and returns. Then the opening line "First: how we serve the same intelligence with *cheaper execution*" | Open |
-| 8 | Serving arcs: the "In our system" beats overflow the page with wasted space, so make them fit | Open |
-| 9 | Problem beat is labelled **Problem / Bottleneck**. State the bottleneck centrally and highlight it (e.g. "12 calls for 12 tokens: serialized computation, a bottleneck at scale") | Open |
-| 10 | How it works shows **Optimized solution** on top and names the real draft model | Open |
-| 11 | Use the empty right space: a tracker of where we started and where we ended up (baseline → now) | Open |
-| 12 | No vague wording | Open |
-| 13 | Cache routing "In our system": the request-C panel is small and diffuse, with no focus | Open |
-| 14 | CPU/GPU overlap "In our system" is the gold standard; redo the others like it | Open |
-| 15 | Impact beats state what you learn, not just three numbers | Open |
-| 16 | Serving glossary: start empty; each of the nine cards (3×3) expands for about 1 s under the cursor, then settles. This ends "serving under load" | Open |
-| 17 | Cheaper execution feels repetitive and has no problem intro. Open with "the same intelligence at cheaper execution depends on N things", then pick one | Open |
-| 18 | Film spacing: fit one screen. Prefix reuse has floating text blocks; use focus and blur instead | Open |
-| 19 | Policy × runtime: annotate the curve itself (base → RL checkpoint: SFT + correctness RL; KV reuse + execution rate), with gains in pp and GPU-s, in focus mode | Open |
-| 20 | Replay: per-request differences look small. Show where it matters (latency), plus a paired baseline-vs-optimized cluster plot with median and mean | Open |
-| 21 | Post-training intro: the goal is a smarter model on math and coding (accuracy, then efficiency) | Open |
-| 22 | Show how the agent learns first: a reasoning trace and a reward critiquing it, like speculative's How it works | Open |
-| 23 | Starting point and SFT+LoRA pages: too much text; the "6-value calculation" box does nothing. Keep the six output coordinates, frozen matrices and loss graph | Open |
-| 24 | GRPO title text is unreadable as data; show it visually. Iterations: pink deepens and the curve tightens | Open |
-| 25 | "Give it more thought": label budgets as thinking budget, not accuracy. The request text is bad; keep the app → payment-provider graph. The guide at the bottom gets missed | Open |
-| 26 | Lean RL is undefined; give it a short mechanism | Open |
-| 27 | Capability terrain loops: say what changes, and place it after SFT/GRPO are explained | Open |
-| 28 | Frontier: highlight the orange (runtime) dots with their gains; replace "moves it up / moves it left" | Open |
-| 29 | Inside the model: context for what improved it | Open |
-| 30 | "What did the model learn": arrows from each step to its result (e.g. where 69.8 came from) | Open |
-| 31 | Where the 96 tasks land: reimagine the graph | Open |
-| 32 | Elastic RL: explain elastic RL and the QwenGyre idea; impact communicated | Open |
-| 33 | Regression audit: communicate, not just represent | Open |
+| 1 | The results lab behaves like the architecture and microscope pages: it fills the screen and stays pinned, with nothing important below the fold | Done. The show layout is exactly one viewport and snaps flush under the header. |
+| 2 | Remove the gap above "Inference optimization" that pushes the content down | Done. The gap is gone; the head is one tight row. |
+| 3 | Every module fits one full screen. Track the page start and cutoff, and measure each component's use of the central 75% | Done. `tools/tracker/fit.mjs` reports room, natural height, scale and central-75% coverage for every module and beat. |
+| 4 | No tiny words, and no robotic letter-spaced labels | Mostly done. Tracked capitals replaced in the film and explorers; HTML small text has a 12 px floor. Some SVG labels still render near 11 px at narrow widths. |
+| 5 | Highlighted numbers get a focus mode: dim or desaturate the rest; baseline, optimized, Δ and cause shine vividly | Done. `stage-meter.tsx`: the stage desaturates and blurs except marked spots; a caption reads baseline, optimized, Δ and cause. |
+| 6 | Guides are not text blocks at the bottom. Use a one-line live meter in the most visible place ("draft model drafting…") | Done. One-line live meter in the lab head, across every film chapter, arc and explorer. |
+| 7 | Lab intro: branch 1 expands, then blurs; branch 2, renamed **Optimized serving under load**, expands and the cursor walks its titles (3–4 s) and returns. Then the opening line "First: how we serve the same intelligence with *cheaper execution*" | Done. Branch 02 renamed; both branches lift in turn, the cursor walks the titles, then the opening line. |
+| 8 | Serving arcs: the "In our system" beats overflow the page with wasted space, so make them fit | Done. New timed system scenes for prefill/decode, speculative and cache; overlap fitted. All at scale 1. |
+| 9 | Problem beat is labelled **Problem / Bottleneck**. State the bottleneck centrally and highlight it (e.g. "12 calls for 12 tokens: serialized computation, a bottleneck at scale") | Done. Beat renamed; each Problem ends with a central bottleneck statement and its effect at scale. |
+| 10 | How it works shows **Optimized solution** on top and names the real draft model | Done. Beat renamed; the draft is the EAGLE-3 head for Qwen3-4B (`AngelSlim/Qwen3-4B_eagle3`). Its 0.2 B parameter count is an estimate from its architecture. |
+| 11 | Use the empty right space: a tracker of where we started and where we ended up (baseline → now) | Done. The arc ledger beside the first two beats tracks baseline → optimized → Δ. |
+| 12 | No vague wording | Done for the arcs and film; headings now state what happens with its number. |
+| 13 | Cache routing "In our system": the request-C panel is small and diffuse, with no focus | Done. Replaced by a two-lane scene with a large consequence panel. The old explorer is behind "Explore the full model". |
+| 14 | CPU/GPU overlap "In our system" is the gold standard; redo the others like it | Done for prefill/decode, speculative and cache. |
+| 15 | Impact beats state what you learn, not just three numbers | Done. Every impact opens with a one-sentence lesson. |
+| 16 | Serving glossary: start empty; each of the nine cards (3×3) expands for about 1 s under the cursor, then settles. This ends "serving under load" | Done. Empty 3×3 slots; each term large then settled; cursor sweep; the show ends there. |
+| 17 | Cheaper execution feels repetitive and has no problem intro. Open with "the same intelligence at cheaper execution depends on N things", then pick one | Done. Opening board: baseline cost, where a request's time goes, three levers. Each technique states its bottleneck. Chapter lengths are unchanged, so some repetition may remain. |
+| 18 | Film spacing: fit one screen. Prefix reuse has floating text blocks; use focus and blur instead | Done. Told on prompt reading (not 0.6% of total GPU work), with the meter and a focus moment. |
+| 19 | Policy × runtime: annotate the curve itself (base → RL checkpoint: SFT + correctness RL; KV reuse + execution rate), with gains in pp and GPU-s, in focus mode | Done. Notes on the curve give pp and GPU-s; the final focus keeps only baseline, optimized and the two moves. |
+| 20 | Replay: per-request differences look small. Show where it matters (latency), plus a paired baseline-vs-optimized cluster plot with median and mean | Done. Opens on response latency; paired cluster plot with median, mean and p95. |
+| 21 | Post-training intro: the goal is a smarter model on math and coding (accuracy, then efficiency) | Done. Opening goal board with the four moves. |
+| 22 | Show how the agent learns first: a reasoning trace and a reward critiquing it, like speculative's How it works | Done. Short scenes for SFT, GRPO, thinking budget and Lean RL, on first_item. |
+| 23 | Starting point and SFT+LoRA pages: too much text; the "6-value calculation" box does nothing. Keep the six output coordinates, frozen matrices and loss graph | Done. Chapter 1 opens on the request; the 6-value box and formula are gone; coordinates, matrices and loss kept. |
+| 24 | GRPO title text is unreadable as data; show it visually. Iterations: pink deepens and the curve tightens | Done. Plain title; four iterations; the pink deepens and the curve sharpens. The iterations are illustrative, not measured epochs. |
+| 25 | "Give it more thought": label budgets as thinking budget, not accuracy. The request text is bad; keep the app → payment-provider graph. The guide at the bottom gets missed | Done. Labelled thinking budget; the request text is gone; the provider diagram stays; the guide moved to the meter. |
+| 26 | Lean RL is undefined; give it a short mechanism | Done. Bottleneck plus a reward-minus-length scene. |
+| 27 | Capability terrain loops: say what changes, and place it after SFT/GRPO are explained | Done. One pass, then holds; the meter names each checkpoint and its solved count. |
+| 28 | Frontier: highlight the orange (runtime) dots with their gains; replace "moves it up / moves it left" | Done. Each serving dot shows its gain; the title states the numbers. |
+| 29 | Inside the model: context for what improved it | Done, lightly: the kicker places it after SFT and GRPO. |
+| 30 | "What did the model learn": arrows from each step to its result (e.g. where 69.8 came from) | Done for curves: arrow from the base point with pp, tasks and cause. Not yet on the capability map. |
+| 31 | Where the 96 tasks land: reimagine the graph | Done. Tasks stacked by difficulty with an ability line that sweeps right. |
+| 32 | Elastic RL: explain elastic RL and the QwenGyre idea; impact communicated | Done. Bottleneck, the idea (crediting QwenGyre), ledger and lesson. |
+| 33 | Regression audit: communicate, not just represent | Done. Step-by-step ledger naming each lost task, plus a focus moment. |

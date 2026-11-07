@@ -17,8 +17,8 @@ const STAGES = [
   { label: "Base", policy: 0, budget: 1 },
   { label: "SFT", policy: 1, budget: 1 },
   { label: "RL", policy: 2, budget: 1 },
-  { label: "RL · 2× thought", policy: 2, budget: 2 },
-  { label: "RL · 4× thought", policy: 2, budget: 4 },
+  { label: "RL · 2× budget", policy: 2, budget: 2 },
+  { label: "RL · 4× budget", policy: 2, budget: 4 },
   { label: "Lean RL · 4×", policy: 3, budget: 4 },
 ] as const;
 const RISE = 13500;

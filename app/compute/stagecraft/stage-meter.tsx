@@ -25,7 +25,7 @@ export type FocusDetail = {
   /** Why it happened, one short clause. */
   cause?: string;
   /** Where the caption sits on the stage (default top). */
-  place?: "top" | "center" | "bottom" | "left";
+  place?: "top" | "center" | "bottom" | "left" | "upper-left";
   tone?: Tone;
 } | null;
 

@@ -68,3 +68,4 @@
 .sm-focus[data-tone="problem"] p small { color: #ff8f86; }
 .sm-focus[data-place="left"] { left: 30%; top: auto; bottom: 90px; max-width: 760px; }
 .lf-stage[data-focus="on"] .rc-panel[data-focus-spot]::after { display: none; }
+.sm-focus[data-place="upper-left"] { left: 34%; top: 230px; max-width: 700px; }
