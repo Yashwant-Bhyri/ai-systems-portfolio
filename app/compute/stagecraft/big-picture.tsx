@@ -5,7 +5,7 @@ import { useTr } from "../../exhibit/i18n";
 import { inferenceStoryRuns } from "../lab-story-data";
 import { ease, prog } from "../../exhibit/engine";
 import { FlowBoard, LEVERS } from "./flow-board";
-import { emitMeter, highlight } from "./stage-meter";
+import { emitMeter, highlight, useSummaryPause } from "./stage-meter";
 import "./big-picture.css";
 
 /**
@@ -24,7 +24,7 @@ const f = (v: number, d = 0) => v.toLocaleString("en-US", { minimumFractionDigit
 /* The timeline: [from ms, line]. A lever's window is when its points move. */
 const LINES: readonly (readonly [number, string])[] = [
   [600, "96 requests: how long each waits, its GPU time, and whether it was right"],
-  [3600, `Today the slowest 5% wait *${f(RUNS[0].p95)} seconds*`],
+  [3600, `Today the slowest 5% of requests wait *${f(RUNS[0].p95)} seconds*`],
   [7000, "Serving the same intelligence for less depends on *three things*"],
   [9000, "Each one moves the same points, and none of them changes an answer"],
   [18800, `Not one answer changed: *${RUNS[3].correct} of 96 still correct*`],
@@ -35,7 +35,7 @@ const FLOW_AT = 21800, FLOW_STEP = 3600, END_AT = FLOW_AT + 1200 + FLOW_STEP * 3
 /** What each lever has bought by the time its points have moved. */
 const mean = (r: (typeof RUNS)[number], k: "prefill") => r.tasks.reduce((a, q) => a + q[k], 0) / r.tasks.length;
 const RESULTS = [
-  `Slowest 5%: ${f(RUNS[0].p95)} → ${f(RUNS[1].p95)} s`,
+  `Slowest 5% of requests: ${f(RUNS[0].p95)} → ${f(RUNS[1].p95)} s`,
   `Prompt reading: ${f(mean(RUNS[1], "prefill") * 1000)} → ${f(mean(RUNS[2], "prefill") * 1000)} ms`,
   `${f(RUNS[2].correctCost!, 2)} → ${f(RUNS[3].correctCost!, 2)} GPU-s per correct answer`,
 ];
@@ -115,32 +115,6 @@ function draw(c: HTMLCanvasElement, t: number, bare = false) {
   g.globalAlpha = 1;
 }
 
-/** The moving cloud alone, for the project's second page; reports GPU time per correct answer as it falls. */
-const LOOP = { from: 7000, to: 19500, hold: 4000 };
-export function CloudBackdrop({ onCost }: { onCost: (cost: number, lever: number) => void }) {
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const report = useRef(onCost);
-  useEffect(() => { report.current = onCost; });
-  useEffect(() => {
-    let raf = 0;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const span = LOOP.to - LOOP.from + LOOP.hold;
-      const local = (now - start) % span;
-      const t = Math.min(LOOP.to, LOOP.from + local);
-      if (canvas.current) draw(canvas.current, t + (now - start) * 0, true);
-      const k = MOVES.map(([a, b]) => ease.io(prog(t, a, b)));
-      let c = RUNS[0].correctCost!;
-      k.forEach((v, m) => { c += (RUNS[m + 1].correctCost! - RUNS[m].correctCost!) * v; });
-      report.current(c, MOVES.findIndex(([a, b]) => t >= a && t <= b + 300));
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-  return <canvas ref={canvas} className="sp-canvas" aria-hidden="true" />;
-}
-
 export function BigPicture({ active }: { active: boolean }) {
   const tr = useTr();
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -177,10 +151,13 @@ export function BigPicture({ active }: { active: boolean }) {
   useEffect(() => {
     const dive = () => setPlaying(false);
     const resume = () => { if (clock.current >= TOTAL) { clock.current = 0; fired.current = false; } setPlaying(true); };
+    const at = (e: Event) => { if (active) { clock.current = (e as CustomEvent<number>).detail; fired.current = true; setPlaying(true); } };
     window.addEventListener("lab:dive", dive);
     window.addEventListener("lab:resume", resume);
-    return () => { window.removeEventListener("lab:dive", dive); window.removeEventListener("lab:resume", resume); };
-  }, []);
+    window.addEventListener("lab:figure-seek", at);
+    return () => { window.removeEventListener("lab:dive", dive); window.removeEventListener("lab:resume", resume); window.removeEventListener("lab:figure-seek", at); };
+  }, [active]);
+  useSummaryPause(() => setPlaying(false), () => setPlaying(true), active);
   useEffect(() => { if (active) emitMeter(null); }, [active]);
 
   const flow = prog(t, FLOW_AT, FLOW_AT + 700);

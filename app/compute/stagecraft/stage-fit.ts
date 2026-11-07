@@ -10,7 +10,7 @@ import { useEffect, type RefObject } from "react";
  */
 const FLOOR = 0.78;
 
-export function useStageFit(stageRef: RefObject<HTMLElement | null>, fitRef: RefObject<HTMLElement | null>, on: boolean) {
+export function useStageFit(stageRef: RefObject<HTMLElement | null>, fitRef: RefObject<HTMLElement | null>, on: boolean, moduleKey = "") {
   useEffect(() => {
     const stage = stageRef.current, fit = fitRef.current;
     if (!stage || !fit) return;
@@ -27,8 +27,10 @@ export function useStageFit(stageRef: RefObject<HTMLElement | null>, fitRef: Ref
       // modules size their main figure against the room they actually have
       stage.style.setProperty("--lf-room", `${room}px`);
       stage.dataset.natural = String(natural);
-      const next = measureOnly ? 1 : Math.max(FLOOR, Math.min(1, Math.floor((room / natural) * 100) / 100));
-      if (Math.abs(next - scale) < 0.01 && stage.dataset.fit) return;
+      const wanted = measureOnly ? 1 : Math.max(FLOOR, Math.min(1, Math.floor((room / natural) * 100) / 100));
+      // Within one module the scale only goes down, so the block never pumps in and out as its content changes.
+      const next = stage.dataset.fit ? Math.min(scale, wanted) : wanted;
+      if (Math.abs(next - scale) < 0.005 && stage.dataset.fit) return;
       scale = next;
       stage.dataset.fit = scale.toFixed(2);
       if (scale === 1) { fit.style.transform = ""; fit.style.marginBottom = ""; return; }
@@ -44,5 +46,5 @@ export function useStageFit(stageRef: RefObject<HTMLElement | null>, fitRef: Ref
     mo.observe(fit, { childList: true, subtree: true });
     schedule();
     return () => { ro.disconnect(); mo.disconnect(); cancelAnimationFrame(raf); reset(); };
-  }, [stageRef, fitRef, on]);
+  }, [stageRef, fitRef, on, moduleKey]);
 }

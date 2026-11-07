@@ -7,74 +7,62 @@ const D = (s: number) => `${s}s`;
 /* ── Inference · Part 1 ───────────────────────────────────────────────── */
 
 export function GlyphBigPicture() {
-  // A turning cloud of requests: the points fall as the levers act.
-  const pts = [[38, 40], [62, 28], [86, 52], [108, 34], [132, 62], [156, 44], [178, 70], [200, 54]];
+  // Same answers on top (the row of ticks never changes); the GPU time under them falls.
+  const bars = [62, 48, 70, 54, 66, 44, 58, 72, 50, 64];
   return <svg viewBox={VB}>
-    <path d="M26 16V96L118 112L226 88" className="g-axis" />
-    {pts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={5} className={i % 3 === 2 ? "g-m" : "g-g"}>
-      <animate attributeName="cy" values={`${y};${y + 24};${y + 24};${y}`} keyTimes="0;.45;.92;1" dur={D(5.4)} begin={D(i * 0.08)} repeatCount="indefinite" />
-    </circle>)}
+    {bars.map((h, i) => <circle key={`t${i}`} cx={30 + i * 20} cy={16} r={3.5} className="g-g" />)}
+    <path d="M18 108H226" className="g-axis" />
+    {bars.map((h, i) => (
+      <rect key={i} x={23 + i * 20} y={108 - h} width={14} height={h} rx={2} className="g-b">
+        <animate attributeName="height" values={`${h};${h * 0.64};${h * 0.64};${h}`} keyTimes="0;.4;.9;1" calcMode="spline" keySplines=".45 0 .55 1;0 0 1 1;.45 0 .55 1" dur={D(8)} repeatCount="indefinite" />
+        <animate attributeName="y" values={`${108 - h};${108 - h * 0.64};${108 - h * 0.64};${108 - h}`} keyTimes="0;.4;.9;1" calcMode="spline" keySplines=".45 0 .55 1;0 0 1 1;.45 0 .55 1" dur={D(8)} repeatCount="indefinite" />
+      </rect>
+    ))}
   </svg>;
 }
 
 export function GlyphExperiment() {
-  // Three interventions remove three slices of the same bar.
-  const parts = [[0, 46, "g-r"], [46, 62, "g-a"], [108, 22, "g-c"]] as const;
+  // One bar; three levers take a slice off it, one at a time.
+  const parts = [[150, 76, "g-r", 0], [116, 34, "g-a", 1], [84, 32, "g-c", 2]] as const;
   return <svg viewBox={VB}>
-    <text x={14} y={22} className="g-t">GPU-s / correct</text>
-    <rect x={14} y={36} width={212} height={16} rx={3} className="g-m" opacity={.35} />
-    {parts.map(([x, w, c], i) => <rect key={i} x={226 - x - w} y={36} width={w} height={16} rx={2} className={c}>
-      <animate attributeName="opacity" values="1;1;.12;.12;1" keyTimes={`0;${.18 + i * .16};${.26 + i * .16};.92;1`} dur={D(5.4)} repeatCount="indefinite" />
-    </rect>)}
-    <rect x={14} y={36} width={96} height={16} rx={3} className="g-g" />
-    <rect x={14} y={66} width={8} height={8} rx={1.5} className="g-r" /><text x={26} y={74} className="g-t">wait</text>
-    <rect x={66} y={66} width={8} height={8} rx={1.5} className="g-a" /><text x={78} y={74} className="g-t">reread</text>
-    <rect x={132} y={66} width={8} height={8} rx={1.5} className="g-c" /><text x={144} y={74} className="g-t">slow rates</text>
-    <text x={14} y={102} className="g-t">same answers · less work each</text>
+    <rect x={14} y={46} width={70} height={28} rx={4} className="g-g" />
+    {parts.map(([x, w, c, i]) => (
+      <rect key={x} x={x} y={46} width={w - 2} height={28} rx={3} className={c}>
+        <animate attributeName="opacity" values="1;1;.1;.1;1" keyTimes={`0;${0.12 + i * 0.2};${0.2 + i * 0.2};.92;1`} dur={D(9)} repeatCount="indefinite" />
+      </rect>
+    ))}
   </svg>;
 }
 
 export function GlyphComposition() {
-  // The four conditions as a quadrilateral; training lifts (rose), serving shifts left (amber).
+  // Accuracy up, then cost down: one point, one L-shaped journey.
   return <svg viewBox={VB}>
-    <path d="M24 12V104H226" className="g-axis" />
-    <path d="M190 84L70 84L106 34L198 34Z" className="g-line" strokeDasharray="2 5" />
-    <circle cx={190} cy={84} r={4} className="g-m" /><circle cx={70} cy={84} r={3} className="g-m" /><circle cx={198} cy={34} r={3} className="g-m" /><circle cx={106} cy={34} r={3} className="g-m" />
-    <path d="M190 84L198 34" className="g-line g-r-s" strokeWidth={2} strokeDasharray="60" strokeDashoffset="60">
-      <animate attributeName="stroke-dashoffset" values="60;0;0;0" keyTimes="0;.3;.9;1" dur={D(5)} repeatCount="indefinite" />
-    </path>
-    <path d="M198 34L106 34" className="g-line g-a-s" strokeWidth={2} strokeDasharray="100" strokeDashoffset="100">
-      <animate attributeName="stroke-dashoffset" values="100;100;0;0" keyTimes="0;.35;.7;1" dur={D(5)} repeatCount="indefinite" />
-    </path>
-    <circle r={5} className="g-ink"><animateMotion path="M190 84L198 34L106 34" keyPoints="0;0.35;1;1" keyTimes="0;.3;.7;1" calcMode="linear" dur={D(5)} repeatCount="indefinite" /></circle>
-    <text x={30} y={22} className="g-t">pass@1 ↑</text><text x={226} y={116} className="g-t" textAnchor="end">← GPU-s / correct</text>
+    <path d="M26 12V104H226" className="g-axis" />
+    <path d="M176 88V30H92" className="g-line" strokeDasharray="3 5" />
+    <circle cx={176} cy={88} r={4} className="g-m" />
+    <circle r={7} className="g-a"><animateMotion path="M176 88V30H92" keyPoints="0;.41;.41;1;1;0" keyTimes="0;.28;.42;.72;.94;1" calcMode="linear" dur={D(9)} repeatCount="indefinite" /></circle>
   </svg>;
 }
 
 export function GlyphReplay() {
-  const bars = Array.from({ length: 32 }, (_, i) => 14 + ((i * 37) % 23));
+  // One request, two runs: the optimized bar ends first; a playhead crosses both.
   return <svg viewBox={VB}>
-    <rect x={14} y={18} width={164} height={12} rx={2} className="g-b" opacity={.8} />
-    <rect x={14} y={38} width={102} height={12} rx={2} className="g-g" />
-    <rect x={14} y={14} width={1.5} height={40} className="g-ink"><animate attributeName="x" values="14;178;178" keyTimes="0;.7;1" dur={D(3.6)} repeatCount="indefinite" /></rect>
-    {bars.map((h, i) => <rect key={i} x={14 + i * 6.7} y={108 - h} width={3.4} height={h} rx={1} className={i % 3 ? "g-b" : "g-g"} opacity={.55} />)}
-    <rect x={14} y={70} width={8} height={40} rx={2} className="g-sel"><animate attributeName="x" values="54;54;121;121;188;188;54" keyTimes="0;.28;.36;.62;.7;.94;1" dur={D(6)} repeatCount="indefinite" /></rect>
+    <rect x={18} y={32} width={204} height={22} rx={4} className="g-b" opacity={0.85} />
+    <rect x={18} y={70} width={132} height={22} rx={4} className="g-g" opacity={0.9} />
+    <rect x={18} y={32} width={8} height={22} className="g-a" /><rect x={18} y={70} width={8} height={22} className="g-a" />
+    <rect x={18} y={22} width={2} height={80} rx={1} className="g-ink"><animate attributeName="x" values="18;222;222;18" keyTimes="0;.8;.96;1" dur={D(8)} repeatCount="indefinite" /></rect>
   </svg>;
 }
 
 export function GlyphLatency() {
-  const dots = Array.from({ length: 24 }, (_, i) => i);
+  // Every request ranked: the optimized curve sits below, and the gap is widest at the slow end.
   return <svg viewBox={VB}>
-    <path d="M20 104H224" className="g-axis" />
-    {dots.map(i => <circle key={i} cx={24 + i * 8.4} cy={100 - Math.pow(i / 23, 3) * 78} r={2.6} className={i > 21 ? "g-r" : "g-b"} />)}
-    {[["p50", 120], ["p95", 196], ["p99", 212]].map(([l, x], i) => <g key={l}>
-      <path d={`M${x} 14V104`} className="g-line g-a-s" strokeDasharray="2 4" opacity={0}>
-        <animate attributeName="opacity" values={["1;0;0;1", "0;1;0;0", "0;0;1;0"][i]} dur={D(4.5)} calcMode="discrete" repeatCount="indefinite" />
-      </path>
-      <text x={Number(x) - 4} y={12} className="g-t g-hi" textAnchor="end" opacity={0}>
-        {l}<animate attributeName="opacity" values={["1;0;0;1", "0;1;0;0", "0;0;1;0"][i]} dur={D(4.5)} calcMode="discrete" repeatCount="indefinite" />
-      </text>
-    </g>)}
+    <path d="M22 12V106H226" className="g-axis" />
+    <path d="M26 96C110 86 170 60 220 18" fill="none" className="g-b-s" strokeWidth="2.5" />
+    <path d="M26 98C110 94 176 80 220 58" fill="none" className="g-g-s" strokeWidth="2.5" />
+    <path d="M214 24V56" className="g-a-s" strokeWidth="2">
+      <animate attributeName="opacity" values=".2;1;1;.2" keyTimes="0;.3;.8;1" dur={D(6)} repeatCount="indefinite" />
+    </path>
   </svg>;
 }
 
@@ -91,64 +79,71 @@ export function GlyphFigureStory() {
 /* ── Inference · Part 2 · investigations ──────────────────────────────── */
 
 export function GlyphChunked() {
-  const ticks = (gap: boolean) => Array.from({ length: 18 }, (_, i) => i).filter(i => !gap || i < 6 || i > 11);
+  // A long prompt (amber) in one block stalls the answer; in chunks, the answer keeps its beat.
+  const ticks = (y: number, skip: (i: number) => boolean) => Array.from({ length: 22 }, (_, i) => (skip(i) ? null : <rect key={i} x={16 + i * 10} y={y} width={5} height={26} rx={1.5} className="g-g" />));
   return <svg viewBox={VB}>
-    <text x={14} y={24} className="g-t">baseline</text>
-    {ticks(true).map(i => <rect key={i} x={74 + i * 8.6} y={14} width={3} height={14} rx={1} className="g-b" />)}
-    <rect x={74 + 6 * 8.6} y={16} width={6 * 8.6 - 5} height={10} rx={2} className="g-r" opacity={.5} />
-    <text x={14} y={64} className="g-t">chunked</text>
-    {ticks(false).map(i => <rect key={i} x={74 + i * 8.6} y={54} width={3} height={14} rx={1} className="g-g" />)}
-    <text x={14} y={104} className="g-t">a new prompt no longer stalls the stream</text>
+    {ticks(22, (i) => i > 5 && i < 16)}
+    <rect x={76} y={22} width={96} height={26} rx={3} className="g-a"><animate attributeName="opacity" values=".55;1;.55" dur={D(5)} repeatCount="indefinite" /></rect>
+    {ticks(70, (i) => i % 3 === 1)}
+    {Array.from({ length: 7 }, (_, i) => <rect key={i} x={26 + i * 30} y={70} width={5} height={26} rx={1.5} className="g-a" />)}
   </svg>;
 }
 
 export function GlyphServingMap() {
+  // Requests into one scheduler, out to the GPU: a pulse travels each route.
+  const rows = [24, 48, 72, 96];
   return <svg viewBox={VB}>
-    {["A", "B", "C", "D"].map((l, i) => <g key={l}>
-      <circle cx={22} cy={20 + i * 26} r={9} className="g-ring-s" /><text x={22} y={24 + i * 26} className="g-t" textAnchor="middle">{l}</text>
-      <path d={`M34 ${20 + i * 26}H120`} className="g-line" />
-      <circle r={3} className={["g-b", "g-a", "g-c", "g-g"][i]}><animateMotion path={`M34 ${20 + i * 26}H120L150 60H220`} dur={D(3 + i * .4)} begin={D(i * .5)} repeatCount="indefinite" /></circle>
-    </g>)}
-    <rect x={128} y={34} width={46} height={52} rx={6} className="g-box" />
-    <text x={151} y={64} className="g-t" textAnchor="middle">GPU</text>
+    <rect x={106} y={40} width={44} height={40} rx={7} className="g-box" />
+    <rect x={186} y={46} width={34} height={28} rx={5} className="g-a" opacity={0.8} />
+    <path d="M150 60H186" className="g-line" />
+    {rows.map((y, i) => (
+      <g key={y}>
+        <path d={`M28 ${y}C70 ${y} 70 60 106 60`} className="g-line" />
+        <circle cx={22} cy={y} r={5} className="g-b" />
+        <circle r={3.5} className="g-g"><animateMotion path={`M28 ${y}C70 ${y} 70 60 106 60H186`} dur={D(5)} begin={D(i * 1.25)} repeatCount="indefinite" /></circle>
+      </g>
+    ))}
   </svg>;
 }
 
 export function GlyphDraft() {
+  // A small model drafts many words; one sweep of the large model verifies them together.
+  const cells = Array.from({ length: 8 }, (_, i) => i);
   return <svg viewBox={VB}>
-    {[0, 1, 2, 3, 4].map(i => <g key={i}>
-      <rect x={18 + i * 42} y={30} width={34} height={18} rx={3} className={i === 3 ? "g-r" : "g-g"} opacity={.25}>
-        <animate attributeName="opacity" values={`0;.25;.25;${i === 4 ? .08 : .9};${i === 4 ? .08 : .9}`} keyTimes="0;.2;.45;.6;1" dur={D(4)} repeatCount="indefinite" />
+    {cells.map((i) => (
+      <rect key={i} x={20 + i * 26} y={30} width={20} height={20} rx={3} className="g-a">
+        <animate attributeName="opacity" values=".1;1;1;.1" keyTimes={`0;${0.04 + i * 0.05};.92;1`} dur={D(8)} repeatCount="indefinite" />
       </rect>
-      <text x={35 + i * 42} y={68} className="g-t" textAnchor="middle" opacity={0}>{i === 3 ? "✗" : i === 4 ? "" : "✓"}
-        <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.5;.6;1" dur={D(4)} repeatCount="indefinite" /></text>
-    </g>)}
-    <rect x={14} y={24} width={4} height={30} className="g-a"><animate attributeName="x" values="14;14;222;222" keyTimes="0;.45;.6;1" dur={D(4)} repeatCount="indefinite" /></rect>
-    <text x={14} y={104} className="g-t">guess five · check once · keep four</text>
+    ))}
+    {cells.map((i) => (
+      <rect key={`v${i}`} x={20 + i * 26} y={72} width={20} height={20} rx={3} className="g-g">
+        <animate attributeName="opacity" values=".08;.08;1;1;.08" keyTimes="0;.56;.66;.92;1" dur={D(8)} repeatCount="indefinite" />
+      </rect>
+    ))}
   </svg>;
 }
 
 export function GlyphCacheRoute() {
+  // A request goes past the empty replica to the one that holds its pages.
   return <svg viewBox={VB}>
-    <circle cx={22} cy={60} r={8} className="g-a" />
-    <path d="M30 60C80 60 90 28 150 28" className="g-line g-c-s" strokeWidth={2} />
-    <path d="M30 60C80 60 90 92 150 92" className="g-line" strokeDasharray="3 5" />
-    {[0, 1].map(k => <g key={k}><rect x={154} y={k ? 76 : 12} width={70} height={32} rx={5} className="g-box" />
-      {[0, 1, 2, 3, 4, 5].map(j => <rect key={j} x={161 + j * 10} y={(k ? 76 : 12) + 11} width={7} height={10} rx={1.5} className={k ? "g-m" : j < 4 ? "g-c" : "g-m"} opacity={k ? .4 : .9} />)}</g>)}
-    <circle r={3.5} className="g-a"><animateMotion path="M30 60C80 60 90 28 150 28" dur={D(1.8)} repeatCount="indefinite" /></circle>
-    <text x={14} y={112} className="g-t">warm prefix · first token sooner</text>
+    <path d="M26 60C80 60 90 30 140 30" className="g-g-s" fill="none" strokeWidth="2" />
+    <path d="M26 60C80 60 90 90 140 90" className="g-line" strokeDasharray="3 5" />
+    {[0, 1, 2, 3, 4].map((i) => <rect key={i} x={146 + i * 15} y={20} width={12} height={20} rx={2} className="g-c" />)}
+    {[0, 1, 2, 3, 4].map((i) => <rect key={i} x={146 + i * 15} y={80} width={12} height={20} rx={2} className="g-box" />)}
+    <circle cx={22} cy={60} r={6} className="g-a" />
+    <circle r={5} className="g-a"><animateMotion path="M26 60C80 60 90 30 140 30" keyPoints="0;1;1" keyTimes="0;.5;1" calcMode="linear" dur={D(5)} repeatCount="indefinite" /></circle>
   </svg>;
 }
 
 export function GlyphOverlap() {
+  // The CPU's block slides under the GPU's, so the GPU never waits.
   return <svg viewBox={VB}>
-    <text x={14} y={30} className="g-t">CPU</text><text x={14} y={64} className="g-t">GPU</text>
-    {[0, 1, 2, 3].map(i => <g key={i}>
-      <rect x={52 + i * 42} y={20} width={22} height={14} rx={2} className="g-a" opacity={.8} />
-      <rect x={66 + i * 42} y={54} width={36} height={14} rx={2} className="g-c" opacity={.85} />
-    </g>)}
-    <rect x={50} y={14} width={2} height={60} className="g-ink"><animate attributeName="x" values="50;222" dur={D(3.4)} repeatCount="indefinite" /></rect>
-    <text x={14} y={104} className="g-t">host prepares step n+1 during step n</text>
+    {[0, 1, 2, 3].map((i) => <rect key={i} x={20 + i * 52} y={68} width={46} height={26} rx={3} className="g-g" />)}
+    {[0, 1, 2, 3].map((i) => (
+      <rect key={i} x={36 + i * 52} y={28} width={24} height={26} rx={3} className="g-b">
+        <animate attributeName="opacity" values=".35;1;.35" dur={D(5)} begin={D(i * 0.6)} repeatCount="indefinite" />
+      </rect>
+    ))}
   </svg>;
 }
 
@@ -176,13 +171,13 @@ export function GlyphSSE() {
 }
 
 export function GlyphKVSizing() {
-  const users = [3, 12, 25];
+  // A dictionary of terms: entries light one by one.
   return <svg viewBox={VB}>
-    {["MHA · BF16", "GQA · BF16", "GQA · FP8"].map((l, k) => <g key={l}>
-      <text x={14} y={24 + k * 30} className="g-t">{l}</text>
-      {Array.from({ length: 25 }, (_, i) => <rect key={i} x={96 + i * 5.2} y={14 + k * 30} width={3.6} height={14} rx={1} className={i < users[k] ? (k === 2 ? "g-a" : "g-c") : "g-m"} opacity={i < users[k] ? .9 : .18} />)}
-    </g>)}
-    <text x={14} y={112} className="g-t">users at 32k context · one 80 GB GPU</text>
+    {Array.from({ length: 9 }, (_, i) => (
+      <rect key={i} x={36 + (i % 3) * 58} y={18 + Math.floor(i / 3) * 30} width={50} height={22} rx={4} className="g-a">
+        <animate attributeName="opacity" values=".12;.12;1;.12;.12" keyTimes={`0;${i * 0.1};${0.05 + i * 0.1};${0.14 + i * 0.1};1`} dur={D(9)} repeatCount="indefinite" />
+      </rect>
+    ))}
   </svg>;
 }
 
@@ -278,65 +273,67 @@ export function GlyphAutoscale() {
 /* ── Post-training ────────────────────────────────────────────────────── */
 
 export function GlyphCapability() {
+  // One square per task: more of them turn on.
+  const on = new Set([0, 3, 4, 8, 9, 11, 14, 15, 18, 22, 23, 25, 27, 30, 32, 33]);
   return <svg viewBox={VB}>
-    {Array.from({ length: 96 }, (_, i) => {
-      const solvedBase = (i * 7) % 10 < 3, gained = !solvedBase && (i * 13) % 10 < 6;
-      return <rect key={i} x={14 + (i % 24) * 9} y={16 + Math.floor(i / 24) * 22} width={6.6} height={16} rx={1.4} className={solvedBase ? "g-b" : gained ? "g-r" : "g-m"} opacity={solvedBase ? .8 : .2}>
-        {gained && <animate attributeName="opacity" values=".2;.2;.95;.95;.2" keyTimes={`0;${.2 + (i % 24) * .02};${.28 + (i % 24) * .02};.92;1`} dur={D(4.6)} repeatCount="indefinite" />}
-      </rect>;
-    })}
-    <text x={14} y={112} className="g-t">28 → 82 of 96 tasks</text>
+    {Array.from({ length: 36 }, (_, i) => (
+      <rect key={i} x={30 + (i % 12) * 15.5} y={26 + Math.floor(i / 12) * 24} width={12} height={18} rx={2} className={on.has(i) ? "g-r" : "g-m"} opacity={on.has(i) ? undefined : 0.35}>
+        {on.has(i) && <animate attributeName="opacity" values=".15;1;1;.15" keyTimes={`0;${0.08 + (i / 36) * 0.5};.92;1`} dur={D(8)} repeatCount="indefinite" />}
+      </rect>
+    ))}
   </svg>;
 }
 
 /** Where the 96 tasks land: a cloud of tasks under an ability line that rises. */
 export function GlyphTasks() {
+  // Tasks stacked by difficulty; the ability line sweeps right and everything behind it lights.
+  const col = [5, 4, 4, 3, 4, 3, 2, 3, 2, 2, 1];
   return <svg viewBox={VB}>
-    {Array.from({ length: 48 }, (_, i) => {
-      const x = 18 + ((i * 37) % 200), y = 18 + ((i * 53) % 84);
-      return <circle key={i} cx={x} cy={y} r={2.6} className={y > 58 ? "g-b" : y > 36 ? "g-r" : "g-m"} opacity={y > 58 ? .85 : y > 36 ? .3 : .25}>
-        {y <= 58 && y > 36 && <animate attributeName="opacity" values=".25;.25;.95;.95;.25" keyTimes="0;.3;.45;.9;1" dur={D(4.6)} repeatCount="indefinite" />}
-      </circle>;
-    })}
-    <path d="M14 58H226" className="g-line g-a-s" strokeWidth={1.6}>
-      <animate attributeName="d" values="M14 58H226;M14 58H226;M14 36H226;M14 36H226;M14 58H226" keyTimes="0;.3;.45;.9;1" dur={D(4.6)} repeatCount="indefinite" />
-    </path>
+    {col.flatMap((n, x) => Array.from({ length: n }, (_, y) => (
+      <circle key={`${x}-${y}`} cx={30 + x * 18} cy={102 - y * 15} r={5} className="g-r">
+        <animate attributeName="opacity" values=".2;.2;1;1;.2" keyTimes={`0;${0.04 + x * 0.06};${0.08 + x * 0.06};.92;1`} dur={D(8)} repeatCount="indefinite" />
+      </circle>
+    )))}
+    <rect y={16} width={2} height={92} rx={1} className="g-ink"><animate attributeName="x" values="22;216;216;22" keyTimes="0;.74;.92;1" dur={D(8)} repeatCount="indefinite" /></rect>
   </svg>;
 }
 
 /** Elastic RL: GPU rows whose cells flip between rollout (rose) and training (cyan) without a shared barrier. */
 export function GlyphFleet() {
+  // Eight GPUs, each changing role as needed, with no gap between roles.
+  const rows = [14, 26, 38, 50, 62, 74, 86, 98];
   return <svg viewBox={VB}>
-    {Array.from({ length: 8 }, (_, r) => {
-      const split = 60 + ((r * 37) % 70);
-      return <g key={r}>
-        <rect x={16} y={14 + r * 11} width={split} height={7} rx={1.5} className="g-r" opacity={.75} />
-        <rect x={20 + split} y={14 + r * 11} width={80} height={7} rx={1.5} className="g-c" opacity={.7}>
-          <animate attributeName="x" values={`${20 + split};${10 + split};${20 + split}`} dur={D(3.2 + r * 0.2)} repeatCount="indefinite" />
+    {rows.map((y, r) => (
+      <g key={y}>
+        <rect x={22} y={y} width={196} height={8} rx={2} className="g-r" opacity={0.7} />
+        <rect x={22 + ((r * 37) % 120)} y={y} width={60} height={8} rx={2} className="g-c">
+          <animate attributeName="x" values={`${22 + ((r * 37) % 120)};${60 + ((r * 53) % 96)};${22 + ((r * 37) % 120)}`} dur={D(9)} calcMode="spline" keyTimes="0;.5;1" keySplines=".45 0 .55 1;.45 0 .55 1" repeatCount="indefinite" />
         </rect>
-        <rect x={104 + split} y={14 + r * 11} width={210 - 104 - split > 0 ? 210 - 104 - split : 6} height={7} rx={1.5} className="g-r" opacity={.5} />
-      </g>;
-    })}
+      </g>
+    ))}
   </svg>;
 }
 
 export function GlyphCurves() {
-  const curves = [["M20 96L70 90L130 86L220 84", "g-m-s"], ["M20 84L70 72L130 64L220 58", "g-b-s"], ["M20 76L70 58L130 38L220 26", "g-r-s"], ["M20 76L60 56L100 38L150 24", "g-g-s"]] as const;
+  // Each checkpoint's curve draws itself as it is given more thinking budget.
+  const lines = [["M26 98C70 92 130 86 220 78", "g-m-s", 0], ["M26 90C70 74 130 62 220 52", "g-b-s", 0.5], ["M26 80C70 50 130 34 220 24", "g-r-s", 1]] as const;
   return <svg viewBox={VB}>
-    <path d="M20 10V104H226" className="g-axis" />
-    {curves.map(([d, c], i) => <path key={i} d={d} className={`g-line ${c}`} strokeWidth={1.8} strokeDasharray="260" strokeDashoffset="260">
-      <animate attributeName="stroke-dashoffset" values="260;0;0" keyTimes="0;.55;1" dur={D(4)} begin={D(i * .25)} repeatCount="indefinite" />
-    </path>)}
-    <text x={224} y={116} className="g-t" textAnchor="end">1× 2× 4× 8× thought</text>
+    <path d="M22 12V106H226" className="g-axis" />
+    {lines.map(([d, c, b]) => (
+      <path key={d} d={d} fill="none" className={c} strokeWidth="2.5" pathLength={1} strokeDasharray="1" strokeDashoffset="1">
+        <animate attributeName="stroke-dashoffset" values="1;0;0;1" keyTimes="0;.45;.92;1" dur={D(8)} begin={D(b)} repeatCount="indefinite" />
+      </path>
+    ))}
   </svg>;
 }
 
 export function GlyphAudit() {
+  // Gains and the few losses, side by side: the losses are never averaged away.
   return <svg viewBox={VB}>
-    {["base", "SFT", "GRPO", "4×", "lean"].map((l, r) => <g key={l}>
-      <text x={14} y={22 + r * 20} className="g-t">{l}</text>
-      {Array.from({ length: 28 }, (_, i) => <rect key={i} x={52 + i * 6.2} y={14 + r * 20} width={4.2} height={10} rx={1} className={(i + r * 3) % 9 === 0 && r > 1 ? "g-r" : "g-b"} opacity={(i * (r + 2)) % 7 < 2 + r ? .85 : .15} />)}
-    </g>)}
+    {Array.from({ length: 22 }, (_, i) => <rect key={i} x={22 + i * 9} y={30} width={6} height={24} rx={1.5} className="g-g" opacity={0.8} />)}
+    {[0, 1].map((i) => (
+      <rect key={i} x={22 + i * 9} y={72} width={6} height={24} rx={1.5} className="g-r"><animate attributeName="opacity" values=".4;1;.4" dur={D(4)} repeatCount="indefinite" /></rect>
+    ))}
   </svg>;
 }
 
@@ -350,41 +347,88 @@ export function GlyphElastic() {
 }
 
 export function GlyphFrontier() {
+  // Move by move: accuracy climbs, then the last step only lowers the cost.
+  const pts = "M60 98L92 72L112 58L190 26L120 26";
   return <svg viewBox={VB}>
-    <path d="M20 10V104H226" className="g-axis" />
-    <path d="M200 96L176 74L184 58L210 30L150 30" className="g-line g-r-s" strokeWidth={2} strokeDasharray="300" strokeDashoffset="300">
-      <animate attributeName="stroke-dashoffset" values="300;0;0" keyTimes="0;.6;1" dur={D(4.6)} repeatCount="indefinite" />
+    <path d="M22 12V106H226" className="g-axis" />
+    <path d={pts} fill="none" className="g-r-s" strokeWidth="2" pathLength={1} strokeDasharray="1" strokeDashoffset="1">
+      <animate attributeName="stroke-dashoffset" values="1;0;0;1" keyTimes="0;.6;.94;1" dur={D(9)} repeatCount="indefinite" />
     </path>
-    <circle cx={150} cy={30} r={4} className="g-r" />
-    <circle cx={150} cy={30} r={4} className="g-a"><animate attributeName="cx" values="150;150;78;78" keyTimes="0;.62;.85;1" dur={D(4.6)} repeatCount="indefinite" /></circle>
-    <text x={24} y={22} className="g-t">pass@1 ↑</text><text x={224} y={116} className="g-t" textAnchor="end">← GPU-s / correct</text>
+    <circle r={6} className="g-a"><animateMotion path={pts} keyPoints="0;1;1;0" keyTimes="0;.6;.94;1" calcMode="linear" dur={D(9)} repeatCount="indefinite" /></circle>
   </svg>;
 }
 
 /* ── Post-training · Brain-Scan family ────────────────────────────────── */
 
 export function GlyphInside() {
-  // A token × layer field; a scan column lights up as it passes, one word flips.
-  const cols = 22, rows = 7;
+  // Layers by tokens: a scan crosses, and the columns that changed light up.
+  const hot = new Set([3, 4, 9, 10, 14]);
   return <svg viewBox={VB}>
-    {Array.from({ length: cols * rows }, (_, i) => {
-      const c = i % cols, r = Math.floor(i / cols);
-      const v = 0.12 + 0.1 * r + ([5, 11, 16].includes(c) ? 0.35 : 0) * (r > 3 ? 1 : 0.4);
-      return <rect key={i} x={12 + c * 10} y={12 + r * 11} width={8} height={9} rx={1} className="g-r" opacity={Math.min(0.95, v)} />;
-    })}
-    <rect x={12} y={8} width={2} height={84} className="g-ink"><animate attributeName="x" values="12;224;224" keyTimes="0;.85;1" dur={D(4.4)} repeatCount="indefinite" /></rect>
-    {[5, 11, 16].map((c) => <rect key={c} x={12 + c * 10} y={100} width={8} height={3} className="g-r" opacity={0}>
-      <animate attributeName="opacity" values="0;0;1;1" keyTimes={`0;${(0.85 * c) / 21};${(0.85 * c) / 21 + 0.02};1`} dur={D(4.4)} repeatCount="indefinite" />
-    </rect>)}
+    {Array.from({ length: 18 }, (_, x) => Array.from({ length: 6 }, (_, y) => (
+      <rect key={`${x}-${y}`} x={22 + x * 11} y={22 + y * 13} width={9.5} height={11} className={hot.has(x) ? "g-r" : "g-m"} opacity={hot.has(x) ? 0.25 + ((y * 7) % 5) * 0.15 : 0.22} />
+    )))}
+    <rect y={16} width={2} height={88} rx={1} className="g-ink"><animate attributeName="x" values="20;222;222;20" keyTimes="0;.8;.95;1" dur={D(8)} repeatCount="indefinite" /></rect>
   </svg>;
 }
 
 export function GlyphTerrain() {
-  // Ridge rows, front to back, rising one after another.
-  const ridge = (k: number) => Array.from({ length: 25 }, (_, i) => `${i ? "L" : "M"}${14 + i * 9} ${30 + k * 14 - Math.max(0, Math.sin(i * 0.5 + k) * (6 + k * 3)) - (i < 8 + k * 3 ? 8 + k * 2 : 0)}`).join("");
+  // Ridges rising, one training step after another.
+  const ridges = [["M16 100C60 96 90 80 120 84C160 88 190 66 224 72V104H16Z", 0], ["M16 80C60 74 90 58 120 62C160 68 190 44 224 50V84H16Z", 0.8], ["M16 58C60 50 90 34 120 38C160 44 190 20 224 26V62H16Z", 1.6]] as const;
   return <svg viewBox={VB}>
-    {[0, 1, 2, 3, 4].map((k) => <path key={k} d={ridge(4 - k)} className="g-line g-r-s" strokeWidth={1.6} opacity={0}>
-      <animate attributeName="opacity" values="0;0;.95;.95;0" keyTimes={`0;${k * 0.14};${k * 0.14 + 0.1};.92;1`} dur={D(4.6)} repeatCount="indefinite" />
-    </path>)}
+    {ridges.map(([d, b], i) => (
+      <path key={d} d={d} className="g-r" opacity={0}>
+        <animate attributeName="opacity" values={`0;${0.35 + i * 0.25};${0.35 + i * 0.25};0`} keyTimes="0;.25;.9;1" dur={D(8)} begin={D(b)} repeatCount="indefinite" />
+      </path>
+    ))}
+  </svg>;
+}
+
+export function GlyphSummary() {
+  // A strip of moments with a playhead crossing it.
+  return <svg viewBox={VB}>
+    {[0, 1, 2, 3, 4, 5].map((i) => <rect key={i} x={18 + i * 35} y={36} width={29} height={48} rx={4} className={i % 2 ? "g-g" : "g-a"} opacity={0.4 + i * 0.09} />)}
+    <rect x={16} y={28} width={2} height={64} rx={1} className="g-ink"><animate attributeName="x" values="16;224" dur={D(9)} repeatCount="indefinite" /></rect>
+  </svg>;
+}
+
+export function GlyphLearn() {
+  // Several attempts, tested: the ones that pass grow, the rest shrink.
+  const rows = [[24, 1], [50, 0], [76, 1], [102, 0]] as const;
+  return <svg viewBox={VB}>
+    {rows.map(([y, ok]) => (
+      <g key={y}>
+        <rect x={28} y={y - 9} width={90} height={14} rx={3} className={ok ? "g-r" : "g-m"}>
+          <animate attributeName="width" values={ok ? "60;178;178;60" : "120;36;36;120"} keyTimes="0;.45;.9;1" calcMode="spline" keySplines=".45 0 .55 1;0 0 1 1;.45 0 .55 1" dur={D(8)} repeatCount="indefinite" />
+        </rect>
+      </g>
+    ))}
+  </svg>;
+}
+
+export function GlyphManifold() {
+  // Two clusters in a turning cube: joined point to point, pulling apart and coming back.
+  const pts = [[70, 40], [92, 62], [58, 70], [84, 84], [110, 44], [66, 92]];
+  return <svg viewBox={VB}>
+    <path d="M40 24L150 14L204 34V96L150 110L40 98Z M40 24L94 44V112 M94 44L204 34" className="g-axis" />
+    {pts.map(([x, y], i) => (
+      <g key={i}>
+        <circle cx={x} cy={y} r={4.5} className="g-b" />
+        <circle cx={x} cy={y} r={4.5} className="g-g">
+          <animate attributeName="cx" values={`${x};${x + 72};${x + 72};${x}`} keyTimes="0;.42;.9;1" calcMode="spline" keySplines=".45 0 .55 1;0 0 1 1;.45 0 .55 1" dur={D(8)} repeatCount="indefinite" />
+          <animate attributeName="cy" values={`${y};${y - 12};${y - 12};${y}`} keyTimes="0;.42;.9;1" calcMode="spline" keySplines=".45 0 .55 1;0 0 1 1;.45 0 .55 1" dur={D(8)} repeatCount="indefinite" />
+        </circle>
+      </g>
+    ))}
+  </svg>;
+}
+
+export function GlyphRace() {
+  // Two runs mirrored on one clock: the lower one finishes first.
+  const rows = Array.from({ length: 9 }, (_, i) => i);
+  return <svg viewBox={VB}>
+    <path d="M14 60H226" className="g-axis" />
+    {rows.map((i) => <rect key={`a${i}`} x={18 + i * 21} y={50 - i * 5} width={22} height={3.6} className="g-b" />)}
+    {rows.map((i) => <rect key={`b${i}`} x={18 + i * 13} y={67 + i * 5} width={14} height={3.6} className="g-g" />)}
+    <rect y={8} width={2} height={104} rx={1} className="g-ink"><animate attributeName="x" values="16;222;222;16" keyTimes="0;.8;.95;1" dur={D(8)} repeatCount="indefinite" /></rect>
   </svg>;
 }

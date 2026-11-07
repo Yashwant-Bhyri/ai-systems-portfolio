@@ -36,3 +36,4 @@
 .mc-option .ts-ring { position: absolute; top: 24px; right: 20px; width: 24px; height: 24px; }
 @media (max-width: 760px) { .mc-options { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .mc-card { animation: none; } }
+.mb-does { color: #f1f4f7; font: 450 22px/30px var(--font-geist-sans), sans-serif; letter-spacing: -.012em; }

@@ -23,7 +23,7 @@ import { useStudyPlayback } from "./use-study-playback";
 import { useFilmTime } from "./use-film-time";
 import type { DirectedView, RequestViewState } from "./explorer-state";
 import { ClusterPanel } from "./cluster-panel";
-import { emitMeter } from "./stagecraft/stage-meter";
+import { emitMeter, useSummaryPause } from "./stagecraft/stage-meter";
 import "./request-replay-explorer.css";
 
 const BLUE = "#9cc5f5",
@@ -151,6 +151,7 @@ export function RequestReplayExplorer({
   const [leader, setLeader] = useState<string | null>(null);
   const meterLine = `Request ${taskId + 1}, ${METRICS.find((item) => item.id === metric)!.label.toLowerCase().replace("gpu", "GPU")}: ${number(values[0])} → ${number(values[1])} ${delivery ? "s" : "GPU-s"}`;
   useEffect(() => { emitMeter({ text: meterLine, tone: "optimized" }); }, [meterLine]);
+  useSummaryPause(localPlayer.pause, localPlayer.resume);
   const selectRequest = (next: number) => {
     if (presentation) {
       presentation.inspect({
@@ -175,8 +176,8 @@ export function RequestReplayExplorer({
       return;
     }
     setMetric(next);
-    // Each new measure replays its last seven seconds, so the comparison visibly lands.
-    film.seek(REQUEST_FILM_MS - 7000);
+    // Each measure plays its whole film from the start.
+    film.seek(0);
     player.resume();
   };
   const play = () => {
@@ -419,6 +420,19 @@ export function RequestReplayExplorer({
                                 ? "reading input"
                                 : "emitting tokens"}
                     </text>
+                    {/* When each thing happens: the worker starts, the prompt is read, tokens begin. */}
+                    {!phaseOnly && delivery && frame.cursor >= wait && (
+                      <g className="rr-mark">
+                        <path d={`M${x(wait)} ${y - 36}V${y + 4}`} stroke="#a8b6c7" />
+                        <text x={x(wait) - 6} y={y - 40} textAnchor="end" className="rr-mark-text" fill="#c9d2db">worker starts at {number(wait, 1)} s</text>
+                      </g>
+                    )}
+                    {!phaseOnly && frame.cursor >= wait + task.prefill && (
+                      <g className="rr-mark">
+                        <path d={`M${x(wait + task.prefill)} ${y - 36}V${y + 4}`} stroke={AMBER} />
+                        <text x={x(wait + task.prefill) + 6} y={y - 40} className="rr-mark-text" fill={AMBER}>prefill done, tokens start at {number(wait + task.prefill, 2)} s</text>
+                      </g>
+                    )}
                     {parts
                       .filter((part) => part.length > 0)
                       .map((part) => (

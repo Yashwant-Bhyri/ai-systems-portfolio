@@ -66,9 +66,8 @@ export function GlossaryBoard({ items, active = true }: { items: readonly ReelIt
     <div ref={root} className="gr-root" onPointerLeave={() => setHover(null)}>
       {rows.map((row, r) => {
         const offset = r * perRow;
-        const here = shown >= offset && shown < offset + row.length;
         return (
-          <div key={r} className="gr-row" style={{ flexGrow: here ? 1.7 : 1 }}>
+          <div key={r} className="gr-row">
             {row.map((item, k) => {
               const i = offset + k, lit = i === shown;
               return (

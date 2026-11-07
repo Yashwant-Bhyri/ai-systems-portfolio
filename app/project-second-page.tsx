@@ -1,42 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { CloudBackdrop } from "./compute/stagecraft/big-picture";
-import { TerrainBackdrop } from "./compute/stagecraft/scan/capability-terrain";
-import { highlight } from "./compute/stagecraft/stage-meter";
+import { Manifold } from "./compute/stagecraft/manifold";
+import { ServingRace } from "./compute/stagecraft/serving-race";
 import "./project-second-page.css";
 
 /**
- * A project's second page has one job: make people go inside. One enormous result,
- * moving in sync with the picture behind it, one sentence, one button, and three doors
- * below. Each door is a live window into the real thing, with a question it answers.
+ * A project's second page has one job: take people into the results laboratory. The project's
+ * one striking picture, live; beside it, the laboratory's modules, one click from
+ * opening. The microscope and the one-page result are smaller ways in.
  */
 export type Door = { key: string; question: string; name: string; href: string; node: ReactNode };
 const DESIGN_W = 1512;
-
-const TRAINING_STEPS = ["Base", "SFT", "RL", "2× budget", "4× budget", "Lean RL"];
-function TrainingHero({ on }: { on: boolean }) {
-  const [state, setState] = useState({ stage: 0, solved: 28 });
-  return (
-    <>
-      <div className="sp-bg">{on && <TerrainBackdrop onStage={(stage, solved) => setState({ stage, solved })} />}</div>
-      <div className="sp-number"><b key={state.solved}>{state.solved}</b><span>of 96 maths, logic and coding<br />tasks solved</span></div>
-      <ol className="sp-steps">{TRAINING_STEPS.map((s, i) => <li key={s} data-on={i === state.stage || undefined} data-done={i < state.stage || undefined}>{s}</li>)}</ol>
-    </>
-  );
-}
-const INFERENCE_STEPS = ["Free-worker scheduling", "Prefix reuse", "Faster prefill & decode"];
-function InferenceHero({ on }: { on: boolean }) {
-  const [state, setState] = useState({ cost: 41.4, lever: -1 });
-  const last = useRef(0);
-  return (
-    <>
-      <div className="sp-bg">{on && <CloudBackdrop onCost={(cost, lever) => { const now = performance.now(); if (now - last.current > 60) { last.current = now; setState({ cost, lever }); } }} />}</div>
-      <div className="sp-number"><b>{state.cost.toFixed(2)}</b><span>GPU-seconds per correct answer,<br />down from 41.40</span></div>
-      <ol className="sp-steps">{INFERENCE_STEPS.map((s, i) => <li key={s} data-on={i === state.lever || undefined}>{s}</li>)}</ol>
-    </>
-  );
-}
 
 function DoorView({ door, seen }: { door: Door; seen: boolean }) {
   const box = useRef<HTMLDivElement>(null);
@@ -57,10 +32,10 @@ function DoorView({ door, seen }: { door: Door; seen: boolean }) {
   );
 }
 
-export function ProjectSecondPage({ id, accent, training, kicker, headline, href, doors }: { id: string; accent: string; training: boolean; kicker: string; headline: string; href: string; doors: readonly Door[] }) {
+export function ProjectSecondPage({ id, accent, training, name, title, enter, lab, doors }: { id: string; accent: string; training: boolean; name: string; title: string; enter: string; lab: ReactNode; doors: readonly Door[] }) {
   const root = useRef<HTMLElement>(null);
-  const [inView, setInView] = useState(false);
   const [seen, setSeen] = useState(false);
+  const [inView, setInView] = useState(false);
   useEffect(() => {
     const el = root.current;
     if (!el) return;
@@ -70,15 +45,22 @@ export function ProjectSecondPage({ id, accent, training, kicker, headline, href
   }, []);
   return (
     <section ref={root} id={`${id}-second`} className={`sp-page vx-page vx-accent-${accent}`} data-vx-page>
-      <div className="sp-hero">
-        <span className="sp-kicker">{kicker}</span>
-        <h2>{highlight(headline)}</h2>
-        {training ? <TrainingHero on={inView} /> : <InferenceHero on={inView} />}
-        <a className="sp-cta" href={href}>Go inside the project <i aria-hidden="true">↗</i></a>
+      <header className="sp-head">
+        <div>
+          <span className="sp-name">{name}</span>
+          <h2>{title}</h2>
+        </div>
+        <a className="sp-cta" href={enter}>Enter the results laboratory <i aria-hidden="true">↗</i></a>
+      </header>
+      <div className="sp-main">
+        <div className="sp-hero">{seen ? (training ? <Manifold active={inView} compact /> : <ServingRace active={inView} />) : null}</div>
+        <div className="sp-side">
+          <div className="sp-lab">{lab}</div>
+          <nav className="sp-doors" aria-label="Other ways in">
+            {doors.map((d) => <DoorView key={d.key} door={d} seen={seen} />)}
+          </nav>
+        </div>
       </div>
-      <nav className="sp-doors" aria-label="Three ways in">
-        {doors.map((d) => <DoorView key={d.key} door={d} seen={seen} />)}
-      </nav>
     </section>
   );
 }

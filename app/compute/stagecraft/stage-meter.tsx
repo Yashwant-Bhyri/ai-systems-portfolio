@@ -143,3 +143,16 @@ export function useFreezeMoments(moments: readonly FreezeMoment[], readTime: () 
     return () => window.clearInterval(id);
   }, [running, frozen]);
 }
+
+/** The summary's pause: every figure on stage holds and carries on with it. */
+export function useSummaryPause(pause: () => void, resume: () => void, on = true) {
+  const live = useRef({ pause, resume });
+  useEffect(() => { live.current = { pause, resume }; });
+  useEffect(() => {
+    if (!on) return;
+    const a = () => live.current.pause(), b = () => live.current.resume();
+    window.addEventListener("lab:hold", a);
+    window.addEventListener("lab:release", b);
+    return () => { window.removeEventListener("lab:hold", a); window.removeEventListener("lab:release", b); };
+  }, [on]);
+}

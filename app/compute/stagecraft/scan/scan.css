@@ -43,3 +43,7 @@
 .sc-transport { display: flex; align-items: center; gap: 12px; padding: 4px 24px; }
 .vx-shell .sc-transport button { flex: 0 0 auto; width: 32px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: rgba(255,255,255,.06); color: #eef2f6; cursor: pointer; font: 400 13px/1 var(--font-geist-mono), monospace; }
 .sc-transport input { flex: 1 1 auto; accent-color: var(--active-accent); }
+
+/* The struck word's room is reserved, so the answer never reflows as the scan reaches it. */
+.sc-tok s { opacity: 0; transition: opacity .3s; }
+.sc-tok s[data-on] { opacity: .9; }

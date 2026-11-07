@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ComponentType, 
 import { useTr } from "../../exhibit/i18n";
 import { ease, prog } from "../../exhibit/engine";
 import { useStageHold } from "./stage-hold";
-import { emitFocus, highlight, type Tone } from "./stage-meter";
+import { emitFocus, highlight, useSummaryPause, type Tone } from "./stage-meter";
 import "./module-arc.css";
 import "./system-board.css";
 
@@ -75,7 +75,9 @@ export function ModuleArc({
   }, []);
 
   // Scene clock: runs while a timed beat is on screen.
-  const live = active && inView && !reduced;
+  const [paused, setPaused] = useState(false);
+  useSummaryPause(() => setPaused(true), () => setPaused(false), active);
+  const live = active && inView && !reduced && !paused;
   useEffect(() => {
     if (!live || !timed) return;
     let raf = 0;
@@ -126,6 +128,19 @@ export function ModuleArc({
   const lines = timed?.meter;
   let line = beat === 2 ? `${labels[2]}: ${systemTitle}` : timed?.title ?? "";
   if (lines) for (const [at, text] of lines) if (shownT >= at) line = text;
+  // The summary sends an arc straight to one beat.
+  useEffect(() => {
+    if (!active) return;
+    let last = "";
+    const goTo = (e: Event) => {
+      const d = (e as CustomEvent<{ id: string; beat: number }>).detail;
+      if (d.id === last) return;
+      last = d.id;
+      setBeat(d.beat); setT(0); setExploring(false); setPaused(false); setRun((n) => n + 1);
+    };
+    window.addEventListener("lab:arc-go", goTo);
+    return () => window.removeEventListener("lab:arc-go", goTo);
+  }, [active]);
   // Keep playing and dive deeper, from the rail.
   useEffect(() => {
     if (!active) return;

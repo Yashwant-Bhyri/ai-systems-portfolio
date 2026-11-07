@@ -1730,8 +1730,11 @@ function FlagshipChapter({
   children,
   part = "full",
   conclusion,
+  results,
 }: {
   conclusion?: ConclusionSpec;
+  /** The results laboratory, placed straight after the architecture and before the microscope. */
+  results?: React.ReactNode;
   id: string;
   number: string;
   brand: string;
@@ -1825,7 +1828,13 @@ function FlagshipChapter({
               onSelect={selectArchitectureNode}
             />
           </div>
-          {part === "overview" ? (
+          {(id === "inference" || id === "post-training") ? (
+            <a className="vx-architecture-handoff" href={part === "overview" ? `/${id}?labnav=show#${id}-study` : `#${id}-study`}>
+              <span>See what it achieved</span>
+              <strong>Enter the results laboratory</strong>
+              <i>{part === "overview" ? "↗" : "↓"}</i>
+            </a>
+          ) : part === "overview" ? (
             <a className="vx-architecture-handoff" href={`${deep}#${id}-microscope`}>
               <span>Inspect the mechanisms</span>
               <strong>Open the component microscope</strong>
@@ -1840,6 +1849,7 @@ function FlagshipChapter({
           )}
         </div>
       </section>
+      {results}
       {part === "full" && <section
         ref={microscopeRef}
         id={`${id}-microscope`}
@@ -1953,8 +1963,8 @@ function MindScapeChapter() {
   );
 }
 
-export function InferenceChapter({ part = "full" }: { part?: "overview" | "full" }) {
-  return <FlagshipChapter part={part}
+export function InferenceChapter({ part = "full", results }: { part?: "overview" | "full"; results?: React.ReactNode }) {
+  return <FlagshipChapter part={part} results={results}
     id="inference" number="02" brand="INFERENCE OPTIMIZATION ENGINE"
     category="LLM SERVING · GPU ACCELERATION · RUNTIME EFFICIENCY · 2026"
     title="From queued prompt to streamed token, every layer of execution matters."
@@ -1964,8 +1974,8 @@ export function InferenceChapter({ part = "full" }: { part?: "overview" | "full"
   />;
 }
 
-export function TrainingChapter({ part = "full" }: { part?: "overview" | "full" }) {
-  return <FlagshipChapter part={part}
+export function TrainingChapter({ part = "full", results }: { part?: "overview" | "full"; results?: React.ReactNode }) {
+  return <FlagshipChapter part={part} results={results}
     id="post-training" number="01" brand="ADVANCED POST-TRAINING"
     category="ALIGNMENT · RL OPTIMIZATION · TEST-TIME SCALING · 2026"
     title="A foundation model learns to reason, then spends compute checking its work."
@@ -2304,15 +2314,15 @@ function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
       id={id}
       accent={training ? "rose" : "amber"}
       training={training}
-      kicker={training ? "Advanced post-training" : "Inference optimization"}
-      headline={training ? "One model. Almost *three times* the answers." : `The same answers. *${INFERENCE_SAVING}% less* GPU time.`}
-      href={href}
+      name={training ? "Advanced post-training" : "Inference optimization"}
+      title={training ? "What did the model learn? See every result" : `Same intelligence at ${INFERENCE_SAVING}% less compute, optimized under load`}
+      enter={`${href}?labnav=show#${id}-study`}
+      lab={<LabPreview training={training} />}
       doors={[
-        { key: "results", question: training ? "What changed inside the model?" : `Where does the ${INFERENCE_SAVING}% come from?`, name: "Results laboratory", href: `${href}#${id}-study`, node: <LabPreview training={training} /> },
         { key: "microscope", question: training ? "How does each training step work?" : "How is a request actually served?", name: "Component microscope", href: `${href}#${id}-microscope`, node: training
           ? <MiniMicroscope id={id} accent="rose" brand="ADVANCED POST-TRAINING" steps={TRAINING_STEPS} Visual={TrainingVisual} proof={TRAINING_PROOF} conclusion={TRAINING_CONCLUSION} />
           : <MiniMicroscope id={id} accent="amber" brand="INFERENCE OPTIMIZATION ENGINE" steps={INFERENCE_STEPS} Visual={InferenceVisual} proof={INFERENCE_PROOF} conclusion={INFERENCE_CONCLUSION} /> },
-        { key: "poster", question: training ? "Which steps gave how much?" : "What did each lever save?", name: "The result on one page", href, node: <ProjectPoster domain={domain} live /> },
+        { key: "poster", question: training ? "What did each training step give?" : "What did each lever save?", name: "The result on one page", href, node: <ProjectPoster domain={domain} live /> },
       ]}
     />
   );
@@ -2369,14 +2379,13 @@ export function ProjectDepthPage({ domain }: { domain: "inference" | "training" 
         <nav aria-label="Project navigation">
           <Link href="/#projects">All projects</Link>
           <a href={`#${id}`}>Architecture</a>
-          <a href={`#${id}-microscope`}>Component microscope</a>
           <a href={`#${id}-study`}>Results laboratory</a>
+          <a href={`#${id}-microscope`}>Component microscope</a>
         </nav>
         <a className="vx-header-resume" href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">{t.resume}</a>
         <LangSwitch />
       </header>
-      {domain === "inference" ? <InferenceChapter /> : <TrainingChapter />}
-      <ComputeStudy domain={domain} />
+      {domain === "inference" ? <InferenceChapter results={<ComputeStudy domain={domain} />} /> : <TrainingChapter results={<ComputeStudy domain={domain} />} />}
       <ContactDock />
     </main>
   );

@@ -31,10 +31,11 @@ import { reductionPercent } from "./study-math";
 import { useStageHold } from "./stagecraft/stage-hold";
 import { useStageFit } from "./stagecraft/stage-fit";
 import { AuditLedger } from "./stagecraft/audit-ledger";
-import { FocusCaption, StageMeter, highlight } from "./stagecraft/stage-meter";
+import { FocusCaption, StageMeter, highlight, useSummaryPause } from "./stagecraft/stage-meter";
 import "./stagecraft/viewport.css";
 import { useStudyPlayback } from "./use-study-playback";
 import { LabStory } from "./lab-story";
+import { inferenceStoryRuns } from "./lab-story-data";
 import { FigurePresentation } from "./figure-presentation";
 import { RetainedLabPanel } from "./retained-lab-panel";
 import type { InferenceTourHandle } from "./inference-figure-tour";
@@ -55,6 +56,8 @@ import { LabNavSwitcher, useLabNav } from "./stagecraft/lab-nav";
 import { LabLanding, TitleRail, type IntroStep, type Pathway, type ShowItem } from "./stagecraft/title-show";
 import { ChoiceCard, LineCard, ModuleBrief, moduleBriefs } from "./stagecraft/module-brief";
 import { BigPicture } from "./stagecraft/big-picture";
+import { Manifold } from "./stagecraft/manifold";
+import { ServingRace } from "./stagecraft/serving-race";
 import { SERVING_RAIL } from "./serving-rail-meta";
 import { TaskLanding } from "./stagecraft/task-landing";
 import { FleetModule } from "./stagecraft/fleet-module";
@@ -70,6 +73,9 @@ import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 import {
   GlyphAudit,
   GlyphBigPicture,
+  GlyphManifold,
+  GlyphRace,
+  GlyphLearn,
   GlyphCapability,
   GlyphComposition,
   GlyphCurves,
@@ -111,11 +117,12 @@ const InferenceFigureTour = lazy(() =>
 );
 
 /* The cursor performs each figure's own controls, so nobody has to discover them. */
+// The opening measure plays its full 20 seconds first (the cursor's start delay); each one after does too.
+const REPLAY_MS = 20600;
 const REPLAY_DEMO: readonly CursorStep[] = [
-  { target: ".rr-measure-chapters button:nth-child(2)", label: "Total GPU work", hold: 8200 },
-  { target: ".rr-measure-chapters button:nth-child(3)", label: "Input only", hold: 8200 },
-  { target: ".rr-measure-chapters button:nth-child(4)", label: "Answer only", hold: 8200 },
-  { target: ".rr-measure-chapters button:nth-child(1)", label: "Wait + execute", hold: 8200 },
+  { target: ".rr-measure-chapters button:nth-child(2)", label: "Total GPU work", hold: REPLAY_MS },
+  { target: ".rr-measure-chapters button:nth-child(3)", label: "Input only", hold: REPLAY_MS },
+  { target: ".rr-measure-chapters button:nth-child(4)", label: "Answer only", hold: REPLAY_MS },
 ]
 const LATENCY_DEMO: readonly CursorStep[] = [
   // The film plays to its end (ranking, then the rank scan); only then does the cursor walk the percentiles.
@@ -423,24 +430,72 @@ const INFERENCE_PATHWAYS: readonly Pathway[] = [
   { n: "02", title: "Optimized serving under load", short: "Optimized serving under load", techniques: [] },
 ];
 const TRAINING_PATHWAYS: readonly Pathway[] = [
-  { n: "01", title: "What did the model learn?", short: "The story", techniques: [] },
-  { n: "02", title: "Check it in detail", short: "In detail", techniques: [] },
+  { n: "01", title: "What did the model learn?", short: "In detail", techniques: [] },
 ];
 const INFERENCE_INTRO: readonly IntroStep[] = [
   { kind: "line", text: "Inference optimization can be done in *two ways*", ms: 2800 },
   { kind: "path", index: 0 },
   { kind: "path", index: 1 },
-  { kind: "line", text: "First: how we serve the same intelligence with *cheaper execution*", ms: 3000 },
+  { kind: "line", text: "First, the *summary*", ms: 2200 },
 ];
 const TRAINING_INTRO: readonly IntroStep[] = [
   { kind: "line", text: "One base model, made *smarter* on maths and coding", ms: 3000 },
   { kind: "path", index: 0 },
-  { kind: "line", text: "First, look *inside the model*", ms: 2400 },
+  { kind: "line", text: "First, the *summary*", ms: 2200 },
 ];
+/**
+ * The summary: 2–3 minutes through the strongest moments, in the order the story is told,
+ * on the real figures, with its own back, pause and forward. The modules after it are the depth.
+ */
+type Clip = { key?: string; title?: string; ms: number; line?: string; card?: string; beat?: number; film?: { step: number; at?: number; frame?: boolean }; seek?: number };
+const T_ = { base: simulateLab(0, 1), sft: simulateLab(1, 1), rl: simulateLab(2, 1), rl4: simulateLab(2, 4), lean: simulateLab(3, 4) };
+const FEWER = Math.round(100 * (1 - T_.lean.tokens / T_.lean.n / (T_.rl4.tokens / T_.rl4.n)));
+const R_ = inferenceStoryRuns("shared-prefix");
+const PCT_LESS = Math.round(100 * (1 - R_[3].correctCost! / R_[0].correctCost!));
+const INFERENCE_CLIPS: readonly Clip[] = [
+  { key: "race", ms: 22000, line: "The same 96 requests on one clock: the baseline above, optimized below" },
+  { card: `First: serving the same intelligence with *${PCT_LESS}% less compute*`, ms: 2800 },
+  { key: "setup", ms: 12500, seek: 7000, line: "Three levers act on all 96 requests, and not one answer changes" },
+  { key: "setup", ms: 13000, seek: 22000, line: "Where each lever works in the serving path" },
+  { key: "replay", ms: 15000, line: "One request, before and after: when the prompt is read, when tokens start" },
+  { key: "composition", ms: 15000, seek: 3000, line: "Training raises accuracy; faster serving takes back most of the extra cost" },
+  { key: "latency", ms: 14000, seek: 12000, line: "Under a queue the saving compounds, most of all for the slowest requests" },
+  { card: "Second: *optimized serving under load*", ms: 2800 },
+  { key: "pressure", ms: 9500, beat: 0, line: "Problem: one long prompt freezes every answer streaming on that GPU" },
+  { key: "pressure", ms: 7500, beat: 2, line: "Chunked prefill: read the prompt in chunks, so answers keep streaming" },
+  { key: "draft", ms: 9000, beat: 0, line: "Problem: the large model writes one word per full pass" },
+  { key: "draft", ms: 8000, beat: 1, line: "Speculative decoding: a small draft model predicts tokens, the large one verifies them" },
+  { key: "cache", ms: 9000, beat: 0, line: "Problem: routing by load ignores what is already in memory" },
+  { key: "cache", ms: 7500, beat: 2, line: "Cache-aware routing: send each request to where its prefix is cached" },
+  { key: "overlap", ms: 9000, beat: 0, line: "Problem: the GPU waits while the CPU prepares the next step" },
+  { key: "overlap", ms: 7500, beat: 1, line: "CPU/GPU overlap: prepare the next step during this one" },
+  { key: "map", ms: 9000, line: "All of it, working together on one serving clock" },
+  { key: "glossary", ms: 10000, line: "And the vocabulary behind it" },
+];
+const TRAINING_CLIPS: readonly Clip[] = [
+  { card: "The goal: the same model, more *correct answers* on maths and coding", ms: 2800 },
+  { key: "manifold", ms: 21000, line: "Every task, three models, six dimensions: turn it and each view tells a different truth" },
+  { key: "inside", ms: 15500, line: "On one coding task: the layers that moved, and the words that changed" },
+  { key: "learn", ms: 16800, line: `Learning from outcomes: the tests decide which attempts survive, ${T_.sft.correct} → ${T_.rl.correct} of 96` },
+  { key: "terrain", ms: 13500, line: `Each thing it learned becomes skill: ${T_.base.correct} → ${T_.lean.correct} of 96 across six checkpoints` },
+  { key: "frontier", ms: 17000, line: "Accuracy against GPU time per correct answer, move by move" },
+  { key: "curves", ms: 13000, line: "What more thinking buys each checkpoint" },
+  { key: "film", title: "Lean RL", ms: 12000, film: { step: 4 }, line: `Lean RL: the same ${T_.lean.correct} answers, ${FEWER}% fewer tokens` },
+  { key: "fleet", ms: 9000, beat: 0, line: "Problem: 64 GPUs wait at a barrier on every RL step" },
+  { key: "fleet", ms: 9000, beat: 1, line: "Elastic RL: any free GPU takes any role" },
+  { key: "map", ms: 10000, line: "Task by task: which ones changed" },
+  { key: "audit", ms: 9000, line: "And the ones that got worse, each one named" },
+];
+/** The Summary part of the rail: each distinct moment, in order. */
+const summaryTiles = (clips: readonly Clip[]) => clips.reduce<{ key: string; title?: string; first: number }[]>((out, c, i) => {
+  if (c.key && out.at(-1)?.key !== c.key) out.push({ key: c.key, title: c.title, first: i });
+  return out;
+}, []);
 /** A standalone exhibit on its own clock, as a module of the laboratory. */
 function ExhibitModule({ Scene, duration, label, active }: { Scene: React.ComponentProps<typeof ExhibitScene>["Scene"]; duration: number; label: string; active: boolean }) {
   const { ref, ...p } = useStudyPlayback(1, 0, { finite: true, interval: duration, enabled: active });
   const host = useRef<HTMLDivElement>(null);
+  useSummaryPause(p.pause, p.resume, active);
   useEffect(() => {
     if (p.finished) host.current?.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true }));
   }, [p.finished]);
@@ -453,9 +508,10 @@ function ExhibitModule({ Scene, duration, label, active }: { Scene: React.Compon
   );
 }
 /** Modules without a scripted demonstration stay on stage this long before the show moves on. */
-const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 40000, tasks: 22000 };
+const DWELL: Record<string, number> = { manifold: 44000, race: 30000, setup: 46000, replay: 96000, composition: 30000, latency: 92000, map: 40000, glossary: 32000, tasks: 30000, inside: 22000, learn: 22000, terrain: 24000, frontier: 22000, curves: 34000, audit: 24000, fleet: 90000, pressure: 90000, draft: 90000, cache: 90000, overlap: 90000 };
 /** The next module's ring fills over this long once the current one has told its story. */
 const COUNTDOWN = 3200;
+const clockNow = () => performance.now();
 /** After the visitor last touched the stage, a finished or abandoned module moves on after this long. */
 const IDLE_MOVE_ON = 30000;
 
@@ -466,7 +522,7 @@ export function ComputeLabStudy({
 }) {
   const training = domain === "training",
     [inferencePart, setInferencePart] = useState<"cheaper" | "load">("cheaper"),
-    [mode, setMode] = useState<"setup" | "watch" | "explore" | "present">(training ? "explore" : "setup"),
+    [mode, setMode] = useState<"manifold" | "setup" | "watch" | "explore" | "present">("manifold"),
     [view, setView] = useState(training ? 5 : 1),
     { ref, ...playback } = useStudyPlayback(4, training ? 2 : 3, {
       enabled: mode === "explore" && training,
@@ -491,9 +547,11 @@ export function ComputeLabStudy({
   const [resumed, setResumed] = useState(0);
   // Where the story pauses to ask: study this in detail, or go on. And the line that opens a new part.
   const [fork, setFork] = useState<string | null>(null);
-  const forked = useRef(new Set<string>());
   const [lineCard, setLineCard] = useState<string | null>(null);
   const carded = useRef(false);
+  // The summary: which clip is on stage, and whether it is held.
+  const [clip, setClip] = useState<number | null>(null);
+  const [clipHeld, setClipHeld] = useState(false);
   const [servingKey, setServingKey] = useState("pressure");
   const [chapter, setChapter] = useState("");
   const [status, setStatus] = useState<{ key: string; phase: "running" | "done" | "taken" }>({ key: "", phase: "running" });
@@ -501,7 +559,7 @@ export function ComputeLabStudy({
   const [filmRun, setFilmRun] = useState(0);
   const tr = useTr();
   const labNav = useLabNav();
-  useStageFit(stageRef, fitRef, labNav === "show");
+  useStageFit(stageRef, fitRef, labNav === "show", `${mode}|${view}|${inferencePart}|${servingKey}`);
   // In the top orientation the reel condenses once the visitor scrolls into the stage.
   const [scrolledIn, setScrolledIn] = useState(false);
   useEffect(() => {
@@ -590,6 +648,10 @@ export function ComputeLabStudy({
     setMode("watch");
     toStage();
   };
+  const openManifold = () => {
+    setMode("manifold");
+    toStage();
+  };
   const openSetup = () => {
     setMode("setup");
     toStage();
@@ -604,25 +666,31 @@ export function ComputeLabStudy({
   const p95 = (r: LabRun) => latencyDistribution(r, 95).threshold.latency;
   const fmt = (v: number, d = 2) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
   // The modules are the story, in the order it should be told. Each title says what improves.
-  const railItems: (RailItem & { depth?: boolean })[] = training
+  // Each project's one opening picture: post-training's manifold, inference's race on one clock.
+  const manifoldItem: RailItem = training
+    ? { key: "manifold", title: "The manifold", term: "Every dimension at once", value: "6 dimensions", unit: "96 tasks, three models", Glyph: GlyphManifold, onOpen: openManifold, current: mode === "manifold" }
+    : { key: "race", title: "The serving race", term: "Two runs, one clock", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphRace, onOpen: openManifold, current: mode === "manifold" };
+  const railItems: RailItem[] = training
     ? [
+        manifoldItem,
         { key: "inside", title: "What changed inside the model", term: "Layer by layer", value: "7 of 50", unit: "words the base model would have written differently", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
-        { key: "learn", title: "Learning from outcomes", term: "GRPO", value: `${simulateLab(1, 1).correct} → ${simulateLab(2, 1).correct}`, unit: "of 96 tasks solved", Glyph: GlyphCapability, onOpen: () => openView(7), current: mode === "explore" && view === 7 },
+        { key: "learn", title: "Learning from outcomes", term: "GRPO", value: `${simulateLab(1, 1).correct} → ${simulateLab(2, 1).correct}`, unit: "of 96 tasks solved", Glyph: GlyphLearn, onOpen: () => openView(7), current: mode === "explore" && view === 7 },
         { key: "terrain", title: "Skill gained at each step", term: "96 tasks, six checkpoints", value: `+${simulateLab(3, 4).correct - simulateLab(0, 1).correct}`, unit: "tasks solved, base to lean RL", Glyph: GlyphTerrain, onOpen: () => openView(6), current: mode === "explore" && view === 6 },
         { key: "frontier", title: "Accuracy against GPU cost", term: "The frontier", value: "28 → 82", unit: "of 96 tasks solved", Glyph: GlyphFrontier, onOpen: () => openView(8), current: mode === "explore" && view === 8 },
         { key: "curves", title: "What more thinking buys", term: "Compute curves", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thinking budget", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "fleet", title: "Training twice as fast on 64 GPUs", term: "Elastic RL", value: "4 → 7", unit: "RL steps in 14 min", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
         { key: "map", title: "Task by task", term: "Capability map", value: `+${solvedGain}`, unit: `net tasks at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "film", title: "Training, step by step", term: "The experiment", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot, depth: true },
-        { key: "tasks", title: "Which tasks it can now solve", term: "Easiest to hardest", value: `+${solvedGain}`, unit: `tasks solved at ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3, depth: true },
-        { key: "audit", title: "What got worse", term: "Regression audit", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thinking budget`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2, depth: true },
+        { key: "film", title: "Training, step by step", term: "The experiment", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "tasks", title: "Which tasks it can now solve", term: "Easiest to hardest", value: `+${solvedGain}`, unit: `tasks solved at ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
+        { key: "audit", title: "What got worse", term: "Regression audit", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thinking budget`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
-        { key: "setup", title: "Same answers, less GPU time", term: "The big picture", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphBigPicture, onOpen: openSetup, current: mode === "setup" },
-        { key: "replay", title: "Every request finishes sooner", term: "Execution replay", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
-        { key: "composition", title: "Better model, cheaper serving", term: "Policy × runtime", value: `${simulateLab(0, budget, false, workload).correct} → ${rlFast.correct}`, unit: "of 96 correct", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "latency", title: "Shorter queues, faster answers", term: "Queue & latency", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s · slowest 5%", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
-        { key: "film", title: "What each lever saves", term: "The experiment", value: "3 levers", unit: "one at a time", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot, depth: true },
+        manifoldItem,
+        { key: "setup", title: "The big picture", term: "Three levers on all 96 requests", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphBigPicture, onOpen: openSetup, current: mode === "setup" },
+        { key: "replay", title: "Execution replay", term: "Any of the 96 requests", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "composition", title: "Policy × runtime", term: "Training and serving together", value: `${simulateLab(0, budget, false, workload).correct} → ${rlFast.correct}`, unit: "of 96 correct", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "latency", title: "Queue & latency", term: "Arrival to completion", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s · slowest 5%", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "film", title: "The experiment", term: "One lever at a time", value: "3 levers", unit: "one at a time", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
       ];
   // Deep links from the project overview: #inference-study/replay opens that module.
   const railRef = useRef(railItems);
@@ -632,7 +700,9 @@ export function ComputeLabStudy({
     const SERVING = ["pressure", "draft", "cache", "overlap", "map", "glossary"];
     const open = () => {
       const [id, key] = window.location.hash.slice(1).split("/");
-      if (id !== sectionId || !key) return;
+      if (id !== sectionId) return;
+      // Arriving at the laboratory itself: bring it into view, and its opening plays.
+      if (!key) { window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "instant", block: "start" }), 60); return; }
       setLandingPhase("off");
       if (!training && SERVING.includes(key)) {
         setInferencePart("load");
@@ -652,10 +722,10 @@ export function ComputeLabStudy({
   const show = labNav === "show";
   const pathways = training ? TRAINING_PATHWAYS : INFERENCE_PATHWAYS;
   const showItems: ShowItem[] = [
-    ...railItems.map((m) => ({ key: m.key, title: m.title, term: m.term, value: m.value, unit: m.unit, Glyph: m.Glyph, pathway: training && m.depth ? 1 : 0 })),
-    ...(training ? [] : SERVING_RAIL.filter((m) => m.key !== "glossary").map((m) => ({ ...m, term: m.technique, pathway: 1 }))),
+    ...railItems.map((m) => ({ key: m.key, title: m.title, term: m.term, value: m.value, unit: m.unit, Glyph: m.Glyph, pathway: 0 })),
+    ...(training ? [] : SERVING_RAIL.map((m) => ({ ...m, pathway: 1 }))),
   ];
-  const currentKey = !training && inferencePart === "load" ? servingKey : railItems.find((i) => i.current)?.key ?? railItems[0].key;
+  const currentKey = clip !== null ? "summary" : !training && inferencePart === "load" ? servingKey : railItems.find((i) => i.current)?.key ?? railItems[0].key;
   const order = showItems.map((i) => i.key);
   const nextKey = order[(order.indexOf(currentKey) + 1) % order.length];
   const lastModule = order.indexOf(currentKey) === order.length - 1;
@@ -681,7 +751,44 @@ export function ComputeLabStudy({
       railRef.current.find((item) => item.key === key)?.onOpen();
     }
   };
+  const clips = training ? TRAINING_CLIPS : INFERENCE_CLIPS;
+  const lastClipKey = useRef<string | null>(null);
+  const playClip = (c: Clip, n: number) => {
+    if (!c.key) return; // a line across the screen; the previous figure rests under the blur
+    const seq = ++openSeq.current;
+    if (lastClipKey.current !== c.key) {
+      lastClipKey.current = c.key;
+      if (!training && SERVING_RAIL.some((m) => m.key === c.key)) {
+        setInferencePart("load");
+        [0, 400, 1400].forEach((ms) => window.setTimeout(() => { if (openSeq.current === seq) window.dispatchEvent(new CustomEvent("lab:serving-open", { detail: c.key })); }, ms));
+      } else {
+        if (!training) setInferencePart("cheaper");
+        railRef.current.find((item) => item.key === c.key)?.onOpen();
+      }
+    }
+    const send = () => {
+      if (openSeq.current !== seq) return;
+      if (c.beat !== undefined) window.dispatchEvent(new CustomEvent("lab:arc-go", { detail: { id: `${n}-${seq}`, beat: c.beat } }));
+      if (c.film) window.dispatchEvent(new CustomEvent("lab:film-go", { detail: { training, ...c.film } }));
+      if (c.seek !== undefined) window.dispatchEvent(new CustomEvent("lab:figure-seek", { detail: c.seek }));
+    };
+    [260, 900, 1700, 3000].forEach((ms) => window.setTimeout(() => { if (ms === 260 || c.beat !== undefined) send(); }, ms));
+  };
+  /** Back, forward or a tick on the summary's bar. */
+  const goClip = (n: number) => {
+    const to = Math.max(0, Math.min(clips.length - 1, n));
+    // jumping restarts the figure from the clip's own moment
+    lastClipKey.current = clip !== null && clips[clip].key === clips[to].key ? clips[to].key ?? null : null;
+    if (clipHeld) { setClipHeld(false); window.dispatchEvent(new Event("lab:release")); }
+    setClip(to);
+  };
+  const toggleClipHold = () => {
+    window.dispatchEvent(new Event(clipHeld ? "lab:release" : "lab:hold"));
+    setClipHeld(!clipHeld);
+  };
   const openKey = (key: string, auto = false) => {
+    if (key === "summary") { setLandingPhase((p) => (p === "on" ? "off" : p)); setBriefKey(null); setFork(null); setClipHeld(false); lastClipKey.current = null; setClip(0); return; }
+    setClip(null);
     setFork(null);
     // The second part opens on one line across the screen.
     if (!training && key === "pressure" && !carded.current) {
@@ -726,7 +833,7 @@ export function ComputeLabStudy({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const done = () => setStatus((s) => (s.key === currentRef.current && s.phase === "taken" ? s : { key: currentRef.current, phase: "done" }));
+    const done = () => { if (currentRef.current !== "summary") setStatus((s) => (s.key === currentRef.current && s.phase === "taken" ? s : { key: currentRef.current, phase: "done" })); };
     el.addEventListener("lab:module-round", done);
     const io = new IntersectionObserver(([e]) => setLabInView(e.isIntersecting), { threshold: 0.3 });
     io.observe(el);
@@ -750,14 +857,6 @@ export function ComputeLabStudy({
     return () => window.clearTimeout(id);
   }, [show, landingPhase, phase, currentKey, touchTick]);
   useEffect(() => { if (phase === "done") seen.current.add(currentKey); }, [phase, currentKey]);
-  // The end of the main story in each part is a planned stop: study it in detail, or go on.
-  const forkAt = training ? "map" : "latency";
-  useEffect(() => {
-    if (!show || phase !== "done" || currentKey !== forkAt || forked.current.has(forkAt)) return;
-    forked.current.add(forkAt);
-    const id = window.setTimeout(() => setFork(forkAt), 900);
-    return () => window.clearTimeout(id);
-  }, [show, phase, currentKey, forkAt]);
   useEffect(() => {
     const ms = DWELL[currentKey];
     if (!show || landingPhase === "on" || !ms) return;
@@ -766,14 +865,31 @@ export function ComputeLabStudy({
   }, [show, landingPhase, currentKey, resumed]);
   useEffect(() => {
     if (!show || landingPhase === "on" || phase !== "done" || !labInView || briefKey || fork || lineCard) return;
-    if (currentKey === forkAt && !forked.current.has(forkAt)) return;
     // The show ends on its last module; it does not loop back to the start.
     if (lastModule) return;
     // A recent touch gives the visitor time before the show moves on.
-    const wait = Math.max(COUNTDOWN, touched.current ? IDLE_MOVE_ON / 3 - (performance.now() - touched.current) : 0);
+    const wait = Math.max(COUNTDOWN, touched.current ? IDLE_MOVE_ON * 0.8 - (clockNow() - touched.current) : 0);
     const id = window.setTimeout(() => openKeyRef.current(nextKey, true), wait);
     return () => window.clearTimeout(id);
-  }, [show, landingPhase, phase, labInView, nextKey, briefKey, lastModule, touchTick, fork, lineCard, currentKey, forkAt]);
+  }, [show, landingPhase, phase, labInView, nextKey, briefKey, lastModule, touchTick, fork, lineCard]);
+  const playClipRef = useRef(playClip);
+  useEffect(() => { playClipRef.current = playClip; });
+  useEffect(() => {
+    if (clip === null || !show) return;
+    playClipRef.current(clips[clip], clip);
+    // the clip list is fixed for one laboratory
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clip, show]);
+  useEffect(() => {
+    if (clip === null || !show || clipHeld || !labInView) return;
+    const id = window.setTimeout(() => {
+      if (clip + 1 < clips.length) setClip(clip + 1);
+      else { setClip(null); seen.current.add("summary"); setFork("summary"); }
+    }, clips[clip].ms);
+    return () => window.clearTimeout(id);
+    // see above
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clip, show, clipHeld, labInView]);
   const stayHere = () => setStatus({ key: currentKey, phase: "taken" });
   const keepPlaying = () => {
     setStatus({ key: currentKey, phase: "running" });
@@ -782,7 +898,9 @@ export function ComputeLabStudy({
     window.dispatchEvent(new Event("lab:resume"));
   };
   const diveDeeper = () => {
-    setStatus({ key: currentKey, phase: "taken" });
+    const key = clip !== null ? clips[clip].key ?? currentKey : currentKey;
+    setClip(null);
+    setStatus({ key, phase: "taken" });
     window.dispatchEvent(new Event("lab:dive"));
   };
   const landingOn = show && landingPhase === "on";
@@ -802,18 +920,26 @@ export function ComputeLabStudy({
   ) : show ? (
     <div className="lf-nav">
       <TitleRail
-        items={showItems}
-        pathways={pathways}
-        current={currentKey}
-        next={nextKey}
-        phase={phase}
-        last={lastModule}
+        groups={[
+          { key: "summary", label: "Summary", onOpen: () => openKey("summary"), items: summaryTiles(clips).map((c) => ({ key: c.key, title: c.title ?? showItems.find((i) => i.key === c.key)?.title ?? c.key })) },
+          { key: "detail", label: "In detail", onOpen: () => openKey(order[0]), items: showItems.map((i) => ({ key: i.key, title: i.title, section: training ? undefined : pathways[i.pathway].short })) },
+        ]}
+        active={clip !== null || fork ? "summary" : "detail"}
+        current={clip !== null ? clips.slice(0, clip + 1).reverse().find((c) => c.key)?.key ?? "" : currentKey}
+        next={clip !== null ? (clips[clip + 1]?.title ?? showItems.find((i) => i.key === clips[clip + 1]?.key)?.title ?? "In detail") : showItems.find((i) => i.key === nextKey)?.title ?? ""}
+        phase={clip !== null ? (clipHeld ? "taken" : "running") : phase}
+        held={clipHeld}
+        last={clip === null && lastModule}
         afterLast={training ? { title: "Inference optimization", href: "/#inference" } : { title: "Medical AI", href: "/#mindscape" }}
         countdownMs={COUNTDOWN}
-        onOpen={(key) => openKey(key)}
-        onLanding={() => { setFork(null); setLandingPhase("on"); }}
-        onStay={stayHere}
-        onKeepPlaying={keepPlaying}
+        onItem={(key) => {
+          if (clip !== null) { const t = summaryTiles(clips).find((c) => c.key === key); if (t) goClip(t.first); return; }
+          openKey(key);
+        }}
+        onNext={() => { if (clip !== null) { if (clip + 1 < clips.length) goClip(clip + 1); else { setClip(null); setFork("summary"); } } else openKey(nextKey); }}
+        onLanding={() => { setFork(null); setClip(null); setLandingPhase("on"); }}
+        onStay={() => { if (clip !== null) toggleClipHold(); else stayHere(); }}
+        onKeepPlaying={() => { if (clip !== null) toggleClipHold(); else keepPlaying(); }}
         onDive={diveDeeper}
       />
     </div>
@@ -852,10 +978,38 @@ export function ComputeLabStudy({
         <h2 id={`${domain}-study-title`}>
           {training ? tr("What did the model learn?") : tr("Inference optimization")}
         </h2>
-        {show && landingPhase !== "on" && (
-          <div className="sm-head" key={currentKey}>
-            <p className="sm-title"><strong>{tr(showItems.find((i) => i.key === currentKey)?.title ?? "")}</strong>{briefs[currentKey] && <span>{highlight(tr(briefs[currentKey].impact))}</span>}</p>
-            <StageMeter moduleKey={`${currentKey}|${chapter}`} rest={briefs[currentKey] ? `${tr(showItems.find((i) => i.key === currentKey)?.term ?? "")}: ${tr(briefs[currentKey].why)}` : undefined} />
+        {show && landingPhase !== "on" && (() => {
+          // during a line across the screen, the head stays on the module before it
+          const key = clip !== null ? clips.slice(0, clip + 1).reverse().find((c) => c.key)?.key ?? clips.find((c) => c.key)!.key! : currentKey;
+          const item = showItems.find((i) => i.key === key);
+          const brief = briefs[key];
+          return (
+            <div className="sm-head" key={`${key}|${clip}`}>
+              <p className="sm-title">
+                {clip !== null && clips[clip].line ? <strong>{tr(clips[clip].line!)}</strong> : <>
+                  <strong>{tr(brief?.does ?? item?.title ?? "")}</strong>
+                  {brief && <span>{highlight(tr(brief.impact))}</span>}
+                </>}
+              </p>
+              <div className="sm-sub">
+                <span className="sm-name">{tr(item?.title ?? "")}</span>
+                {clip === null && <StageMeter moduleKey={`${currentKey}|${chapter}`} rest={brief ? tr(brief.why) : undefined} />}
+              </div>
+            </div>
+          );
+        })()}
+        {show && clip !== null && (
+          <div className="sb-bar" role="group" aria-label={tr("Summary controls")}>
+            <button type="button" onClick={() => goClip(clip - 1)} disabled={clip === 0} aria-label={tr("Back one moment")}>◂</button>
+            <button type="button" onClick={toggleClipHold} aria-label={tr(clipHeld ? "Keep playing" : "Pause")}>{clipHeld ? "▷" : "Ⅱ"}</button>
+            <button type="button" onClick={() => goClip(clip + 1)} disabled={clip === clips.length - 1} aria-label={tr("Forward one moment")}>▸</button>
+            <span className="sb-ticks">
+              {clips.map((c, i) => (
+                <button key={i} type="button" data-on={i === clip || undefined} data-done={i < clip || undefined} aria-label={`${tr("Moment")} ${i + 1}`} onClick={() => goClip(i)}>
+                  {i === clip && <i key={`${clip}-${clipHeld}`} style={{ animationDuration: `${c.ms}ms`, animationPlayState: clipHeld ? "paused" : "running" }} />}
+                </button>
+              ))}
+            </span>
           </div>
         )}
         {!training && (
@@ -882,7 +1036,7 @@ export function ComputeLabStudy({
       </div>
       <div className={block ? "lb-body" : "lf-body"} data-landing={landingOn || undefined}>
         {show && landingPhase !== "off" && (
-          <LabLanding pathways={pathways} items={showItems} leaving={landingPhase === "leaving"} script={training ? TRAINING_INTRO : INFERENCE_INTRO} onStart={startShow} />
+          <LabLanding pathways={pathways} items={showItems} leaving={landingPhase === "leaving"} script={training ? TRAINING_INTRO : INFERENCE_INTRO} onStart={startShow} onEnd={() => startShow("summary")} />
         )}
         {briefKey && briefs[briefKey] && (
           <ModuleBrief
@@ -893,27 +1047,21 @@ export function ComputeLabStudy({
           />
         )}
         {show && lineCard && <LineCard text={lineCard} />}
+        {show && clip !== null && clips[clip].card && <LineCard text={clips[clip].card!} />}
         {show && fork && (
-          training ? (
-            <ChoiceCard
-              auto={false}
-              headline="That is the story of *post-training*"
-              study={{ title: "Check it in detail", detail: "The figures, the methods and the training data, step by step, and what got worse", onPick: () => openKey("film") }}
-              onward={{ title: "Next project: Inference optimization", detail: "The same intelligence served for less, and optimized under load", href: "/#inference" }}
-            />
-          ) : (
-            <ChoiceCard
-              auto
-              headline="That is *cheaper execution*, and what it bought"
-              study={{ title: "Check it in detail", detail: "The figures and the method, one lever at a time on the same 96 requests", onPick: () => openKey("film") }}
-              onward={{ title: "Next: Optimized serving under load", detail: "Chunked prefill, speculative decoding, cache-aware routing and CPU/GPU overlap", onPick: () => openKey("pressure") }}
-            />
-          )
+          <ChoiceCard
+            auto
+            headline={training ? "That is *post-training*, in summary" : "That is *inference optimization*, in summary"}
+            study={{ title: "Go through it in detail", detail: training ? "Every module in full: the figures, the methods and the training data" : "Every module in full: the figures and the method, then optimized serving under load", onPick: () => openKey(order[0]) }}
+            onward={training
+              ? { title: "Next project: Inference optimization", detail: "The same intelligence served for less, and optimized under load", href: "/#inference" }
+              : { title: "Next project: Medical AI", detail: "An evidence-grounded assistant for clinicians", href: "/#mindscape" }}
+          />
         )}
         {labNav !== "dock" && !landingOn && navNode}
         <div ref={stageRef} className={block ? "lb-stage" : "lf-stage"} hidden={landingOn}>
           {!block && (training || inferencePart === "cheaper") && mode === "watch" && <div className="lf-chapters">{chapterSlot}</div>}
-        {show && <FocusCaption moduleKey={`${currentKey}|${chapter}`} />}
+        {show && <FocusCaption moduleKey={`${currentKey}|${chapter}|${clip}`} />}
         <div ref={fitRef} className="lf-fit">
       <RetainedLabPanel
         active={training || inferencePart === "cheaper"}
@@ -952,6 +1100,13 @@ export function ComputeLabStudy({
           </button>
           {training && <span>Watch → intervene → inspect</span>}
         </div>
+        <RetainedLabPanel active={mode === "manifold"} id={`${domain}-manifold`} label="The manifold">
+          <div className="lf-manifold">
+            {training
+              ? <Manifold dwell={clip !== null ? 5200 : 9000} active={mode === "manifold" && landingPhase === "off" && !briefKey && labInView} onRound={() => ref.current?.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true }))} />
+              : <ServingRace active={mode === "manifold" && landingPhase === "off" && !briefKey && labInView} onRound={() => ref.current?.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true }))} />}
+          </div>
+        </RetainedLabPanel>
         {!training && (
           <RetainedLabPanel active={mode === "setup"} id={`${domain}-big-picture`} label="The big picture">
             <BigPicture active={mode === "setup" && landingPhase === "off" && labInView && inferencePart === "cheaper"} />
@@ -1112,7 +1267,7 @@ export function ComputeLabStudy({
               aria-label={views[view].name}
             >
               {training && (
-                <GhostCursor root={exhibitRef} script={TRAINING_DEMO} enabled={mode === "explore" && view < 3} startDelay={2500} restDelay={2200} />
+                <GhostCursor root={exhibitRef} script={TRAINING_DEMO} enabled={mode === "explore" && view < 3} startDelay={2500} restDelay={2200} loop={!show} />
               )}
               <div className={training ? "rs-context-bar rs-budget-bar" : "rs-context-bar"} hidden={training && view >= 4}>
                 <span className="rs-status rs-status-scenario">
@@ -1200,7 +1355,7 @@ export function ComputeLabStudy({
                       }
                     >
                       <div key={figureRevisions[1]} ref={replayHost} className="gc-host">
-                      <GhostCursor root={replayHost} script={REPLAY_DEMO} enabled={mode === "explore" && view === 1} />
+                      <GhostCursor root={replayHost} script={REPLAY_DEMO} enabled={mode === "explore" && view === 1} startDelay={clip !== null ? 1400 : REPLAY_MS + 5000} loop={!show} />
                       <RequestReplayExplorer
                         key={`${base.policyIndex}-${budget}-${workload}-${figureRevisions[1]}`}
                         baseline={base}
@@ -1233,7 +1388,7 @@ export function ComputeLabStudy({
                       }
                     >
                       <div key={figureRevisions[2]} ref={latencyHost} className="gc-host">
-                      <GhostCursor root={latencyHost} script={LATENCY_DEMO} enabled={mode === "explore" && view === 2} startDelay={1000} restDelay={1800} />
+                      <GhostCursor root={latencyHost} script={LATENCY_DEMO} enabled={mode === "explore" && view === 2} startDelay={1000} restDelay={1800} loop={!show} />
                       <LoadLatencyExplorer
                         key={`${base.policyIndex}-${budget}-${workload}-${figureRevisions[2]}`}
                         baseline={base}

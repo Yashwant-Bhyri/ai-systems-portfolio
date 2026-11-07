@@ -4,7 +4,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } 
 import { FilmInterlude } from "./stagecraft/module-arc";
 import { FILM_ARCS } from "./arc-scenes/film-arcs";
 import { FLOW_ZOOMS } from "./stagecraft/flow-board";
-import { useFreezeMoments, type FreezeMoment } from "./stagecraft/stage-meter";
+import { useFreezeMoments, useSummaryPause, type FreezeMoment } from "./stagecraft/stage-meter";
 import { LEARN_ARCS } from "./arc-scenes/learn-arcs";
 import { useTr } from "../exhibit/i18n";
 import { createPortal } from "react-dom";
@@ -74,7 +74,7 @@ function chapterMoments(training: boolean, step: number, duration: number, runs:
   }
   const [a, b, , d] = runs;
   if (step === 0) return [{ at, headline: `Today each correct answer costs *${fm(a.correctCost!, 2)} GPU-s*`, cause: `and the slowest 5% wait ${fm(a.p95)} s` }];
-  if (step === 1) return [{ at, headline: `Same GPU work, slowest 5% *${fm(a.p95 - b.p95)} s sooner*`, parts: [{ label: "fixed pairs", value: `${fm(a.p95)} s`, tone: "baseline" }, { label: "free worker", value: `${fm(b.p95)} s`, tone: "optimized" }] }];
+  if (step === 1) return [{ at, headline: `Same GPU work, the slowest 5% of requests *${fm(a.p95 - b.p95)} s sooner*`, parts: [{ label: "fixed pairs", value: `${fm(a.p95)} s`, tone: "baseline" }, { label: "free worker", value: `${fm(b.p95)} s`, tone: "optimized" }] }];
   if (step === 3) return [{ at: duration * 0.93, headline: `Same tokens, *${fm(runs[2].correctCost!, 2)} → ${fm(d.correctCost!, 2)} GPU-s* per correct answer` }];
   if (step === 4) return [{ at, headline: `All three levers: *${fm(a.correctCost!, 2)} → ${fm(d.correctCost!, 2)} GPU-s* each`, parts: [{ label: "correct answers", value: `${d.correct} of 96`, tone: "delta" }, { label: "slowest 5%", value: `${fm(a.p95)} → ${fm(d.p95)} s`, tone: "optimized" }] }];
   return [];
@@ -118,11 +118,14 @@ export function LabStory({
   });
   // The frontier has its own module near the top of post-training.
   const steps = training ? TRAINING_STORY.slice(0, 5) : INFERENCE_STORY;
+  // In the summary a chapter plays with its how-it-learns scene at most.
+  const [quiet, setQuiet] = useState<null | { frame: boolean }>(null);
   const [seenStep, setSeenStep] = useState(playback.step);
   if (seenStep !== playback.step) {
     const prev = seenStep, next = playback.step;
     setSeenStep(next);
-    if (training) setInterludes(unseen(true, LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" }] : []));
+    if (quiet) setInterludes(quiet.frame && training && LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" }] : []);
+    else if (training) setInterludes(unseen(true, LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" }] : []));
     else
       setInterludes(unseen(false, [
         ...(FILM_ARCS[prev] && next === prev + 1 ? [{ step: prev, kind: "impact" as const }] : []),
@@ -223,6 +226,21 @@ export function LabStory({
     pauseRef.current = playback.pause;
     resumeRef.current = () => { if (playback.finished) playback.select(step); playback.resume(); };
   });
+  const goRef = useRef((step: number, at: number, frame: boolean) => { void step; void at; void frame; });
+  useEffect(() => {
+    goRef.current = (n, at, frame) => {
+      setQuiet({ frame });
+      setInterludes(frame && training && LEARN_ARCS[n] ? [{ step: n, kind: "mechanism" }] : []);
+      setUndo(false); playback.select(n); playback.resume();
+      if (at) window.setTimeout(() => playback.seek(at), 60);
+    };
+  });
+  useEffect(() => {
+    const go = (e: Event) => { const d = (e as CustomEvent<{ training: boolean; step: number; at?: number; frame?: boolean }>).detail; if (d.training === training) goRef.current(d.step, d.at ?? 0, !!d.frame); };
+    window.addEventListener("lab:film-go", go);
+    return () => window.removeEventListener("lab:film-go", go);
+  }, [training]);
+  useSummaryPause(() => pauseRef.current(), () => resumeRef.current());
   useEffect(() => {
     const dive = () => { setInterludes([]); pauseRef.current(); };
     const resume = () => resumeRef.current();

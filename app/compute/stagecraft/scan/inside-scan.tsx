@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTr } from "../../../exhibit/i18n";
 import { mountRelief } from "./relief";
-import { emitMeter } from "../stage-meter";
+import { emitMeter, useSummaryPause } from "../stage-meter";
 import { BASE_WOULD, LAYERS, TOKENS, buildLearnScan, changeColor } from "./learn-data";
 import "./scan.css";
 
@@ -117,6 +117,7 @@ export function InsideScan({ active }: { active: boolean }) {
     window.addEventListener("lab:resume", resume);
     return () => { window.removeEventListener("lab:dive", dive); window.removeEventListener("lab:resume", resume); };
   }, [active]);
+  useSummaryPause(() => setPlaying(false), () => setPlaying(true), active);
   useEffect(() => { if (active) emitMeter({ text: `Reading the answer word by word: ${Math.min(front, T)} of ${T}`, tone: "optimized" }); }, [active, front]);
 
   const flips = [...BASE_WOULD.keys()];
@@ -143,7 +144,7 @@ export function InsideScan({ active }: { active: boolean }) {
           const base = BASE_WOULD.get(t);
           return (
             <span key={t} className="sc-tok" data-on={t < front || undefined} data-now={t === front - 1 || undefined} data-flip={base ? true : undefined}>
-              {tok}{base && t < front && <s>{base}</s>}
+              {tok}{base && <s data-on={t < front || undefined}>{base}</s>}
             </span>
           );
         })}

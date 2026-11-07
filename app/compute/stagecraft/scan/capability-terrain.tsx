@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTr } from "../../../exhibit/i18n";
 import { POLICIES, TASKS, hashTask, simulateLab } from "../../lab-simulation";
 import { mountRelief } from "./relief";
-import { emitFocus, emitMeter } from "../stage-meter";
+import { emitFocus, emitMeter, useSummaryPause } from "../stage-meter";
 import "./scan.css";
 
 /**
@@ -29,54 +29,6 @@ function margin(policyIndex: number, budget: number, taskId: number) {
   const ability = Math.min(0.94, p.skill + p.growth * Math.log2(budget) - task.family * 0.025);
   const regression = policyIndex > 0 && hashTask(task.id + policyIndex * 37) % 47 === 0;
   return { m: ability - task.difficulty, regression };
-}
-
-/** The rising land alone, for the project's second page; reports which checkpoint has risen. */
-export function TerrainBackdrop({ onStage }: { onStage: (stage: number, solved: number) => void }) {
-  const host = useRef<HTMLDivElement>(null);
-  const report = useRef(onStage);
-  useEffect(() => { report.current = onStage; });
-  useEffect(() => {
-    const el = host.current;
-    if (!el) return;
-    const field = STAGES.map((s) => ORDER.map((id) => {
-      const { m, regression } = margin(s.policy, s.budget, id);
-      const solved = m > 0 && !regression;
-      return { h: solved ? 0.22 + Math.min(0.5, m) * 1.7 : regression ? 0.14 : 0.02, solved, regression };
-    }));
-    const counts = STAGES.map((s) => simulateLab(s.policy, s.budget).correct);
-    const ROWS = STAGES.length * 2 - 1;
-    const stageOf = (row: number) => (row % 2 ? -1 : row / 2);
-    const r = mountRelief(el, {
-      cols: ORDER.length, rows: ROWS, max: 1.4, sub: 1, size: { w: 10.6, d: 4.8, h: 1.9 },
-      value: (c, row) => (stageOf(row) < 0 ? 0 : field[stageOf(row)][c].h),
-      color: (v, c, row) => {
-        const st = stageOf(Math.max(0, Math.min(ROWS - 1, row)));
-        if (st < 0 || v < 0.05) return [30, 24, 34];
-        const cell = field[st][Math.max(0, Math.min(ORDER.length - 1, c))];
-        if (cell.regression) return [255, 120, 110];
-        if (!cell.solved) return [34, 30, 38];
-        const x = Math.min(1, v / 1.1);
-        return [Math.round(120 + 123 * x), Math.round(40 + 120 * x), Math.round(80 + 108 * x)];
-      },
-      ground: 0x120d13, light: 0xf3a0bc, zoom: 1.3,
-    });
-    const RISE_MS = 11000, HOLD = 4000, END = STAGES.length;
-    let raf = 0, last = -1;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const local = (now - start) % (RISE_MS + HOLD);
-      const k = Math.min(END, (local / RISE_MS) * END);
-      r.update((c, row) => (stageOf(row) < 0 ? 1 : Math.min(1, Math.max(0, (k - stageOf(row)) * 1.6 - (c / ORDER.length) * 0.6))));
-      r.render();
-      const n = Math.max(0, Math.min(END - 1, Math.ceil(k) - 1));
-      if (n !== last) { last = n; report.current(n, counts[n]); }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); r.dispose(); };
-  }, []);
-  return <div ref={host} className="sp-canvas" aria-hidden="true" />;
 }
 
 export function CapabilityTerrain({ active }: { active: boolean }) {
@@ -159,6 +111,7 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
     return () => { cancelAnimationFrame(raf); r.dispose(); };
   }, [field, active, run]);
 
+  useSummaryPause(() => { goal.current = k.current; }, () => { goal.current = null; }, active);
   // Keep playing raises the land again; dive deeper stops it where it is, with the stages to choose from.
   useEffect(() => {
     if (!active) return;

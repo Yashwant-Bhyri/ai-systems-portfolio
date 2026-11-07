@@ -177,3 +177,23 @@ Target viewport stays 1512×860.
 | 10 | Second page is not striking; make it enticing enough that people go in | Done. One enormous number moving in step with the live picture behind it, one sentence, one button, three live doors with a question each. |
 | 11 | Task by task: a blinking box on the number that changes (22 of 32) | Done. A box blinks three times on each score that changes. |
 | 12 | Post-training order: learning from outcomes second, then skill gained, then frontier, then accuracy | Done. Inside the model, learning from outcomes, skill gained, accuracy against cost, what more thinking buys, elastic RL, task by task; then the detail. |
+
+## Round 14 (2026-11-08): put back what was over-removed; stop the shaking
+| # | Ask | Status |
+|---|---|---|
+| 1 | Summary and glossary belong inside the project; only the project's second page leaves them out | Done. The second page leaves them out; the lab has them. |
+| 2 | A real 2–3 minute summary with go-back / go-forward controls | Done. Summary part made of the best moments, with back, pause, forward and clickable ticks. |
+| 3 | Top of the module: what is happening and what it does. Beneath: the name, e.g. Speculative decoding | Done. Top line says what it does and the number; beneath it, the name (Speculative decoding). |
+| 4 | "The slowest 5% of requests", not "slowest 5%" | Done. |
+| 5 | Replay: play the full 20 s; show when prefill ends and token generation starts | Done. Each measure plays its full 20 s; markers show when the worker starts and when prefill ends and tokens start. |
+| 6 | Queue & latency: the central block shrinks; look at full and half-screen shots | Done. Cause seen in the screenshots: the module grew mid-film, so the fit scale fell from 0.98 to 0.80. It now holds one height, and within a module the scale can only go down. Half-screen is still cramped and was not changed, as asked. |
+| 7 | Modules must not loop after they finish | Done. Cursor demonstrations no longer loop in the show. |
+| 8 | Numbers going from one digit to two shake the screen; audit everywhere | Done. `tools/tracker/shake.mjs` measures it; the worst case, the baseline chapter, fell from 15.35 to 0.004. |
+| 9 | Title-card graphics are shaky or poor; rework every one | Done. Title graphics redrawn; they keep one size instead of rescaling; tiny rail thumbnails removed. |
+| 10 | Second page, post-training: badly arranged; no slogans; show a benchmark, baseline against improved; highlight how each step works and what each step gave | Superseded: Yash rejected the benchmark and 3D versions. See below. |
+| 11 | Second page, inference: an elite 3D, multi-dimensional picture; same intelligence at about 36% less compute, optimized under load | Superseded: the serving race. See below. |
+| 12 | Results laboratory comes first: if people do not go inside it, nothing else matters | Done. It follows the architecture, ahead of the microscope; the architecture's button and the second page's button both enter it. |
+| 13 | Summary is one part made of the best moments; In detail is the second part, with every module | Done. The rail has exactly these two parts. |
+| 14 | Modules must move on by themselves | Done and tested on every module. |
+| 15 | A from-scratch multi-dimensional manifold, for post-training only: switch axes and see different truths | Done. `manifold.tsx`: 96 tasks, three models, six dimensions, four views, any three axes, drag to turn. |
+| 16 | One robust, perceptive picture for inference | Done. `serving-race.tsx`: two runs mirrored on one clock, every request drawn as it waits, reads and writes. |

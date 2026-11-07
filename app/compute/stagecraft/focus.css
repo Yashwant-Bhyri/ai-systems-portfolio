@@ -58,3 +58,21 @@
 .sm-head .sm-voice { flex: 0 0 auto; align-self: stretch; color: #aab6c2; font: 400 14px/20px var(--font-geist-sans), sans-serif; letter-spacing: 0; }
 .sm-head .sm-voice[data-on="false"] { display: none; }
 .sm-head .sm-line { padding-block: 0; margin-block: 0; }
+
+/* Top: what is happening. Beneath: its name. */
+.sm-sub { display: flex; align-items: center; gap: 12px; min-width: 0; color: #aab6c2; font: 400 14px/20px var(--font-geist-sans), sans-serif; }
+.sm-name { flex: 0 0 auto; color: var(--active-accent, #ffc267); font-weight: 500; }
+.sm-sub .sm-voice { flex: 1 1 auto; min-width: 0; color: #aab6c2; font: 400 14px/20px var(--font-geist-sans), sans-serif; letter-spacing: 0; }
+.sm-sub .sm-voice[data-on="false"] { display: none; }
+.sm-sub .sm-line { padding-block: 0; margin-block: 0; }
+/* The summary's own controls. */
+.sb-bar { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; align-self: center; }
+.vx-shell .sb-bar > button { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: rgba(255,255,255,.07); color: #eef2f6; cursor: pointer; font: 400 14px/1 var(--font-geist-mono), monospace; transition: background .16s; }
+.vx-shell .sb-bar > button:hover:not(:disabled) { background: rgba(255,255,255,.14); }
+.vx-shell .sb-bar > button:disabled { opacity: .35; cursor: default; }
+.sb-ticks { display: flex; gap: 3px; margin-left: 8px; }
+.vx-shell .sb-ticks button { position: relative; width: 14px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; }
+.sb-ticks button::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.16); }
+.sb-ticks button[data-done]::before { background: var(--active-accent, #ffc267); }
+.sb-ticks button > i { position: absolute; left: 0; right: 0; top: 10px; height: 4px; border-radius: 2px; background: var(--active-accent, #ffc267); transform-origin: 0 50%; animation: sb-tick linear both; }
+@keyframes sb-tick { from { transform: scaleX(0); } to { transform: scaleX(1); } }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { useTr } from "../../exhibit/i18n";
+import { useSummaryPause } from "./stage-meter";
 
 /**
  * A scripted cursor that performs a component's own controls, so a visitor sees
@@ -116,7 +117,9 @@ export function GhostCursor({
     window.addEventListener("lab:resume", resume);
     return () => { window.removeEventListener("lab:dive", dive); window.removeEventListener("lab:resume", resume); };
   }, [enabled]);
-  const live = enabled && inView && !taken && !reduced;
+  const [held, setHeld] = useState(false);
+  useSummaryPause(() => setHeld(true), () => setHeld(false), enabled);
+  const live = enabled && inView && !taken && !reduced && !held;
 
   const place = useCallback((x: number, y: number, ms: number) => {
     const c = cursor.current;

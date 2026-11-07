@@ -8,3 +8,5 @@
 
 /* The keywords keep rolling when the walkthrough is paused or a step is chosen by hand. */
 [data-motion-paused="true"] .vx-signal-ticker[data-running="true"] .vx-signal-ticker-track { animation-play-state: running !important; }
+/* Digits keep one width in every walkthrough. */
+.vx-walkthrough { font-variant-numeric: tabular-nums; }

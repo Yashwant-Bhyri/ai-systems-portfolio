@@ -1,5 +1,5 @@
 "use client";
-import { emitFocus, emitMeter, useFreezeMoments } from "./stagecraft/stage-meter";
+import { emitFocus, emitMeter, useFreezeMoments, useSummaryPause } from "./stagecraft/stage-meter";
 
 import {
   useEffect,
@@ -122,6 +122,15 @@ export function CompositionExplorer({
   useEffect(() => {
     if (showing) emitMeter({ text: meterLine, step: phase + 1, total: 5, tone: phase === 0 ? "baseline" : phase === 4 ? "delta" : "optimized" });
   }, [meterLine, phase, showing]);
+  // The summary opens a figure at its best moment, and can hold it.
+  useEffect(() => {
+    const go = (e: Event) => film.seek((e as CustomEvent<number>).detail);
+    window.addEventListener("lab:figure-seek", go);
+    return () => window.removeEventListener("lab:figure-seek", go);
+    // the film's seek is stable for one mounted figure
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useSummaryPause(localPlayer.pause, localPlayer.resume);
   // Freeze on each move: what it did to accuracy, then what it did to cost.
   const moments = useMemo(() => {
     const atPhase = (p: number) => { for (let t = 0; t < COMPOSITION_FILM_MS; t += 100) if (compositionMotion(t).phase === p) return t + 1800; return COMPOSITION_FILM_MS; };

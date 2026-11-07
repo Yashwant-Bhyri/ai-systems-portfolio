@@ -1,0 +1,36 @@
+/* The project as one object you can turn. */
+.mf-root { position: relative; height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.mf-truth { flex: 0 0 auto; min-height: 36px; margin: 0; color: #f6f8fa; font: 500 clamp(19px, 1.6vw, 25px)/1.3 var(--font-geist-sans), sans-serif; letter-spacing: -.016em; animation: mf-in .4s cubic-bezier(.22,1,.36,1) both; }
+@keyframes mf-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.mf-stage { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; border-radius: 12px; background: #080c11; box-shadow: inset 0 0 0 1px rgba(230,237,244,.08); }
+.mf-canvas { position: absolute; inset: 0; cursor: grab; touch-action: none; }
+.mf-canvas:active { cursor: grabbing; }
+.mf-canvas canvas { display: block; }
+.mf-labels { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+.mf-axis { fill: #eef2f6; font: 500 14px var(--font-geist-sans), sans-serif; paint-order: stroke; stroke: #080c11; stroke-width: 4px; }
+.mf-end { fill: #93a0ae; font: 400 12.5px var(--font-geist-mono), monospace; paint-order: stroke; stroke: #080c11; stroke-width: 3px; }
+.mf-readout { position: absolute; top: 12px; right: 12px; width: 264px; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 10px; background: rgba(8,12,17,.82); box-shadow: inset 0 0 0 1px rgba(230,237,244,.08); }
+.mf-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px 8px; }
+.vx-shell .mf-legend button { display: inline-flex; align-items: center; gap: 6px; padding: 2px 4px; border: 0; background: none; color: #eef2f6; cursor: pointer; font: 400 13px/20px var(--font-geist-sans), sans-serif; }
+.vx-shell .mf-legend button[aria-pressed="false"] { opacity: .4; }
+.mf-legend i { width: 10px; height: 10px; border-radius: 50%; }
+.mf-readout table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.mf-readout th { display: block; padding-top: 6px; color: #aab6c2; font: 400 13px/18px var(--font-geist-sans), sans-serif; text-align: left; }
+.mf-readout td { display: block; color: #fff; font: 400 14px/20px var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums; }
+.mf-readout td b { font-weight: 500; }
+.mf-readout td i { color: #6f7c89; font-style: normal; }
+.mf-readout td em { color: #93a0ae; font: 400 13px var(--font-geist-sans), sans-serif; font-style: normal; }
+.mf-readout small { color: #7f8c99; font: 400 12px/16px var(--font-geist-sans), sans-serif; }
+.mf-controls { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.mf-views { display: flex; gap: 4px; }
+.vx-shell .mf-views button { position: relative; height: 36px; padding: 0 14px; overflow: hidden; border: 0; border-radius: 8px; background: none; color: #aab6c2; cursor: pointer; font: 400 14px/36px var(--font-geist-sans), sans-serif; transition: background .16s, color .16s; }
+.vx-shell .mf-views button:hover { color: #fff; }
+.vx-shell .mf-views button[aria-pressed="true"] { color: #fff; background: rgba(255,255,255,.08); }
+.mf-views b { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--active-accent, #ffc267); transform-origin: 0 50%; animation: mf-bar linear both; }
+@keyframes mf-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.mf-axes { display: flex; gap: 8px; }
+.mf-axes label { display: inline-flex; align-items: center; gap: 4px; color: #93a0ae; font: 500 13px/1 var(--font-geist-mono), monospace; }
+.mf-axes select { max-width: 150px; height: 32px; padding: 0 6px; border: 0; border-radius: 6px; background: rgba(255,255,255,.07); color: #eef2f6; font: 400 13px/1 var(--font-geist-sans), sans-serif; }
+.mf-root[data-compact] .mf-axes select { max-width: 118px; }
+@media (max-width: 900px) { .mf-readout { position: static; width: auto; } .mf-axes { flex-wrap: wrap; } }
+@media (prefers-reduced-motion: reduce) { .mf-truth, .mf-views b { animation: none; } }

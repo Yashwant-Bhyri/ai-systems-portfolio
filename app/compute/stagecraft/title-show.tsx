@@ -51,9 +51,8 @@ export function TileGrid({ items, open, wide = false, onOpen }: { items: readonl
       {counts.map((count, r) => {
         const from = counts.slice(0, r).reduce((a, c) => a + c, 0);
         const row = items.slice(from, from + count);
-        const here = open >= from && open < from + count;
         return (
-          <div key={from} className="tg-row" style={{ flexGrow: here ? 1.5 : 1 }}>
+          <div key={from} className="tg-row">
             {row.map((item, k) => {
               const lit = from + k === open;
               return (
@@ -81,7 +80,7 @@ const LIFT = 700, CARD = 1900, SETTLE = 400;
 type Now = { kind: "idle" } | { kind: "line"; text: string; ms: number } | { kind: "path"; index: number };
 
 export function LabLanding({
-  pathways, items, leaving, script, threshold = 0.55, onStart,
+  pathways, items, leaving, script, threshold = 0.55, onStart, onEnd,
 }: {
   pathways: readonly Pathway[];
   items: readonly ShowItem[];
@@ -90,9 +89,13 @@ export function LabLanding({
   /** How much of the landing must be on screen before the script runs. */
   threshold?: number;
   onStart: (key: string, from: Rects) => void;
+  /** What happens when the script ends, if not starting the first module. */
+  onEnd?: () => void;
 }) {
   const tr = useTr();
   const root = useRef<HTMLDivElement>(null);
+  const endRef = useRef(onEnd);
+  useEffect(() => { endRef.current = onEnd; });
   const [now, setNow] = useState<Now>({ kind: "idle" });
   const [open, setOpen] = useState(0);
   const start = (key: string) => onStart(key, collect(root.current));
@@ -123,7 +126,7 @@ export function LabLanding({
           t += own.length * CARD + SETTLE;
         }
       }
-      at(t, () => startRef.current(itemsRef.current[0].key));
+      at(t, () => { if (endRef.current) endRef.current(); else startRef.current(itemsRef.current[0].key); });
     };
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) run();
@@ -150,7 +153,7 @@ export function LabLanding({
       {now.kind === "line" && (
         <p key={now.text} className="ts-opening" style={{ animationDuration: `${now.ms}ms` }}>{highlight(tr(now.text))}</p>
       )}
-      <button type="button" className="ts-skip" onClick={() => start(first.key)}>{tr("Skip the introduction ▸")}</button>
+      <button type="button" className="ts-skip" onClick={() => { if (onEnd) onEnd(); else start(first.key); }}>{tr("Skip the introduction ▸")}</button>
     </div>
   );
 }
@@ -255,14 +258,17 @@ export function TitleShow({
   );
 }
 
-/* ── The rail: the module titles, and what to do next, in one quiet column ──
-   Nothing here floats over the stage, so it can never sit on a scrubber. Beneath
-   the titles: stay on this module, dive into it, or go on to the next one. */
+/* ── The rail: the laboratory's two parts ───────────────────────────────────
+   Summary is one part, made of the best moments. In detail is the other, with every module.
+   The part you are in stays open; the other folds to its name. Beneath: stay, dive, or go on.
+   Nothing here floats over the stage. */
+export type RailGroup = { key: string; label: string; items: readonly { key: string; title: string; section?: string }[]; onOpen: () => void };
 export function TitleRail({
-  items, pathways, current, next, phase, countdownMs, last, afterLast, onOpen, onLanding, onStay, onKeepPlaying, onDive,
+  groups, active, current, next, phase, countdownMs, last, afterLast, held, onItem, onNext, onLanding, onStay, onKeepPlaying, onDive,
 }: {
-  items: readonly ShowItem[];
-  pathways: readonly Pathway[];
+  groups: readonly RailGroup[];
+  /** Which part is open. */
+  active: string;
   current: string;
   next: string;
   phase: "running" | "done" | "taken";
@@ -271,36 +277,40 @@ export function TitleRail({
   last: boolean;
   /** Where the visitor goes after the last module. */
   afterLast?: { title: string; href: string };
-  onOpen: (key: string) => void;
+  held?: boolean;
+  onItem: (key: string) => void;
+  onNext: () => void;
   onLanding?: () => void;
   onStay: () => void;
   onKeepPlaying: () => void;
   onDive: () => void;
 }) {
   const tr = useTr();
-  const cur = items.find((i) => i.key === current) ?? items[0];
-  const nxt = items.find((i) => i.key === next) ?? items[0];
   const state = phase === "taken" ? "Yours to explore" : phase === "done" ? (last ? "Finished" : "Finished, moving on") : "Playing";
   return (
     <aside className="tr-rail" aria-label={tr("Laboratory modules")}>
       <div className="tr-strip">
         {onLanding && <button type="button" className="ts-back tr-back" onClick={onLanding} aria-label={tr("Replay the introduction")}><span className="tr-label">{tr("Introduction")}</span></button>}
-        {pathways.map((p, pi) => (
-          <div key={p.n} className="tr-group" data-on={cur.pathway === pi || undefined}>
-            <i className="tr-path">{p.n}<span className="tr-label"> {tr(p.short)}</span></i>
-            {items.filter((i) => i.pathway === pi).map((i) => (
-              <button key={i.key} type="button" className="tr-tile" data-rail-key={i.key} data-on={i === cur || undefined} title={tr(i.title)}
-                onClick={() => onOpen(i.key)} aria-label={tr(i.title)} aria-current={i === cur ? "step" : undefined}>
-                <span className="ts-glyph" aria-hidden="true">{i.Glyph && <i.Glyph />}</span>
-                <span className="tr-label">{tr(i.title)}</span>
-              </button>
-            ))}
-          </div>
-        ))}
+        {groups.map((g) => {
+          const open = g.key === active;
+          return (
+            <div key={g.key} className="tr-group" data-on={open || undefined}>
+              <button type="button" className="tr-part" aria-expanded={open} onClick={g.onOpen}>{tr(g.label)}<i aria-hidden="true">{open ? "" : g.items.length}</i></button>
+              {open && g.items.map((i, k) => (
+                <div key={i.key}>
+                  {i.section && i.section !== g.items[k - 1]?.section && <span className="tr-section">{tr(i.section)}</span>}
+                  <button type="button" className="tr-tile" data-rail-key={i.key} data-on={i.key === current || undefined} title={tr(i.title)} onClick={() => onItem(i.key)} aria-current={i.key === current ? "step" : undefined}>
+                    <span className="tr-label">{tr(i.title)}</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </div>
       <div className="tr-ctl" data-phase={phase}>
         <span className="tr-state" aria-live="polite"><i />{tr(state)}</span>
-        {phase === "taken"
+        {phase === "taken" || held
           ? <button type="button" className="tr-act" onClick={onKeepPlaying} title={tr("Keep playing")}><b aria-hidden="true">▷</b><span className="tr-label">{tr("Keep playing")}</span></button>
           : <button type="button" className="tr-act" onClick={onStay} title={tr("Stay on this one")}><b aria-hidden="true">Ⅱ</b><span className="tr-label">{tr("Stay on this one")}</span></button>}
         <button type="button" className="tr-act" onClick={onDive} title={tr("Dive deeper")}><b aria-hidden="true">⌕</b><span className="tr-label">{tr("Dive deeper")}</span></button>
@@ -311,15 +321,15 @@ export function TitleRail({
           </a>
         )}
         {!last && phase !== "done" && (
-          <button type="button" className="tr-act" onClick={() => onOpen(nxt.key)} title={`${tr("Next")}: ${tr(nxt.title)}`}><b aria-hidden="true">▸</b><span className="tr-label">{tr("Next")}</span></button>
+          <button type="button" className="tr-act" onClick={onNext} title={`${tr("Next")}: ${tr(next)}`}><b aria-hidden="true">▸</b><span className="tr-label">{tr("Next")}</span></button>
         )}
         {!last && phase === "done" && (
-          <button type="button" className="tr-next" data-phase={phase} onClick={() => onOpen(nxt.key)}>
+          <button type="button" className="tr-next" data-phase={phase} onClick={onNext}>
             <svg className="ts-ring" viewBox="0 0 20 20" aria-hidden="true">
               <circle cx="10" cy="10" r="8" />
-              <circle key={nxt.key} cx="10" cy="10" r="8" className="ts-ring-run" style={{ animationDuration: `${countdownMs}ms` }} />
+              <circle key={next} cx="10" cy="10" r="8" className="ts-ring-run" style={{ animationDuration: `${countdownMs}ms` }} />
             </svg>
-            <span><small>{tr("Next")}</small>{tr(nxt.title)}</span>
+            <span><small>{tr("Next")}</small>{tr(next)}</span>
           </button>
         )}
       </div>

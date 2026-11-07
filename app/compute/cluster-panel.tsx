@@ -6,7 +6,9 @@ import { RequestClusters, clusterStats } from "./request-clusters";
 import { emitFocus } from "./stagecraft/stage-meter";
 
 /** Plays the clusters once when they come into view: the population moves, then the result is read. */
-const START = 1200, MOVE = 6500, HOLD = 6000;
+const START = 1200, MOVE = 6500, HOLD = 4800;
+/** The finding waits for the request film beside it to finish its 20 seconds. */
+const FILM_END = 20600;
 const f = (v: number) => v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 
 export function ClusterPanel({ baseline, target, taskId }: { baseline: LabRun; target: LabRun; taskId: number }) {
@@ -30,7 +32,7 @@ export function ClusterPanel({ baseline, target, taskId }: { baseline: LabRun; t
           place: "left",
         });
         off = window.setTimeout(() => emitFocus(null), HOLD);
-      }, 500);
+      }, FILM_END - START - MOVE);
     };
     const io = new IntersectionObserver(([e]) => {
       cancelAnimationFrame(raf); window.clearTimeout(timer); window.clearTimeout(off);
