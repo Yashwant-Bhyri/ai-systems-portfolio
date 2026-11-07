@@ -89,16 +89,27 @@ function Raster({ t }: SceneProps) {
   </svg>;
 }
 
-export const FLEET_LABELS = ["Problem", "The QwenGyre idea", "What we built", "Impact"] as const;
+export const FLEET_LABELS = ["Problem / Bottleneck", "Elastic RL: the idea", "What we built", "Impact"] as const;
+const idlePct = Math.round(100 * (1 - FLEET.utilA)), busyB = Math.round(100 * FLEET.utilB);
 export const FLEET_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; systemMs: number; labels: readonly string[]; ledger?: ArcLedger } = {
   labels: FLEET_LABELS,
-  problem: { label: "Problem", title: "Synchronous RL: every GPU waits for the slowest rollout before anyone trains", ms: PROBLEM_MS, Scene: Problem },
-  mechanism: { label: "The QwenGyre idea", title: "Each GPU keeps its identity and changes role the moment its own rollout ends", ms: IDEA_MS, Scene: Idea },
+  problem: {
+    label: "Problem / Bottleneck", title: "Synchronous RL: every GPU waits for the slowest rollout before anyone trains", ms: PROBLEM_MS, Scene: Problem,
+    meter: [[0, "Each GPU writes its rollouts; answers vary a lot in length"], [3200, "Faster GPUs finish first, and then they wait"], [7200, `GPU ${SLOWEST + 1} is the slowest, so 63 GPUs wait for it`]],
+    bottleneck: { at: PROBLEM_MS - 3200, headline: `RL is sequential at the fleet level: 64 GPUs sit idle ${idlePct}% of the time`, effect: "one barrier per step means the slowest rollout sets the pace for every GPU, and that gets worse as the fleet grows" },
+  },
+  mechanism: {
+    label: "Elastic RL: the idea", title: "Elastic RL, after QwenGyre (arXiv 2609.33848): a GPU that finishes its rollout starts training at once", ms: IDEA_MS, Scene: Idea,
+    meter: [[0, "No barrier: each GPU keeps its identity and changes role"], [3000, "A finished GPU moves straight from writing rollouts to training"], [7000, "Weights are published to the fleet as they are ready"], [9500, "A straggler's rollout simply lands in the next step"]],
+  },
   systemTitle: "What we built: 64 GPUs on one wall clock",
   systemMs: (13100 + 2600) * 2,
+  ledger: { metric: "One RL step, 64 GPUs", unit: "min", baseline: FLEET.stepA, optimized: FLEET.stepB, digits: 2, baselineLabel: "Synchronous", optimizedLabel: "Elastic" },
   impact: {
     label: "Impact", title: "Almost twice the RL steps in the same wall-clock time", ms: 9000,
+    meter: [[0, `${FLEET.doneA} → ${FLEET.doneB} RL steps in ${FLEET.span.toFixed(0)} minutes`], [3600, "The price: some rollouts are trained one step late"]],
     Scene: makeImpact({
+      lesson: `The same 64 GPUs go from ${Math.round(100 * FLEET.utilA)}% to ${busyB}% busy, so training gets ${(FLEET.stepA / FLEET.stepB).toFixed(2)}× the RL steps per hour without one more GPU.`,
       from: FLEET.doneA, to: FLEET.doneB, unit: "RL steps", digits: 0,
       what: `RL steps completed by 64 GPUs in ${FLEET.span.toFixed(0)} minutes`,
       cause: `No GPU idles at the barrier: a finished GPU trains at once, so a step takes ${FLEET.stepB.toFixed(2)} instead of ${FLEET.stepA.toFixed(2)} minutes (${(FLEET.stepA / FLEET.stepB).toFixed(2)}×).`,

@@ -1,139 +1,130 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { attrs, ease, lerp, prog } from "../../exhibit/engine";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ease, prog } from "../../exhibit/engine";
 import { useTr } from "../../exhibit/i18n";
 import { POLICIES, TASKS, simulateLab } from "../lab-simulation";
+import { emitFocus, emitMeter } from "./stage-meter";
 
 /**
- * Where the 96 tasks land. Each dot is one task: its height is the task's
- * difficulty (plus the small per-family offset the model uses), its x is the
- * GPU-seconds the checkpoint spends on it. A task is solved when it sits below
- * the checkpoint's ability line. Post-training lifts the line, so more tasks
- * fall under it, and longer reasoning moves every dot to the right.
+ * Where the 96 tasks land. The tasks stack up by difficulty, easiest on the
+ * left. Each checkpoint has an ability, drawn as a line: a task it passes is
+ * solved, and the dot lights up. Training moves the line to the right; one
+ * pass, then the result is held. A red ring is a regression: the line has
+ * passed the task, but the answer is still wrong.
  */
-
-const VB = { w: 820, h: 560 };
-const P = { x0: 70, x1: 790, y0: 500, y1: 40 };
-const T = { base: 1400, move: [2200, 5600] as const, hold: 8000, back: [10200, 11800] as const };
-const LOOP = 12600;
-const BLUE = "#8fb4ff", ROSE = "#f3a0bc", RED = "#ff8176", MUTED = "#4c5864";
-const median = (xs: number[]) => {
-  const s = [...xs].sort((a, b) => a - b), m = s.length >> 1;
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-};
+const VB = { w: 980, h: 470 };
+const P = { x0: 40, x1: 950, y0: 400, top: 150 };
+const R = 7.5, BIN = 0.04;
+const STEPS = [
+  { policy: 0, name: "Base", how: "the model as it comes" },
+  { policy: 1, name: "SFT + LoRA", how: "imitates verified reasoning" },
+  { policy: 2, name: "GRPO", how: "learns from test outcomes" },
+] as const;
+const HOLD = 1800, MOVE = 2600, GAP = 900;
+const BLUE = "#8fb4ff", ROSE = "#f3a0bc", RED = "#ff8176", MUTED = "#3b4651";
 
 export function TaskLanding({ budget, active }: { budget: number; active: boolean }) {
   const tr = useTr();
+  const root = useRef<HTMLDivElement>(null);
   const data = useMemo(() => {
-    const base = simulateLab(0, budget), post = simulateLab(2, budget);
     const thought = Math.log2(budget);
-    const ability = (p: number) => Math.min(0.94, POLICIES[p].skill + POLICIES[p].growth * thought);
-    const rows = TASKS.map((t, i) => ({
-      y: t.difficulty + t.family * 0.025,
-      bx: base.tasks[i].gpuSeconds, px: post.tasks[i].gpuSeconds,
-      b: base.tasks[i].correct, p: post.tasks[i].correct,
-      regression: post.tasks[i].correct === false && t.difficulty + t.family * 0.025 < ability(2),
-    }));
-    const maxX = Math.max(...rows.map((r) => Math.max(r.bx, r.px)));
-    return {
-      rows, maxX: Math.ceil(maxX / 5) * 5,
-      baseAbility: ability(0), postAbility: ability(2),
-      baseSolved: base.correct, postSolved: post.correct,
-      baseMedian: median(rows.map((r) => r.bx)), postMedian: median(rows.map((r) => r.px)),
-    };
-  }, [budget]);
-  const X = useCallback((v: number) => P.x0 + (v / data.maxX) * (P.x1 - P.x0), [data.maxX]);
-  const Y = useCallback((d: number) => P.y0 - Math.min(1, d) * (P.y0 - P.y1), []);
-
-  const dots = useRef<(SVGCircleElement | null)[]>([]);
-  const ghosts = useRef<(SVGCircleElement | null)[]>([]);
-  const zone = useRef<SVGRectElement>(null), abilityPath = useRef<SVGPathElement>(null);
-  const lineLabel = useRef<SVGTextElement>(null);
-  const medB = useRef<SVGGElement>(null), medP = useRef<SVGGElement>(null), bracket = useRef<SVGGElement>(null);
-  const solved = useRef<HTMLSpanElement>(null), med = useRef<HTMLSpanElement>(null);
-  const [phase, setPhase] = useState(0);
-  const phaseRef = useRef(0);
-
-  const draw = useCallback((t: number) => {
-    const fwd = ease.io(prog(t, T.move[0], T.move[1])), backP = ease.io(prog(t, T.back[0], T.back[1]));
-    const k = fwd * (1 - backP);
-    const ab = lerp(data.baseAbility, data.postAbility, k);
-    attrs(zone.current, { y: Y(ab), height: P.y0 - Y(ab) });
-    attrs(abilityPath.current, { d: `M${P.x0} ${Y(ab)}H${P.x1}` });
-    attrs(lineLabel.current, { y: Y(ab) - 8, x: P.x0 + 8 });
-    if (lineLabel.current) lineLabel.current.textContent = `${tr("ability")} ${ab.toFixed(2)} · ${tr("below the line = solved")}`;
-    data.rows.forEach((r, i) => {
-      const x = lerp(X(r.bx), X(r.px), k);
-      const isSolved = k < 0.5 ? r.b && r.y < ab + 1e-9 : r.p;
-      const lit = r.y < ab && !(r.regression && k > 0.5);
-      const gained = lit && !r.b && k > 0.05;
-      attrs(dots.current[i], {
-        cx: x, fill: lit ? (gained ? ROSE : BLUE) : "none",
-        stroke: r.regression && k > 0.5 ? RED : lit ? (gained ? ROSE : BLUE) : MUTED,
-        "fill-opacity": isSolved ? 0.9 : 0, r: gained ? 4.4 : 3.6,
-      });
-      attrs(ghosts.current[i], { opacity: 0.35 * k });
+    const runs = STEPS.map((s) => simulateLab(s.policy, budget));
+    const abilities = STEPS.map((s) => Math.min(0.94, POLICIES[s.policy].skill + POLICIES[s.policy].growth * thought));
+    const diff = TASKS.map((t) => t.difficulty + t.family * 0.025);
+    const dMax = Math.max(...diff) + BIN;
+    const stacks = new Map<number, number>();
+    const dots = TASKS.map((t, i) => {
+      const bin = Math.floor(diff[i] / BIN), level = stacks.get(bin) ?? 0;
+      stacks.set(bin, level + 1);
+      return { i, d: diff[i], bin, level, solved: runs.map((r) => r.tasks[i].correct) };
     });
-    const mx = lerp(data.baseMedian, data.postMedian, k);
-    attrs(medB.current, { opacity: 0.9 });
-    attrs(medP.current, { transform: `translate(${X(mx) - X(data.baseMedian)} 0)`, opacity: k > 0.02 ? 1 : 0 });
-    attrs(bracket.current, { opacity: ease.out(prog(t, T.move[1], T.move[1] + 800)) * (1 - backP) });
-    if (solved.current) solved.current.textContent = String(k < 0.5 ? data.baseSolved : data.postSolved);
-    // The plate shows settled values only (base, then post-trained), never a half-counted number.
-    if (med.current) med.current.textContent = (k < 0.5 ? data.baseMedian : data.postMedian).toFixed(1);
-    const ph = t < T.move[0] ? 0 : t < T.move[1] ? 1 : t < T.back[0] ? 2 : 3;
-    if (ph !== phaseRef.current) { phaseRef.current = ph; setPhase(ph); }
-  }, [data, X, Y, tr]);
-
+    return { runs, abilities, dots, dMax, tallest: Math.max(...stacks.values()) };
+  }, [budget]);
+  const X = (d: number) => P.x0 + (d / data.dMax) * (P.x1 - P.x0);
+  const [t, setT] = useState(0);
+  const total = HOLD + (STEPS.length - 1) * (MOVE + GAP) + 1000;
   useEffect(() => {
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced || !active) { draw(T.hold); return; }
+    if (!active) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { const id = window.setTimeout(() => setT(total), 0); return () => window.clearTimeout(id); }
     let raf = 0; const start = performance.now();
-    const tick = (now: number) => { draw((now - start) % LOOP); raf = requestAnimationFrame(tick); };
+    const tick = (now: number) => { const v = now - start; setT(Math.min(total, v)); if (v < total) raf = requestAnimationFrame(tick); };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [active, draw]);
+  }, [active, total]);
 
-  const ticksX = Array.from({ length: Math.floor(data.maxX / 10) + 1 }, (_, i) => i * 10);
-  const gain = data.postSolved - data.baseSolved;
-  const medGain = data.postMedian - data.baseMedian;
+  // which checkpoint we are at, and how far the line has travelled towards it
+  const span = MOVE + GAP;
+  const reached = t < HOLD ? 0 : Math.min(STEPS.length - 1, 1 + Math.floor((t - HOLD) / span));
+  const k = t < HOLD ? 1 : ease.io(prog((t - HOLD) % span, 0, MOVE));
+  const atEnd = t >= HOLD + (STEPS.length - 1) * span;
+  const from = atEnd ? STEPS.length - 1 : Math.max(0, reached - 1);
+  const to = atEnd ? STEPS.length - 1 : reached;
+  const ability = data.abilities[from] + (data.abilities[to] - data.abilities[from]) * (atEnd ? 1 : k);
+  const settled = atEnd || k >= 0.98 ? to : from;
+  const run = data.runs[settled];
+  const gain = run.correct - data.runs[0].correct;
+
+  const line = t < HOLD ? `Base: the ability line passes ${data.runs[0].correct} of 96 tasks`
+    : atEnd ? `${data.runs[0].correct} → ${run.correct} tasks solved: the line moved from ${data.abilities[0].toFixed(2)} to ${ability.toFixed(2)}`
+    : `${STEPS[to].name} ${STEPS[to].how}: the line moves right`;
+  useEffect(() => { if (active) emitMeter({ text: line, step: settled + 1, total: STEPS.length, tone: atEnd ? "delta" : "optimized" }); }, [active, line, settled, atEnd]);
+  useEffect(() => {
+    if (!active || !atEnd) return;
+    const a = data.runs[0], b = data.runs[STEPS.length - 1];
+    emitFocus({
+      headline: `Training lifted ${b.correct - a.correct} tasks over the line`,
+      parts: [{ label: "base", value: `${a.correct} of 96`, tone: "baseline" }, { label: "after SFT and GRPO", value: `${b.correct} of 96`, tone: "optimized" }, { label: "median cost", value: `${(a.tokens / a.n / 1000).toFixed(1)}k → ${(b.tokens / b.n / 1000).toFixed(1)}k tokens`, tone: "delta" }],
+      cause: "the model got more able, and it now spends more tokens per answer to do it",
+      place: "bottom",
+    });
+    const id = window.setTimeout(() => { emitFocus(null); root.current?.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true })); }, 6000);
+    return () => { window.clearTimeout(id); emitFocus(null); };
+    // the focus reads settled values once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, atEnd]);
+
   return (
-    <div className="tl-root">
-      <div className="tl-figure">
-        <header className="tl-head">
-          <h3>{phase === 0 ? tr("Base checkpoint: 96 tasks by difficulty and cost") : phase === 1 ? `SFT, then RL, lift the ability line from ${data.baseAbility.toFixed(2)} to ${data.postAbility.toFixed(2)}` : phase === 2 ? `${gain} more tasks fall below the line` : tr("Back to the base checkpoint")}</h3>
-          <span>{tr("one dot = one task · filled = solved · same 96 tasks, same runtime")}</span>
-        </header>
-        <svg viewBox={`0 0 ${VB.w} ${VB.h}`} className="tl-svg" role="img" aria-label={`Base solves ${data.baseSolved} of 96 at a median of ${data.baseMedian.toFixed(1)} GPU-seconds per task; SFT plus RL solves ${data.postSolved} at ${data.postMedian.toFixed(1)}.`}>
-          <path d={`M${P.x0} ${P.y1}V${P.y0}H${P.x1}`} className="tl-axis" />
-          {[0, 0.25, 0.5, 0.75, 1].map((d) => <g key={d}><path d={`M${P.x0} ${Y(d)}H${P.x1}`} className="tl-grid" /><text x={P.x0 - 10} y={Y(d) + 4} textAnchor="end" className="tl-tick">{d.toFixed(2)}</text></g>)}
-          {ticksX.map((v) => <text key={v} x={X(v)} y={P.y0 + 20} textAnchor="middle" className="tl-tick">{v}</text>)}
-          <text x={P.x0} y={P.y1 - 16} className="tl-axis-label">{tr("task difficulty ↑")}</text>
-          <text x={P.x1} y={P.y0 + 44} textAnchor="end" className="tl-axis-label">{tr("GPU-s per task →")}</text>
-          {/* the ability line: everything below it is solved */}
-          <rect ref={zone} x={P.x0} y={Y(data.baseAbility)} width={P.x1 - P.x0} height={P.y0 - Y(data.baseAbility)} className="tl-solved-zone" />
-          <path ref={abilityPath} d={`M${P.x0} ${Y(data.baseAbility)}H${P.x1}`} className="tl-ability" />
-          <text ref={lineLabel} x={P.x0 + 8} y={Y(data.baseAbility) - 8} className="tl-ability-label" />
-          {data.rows.map((r, i) => <circle key={`g${i}`} ref={(e) => { ghosts.current[i] = e; }} cx={X(r.bx)} cy={Y(r.y)} r={2.4} className="tl-ghost" opacity={0} />)}
-          {data.rows.map((r, i) => <circle key={i} ref={(e) => { dots.current[i] = e; }} cx={X(r.bx)} cy={Y(r.y)} r={3.6} strokeWidth={1.3} />)}
-          {/* medians on the cost axis, with the shift between them */}
-          <g ref={medB}><path d={`M${X(data.baseMedian)} ${P.y0}v-14`} className="tl-median tl-median-base" /><text x={X(data.baseMedian)} y={P.y0 - 20} textAnchor="middle" className="tl-median-label">{tr("base median")}</text></g>
-          <g ref={medP} opacity={0}><path d={`M${X(data.baseMedian)} ${P.y0}v-14`} className="tl-median tl-median-post" /><text x={X(data.baseMedian)} y={P.y0 - 20} textAnchor="middle" className="tl-median-label tl-post">{tr("RL checkpoint median")}</text></g>
-          <g ref={bracket} opacity={0}>
-            <path d={`M${X(data.baseMedian)} ${P.y0 + 30}v6H${X(data.postMedian)}v-6`} className="tl-bracket" />
-          </g>
-        </svg>
-      </div>
-      <aside className="tl-plate" aria-live="off">
-        <span className="tl-label">{`Base → RL checkpoint · ${budget}× thought · same 96 tasks`}</span>
-        <h4>{`+${gain} tasks solved, for +${medGain.toFixed(1)} GPU-s per task`}</h4>
-        <div className="tl-row"><span>{tr("Tasks solved")}</span><strong><span ref={solved}>{data.baseSolved}</span><small> / 96</small></strong></div>
-        <p className="tl-hero"><b className="cx-hero-num">+{gain}</b> <span className="cx-hero-unit">{tr("tasks solved")}</span></p>
-        <div className="tl-row"><span>{tr("Median GPU-s per task")}</span><strong><span ref={med}>{data.baseMedian.toFixed(1)}</span><small> GPU-s</small></strong></div>
-        <p className="tl-delta-line">+{medGain.toFixed(1)} GPU-s {tr("per task")} <em>({data.baseMedian.toFixed(1)} → {data.postMedian.toFixed(1)})</em></p>
-        <p className="tl-cause"><b>{tr("Cause")}</b> {`SFT lifts the line ${data.baseAbility.toFixed(2)} → ${Math.min(0.94, POLICIES[1].skill + POLICIES[1].growth * Math.log2(budget)).toFixed(2)}; RL lifts it to ${data.postAbility.toFixed(2)}, with answers ${POLICIES[2].work}× the base length.`}</p>
-      </aside>
+    <div ref={root} className="tl-root tl-ladder">
+      <header className="tl-head">
+        <h3>{tr("Where the 96 tasks land")}</h3>
+        <ol className="tl-steps">
+          {STEPS.map((s, i) => (
+            <li key={s.name} data-on={i === settled || undefined} data-done={i < settled || undefined}>
+              <strong>{s.name}</strong>
+              <span>{i <= settled ? `${data.runs[i].correct} of 96` : "?"}</span>
+            </li>
+          ))}
+        </ol>
+      </header>
+      <svg viewBox={`0 0 ${VB.w} ${VB.h}`} className="tl-svg" role="img" aria-label={`Tasks stacked by difficulty. The ability line moves right from ${data.abilities[0].toFixed(2)} to ${data.abilities[STEPS.length - 1].toFixed(2)}, and solved tasks go from ${data.runs[0].correct} to ${data.runs[STEPS.length - 1].correct} of 96.`}>
+        <rect x={P.x0} y={P.top - 40} width={Math.max(0, X(ability) - P.x0)} height={P.y0 - P.top + 40} fill={ROSE} opacity={0.05} />
+        <path d={`M${P.x0} ${P.y0 + 6}H${P.x1}`} className="tl-axis" />
+        {data.dots.map((d) => {
+          const passed = d.d < ability;
+          const solved = passed && d.solved[settled];
+          const regressed = passed && !d.solved[settled];
+          const gained = solved && !d.solved[0];
+          const cx = X((d.bin + 0.5) * BIN), cy = P.y0 - R - d.level * (2 * R + 2.5);
+          return <circle key={d.i} cx={cx} cy={cy} r={R} fill={solved ? (gained ? ROSE : BLUE) : "none"} stroke={regressed ? RED : solved ? (gained ? ROSE : BLUE) : MUTED} strokeWidth={regressed ? 2 : 1.3} style={{ transition: "fill .25s, stroke .25s" }} data-focus-spot={solved ? "" : undefined} />;
+        })}
+        <g data-focus-spot>
+          <path d={`M${X(ability)} ${P.top - 40}V${P.y0 + 12}`} stroke={ROSE} strokeWidth={3} />
+          <text x={X(ability) + (ability > data.dMax * 0.7 ? -10 : 10)} y={P.top - 22} textAnchor={ability > data.dMax * 0.7 ? "end" : "start"} className="tl-line-label">{tr("Ability")} {ability.toFixed(2)}</text>
+          <text x={X(ability) + (ability > data.dMax * 0.7 ? -10 : 10)} y={P.top - 2} textAnchor={ability > data.dMax * 0.7 ? "end" : "start"} className="tl-line-sub">{tr("tasks it has passed are solved")}</text>
+        </g>
+        <text x={P.x0} y={P.y0 + 34} className="tl-axis-label">{tr("← easier tasks")}</text>
+        <text x={P.x1} y={P.y0 + 34} textAnchor="end" className="tl-axis-label">{tr("harder tasks →")}</text>
+        <g transform={`translate(${P.x0} ${P.y0 + 52})`}>
+          {[[BLUE, "solved by the base model", false], [ROSE, "newly solved", false], [RED, "regression: passed, still wrong", true]].map(([c, l, ring], i) => (
+            <g key={String(l)} transform={`translate(${[0, 230, 400][i]} 0)`}><circle cx={7} cy={0} r={6} fill={ring ? "none" : String(c)} stroke={String(c)} strokeWidth={2} /><text x={20} y={5} className="tl-axis-label">{String(l)}</text></g>
+          ))}
+        </g>
+        <g transform={`translate(${P.x1} 40)`} data-focus-spot>
+          <text textAnchor="end" className="tl-count">{run.correct}<tspan className="tl-count-unit"> {tr("of 96 solved")}</tspan></text>
+          {gain > 0 && <text y={30} textAnchor="end" className="tl-gain">+{gain} {tr("on the base model")}</text>}
+        </g>
+      </svg>
     </div>
   );
 }

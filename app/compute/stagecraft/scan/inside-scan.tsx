@@ -94,7 +94,7 @@ export function InsideScan({ active }: { active: boolean }) {
     <div className="sc-root sc-rose">
       <header className="sc-head">
         <div>
-          <span className="sc-kicker">{tr("first_item([]) crashes. Fix it.")}</span>
+          <span className="sc-kicker">{tr("After SFT and GRPO, on one coding task: first_item([]) crashes. Fix it.")}</span>
           <h3>{tr("Inside the model: where the RL checkpoint's layers moved away from the base model's")}</h3>
         </div>
         <div className="sc-count"><b className="cx-hero-num" data-hero={seen === flips.length || undefined}>{seen}</b><small>{tr(`of ${flips.length} words the base model would have written differently`)}</small></div>

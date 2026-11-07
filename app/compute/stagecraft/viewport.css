@@ -227,3 +227,56 @@
 .lab-flow-show .lf-fit .tt-controls { padding-block: 4px; min-height: 0; }
 .lab-flow-show .lf-fit .tt-evidence { display: none; }
 .lab-flow-show .lf-fit .tt-revelation small { display: none; }
+
+/* ── Where the 96 tasks land: the ability line ────────────────────────── */
+.tl-root.tl-ladder { display: flex; flex-direction: column; height: var(--lf-room, 700px); padding: 12px 24px 8px; box-sizing: border-box; }
+.tl-ladder .tl-head { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex: 0 0 auto; }
+.tl-ladder .tl-head h3 { margin: 0; color: #f1f4f7; font: 500 22px/1.2 var(--font-geist-sans), sans-serif; letter-spacing: -.02em; }
+.tl-steps { list-style: none; display: flex; gap: 8px; margin: 0; padding: 0; }
+.tl-steps li { display: flex; align-items: baseline; gap: 8px; padding: 7px 14px; border: 1px solid rgba(230,237,244,.1); border-radius: 18px; color: #93a0ae; transition: border-color .4s, background .4s, color .4s; }
+.tl-steps li strong { font: 500 14px/1 var(--font-geist-sans), sans-serif; }
+.tl-steps li span { font: 500 14px/1 var(--font-geist-mono), monospace; }
+.tl-steps li[data-done] { color: #d6dfe7; }
+.tl-steps li[data-on] { color: #fff; border-color: #f3a0bc; background: rgba(243,160,188,.12); }
+.tl-ladder .tl-svg { flex: 1 1 auto; min-height: 0; width: 100%; }
+.tl-line-label { fill: #ffd6e4; font: 500 19px/1 var(--font-geist-mono), monospace; }
+.tl-line-sub { fill: #c9d2db; font: 400 14px/1 var(--font-geist-sans), sans-serif; }
+.tl-count { fill: #fff; font: 500 40px/1 var(--font-geist-mono), monospace; letter-spacing: -.03em; }
+.tl-count-unit { fill: #aab6c2; font: 400 16px var(--font-geist-sans), sans-serif; letter-spacing: 0; }
+.tl-gain { fill: #f3a0bc; font: 500 16px/1 var(--font-geist-mono), monospace; }
+.tl-ladder .tl-axis { stroke: #3a4753; fill: none; }
+.tl-ladder .tl-axis-label { fill: #aab6c2; font: 400 14px/1 var(--font-geist-sans), sans-serif; }
+
+/* ── Regression audit: the flow, then what it found at each step ──────── */
+.al-root { display: none; }
+.lab-flow-show .lf-fit .al-root { display: block; padding: 6px 24px 10px; }
+.al-root h4 { margin: 0 0 8px; color: #f1f4f7; font: 500 17px/1.2 var(--font-geist-sans), sans-serif; }
+.al-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.al-steps li { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border: 1px solid rgba(230,237,244,.09); border-radius: 10px; }
+.al-name { color: #c9d2db; font: 450 13.5px/1.25 var(--font-geist-sans), sans-serif; }
+.al-count b { font: 500 22px/1 var(--font-geist-mono), monospace; letter-spacing: -.02em; margin-right: 6px; }
+.al-count b[data-tone="gain"] { color: #b8e986; }
+.al-count b[data-tone="loss"] { color: #ff8f86; }
+.al-ticks { display: flex; flex-wrap: wrap; gap: 2px; min-height: 12px; }
+.al-ticks i { width: 8px; height: 12px; border-radius: 1.5px; background: #b8e986; opacity: .8; }
+.al-ticks i[data-tone="loss"] { background: #ff8f86; opacity: 1; }
+.al-named { color: #aab6c2; font: 400 13px/1.3 var(--font-geist-sans), sans-serif; }
+.al-named[data-focus-spot] { color: #ffb3ac; }
+/* Explorer plots use the height they have. */
+.lab-flow-show .lf-fit .rs-plot { max-height: calc(var(--lf-room) - 210px); margin-inline: auto; }
+.lab-flow-show .lf-fit .rs-stage { min-height: 0; }
+.lab-flow-show .lf-fit .rs-pan-hint { display: none; }
+
+/* The thinking budget has its own labelled row in the post-training explorers. */
+.lab-flow-show .lf-fit .rs-context-bar.rs-budget-bar { position: static; display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-height: 40px; padding: 4px 16px; border-bottom: 1px solid rgba(230,237,244,.07); }
+.lab-flow-show .lf-fit .rs-budget-bar[hidden] { display: none; }
+.lab-flow-show .lf-fit .rs-context-bar.rs-budget-bar > .rs-status { display: inline; color: #aab6c2; font: 450 13.5px/1 var(--font-geist-sans), sans-serif; letter-spacing: 0; text-transform: none; }
+.tl-root.tl-ladder { height: calc(var(--lf-room, 700px) - 44px); }
+.tl-ladder .tl-svg { max-height: none; height: 100%; margin-top: 0; }
+/* No utterly small words, no tracked capitals in the show. */
+.lab-flow-show .lf-fit small { font-size: max(12px, 1em); }
+.lab-flow-show .lf-fit :is(.rs-status, .ls-figure-label, .rs-figure-label, .ls-eyebrow, .cf-practice-heading, .pf-scrub, .sq-result-label, .ll-tools > span) { letter-spacing: 0; text-transform: none; }
+.lab-flow-show .lf-fit .ll-plot { max-height: calc(var(--lf-room) - 236px); }
+.lab-flow-show .lf-fit .tt-plot { max-height: calc(var(--lf-room) - 198px); }
+.lab-flow-show .lf-fit .sc-root { padding-block: 10px 12px; }
+.lab-flow-show .lf-fit .sc-stage:not(.sc-terrain) { height: clamp(220px, 30svh, 300px); }

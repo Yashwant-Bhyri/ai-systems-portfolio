@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTr } from "../../../exhibit/i18n";
 import { POLICIES, TASKS, hashTask, simulateLab } from "../../lab-simulation";
 import { mountRelief } from "./relief";
+import { emitMeter } from "../stage-meter";
 import "./scan.css";
 
 /**
@@ -20,7 +21,7 @@ const STAGES = [
   { label: "RL · 4× thought", policy: 2, budget: 4 },
   { label: "Lean RL · 4×", policy: 3, budget: 4 },
 ] as const;
-const LOOP = 18000, RISE = 13500;
+const RISE = 13500;
 const ORDER = [...TASKS].sort((a, b) => a.difficulty - b.difficulty).map((t) => t.id);
 
 function margin(policyIndex: number, budget: number, taskId: number) {
@@ -79,19 +80,22 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
     let raf = 0, last = -1;
     const start = performance.now();
     const tick = (now: number) => {
-      const t = reduced ? RISE : (now - start) % LOOP;
+      // One pass: each checkpoint rises in turn, and the finished terrain holds.
+      const t = reduced ? RISE : Math.min(RISE, now - start);
       const k = Math.min(STAGES.length, (t / RISE) * STAGES.length);
       // each checkpoint row rises in turn, sweeping from easy to hard tasks
       r.update((c, row) => (stageOf(row) < 0 ? 1 : Math.min(1, Math.max(0, (k - stageOf(row)) * 1.6 - (c / ORDER.length) * 0.6))));
       r.render();
       const n = Math.min(STAGES.length - 1, Math.floor(k));
       if (n !== last) { last = n; setStage(n); }
-      if (!reduced) raf = requestAnimationFrame(tick);
+      if (!reduced && now - start < RISE) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); r.dispose(); };
   }, [field, active]);
 
+  const stageLine = stage === 0 ? `Base: ${solvedCounts[0]} of 96 tasks rise above the ground` : `${STAGES[stage].label}: ${solvedCounts[stage - 1]} → ${solvedCounts[stage]} tasks solved`;
+  useEffect(() => { if (active) emitMeter({ text: stageLine, step: stage + 1, total: STAGES.length, tone: "optimized" }); }, [active, stageLine, stage]);
   return (
     <div className="sc-root sc-rose">
       <header className="sc-head">

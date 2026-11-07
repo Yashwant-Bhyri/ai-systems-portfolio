@@ -30,6 +30,7 @@ import {
 import { reductionPercent } from "./study-math";
 import { useStageHold } from "./stagecraft/stage-hold";
 import { useStageFit } from "./stagecraft/stage-fit";
+import { AuditLedger } from "./stagecraft/audit-ledger";
 import { FocusCaption, StageMeter } from "./stagecraft/stage-meter";
 import "./stagecraft/viewport.css";
 import { useStudyPlayback } from "./use-study-playback";
@@ -149,9 +150,9 @@ const TRAINING_DEMO: readonly CursorStep[] = [
   { target: ".rs-policy-strip button:nth-of-type(2)", label: "After SFT", hold: 4200 },
   { target: ".rs-policy-strip button:nth-of-type(3)", label: "RL checkpoint", hold: 4600 },
   { target: ".rs-policy-strip button:nth-of-type(4)", label: "Lean RL", hold: 4600 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(1)", label: "1× thought", hold: 3800 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(3)", label: "4× thought", hold: 3800 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(4)", label: "8× thought", hold: 3800 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(1)", label: "1× thinking budget", hold: 3800 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(3)", label: "4× thinking budget", hold: 3800 },
+  { target: ".rs-context-bar .rs-segmented button:nth-of-type(4)", label: "8× thinking budget", hold: 3800 },
   { target: ".rs-context-bar .rs-segmented button:nth-of-type(2)", label: "Back to 2×", hold: 2600 },
   { target: ".rs-policy-strip button:nth-of-type(3)", label: "RL checkpoint", hold: 2600 },
 ]
@@ -239,7 +240,7 @@ function LabEvidence({
           <div>
             <span>Illustrative, not measured</span>
             <h3 id={id}>
-              {POLICIES[run.policyIndex].name} · {run.budget}× thought
+              {POLICIES[run.policyIndex].name} · {run.budget}× thinking budget
             </h3>
           </div>
           <button
@@ -549,11 +550,11 @@ export function ComputeLabStudy({
   const fmt = (v: number, d = 2) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
   const railItems: RailItem[] = training
     ? [
-        { key: "film", title: "The experiment", term: "base → SFT → RL → 4× thought → lean RL", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "film", title: "The experiment", term: "base → SFT → RL → 4× thinking budget → lean RL", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "inside", title: "Inside the model", term: "base → RL checkpoint · 36 layers × 50 tokens", value: "7 of 50", unit: "words the base model would have written differently", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
         { key: "terrain", title: "Capability terrain", term: "96 tasks × six checkpoints", value: `+${simulateLab(3, 4).correct - simulateLab(0, 1).correct}`, unit: "tasks raised above the line, base → lean RL", Glyph: GlyphTerrain, onOpen: () => openView(6), current: mode === "explore" && view === 6 },
-        { key: "map", title: "Capability map", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thought`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thought", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thought", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "map", title: "Capability map", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thinking budget", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thinking budget", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thought`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
         { key: "fleet", title: "Elastic RL on 64 GPUs", term: "rollout ↔ training role per GPU · after QwenGyre", value: "4 → 7", unit: "RL steps in 14 min · 1.96×", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
         { key: "audit", title: "Regression audit", term: "gains beside losses", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thought`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
@@ -951,16 +952,16 @@ export function ComputeLabStudy({
               {training && (
                 <GhostCursor root={exhibitRef} script={TRAINING_DEMO} enabled={mode === "explore" && view < 3} startDelay={2500} restDelay={2200} />
               )}
-              <div className="rs-context-bar">
+              <div className={training ? "rs-context-bar rs-budget-bar" : "rs-context-bar"} hidden={training && view >= 4}>
                 <span className="rs-status rs-status-scenario">
                   {training
-                    ? "96 tasks · thought allowance"
+                    ? "Thinking budget"
                     : "One cohort · 96 tasks"}
                 </span>
                 <div
                   className="rs-segmented"
                   role="group"
-                  aria-label={training ? "Thought allowance" : "Workload trace"}
+                  aria-label={training ? "Thinking budget" : "Workload trace"}
                 >
                   {training
                     ? BUDGETS.map((b) => (
@@ -973,7 +974,7 @@ export function ComputeLabStudy({
                             playback.select(selected);
                           }}
                         >
-                          {b}× thought
+                          {b}×
                         </button>
                       ))
                     : (["shared-prefix", "interactive"] as const).map((w) => (
@@ -1127,7 +1128,10 @@ export function ComputeLabStudy({
                             onSelect={selectCurve}
                           />
                         ) : (
-                          <RegressionAuditPlot before={base} after={run} />
+                          <>
+                            <RegressionAuditPlot before={base} after={run} />
+                            <AuditLedger active={show && mode === "explore" && view === 2} />
+                          </>
                         )
                       ) : null}
                     </div>
