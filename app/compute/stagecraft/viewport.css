@@ -84,3 +84,37 @@
 .lab-flow-show .lf-fit .slo-header p { display: none; }
 .lab-flow-show .lf-fit .slo-context-controls { padding-block: 4px; min-height: 0; }
 .lab-flow-show .lf-fit .sa-diagram { max-height: calc(var(--lf-room) - 200px); margin-inline: auto; }
+
+/* ── The serving explorers (CPU/GPU overlap, and the full models behind "Explore") ── */
+.lab-flow-show .lf-fit { --lf-system: calc(var(--lf-room) - 54px); }
+.lab-flow-show .lf-fit :is(.so-moments, .so-method, .dv-moments, .dv-method, .cr-moments, .cr-method, .sp-moments, .sp-footer, .dv-rounds) { display: none; }
+.lab-flow-show .lf-fit :is(.so-heading, .dv-heading, .cr-heading) { padding-block: 8px 2px; min-height: 0; }
+.lab-flow-show .lf-fit :is(.so-heading, .dv-heading, .cr-heading) p { display: none; }
+.lab-flow-show .lf-fit :is(.dv-controls, .cr-controls, .sp-controls) { padding-block: 4px; min-height: 0; }
+.lab-flow-show .lf-fit :is(.dv-transport, .cr-transport, .sp-transport) { padding-block: 2px; min-height: 0; }
+.lab-flow-show .lf-fit .so-diagram { max-height: calc(var(--lf-system) - 118px); margin-inline: auto; }
+.lab-flow-show .lf-fit .dv-diagram { max-height: calc(var(--lf-system) - 150px); }
+.lab-flow-show .lf-fit .dv-stage { max-height: calc(var(--lf-system) - 136px); overflow: hidden; }
+.lab-flow-show .lf-fit .cr-diagram { max-height: calc(var(--lf-system) - 150px); }
+.lab-flow-show .lf-fit .cr-stage { max-height: calc(var(--lf-system) - 136px); overflow: hidden; }
+.lab-flow-show .lf-fit .sp-header { padding-block: 8px 2px; min-height: 0; }
+.lab-flow-show .lf-fit .sp-plot { max-height: calc(var(--lf-system) - 170px); }
+.lab-flow-show .lf-fit .sp-stage { max-height: calc(var(--lf-system) - 150px); overflow: hidden; }
+
+/* Problem and solution scenes sit in the middle of the stage; impact boards fit under their lesson. */
+.lab-flow-show .lf-fit .ma-stagewrap[data-ledger] { min-height: var(--lf-system); }
+.lab-flow-show .lf-fit .ma-impact[data-board] { min-height: 0; padding-block: 12px 8px; }
+.lab-flow-show .lf-fit .ma-impact .ma-lesson { padding-top: 0; }
+.lab-flow-show .lf-fit .ma-root .ma-figure svg { max-height: calc(var(--lf-system) - 290px); }
+.lab-flow-show .lf-fit .so-diagram { max-height: calc(var(--lf-system) - 172px); }
+.lab-flow-show .lf-fit .ma-impact[data-board] { gap: 12px; }
+.lab-flow-show .lf-fit .ma-impact[data-board] .ma-board { padding-bottom: 10px; }
+.lab-flow-show .lf-fit .ma-impact[data-board] .ma-hero strong { font-size: 48px; }
+.lab-flow-show .lf-fit .ma-figure { margin-top: 0; }
+/* Overlap: heading and host choice share a row, so the diagram stays near full size. */
+.lab-flow-show .lf-fit .so-root { position: relative; }
+.lab-flow-show .lf-fit .so-controls { position: absolute; top: 6px; right: 18px; z-index: 2; padding: 0; min-height: 0; border: 0; background: none; }
+.lab-flow-show .lf-fit .so-controls .so-inputs { display: none; }
+.lab-flow-show .lf-fit .so-heading { padding: 10px 24px 2px; padding-right: 460px; }
+.lab-flow-show .lf-fit .so-heading h3 { font-size: 22px; }
+.lab-flow-show .lf-fit .so-diagram { max-height: calc(var(--lf-system) - 92px); }

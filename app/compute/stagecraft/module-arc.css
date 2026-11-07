@@ -12,7 +12,6 @@
 .ma-beats button[aria-pressed="true"] i { color: var(--active-accent); }
 .ma-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--active-accent); transform-origin: 0 50%; }
 .ma-title { margin-left: 14px; color: #dfe6ec; font: 500 15px/1.25 var(--font-geist-sans), sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: ts-fade .5s cubic-bezier(.2,.75,.2,1) both; }
-.ma-root[data-beat="2"] .ma-title { display: none; }
 .ma-scene { position: relative; padding: 18px 24px 22px; animation: ts-fade .55s cubic-bezier(.2,.75,.2,1) both; }
 .ma-scene[data-film] { padding: 0; }
 .ma-scene > svg { display: block; width: 100%; height: auto; max-height: calc(100svh - 300px); }

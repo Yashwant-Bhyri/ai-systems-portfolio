@@ -3,6 +3,7 @@
 import { PROMPT_BLOCK_TOKENS, STREAM_COSTS, simulateStream, type StreamTrace } from "../stream-continuity-model";
 import { ease, prog } from "../../exhibit/engine";
 import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
+import { SideDelta, SideRow, SideTitle, SystemBoard, laneOpacity, phaseOf } from "../stagecraft/system-board";
 
 /* Prefill / decode scheduling, as a full circle. Every block and tick is the
    lab's own stream model (four requests, 16-token budget, 24 KV pages). */
@@ -151,7 +152,64 @@ function Streams({ t }: SceneProps) {
 const PROBLEM_MS = 11500, MECH_MS = 13500;
 const gapW = worstGap(WHOLE), gapC = worstGap(CHUNKED);
 
-export const PRESSURE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; ledger?: ArcLedger } = {
+/* In our system, the overlap module's way: the four requests under both schedulers on one clock. */
+const SYS_A = 8000, SYS_B = 16000, SYS_MS = 21500;
+const SYS_X0 = 180, SYS_PX = (975 - SYS_X0) / END, sysX = (ms: number) => SYS_X0 + ms * SYS_PX;
+
+function SysLane({ trace, y, now, title, note, tone, opacity, chunked }: { trace: StreamTrace; y: number; now: number; title: string; note: string; tone: string; opacity: number; chunked: boolean }) {
+  const gap = worstGap(trace);
+  const r1 = trace.requests[0], r3 = trace.requests[2];
+  const ft = r3.arrivalMs + (r3.ttftMs ?? 0);
+  return <g className="sb-lane" opacity={opacity}>
+    <text x={0} y={y + 18} className="sb-lt" style={{ fill: tone }}>{title}</text>
+    <text x={SYS_X0} y={y + 18} className="sb-ls">{note}</text>
+    <text x={0} y={y + 54} className="sb-rl">GPU steps</text>
+    {trace.steps.filter((st) => st.startMs <= now).map((st) => {
+      const segs: [number, string][] = [[st.overheadMs, C.ov]];
+      const pre = st.prefill.map((p) => [p.tokens * STREAM_COSTS.prefillMsPerBlock, p.id === 3 ? C.doc : C.other] as [number, string]);
+      if (chunked) segs.push([st.decodeMs, C.dec], ...pre); else segs.push(...pre, [st.decodeMs, C.dec]);
+      let at = st.startMs;
+      return <g key={st.index}>{segs.filter(([w]) => w > 0).map(([w, col], i) => { const a = at; at += w; const right = Math.min(at, now); return right > a && <rect key={i} x={sysX(a) + 0.4} y={y + 34} width={Math.max(0.5, (right - a) * SYS_PX - 0.8)} height={32} rx={2} fill={col} />; })}</g>;
+    })}
+    <text x={0} y={y + 96} className="sb-rl">Request 1&rsquo;s answer</text>
+    {r1.tokenMs.filter((ms) => ms <= now).map((ms) => <rect key={ms} x={sysX(ms) - 1.5} y={y + 78} width={3} height={28} rx={1.5} fill={C.dec} />)}
+    {now >= gap.b && <g data-focus-spot>
+      <rect x={sysX(gap.a) + 2} y={y + 78} width={(gap.b - gap.a) * SYS_PX - 4} height={28} fill={chunked ? C.dec : C.red} opacity={0.14} />
+      <text x={(sysX(gap.a) + sysX(gap.b)) / 2} y={chunked ? y + 76 : y + 98} textAnchor="middle" className="sb-v" style={{ fill: chunked ? C.dec : C.red, fontSize: chunked ? 14 : 17 }}>{(gap.b - gap.a).toFixed(chunked ? 1 : 0)} ms{chunked ? "" : " without a token"}</text>
+    </g>}
+    <text x={0} y={y + 138} className="sb-rl">Request 3&rsquo;s document</text>
+    {now >= r3.arrivalMs && <rect x={sysX(r3.arrivalMs)} y={y + 124} width={Math.max(0, (Math.min(now, r3.prefillEndMs ?? 0) - r3.arrivalMs) * SYS_PX)} height={18} rx={3} fill={C.doc} opacity={0.4} />}
+    {now >= ft && <g><path d={`M${sysX(ft)} ${y + 120}l8 13-8 13-8-13z`} fill={C.doc} /><text x={sysX(ft) + 14} y={y + 139} className="sb-ls" style={{ fill: C.doc }}>first token {(r3.ttftMs ?? 0).toFixed(0)} ms</text></g>}
+    <text x={0} y={y + 172} className="sb-rl">KV pages in use</text>
+    {trace.steps.filter((st) => st.startMs <= now).map((st) => <rect key={st.index} x={sysX(st.startMs)} y={y + 180 - (st.reservationEndPages / 24) * 26} width={Math.max(0.5, (Math.min(st.endMs, now) - st.startMs) * SYS_PX)} height={(st.reservationEndPages / 24) * 26} fill="#7f93a8" opacity={0.55} />)}
+    <path d={`M${sysX(0)} ${y + 180}H${sysX(END)}`} className="ma-grid" />
+  </g>;
+}
+
+function PressureSystem({ t }: SceneProps) {
+  const phase = phaseOf(t, SYS_A, SYS_B);
+  const nowA = ease.io(prog(t, 300, SYS_A - 500)) * END, nowB = ease.io(prog(t, SYS_A + 300, SYS_B - 500)) * END;
+  const showB = phase !== "baseline", done = phase === "both";
+  const w = worstGap(WHOLE), c = worstGap(CHUNKED);
+  const ttftW = WHOLE.requests[2].ttftMs ?? 0, ttftC = CHUNKED.requests[2].ttftMs ?? 0;
+  const title = phase === "baseline" ? "Request 1's stream stops while the whole document is read" : phase === "optimized" ? "The document is read in slices, between request 1's tokens" : `Worst pause ${Math.round((w.b - w.a) / (c.b - c.a))}× shorter`;
+  return <SystemBoard phase={phase} heading={`Four requests on one GPU: request 1 pauses ${(w.b - w.a).toFixed(0)} ms, or ${(c.b - c.a).toFixed(1)} ms`} sub="Requests 1 and 2 are streaming answers; request 3 brings an 8,192-token document; request 4 a short prompt" clock={(phase === "baseline" ? nowA : nowB).toFixed(0)} unit="ms" figure={
+    <svg viewBox="0 0 1000 490" role="img" aria-label="The same four requests under whole prefill and chunked prefill on one clock">
+      <SysLane trace={WHOLE} y={0} now={nowA} title="Whole prefill" note="each step reads all waiting input, then decodes" tone="#9cc5f5" opacity={laneOpacity(phase, "baseline")} chunked={false} />
+      <SysLane trace={CHUNKED} y={210} now={showB ? nowB : 0} title="Chunked prefill" note="each step decodes first, then reads at most 1,024 input tokens" tone={C.dec} opacity={laneOpacity(phase, "optimized")} chunked />
+      <path d={`M${sysX(0)} 412H${sysX(END)}`} className="ma-axis" />
+      {Array.from({ length: Math.floor(END / 50) + 1 }, (_, i) => i * 50).map((v) => <text key={v} x={sysX(v)} y={432} textAnchor="middle" className="sb-tick">{v}</text>)}
+      {[["overhead", C.ov], ["the document", C.doc], ["other input", C.other], ["answer tokens", C.dec]].map(([l, col], i) => <g key={l} transform={`translate(${SYS_X0 + i * 150} 448)`}><rect width={13} height={13} rx={2} fill={col} /><text x={20} y={12} className="sb-tick">{l}</text></g>)}
+    </svg>
+  }>
+    <SideTitle kicker="Request 1, already streaming" title={title} />
+    <SideRow label="Worst pause in the answer" base={(w.b - w.a).toFixed(1)} opt={(c.b - c.a).toFixed(1)} unit="ms" on={showB && nowB >= c.b} />
+    <SideRow label="Request 3's first token" base={ttftW.toFixed(0)} opt={ttftC.toFixed(0)} unit="ms" on={showB && nowB >= CHUNKED.requests[2].arrivalMs + ttftC} />
+    <SideDelta value={`−${((w.b - w.a) - (c.b - c.a)).toFixed(0)} ms`} what={`the worst pause, for ${(ttftC - ttftW).toFixed(0)} ms more on the document's first token`} on={done} />
+  </SystemBoard>;
+}
+
+export const PRESSURE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; system?: ArcBeat; ledger?: ArcLedger } = {
   problem: {
     label: "Problem / Bottleneck", title: "A long new prompt stalls an answer that is already streaming", ms: PROBLEM_MS, Scene: Problem,
     meter: [[0, "Request 1 is streaming its answer, one token per step"], [2600, "Request 3 arrives with an 8,192-token document"], [4200, "The engine reads the whole document in one step"], [8200, `Request 1 has waited ${(gapW.b - gapW.a).toFixed(0)} ms without a token`]],
@@ -163,6 +221,11 @@ export const PRESSURE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBe
   },
   ledger: { metric: "Worst pause in request 1's answer", unit: "ms", baseline: gapW.b - gapW.a, optimized: gapC.b - gapC.a, digits: 1, baselineLabel: "Whole prefill", optimizedLabel: "Chunked prefill" },
   systemTitle: "The same four requests in our serving model",
+  system: {
+    label: "In our system", title: "The same four requests under both schedulers, one clock", ms: SYS_MS, Scene: PressureSystem,
+    meter: [[0, "Whole prefill: requests 1 and 2 stream, one token per step"], [2200, "Request 3 arrives: one step reads all 8,192 tokens"], [SYS_A, "Chunked prefill: the same requests, the same arrivals"], [SYS_A + 2200, "Each step decodes first, then reads a slice of the document"], [SYS_B, `Worst pause ${(gapW.b - gapW.a).toFixed(0)} → ${(gapC.b - gapC.a).toFixed(1)} ms`]],
+    focus: { at: SYS_B + 1400, headline: `The worst pause in a live answer: ${(gapW.b - gapW.a).toFixed(0)} → ${(gapC.b - gapC.a).toFixed(1)} ms`, parts: [{ label: "whole prefill", value: `${(gapW.b - gapW.a).toFixed(0)} ms`, tone: "baseline" }, { label: "chunked", value: `${(gapC.b - gapC.a).toFixed(1)} ms`, tone: "optimized" }, { label: "Δ", value: `−${((gapW.b - gapW.a) - (gapC.b - gapC.a)).toFixed(0)} ms`, tone: "delta" }], cause: "every live answer gets a token before the next slice of the document is read" },
+  },
   impact: {
     label: "Impact", title: "A smoother stream, paid for with a later first token", ms: 9000,
     meter: [[0, `Worst pause ${(gapW.b - gapW.a).toFixed(0)} → ${(gapC.b - gapC.a).toFixed(1)} ms for the same four requests`], [3600, "The price: the long document's first token arrives later"]],

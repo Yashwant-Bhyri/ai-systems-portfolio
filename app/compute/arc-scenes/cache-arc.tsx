@@ -3,6 +3,7 @@
 import { cacheRoutingStudy } from "../cache-routing-model";
 import { ease, prog } from "../../exhibit/engine";
 import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
+import { SideDelta, SideRow, SideTitle, SystemBoard, laneOpacity, phaseOf } from "../stagecraft/system-board";
 
 /* Cache-aware routing, as a full circle. Pages, waits and first-token times are
    the lab's cache-routing model on calibrated costs: 12 KV pages of 1,024 tokens
@@ -130,7 +131,78 @@ function Crossover({ t }: SceneProps) {
   </svg>;
 }
 
-export const CACHE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; ledger?: ArcLedger } = {
+/* In our system, the overlap module's way: both routes on one clock, every prompt page placed in time. */
+const SYS_A = 7000, SYS_B = 13500, SYS_MS = 19000;
+const SYS_H = Math.ceil((S.cold.firstToken + 15) / 10) * 10;
+const SYS_X0 = 180, SYS_PX = (975 - SYS_X0) / SYS_H, sysX = (ms: number) => SYS_X0 + ms * SYS_PX;
+const PAGE_NAMES = ["P1", "P2", "P3", "P4", "S1", "S2"];
+
+function SysLane({ r, y, now, title, note, tone, opacity }: { r: typeof S.warm; y: number; now: number; title: string; note: string; tone: string; opacity: number }) {
+  const computed = PAGE_NAMES.slice(r.reuse);
+  const vis = (a: number, b: number) => Math.max(0, Math.min(b, now) - a) * SYS_PX;
+  const tokens = Array.from({ length: S.outputTokens }, (_, i) => r.firstToken + i * S.decodeMsPerToken).filter((ms) => ms <= now);
+  return <g className="sb-lane" opacity={opacity}>
+    <text x={0} y={y + 18} className="sb-lt" style={{ fill: tone }}>{title}</text>
+    <text x={SYS_X0} y={y + 18} className="sb-ls">{note}</text>
+    {r.reuse > 0 && <g>
+      {PAGE_NAMES.slice(0, r.reuse).map((n, i) => <g key={n} transform={`translate(${655 + i * 44} ${y + 1})`}><rect width={40} height={24} rx={4} fill={C.prefix} /><text x={20} y={17} textAnchor="middle" className="sb-bk">{n}</text></g>)}
+      <text x={655 + r.reuse * 44 + 6} y={y + 18} className="sb-ls" style={{ fill: C.prefix }}>reused</text>
+    </g>}
+
+    <text x={0} y={y + 62} className="sb-rl">KV pages</text>
+    <rect x={sysX(0)} y={y + 40} width={SYS_H * SYS_PX} height={34} rx={4} fill="none" stroke="#2f3a45" />
+    {r.start > 0 && <g>
+      <rect x={sysX(0)} y={y + 40} width={vis(0, r.start)} height={34} rx={4} fill={C.wait} fillOpacity={0.2} stroke={C.wait} strokeDasharray="4 3" />
+      {now >= r.start && <text x={sysX(r.start) + 10} y={y + 62} className="sb-ls" style={{ fill: C.wait }}>request R held 8 of 12 pages for {r.start} ms; the wait ends here</text>}
+    </g>}
+    {r.start === 0 && <text x={sysX(0) + 10} y={y + 62} className="sb-ls">all 12 pages free, no wait</text>}
+
+    <text x={0} y={y + 110} className="sb-rl">GPU prefill</text>
+    {computed.map((n, i) => {
+      const a = r.start + i * S.prefillMsPerBlock, w = vis(a, a + S.prefillMsPerBlock);
+      return w > 0 && <g key={n}><rect x={sysX(a) + 1} y={y + 88} width={Math.max(0, w - 2)} height={36} rx={4} fill={n.startsWith("P") ? C.prefix : C.q} />
+        {now >= a + S.prefillMsPerBlock && <text x={sysX(a + S.prefillMsPerBlock / 2)} y={y + 111} textAnchor="middle" className="sb-bk">{n}</text>}</g>;
+    })}
+
+    <text x={0} y={y + 158} className="sb-rl">The user sees</text>
+    {tokens.map((ms) => <rect key={ms} x={sysX(ms) - 1.5} y={y + 140} width={3} height={26} rx={1.5} fill={C.out} />)}
+    {now >= r.firstToken && <g data-focus-spot>
+      <path d={`M${sysX(r.firstToken)} ${y + 134}l9 19-9 19-9-19z`} fill={C.out} />
+      <text x={sysX(r.firstToken) - 16} y={y + 159} textAnchor="end" className="sb-v" style={{ fill: C.out }}>first token {r.firstToken} ms</text>
+    </g>}
+  </g>;
+}
+
+function CacheSystem({ t }: SceneProps) {
+  const phase = phaseOf(t, SYS_A, SYS_B);
+  const nowA = ease.io(prog(t, 300, SYS_A - 500)) * SYS_H, nowB = ease.io(prog(t, SYS_A + 300, SYS_B - 500)) * SYS_H;
+  const showWarm = phase !== "baseline";
+  const done = phase === "both";
+  const clock = phase === "baseline" ? nowA : nowB;
+  const title = phase === "baseline" ? "The least-loaded replica recomputes the whole prompt" : phase === "optimized" ? "The warm replica reuses the prefix, after a short wait" : `First token ${S.delta} ms sooner, on the same request`;
+  return <SystemBoard phase={phase} heading={`Request C on two replicas: ${S.cold.firstToken} ms vs ${S.warm.firstToken} ms to the first token`} sub={`4,096 tokens of shared prefix (P) plus a 2,048-token question (S); each page takes ${S.prefillMsPerBlock} ms to prefill`} clock={clock.toFixed(0)} unit="ms" figure={
+    <svg viewBox="0 0 1000 490" role="img" aria-label={`Both routes on one clock: the cold replica prefills ${S.cold.prefillBlocks} pages and answers at ${S.cold.firstToken} ms; the warm replica waits ${S.warm.start} ms, prefills ${S.warm.prefillBlocks} and answers at ${S.warm.firstToken} ms`}>
+      <SysLane r={S.cold} y={4} now={nowA} title="Least-loaded" note="replica B: empty, holds no prefix" tone="#9cc5f5" opacity={laneOpacity(phase, "baseline")} />
+      <SysLane r={S.warm} y={226} now={showWarm ? nowB : 0} title="Cache-aware" note="replica A: holds the prefix, memory full" tone={C.out} opacity={laneOpacity(phase, "optimized")} />
+      <path d={`M${sysX(0)} 422H${sysX(SYS_H)}`} className="ma-axis" />
+      {Array.from({ length: Math.floor(SYS_H / 20) + 1 }, (_, i) => i * 20).map((v) => <text key={v} x={sysX(v)} y={442} textAnchor="middle" className="sb-tick">{v}</text>)}
+      <text x={sysX(SYS_H)} y={464} textAnchor="end" className="sb-tick">milliseconds since the request arrived</text>
+      {done && <g data-focus-spot>
+        <path d={`M${sysX(S.warm.firstToken)} 388V206M${sysX(S.cold.firstToken)} 206V172`} stroke="#d3b6ff" strokeDasharray="3 4" fill="none" />
+        <path d={`M${sysX(S.warm.firstToken)} 206H${sysX(S.cold.firstToken)}`} stroke="#d3b6ff" strokeWidth={3} />
+        <text x={(sysX(S.warm.firstToken) + sysX(S.cold.firstToken)) / 2} y={198} textAnchor="middle" className="sb-v" style={{ fill: "#d3b6ff" }}>−{S.delta} ms</text>
+      </g>}
+    </svg>
+  }>
+    <SideTitle kicker="Request C · 6,144-token prompt" title={title} />
+    <SideRow label="Pages the GPU must prefill" base={String(S.cold.prefillBlocks)} opt={String(S.warm.prefillBlocks)} on={showWarm} />
+    <SideRow label="Wait for free KV pages" base="0" opt={String(S.warm.start)} unit="ms" on={showWarm} />
+    <SideRow label="Time to the first token" base={String(S.cold.firstToken)} opt={String(S.warm.firstToken)} unit="ms" on={done} />
+    <SideDelta value={`−${S.delta} ms`} what={`${S.warm.reuse} of ${S.promptBlocks} prompt pages were already cached on replica A`} on={done} />
+  </SystemBoard>;
+}
+
+export const CACHE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; system?: ArcBeat; ledger?: ArcLedger } = {
   problem: {
     label: "Problem / Bottleneck", title: "Least-loaded routing recomputes a prefix another replica already holds", ms: PROBLEM_MS, Scene: Problem,
     meter: [[0, "A new request arrives: a 4,096-token shared prefix and its own question"], [900, "The router picks the least-loaded replica: B, which is empty"], [2000, "Replica B recomputes all 6 pages of the prompt"], [8000, `First token after ${S.cold.firstToken} ms`]],
@@ -142,6 +214,11 @@ export const CACHE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat;
   },
   ledger: { metric: "Time to the first token, same request", unit: "ms", baseline: S.cold.firstToken, optimized: S.warm.firstToken, baselineLabel: "Least-loaded", optimizedLabel: "Cache-aware" },
   systemTitle: "Warm prefix versus memory pressure, in our cache model",
+  system: {
+    label: "In our system", title: "The same request on both replicas, one clock", ms: SYS_MS, Scene: CacheSystem,
+    meter: [[0, "Least-loaded: replica B has room, so it recomputes all 6 pages"], [SYS_A, "Cache-aware: replica A holds the prefix but its memory is full"], [SYS_A + 1400, `The request waits ${S.warm.start} ms for request R to release its pages`], [SYS_A + 2600, `Then only ${S.warm.prefillBlocks} pages need prefill`], [SYS_B, `First token ${S.cold.firstToken} → ${S.warm.firstToken} ms`]],
+    focus: { at: SYS_B + 1400, headline: `Same request, first token ${S.delta} ms sooner`, parts: [{ label: "least-loaded", value: `${S.cold.firstToken} ms`, tone: "baseline" }, { label: "cache-aware", value: `${S.warm.firstToken} ms`, tone: "optimized" }, { label: "Δ", value: `−${S.delta} ms`, tone: "delta" }], cause: `${S.warm.reuse} of ${S.promptBlocks} prompt pages were already in replica A's KV cache` },
+  },
   impact: {
     label: "Impact", title: "A faster first token, until the wait for space outgrows the reuse", ms: 9000,
     meter: [[0, `First token ${S.cold.firstToken} → ${S.warm.firstToken} ms for the same request`], [3600, `Past a ${S.crossover ?? 0} ms wait for pages, the cold replica wins again`]],

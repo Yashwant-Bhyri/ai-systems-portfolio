@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ComponentType, 
 import { useTr } from "../../exhibit/i18n";
 import { ease, prog } from "../../exhibit/engine";
 import { useStageHold } from "./stage-hold";
-import { emitFocus, emitMeter } from "./stage-meter";
+import { emitFocus, emitMeter, type Tone } from "./stage-meter";
 import "./module-arc.css";
 
 /**
@@ -25,6 +25,8 @@ export type ArcBeat = {
   meter?: readonly (readonly [number, string])[];
   /** Problem beats: the bottleneck, stated centrally once the scene has shown it. */
   bottleneck?: { at: number; headline: string; effect: string };
+  /** Any beat: from `at`, the stage goes quiet except its spots and this caption reads the result. */
+  focus?: { at: number; headline: string; parts?: readonly { label: string; value: string; tone?: Tone }[]; cause?: string };
 };
 /** The arc's one measure, tracked beside the scenes: where we started, where we ended up. */
 export type ArcLedger = { metric: string; unit: string; baseline: number; optimized: number; digits?: number; baselineLabel?: string; optimizedLabel?: string };
@@ -34,13 +36,15 @@ const REDUCED = "(prefers-reduced-motion: reduce)";
 const subscribeReduced = (notify: () => void) => { const m = matchMedia(REDUCED); m.addEventListener("change", notify); return () => m.removeEventListener("change", notify); };
 
 export function ModuleArc({
-  active, problem, mechanism, impact, systemTitle, systemMs = 90000, labels = LABELS, ledger, children,
+  active, problem, mechanism, impact, systemTitle, system, systemMs = 90000, labels = LABELS, ledger, children,
 }: {
   active: boolean;
   problem: ArcBeat;
   mechanism: ArcBeat;
   impact: ArcBeat;
   systemTitle: string;
+  /** The system beat as a timed scene; the module's own explorer stays one click away. */
+  system?: ArcBeat;
   ledger?: ArcLedger;
   /** Fallback length of the system beat when the module has no scripted demonstration. */
   systemMs?: number;
@@ -56,8 +60,9 @@ export function ModuleArc({
   const [run, setRun] = useState(0);
   const [inView, setInView] = useState(false);
   const reduced = useSyncExternalStore(subscribeReduced, () => matchMedia(REDUCED).matches, () => false);
-  const beats = [problem, mechanism, null, impact] as const;
-  const timed = beats[beat];
+  const [exploring, setExploring] = useState(false);
+  const beats = [problem, mechanism, system ?? null, impact] as const;
+  const timed = beat === 2 && exploring ? null : beats[beat];
   useStageHold(root, String(beat));
 
   useEffect(() => {
@@ -100,20 +105,20 @@ export function ModuleArc({
     const round = (e: Event) => {
       if (e.target === el.parentElement) return;
       e.stopPropagation();
-      if (beat === 2 && !held) { setBeat(3); setT(0); }
+      if (beat === 2 && !held && (!system || exploring)) { setBeat(3); setT(0); }
     };
     const taken = () => setHeld(true);
     el.addEventListener("lab:module-round", round);
     el.addEventListener("lab:module-taken", taken);
     return () => { el.removeEventListener("lab:module-round", round); el.removeEventListener("lab:module-taken", taken); };
-  }, [beat, held]);
+  }, [beat, held, system, exploring]);
   useEffect(() => {
-    if (beat !== 2 || !live || held) return;
+    if (beat !== 2 || !live || held || (system && !exploring)) return;
     const id = window.setTimeout(() => { setBeat(3); setT(0); }, systemMs);
     return () => window.clearTimeout(id);
-  }, [beat, live, held, systemMs]);
+  }, [beat, live, held, systemMs, system, exploring]);
 
-  const go = (i: number) => { setBeat(i); setT(0); setRun((n) => n + 1); };
+  const go = (i: number) => { setBeat(i); setT(0); setExploring(false); setRun((n) => n + 1); };
   const shownT = reduced && timed ? timed.ms : t;
 
   // The live meter narrates the beat; the system beat names the module unless it speaks for itself.
@@ -133,6 +138,13 @@ export function ModuleArc({
     emitFocus({ headline: tr(choke.headline), cause: tr(choke.effect), place: "bottom", tone: "problem" });
     return () => { emitFocus(null); };
   }, [choked, choke, tr]);
+  const moment = timed?.focus;
+  const lit = !!moment && active && shownT >= moment.at;
+  useEffect(() => {
+    if (!lit || !moment) return;
+    emitFocus({ headline: tr(moment.headline), parts: moment.parts, cause: moment.cause && tr(moment.cause), place: "bottom" });
+    return () => { emitFocus(null); };
+  }, [lit, moment, tr]);
   const half = timed ? shownT >= timed.ms * 0.45 : false;
   return (
     <div ref={root} className="ma-root" data-beat={beat}>
@@ -144,6 +156,11 @@ export function ModuleArc({
           </button>
         ))}
         <span className="ma-title" key={beat}>{tr(timed ? timed.title : systemTitle)}</span>
+        {beat === 2 && system && (
+          <button type="button" className="sb-explore-btn" aria-pressed={exploring} onClick={() => { setExploring((v) => !v); root.current?.dispatchEvent(new CustomEvent("lab:module-taken", { bubbles: true })); }}>
+            {tr(exploring ? "Back to the walkthrough" : "Explore the full model ▸")}
+          </button>
+        )}
       </nav>
       {timed && (
         <div className="ma-stagewrap" data-ledger={ledger && beat < 2 ? true : undefined}>
@@ -151,7 +168,7 @@ export function ModuleArc({
           {ledger && beat < 2 && <ArcLedgerView ledger={ledger} beat={beat} revealed={beat > 0 && half} />}
         </div>
       )}
-      <div className="ma-system" hidden={beat !== 2}>{children}</div>
+      <div className="ma-system" hidden={beat !== 2 || (!!system && !exploring)}>{children}</div>
     </div>
   );
 }

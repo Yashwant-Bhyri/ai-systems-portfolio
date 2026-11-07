@@ -5,6 +5,7 @@ import { draftStudy, TARGET_UNITS } from "../draft-verification-model";
 import { ease, prog } from "../../exhibit/engine";
 import { STEP_OVERHEAD, bandwidth, decodeBytes } from "../calibration";
 import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
+import { SideDelta, SideTitle, SystemBoard, laneOpacity, phaseOf } from "../stagecraft/system-board";
 
 /* Speculative decoding, as a full circle. The sentence and every count come
    from the lab's draft-verification model (12 target units, 4-token drafts). */
@@ -102,7 +103,76 @@ function Modes({ t }: SceneProps) {
   </svg>;
 }
 
-export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; ledger?: ArcLedger } = {
+/* In our system, the overlap module's way: the same answer, call by call, on one clock. */
+const SYS_A = 7000, SYS_B = 14500, SYS_MS = 20000;
+const SYS_X0 = 180, SYS_H = SPEC_TIME.serial * 1.03, SYS_PX = (975 - SYS_X0) / SYS_H, sysX = (ms: number) => SYS_X0 + ms * SYS_PX;
+/** Each round's start, and the words it commits, in two lines when they would not fit its width. */
+const ROUNDS = MIXED.rounds.map((r, i) => {
+  const at = MIXED.rounds.slice(0, i).reduce((x, q) => x + q.proposal.length * DRAFT_MS + TARGET_MS, 0);
+  const end = at + r.proposal.length * DRAFT_MS + TARGET_MS;
+  const mid = Math.ceil(r.committed.length / 2);
+  const text = r.committed.join(" ");
+  const lines = text.length * 8.6 < (end - at) * SYS_PX ? [text] : [r.committed.slice(0, mid).join(" "), r.committed.slice(mid).join(" ")];
+  return { ...r, at, end, verifyAt: end - TARGET_MS, lines };
+});
+
+function SpecSystem({ t }: SceneProps) {
+  const phase = phaseOf(t, SYS_A, SYS_B);
+  const nowA = ease.io(prog(t, 300, SYS_A - 500)) * SPEC_TIME.serial, nowB = ease.io(prog(t, SYS_A + 300, SYS_B - 500)) * SPEC_TIME.speculative;
+  const showB = phase !== "baseline", done = phase === "both";
+  const clock = phase === "baseline" ? nowA : nowB;
+  const current = phase === "baseline" ? -1 : ROUNDS.findIndex((r) => nowB < r.end);
+  const active = current < 0 ? ROUNDS.length - 1 : current;
+  const y1 = 4, y2 = 200;
+  const title = phase === "baseline" ? "Every word is a full pass of Qwen3-4B" : phase === "optimized" ? `Round ${active + 1}: the draft guesses, Qwen3-4B checks them all at once` : `${MIXED.baselineCalls - MIXED.targetCalls} fewer serial calls, the same 12 words`;
+  return <SystemBoard phase={phase} heading={`The same 12-word answer: ${MIXED.baselineCalls} calls of Qwen3-4B, or ${MIXED.targetCalls}`} sub={`A pass of Qwen3-4B takes ${TARGET_MS.toFixed(1)} ms; one guess from the ${DRAFT_MODEL.name} takes ${DRAFT_MS.toFixed(1)} ms`} clock={clock.toFixed(1)} unit="ms" figure={
+    <svg viewBox="0 0 1000 490" role="img" aria-label={`One call per word takes ${SPEC_TIME.serial.toFixed(0)} ms; drafting and verifying takes ${SPEC_TIME.speculative.toFixed(0)} ms and ${MIXED.targetCalls} calls`}>
+      <g className="sb-lane" opacity={laneOpacity(phase, "baseline")}>
+        <text x={0} y={y1 + 18} className="sb-lt" style={{ fill: C.base }}>One word per call</text>
+        <text x={SYS_X0} y={y1 + 18} className="sb-ls">no draft: Qwen3-4B writes every word itself</text>
+        <text x={0} y={y1 + 62} className="sb-rl">Qwen3-4B</text>
+        {TARGET_UNITS.map((w, i) => { const a = i * TARGET_MS, vis = Math.max(0, Math.min(a + TARGET_MS, nowA) - a) * SYS_PX; return vis > 0 && <g key={i}>
+          <rect x={sysX(a) + 1} y={y1 + 40} width={Math.max(0, vis - 2)} height={36} rx={4} fill={C.acc} />
+          {nowA >= a + TARGET_MS && <text x={sysX(a + TARGET_MS / 2)} y={y1 + 63} textAnchor="middle" className="sb-bk">{i + 1}</text>}
+        </g>; })}
+        <text x={0} y={y1 + 112} className="sb-rl">The user sees</text>
+        {TARGET_UNITS.map((w, i) => nowA >= (i + 1) * TARGET_MS && <text key={i} x={sysX((i + 0.5) * TARGET_MS)} y={y1 + 112} textAnchor="middle" className="sb-w">{w}</text>)}
+        {nowA >= SPEC_TIME.serial && <text x={sysX(SPEC_TIME.serial)} y={y1 + 150} textAnchor="end" className="sb-v" style={{ fill: C.base }} data-focus-spot>{MIXED.baselineCalls} calls · {SPEC_TIME.serial.toFixed(0)} ms</text>}
+      </g>
+      <g className="sb-lane" opacity={laneOpacity(phase, "optimized")}>
+        <text x={0} y={y2 + 18} className="sb-lt" style={{ fill: C.ok }}>Draft, then verify</text>
+        <text x={SYS_X0} y={y2 + 18} className="sb-ls">green guesses are kept, red ones thrown away</text>
+        <text x={0} y={y2 + 62} className="sb-rl">EAGLE-3 head</text>
+        <text x={0} y={y2 + 110} className="sb-rl">Qwen3-4B</text>
+        <text x={0} y={y2 + 168} className="sb-rl">The user sees</text>
+        {showB && ROUNDS.map((r) => <g key={r.index}>
+          {r.proposal.map((_, j) => { const a = r.at + j * DRAFT_MS, vis = Math.max(0, Math.min(a + DRAFT_MS, nowB) - a) * SYS_PX; return vis > 0 && <rect key={j} x={sysX(a) + 0.5} y={y2 + 40} width={Math.max(0, vis - 1)} height={34} rx={3} fill={j < r.accepted ? C.ok : C.red} />; })}
+          {nowB > r.verifyAt && <rect x={sysX(r.verifyAt) + 1} y={y2 + 88} width={Math.max(0, (Math.min(r.end, nowB) - r.verifyAt) * SYS_PX - 2)} height={36} rx={4} fill={C.acc} />}
+          {nowB >= r.end && <text x={sysX(r.verifyAt + TARGET_MS / 2)} y={y2 + 111} textAnchor="middle" className="sb-bk">call {r.index + 1}</text>}
+          {nowB >= r.end && r.lines.map((l, k) => <text key={k} x={sysX(r.at) + 2} y={y2 + 160 + k * 20} className="sb-w" style={{ fontSize: 14 }}>{l}</text>)}
+        </g>)}
+        {nowB >= SPEC_TIME.speculative && <text x={sysX(SPEC_TIME.speculative) + 12} y={y2 + 111} className="sb-v" style={{ fill: C.ok }} data-focus-spot>{MIXED.targetCalls} calls · {SPEC_TIME.speculative.toFixed(0)} ms</text>}
+      </g>
+      <path d={`M${sysX(0)} 422H${sysX(SYS_H)}`} className="ma-axis" />
+      {Array.from({ length: Math.floor(SYS_H / 10) + 1 }, (_, i) => i * 10).map((v) => <text key={v} x={sysX(v)} y={442} textAnchor="middle" className="sb-tick">{v}</text>)}
+      <text x={sysX(SYS_H)} y={464} textAnchor="end" className="sb-tick">milliseconds for this answer</text>
+      {done && <g data-focus-spot>
+        <path d={`M${sysX(SPEC_TIME.speculative)} ${y2 + 136}H${sysX(SPEC_TIME.serial)}`} stroke="#d3b6ff" strokeWidth={3} />
+        <path d={`M${sysX(SPEC_TIME.serial)} ${y1 + 80}V${y2 + 136}`} stroke="#d3b6ff" strokeDasharray="3 4" fill="none" />
+        <text x={(sysX(SPEC_TIME.speculative) + sysX(SPEC_TIME.serial)) / 2} y={y2 + 160} textAnchor="middle" className="sb-v" style={{ fill: "#d3b6ff" }}>{(SPEC_TIME.serial - SPEC_TIME.speculative).toFixed(0)} ms sooner</text>
+      </g>}
+    </svg>
+  }>
+    <SideTitle kicker="Round by round · 4-word drafts" title={title} />
+    {ROUNDS.map((r, i) => <div key={r.index} className="sb-row" style={{ opacity: !showB || i > active ? 0.35 : 1 }}>
+      <span>Round {r.index + 1}: guesses &ldquo;{r.proposal.join(" ")}&rdquo;</span>
+      <b style={{ fontSize: 15 }}><em data-tone="opt" data-on>{r.accepted} kept</em>{r.correction ? <><i>+</i><em data-tone="base">&ldquo;{r.correction}&rdquo;</em></> : r.bonus ? <><i>+</i><em data-tone="base">&ldquo;{r.bonus}&rdquo;</em></> : null}</b>
+    </div>)}
+    <SideDelta value={`−${MIXED.baselineCalls - MIXED.targetCalls} calls`} what={`${MIXED.baselineCalls} → ${MIXED.targetCalls} serial passes, ${SPEC_TIME.serial.toFixed(0)} → ${SPEC_TIME.speculative.toFixed(0)} ms for the answer`} on={done} />
+  </SystemBoard>;
+}
+
+export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; system?: ArcBeat; ledger?: ArcLedger } = {
   problem: {
     label: "Problem / Bottleneck", title: "Writing an answer takes one large-model call per word, one after another", ms: PROBLEM_MS, Scene: Problem,
     meter: [[0, "Qwen3-4B writes the answer one word per call"], [900, "Call after call: each one waits for the word before it"], [8000, "12 calls for 12 words"]],
@@ -113,6 +183,11 @@ export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; 
     meter: [[0, "The answer so far"], [2000, `Draft model (${DRAFT_MODEL.name}) is drafting the next words`], [3600, "Qwen3-4B verifies all drafted words in one pass"], [4800, "3 accepted, the 4th rejected: everything after it is dropped"], [6000, "Qwen3-4B writes its own word in place of the rejected one"], [7600, "4 words from 1 large-model call"], [10600, "Round 2: the first guess is wrong, so the draft is wasted"], [15600, "Speculation pays only when the guesses are good"]],
   },
   systemTitle: "Round by round, in our draft-verification model",
+  system: {
+    label: "In our system", title: "The same 12-word answer, both ways, one clock", ms: SYS_MS, Scene: SpecSystem,
+    meter: [[0, `One word per call: ${MIXED.baselineCalls} passes of Qwen3-4B, one after another`], [SYS_A, `Round 1: the draft head guesses 4 words; Qwen3-4B keeps ${MIXED.rounds[0].accepted}`], [SYS_A + 2500, `Round 2: all ${MIXED.rounds[1].accepted} guesses kept`], [SYS_A + 5000, `Round 3: all ${MIXED.rounds[2].accepted} guesses kept`], [SYS_B, `${MIXED.baselineCalls} → ${MIXED.targetCalls} serial calls`]],
+    focus: { at: SYS_B + 1400, headline: `The same answer in ${MIXED.targetCalls} passes of Qwen3-4B, not ${MIXED.baselineCalls}`, parts: [{ label: "one word per call", value: `${SPEC_TIME.serial.toFixed(0)} ms`, tone: "baseline" }, { label: "draft, then verify", value: `${SPEC_TIME.speculative.toFixed(0)} ms`, tone: "optimized" }, { label: "Δ", value: `−${(SPEC_TIME.serial - SPEC_TIME.speculative).toFixed(0)} ms`, tone: "delta" }], cause: "one pass of the large model can verify a whole run of cheap guesses" },
+  },
   ledger: { metric: "Serial Qwen3-4B calls for the 12-word answer", unit: "calls", baseline: MIXED.baselineCalls, optimized: MIXED.targetCalls, baselineLabel: "One word per call", optimizedLabel: "Draft, then verify" },
   impact: {
     label: "Impact", title: "Fewer serial calls, as long as the guesses are good", ms: 9000,
