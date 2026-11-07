@@ -285,9 +285,17 @@ export function makeImpact(spec: ImpactSpec): ComponentType<SceneProps> {
  * carries on. Used for a technique's "how it works" before its chapter and its
  * impact after it.
  */
-export function FilmInterlude({ beat, kicker, live, onDone }: { beat: ArcBeat; kicker: string; live: boolean; onDone: () => void }) {
+export function FilmInterlude({ beat, kicker, live, onDone, doneLabel }: { beat: ArcBeat; kicker: string; live: boolean; onDone: () => void; doneLabel?: string }) {
   const tr = useTr();
   const [t, setT] = useState(0);
+  // The live meter narrates the interlude too.
+  let line = beat.title;
+  if (beat.meter) for (const [at, text] of beat.meter) if (t >= at) line = text;
+  useEffect(() => {
+    if (!live) return;
+    emitMeter({ text: tr(line), tone: beat.label === "Impact" ? "delta" : beat.bottleneck ? "problem" : "neutral" });
+    return () => { emitMeter(null); };
+  }, [live, line, beat, tr]);
   const reduced = useSyncExternalStore(subscribeReduced, () => matchMedia(REDUCED).matches, () => false);
   const done = useRef(onDone);
   useEffect(() => { done.current = onDone; });
@@ -311,9 +319,12 @@ export function FilmInterlude({ beat, kicker, live, onDone }: { beat: ArcBeat; k
       <header>
         <span><i>{tr(kicker)}</i> · {tr(beat.label)}</span>
         <strong>{tr(beat.title)}</strong>
-        <button type="button" onClick={onDone}>{tr(beat.label === "Impact" ? "Continue ▸" : "Skip to our system ▸")}</button>
+        <button type="button" onClick={onDone}>{tr(doneLabel ?? (beat.label === "Impact" ? "Continue ▸" : "Skip to our system ▸"))}</button>
         <b className="ma-progress" style={{ transform: `scaleX(${Math.min(1, (reduced ? beat.ms : t) / beat.ms)})` }} />
       </header>
+      {beat.bottleneck && (
+        <p className="ma-choke"><b>{tr("Bottleneck")}</b> <span>{tr(beat.bottleneck.headline)}</span> <em>{tr(beat.bottleneck.effect)}</em></p>
+      )}
       <div className="ma-scene">{beat.Scene && <beat.Scene t={reduced ? beat.ms : t} />}</div>
     </div>
   );

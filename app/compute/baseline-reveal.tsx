@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { emitMeter } from "./stagecraft/stage-meter";
 import type { LabRun, LabTask } from "./lab-simulation";
 import { clamp01, decodeAt } from "./inference-film-math";
 import {
@@ -199,6 +200,7 @@ export function BaselineReveal({
   const partial = [frame.wait, frame.prefill, frame.decode];
   const color = COLORS[Math.max(0, selected)];
   const lit = LIT[frame.beat];
+  useEffect(() => { if (playing) emitMeter({ text: `Baseline: ${MOMENTS[frame.beat].toLowerCase()}`, step: frame.beat + 1, total: MOMENTS.length, tone: "baseline" }); }, [frame.beat, playing]);
   useEffect(() => {
     const root = stage.current;
     if (!root || selected < 0) return;

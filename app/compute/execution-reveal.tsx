@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { emitMeter } from "./stagecraft/stage-meter";
 import type { LabRun } from "./lab-simulation";
 import { useFilmTime } from "./use-film-time";
 import { ExecutionMachine } from "./execution-machine";
@@ -177,6 +178,7 @@ export function ExecutionReveal({
   const direction = executionDirection(film.time);
   const frame = executionFrame(direction.modelTime, reference, optimized),
     beat = frame.beat;
+  useEffect(() => { if (playing) emitMeter({ text: TITLES[beat], step: beat + 1, total: MOMENTS.length, tone: "optimized" }); }, [beat, playing]);
   const waterfall = waterfallFrame(direction.modelTime, trace, frame.time);
   const selected = pinnedRequest ?? waterfallSelection(trace, waterfall);
   const allowance = Math.round(

@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useMemo } from "react";
+import { useEffect, useId, useMemo } from "react";
+import { emitFocus, emitMeter } from "./stagecraft/stage-meter";
 import type { LabRun } from "./lab-simulation";
 import { Hotspot, type Inspectors } from "./lab-story-scenes";
 import { useFilmTime } from "./use-film-time";
@@ -86,7 +87,7 @@ function PrefixMechanism({
       <title
         id={id}
       >{`Cold request ${producer.id + 1} computes prompt state; later request ${request.id + 1} ${shared ? `reuses ${savedTokens} input tokens after cache readiness` : "has unrelated context and cannot reuse the prefix"}. New question and answer computation remain. KV groups are schematic, not physical page counts.`}</title>
-      <text x="28" y="25" className="pr-label">
+      <text x="28" y="25" className="pr-label pr-float">
         Same model · same token rates · answers are not cached
       </text>
       
@@ -265,10 +266,10 @@ function PrefixMechanism({
         </text>
       </Hotspot>
       <g opacity={frame.store}>
-        <text x="811" y="122" className="pr-label">
+        <text x="811" y="122" className="pr-label pr-float">
           Reused: the contract&rsquo;s
         </text>
-        <text x="811" y="142" className="pr-label">
+        <text x="811" y="142" className="pr-label pr-float">
           keys and values, not its answer
         </text>
       </g>
@@ -505,7 +506,7 @@ function PrefixMechanism({
       <text x="815" y="420" className="pr-small">
         answer still decoded
       </text>
-      <text x="32" y="461" className="pr-label" fill={AMBER}>
+      <text x="32" y="461" className="pr-label pr-float" fill={AMBER}>
         {frame.matched
           ? `${format(frame.avoidedTokens)} repeated input tokens avoided. The context was not removed.`
           : shared
@@ -541,6 +542,30 @@ export function PrefixReuseReveal({
   const frame = prefixFrame(film.time, study),
     shared = study.request.cacheHit;
   const handoff = reduced ? Number(frame.handoff >= 0.5) : frame.handoff;
+  const readMs = (seconds: number) => (seconds * 1000).toFixed(0);
+  // The guide lives in the meter, one line at a time; the result gets the focus moment.
+  const line = frame.beat < 1 ? "Request 1 reads the whole contract and builds its keys and values"
+    : frame.beat === 1 ? "Those KV pages stay in GPU memory, ready to reuse"
+    : frame.beat === 2 ? `Request 7 matches the first ${format(study.savedTokens)} tokens and computes only its ${format(study.request.computedInputTokens)}-token question`
+    : frame.beat === 3 ? "The same request on both paths, on one clock"
+    : shared ? `Prompt reading ${readMs(study.reference.prefill)} → ${readMs(study.request.prefill)} ms; the answer itself still costs ${fmtS(study.request.decode)} GPU-s`
+    : "No prefix match, so nothing is skipped";
+  useEffect(() => {
+    if (!playing) return;
+    emitMeter({ text: line, step: frame.beat + 1, total: PREFIX_MOMENTS.length, tone: frame.beat >= 4 ? "delta" : "neutral" });
+  }, [line, frame.beat, playing]);
+  const landed = shared && frame.beat >= 5;
+  useEffect(() => {
+    if (!landed) return;
+    emitFocus({
+      headline: `Request 7 reads its prompt ${Math.round(study.reference.prefill / study.request.prefill)}× faster`,
+      parts: [{ label: "baseline", value: `${readMs(study.reference.prefill)} ms`, tone: "baseline" }, { label: "prefix reuse", value: `${readMs(study.request.prefill)} ms`, tone: "optimized" }, { label: "Δ", value: `−${format(study.savedTokens)} input tokens`, tone: "delta" }],
+      cause: `its first ${format(study.savedTokens)} tokens were already in the KV cache from request ${study.producer.id + 1}`,
+      place: "bottom",
+    });
+    return () => { emitFocus(null); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [landed]);
   return (
     <section
       className="pr-reveal"
@@ -552,14 +577,14 @@ export function PrefixReuseReveal({
       <div className="pr-comparison-heading">
         <h4>
           {frame.beat < 2
-            ? `Request 1 pays ${fmtS(study.producer.prefill)} GPU-s to read the contract once`
+            ? `Request 1 reads the whole 8,192-token contract: ${readMs(study.producer.prefill)} ms of GPU`
             : frame.beat === 2
-              ? "Compute the new question"
+              ? "Request 7 shares the contract: only its own question is computed"
               : frame.beat === 3
-                ? "Same request, less input work"
-                : frame.beat === 4 && shared
-                  ? `Request 7 finishes its GPU work at ${fmtS(study.request.gpuSeconds)} s with reuse; baseline needs ${fmtS(study.reference.gpuSeconds)} s`
-                  : `Δ ${fmtS(study.reference.gpuSeconds - study.request.gpuSeconds)} GPU-s for request 7 · cause: ${format(study.savedTokens)} input tokens not recomputed`}
+                ? "The same request, with and without reuse"
+                : shared
+                  ? `Request 7 reads its prompt in ${readMs(study.request.prefill)} ms instead of ${readMs(study.reference.prefill)} ms`
+                  : "No shared prefix here: every prompt is read in full"}
         </h4>
       </div>
       <div className="pr-stage">

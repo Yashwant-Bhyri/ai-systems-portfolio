@@ -22,6 +22,7 @@ export function PrefixComparison({
   inspect: Inspectors;
 }) {
   const id = useId();
+  const readMs = (seconds: number) => (seconds * 1000).toFixed(0);
   const frame = prefixComparisonFrame(milliseconds, study);
   const delta = study.savedWork;
   const revealed = frame.optimized.done;
@@ -384,15 +385,15 @@ export function PrefixComparison({
         <div className="pr-focus-result">
           <div className="pr-gain" data-pr-target data-revealed={revealed}>
             <span>
-              {revealed ? "Input computation avoided" : "GPU work accumulated"}
+              {revealed && delta > 0 ? "Reading the prompt, before the first token" : revealed ? "Input computation avoided" : "GPU work accumulated"}
             </span>
-            <strong>
-              {revealed ? `Δ ${fmt(delta)}` : fmt(frame.optimized.work)}
-              <small> GPU-s{!revealed && " · reuse"}</small>
+            <strong data-focus-spot={revealed && delta > 0 ? "" : undefined}>
+              {revealed && delta > 0 ? `${readMs(study.reference.prefill)} → ${readMs(study.request.prefill)}` : revealed ? `Δ ${fmt(delta)}` : fmt(frame.optimized.work)}
+              <small> {revealed && delta > 0 ? "ms" : `GPU-s${!revealed ? " · reuse" : ""}`}</small>
             </strong>
           </div>
           <span className="pr-cost-scope">
-            {revealed ? "Total work per request" : "Work accumulated so far"}
+            {revealed ? "Total GPU work for this answer" : "Work accumulated so far"}
           </span>
           <div className="pr-focus-values">
             <span className="pr-baseline-value">
@@ -429,7 +430,7 @@ export function PrefixComparison({
             data-ready={frame.baseline.done}
             aria-hidden={!frame.baseline.done}
           >
-            <b>{fmt(ratio, 1)}%</b> less work per request
+            <b>{fmt(ratio, 1)}%</b> of the total: writing the answer dominates
           </p>
         </div>
         <div className="pr-focus-status" data-live={contrast}>

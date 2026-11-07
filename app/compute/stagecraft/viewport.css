@@ -137,3 +137,4 @@
 .lab-flow-show .lf-fit .gb-root[data-opening] .gb-card[data-state="placed"] { opacity: .35; filter: grayscale(.7) blur(1px); }
 /* The cursor's sweep: each term lifts as it passes. */
 .lab-flow-show .lf-fit .gb-card[data-hot] { z-index: 6; transform: translateY(-4px) scale(1.03); border-color: color-mix(in srgb, var(--active-accent) 70%, transparent); box-shadow: 0 14px 40px rgba(0,0,0,.45), 0 0 34px color-mix(in srgb, var(--active-accent) 18%, transparent); }
+.lab-flow-show .lf-fit .pr-float { display: none; }

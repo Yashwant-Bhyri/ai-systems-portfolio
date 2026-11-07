@@ -1,4 +1,5 @@
 "use client";
+import { emitMeter } from "./stagecraft/stage-meter";
 
 import { fmtMs, rateCard } from "./calibration.ts";
 import {
@@ -227,6 +228,7 @@ export function RuntimeGainsReveal({
   );
   const frame = runtimeGainsFrame(film.time, study);
   const { beat } = frame;
+  useEffect(() => { if (playing) emitMeter({ text: TITLES[beat], step: beat + 1, total: TITLES.length, tone: "delta" }); }, [beat, playing]);
   const cohort = beat >= 4;
   const active = Math.min(3, beat);
   const id = useId(),

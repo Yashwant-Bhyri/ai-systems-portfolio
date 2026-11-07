@@ -6,6 +6,7 @@ import { BATCHING } from "../batching-result";
 import type { LabRun, Workload } from "../lab-simulation";
 import { ease, prog } from "../../exhibit/engine";
 import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
+import { idleAt, schedulingStudy } from "../scheduling-study-math";
 
 /* The cheaper-execution pathway's three techniques, each told around its film
    chapter: how it works (a general scene) before the chapter, the measured
@@ -235,15 +236,27 @@ function Bytes({ t }: SceneProps) {
 
 const BATCH_MS = 11500, REUSE_MS = 11000, RATES_MS = 10500;
 
+const SHARED = RUNS["shared-prefix"];
+const SCHED = schedulingStudy(SHARED[0], SHARED[1]);
+const IDLE = idleAt(SCHED.gaps, SCHED.horizon);
+const sumOf = (r: LabRun, k: "prefill" | "decode") => r.tasks.reduce((a, q) => a + q[k], 0);
+const HITS = SHARED[2].tasks.filter((q) => q.cacheHit).length;
+const DECODE_SHARE = (100 * sumOf(SHARED[0], "decode")) / SHARED[0].tasks.reduce((a, q) => a + q.gpuSeconds, 0);
+
 export type FilmArc = { name: string; mechanism: ArcBeat; impact: (workload: Workload) => ArcBeat };
 /** Keyed by the film chapter each technique belongs to. */
 export const FILM_ARCS: Record<number, FilmArc> = {
   1: {
-    name: "Continuous batching",
-    mechanism: { label: "How it works", title: "Continuous batching, first step: a free worker takes the next request at once", ms: BATCH_MS, Scene: Batching },
+    name: "Free-worker scheduling",
+    mechanism: {
+      label: "Optimized solution", title: "A free worker takes the next request at once", ms: BATCH_MS, Scene: Batching,
+      bottleneck: { at: 0, headline: `workers sit idle while requests wait: ${IDLE.toFixed(1)} worker-s in the first 8 requests alone.`, effect: "Fixed pairs start only when both workers are free, so the faster one waits for its partner." },
+      meter: [[0, "Fixed pairs: the faster worker waits for its partner"], [BATCH_MS * 0.45, "First free worker: nobody waits while work is queued"]],
+    },
     impact: (w) => {
       const [a, b] = [RUNS[w][0], RUNS[w][1]];
       return { label: "Impact", title: "Less waiting, the same GPU work", ms: 8500, Scene: makeImpact({
+        lesson: `No GPU work is saved, but the slowest 5% of requests finish ${fmt(a.p95 - b.p95)} s sooner: the same hardware, used without gaps.`,
         from: a.p95, to: b.p95, unit: "s", digits: w === "interactive" ? 1 : 0, what: "p95 response time across the 96 requests",
         cause: `Requests no longer wait for a partner to finish; each still runs alone on its H100, so the GPU work is unchanged at ${fmt(b.gpuSeconds)} GPU-s. Sharing each step across requests is what cuts the work (below).`,
         base: "Fixed pairs", optimized: "First free worker",
@@ -253,12 +266,17 @@ export const FILM_ARCS: Record<number, FilmArc> = {
   },
   2: {
     name: "Prefix reuse",
-    mechanism: { label: "How it works", title: "Prefix reuse: read a shared document once, keep its KV pages, reference them after", ms: REUSE_MS, Scene: Reuse },
+    mechanism: {
+      label: "Optimized solution", title: "Read a shared document once, keep its KV pages, reference them after", ms: REUSE_MS, Scene: Reuse,
+      bottleneck: { at: 0, headline: `${HITS} of 96 requests re-read a document already in GPU memory: ${fmt(sumOf(SHARED[1], "prefill") - sumOf(SHARED[2], "prefill"), 1)} GPU-s of repeated work.`, effect: "Each one also makes its user wait for the prompt to be read again before the first token." },
+      meter: [[0, "Request 1 reads the document and keeps its KV pages"], [REUSE_MS * 0.45, "Later requests reference those pages and read only their own question"]],
+    },
     impact: (w) => {
       const [a, b] = [RUNS[w][1], RUNS[w][2]];
       const pre = (r: LabRun) => r.tasks.reduce((x, t) => x + t.prefill, 0);
       const share = (100 * (pre(a) - pre(b))) / a.gpuSeconds;
       return { label: "Impact", title: w === "interactive" ? "Nothing shared, nothing to reuse" : "Prompt reading nearly gone; answers still cost what they cost", ms: 8500, Scene: makeImpact({
+        lesson: w === "interactive" ? "Reuse only pays when requests share a prefix; with different documents nothing changes, and it costs nothing either." : `Reading the prompt is ${Math.round(pre(a) / pre(b))}× cheaper, so the first token no longer waits for it. Total GPU cost barely moves, because answers dominate.`,
         from: pre(a), to: pre(b), unit: "GPU-s of prompt reading", digits: 1, what: "Prefill work for the 96 requests",
         cause: w === "interactive" ? "Every request brings a different document, so no prefix is ready to reuse; the work is unchanged." : `The shared document is prefilled once per group; later requests reference its KV pages and read only their 384-token question. That is ${share.toFixed(1)}% of all GPU time here: the ~5,600-token answers dominate. Reuse pays most when prompts are long and answers short.`,
         base: "Read every time", optimized: "Read once, reuse",
@@ -268,10 +286,15 @@ export const FILM_ARCS: Record<number, FilmArc> = {
   },
   3: {
     name: "Faster prefill & decode",
-    mechanism: { label: "How it works", title: "FP8 weights and KV: every decode step moves half the bytes", ms: RATES_MS, Scene: Rates },
+    mechanism: {
+      label: "Optimized solution", title: "FP8 weights and KV: every decode step moves half the bytes", ms: RATES_MS, Scene: Rates,
+      bottleneck: { at: 0, headline: `writing answers is ${DECODE_SHARE.toFixed(1)}% of all GPU time, and every token reads 8.04 GB of weights from memory.`, effect: "Decode is limited by memory bandwidth, not compute, so the bytes per step set the cost per token." },
+      meter: [[0, "Every decode step reads all the weights plus the KV cache"], [RATES_MS * 0.45, "FP8 halves both, so each token moves half the bytes"]],
+    },
     impact: (w) => {
       const [a, b] = [RUNS[w][2], RUNS[w][3]];
       return { label: "Impact", title: "The same answers, cheaper per answer", ms: 8500, Scene: makeImpact({
+        lesson: `This is the lever that moves the bill: each correct answer costs ${Math.round((100 * (a.correctCost! - b.correctCost!)) / a.correctCost!)}% less, and every queue behind it drains sooner (p95 ${fmt(a.p95)} → ${fmt(b.p95)} s).`,
         from: a.correctCost!, to: b.correctCost!, unit: "GPU-s per correct answer", digits: 2, what: "Cost of each correct answer",
         cause: `Decode reads the weights every step: 8.04 GB in BF16, 4.02 GB in FP8, so an output token falls from ${fmtMs(rateCard(false).outputMs)} to ${fmtMs(rateCard(true).outputMs)} ms on one H100. Same tokens, same answers.`,
         base: "BF16", optimized: "FP8 weights and KV",

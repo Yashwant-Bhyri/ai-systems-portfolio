@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { emitMeter } from "./stagecraft/stage-meter";
 import type { LabRun } from "./lab-simulation";
 import { useFilmTime } from "./use-film-time";
 import {
@@ -53,6 +54,7 @@ export function SchedulingReveal({
     onSeek,
   );
   const frame = schedulingFrame(film.time, study);
+  useEffect(() => { if (playing) emitMeter({ text: MOMENTS[frame.beat], step: frame.beat + 1, total: MOMENTS.length, tone: "optimized" }); }, [frame.beat, playing]);
   const [pinned, setPinned] = useState<number | null>(null);
   const selected = pinned ?? frame.selected;
   const a = study.baseline[selected];

@@ -3,6 +3,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { FilmInterlude } from "./stagecraft/module-arc";
 import { FILM_ARCS } from "./arc-scenes/film-arcs";
+import { CHEAP_INTRO } from "./arc-scenes/film-intro";
 import { useTr } from "../exhibit/i18n";
 import { createPortal } from "react-dom";
 import { useSlot } from "./stagecraft/use-slot";
@@ -71,7 +72,7 @@ export function LabStory({
     [budget, setBudget] = useState(4),
     [workload, setWorkload] = useState<Workload>("shared-prefix");
   // A technique chapter is framed by "how it works" before it and its impact after it; the film holds meanwhile.
-  const [interludes, setInterludes] = useState<{ step: number; kind: "mechanism" | "impact" }[]>([]);
+  const [interludes, setInterludes] = useState<{ step: number; kind: "intro" | "mechanism" | "impact" }[]>(training ? [] : [{ step: -1, kind: "intro" }]);
   const { ref, ...playback } = useStudyPlayback(training ? 6 : 5, 0, {
     // Hovering or pinning an inspection explains; it never stops the film.
     held: undo || interludes.length > 0,
@@ -100,7 +101,7 @@ export function LabStory({
   }
   const interlude = interludes[0];
   const interludeBeat = useMemo(
-    () => (interlude ? (interlude.kind === "mechanism" ? FILM_ARCS[interlude.step].mechanism : FILM_ARCS[interlude.step].impact(workload)) : null),
+    () => (interlude ? (interlude.kind === "intro" ? CHEAP_INTRO : interlude.kind === "mechanism" ? FILM_ARCS[interlude.step].mechanism : FILM_ARCS[interlude.step].impact(workload)) : null),
     [interlude, workload],
   );
   const slotId = training ? "training-chapters-slot" : "inference-chapters-slot";
@@ -235,7 +236,8 @@ export function LabStory({
         <FilmInterlude
           key={`${interlude.step}-${interlude.kind}-${workload}`}
           beat={interludeBeat}
-          kicker={FILM_ARCS[interlude.step].name}
+          kicker={interlude.kind === "intro" ? "The problem" : FILM_ARCS[interlude.step].name}
+          doneLabel={interlude.kind === "intro" ? "Start with the baseline ▸" : undefined}
           live={playback.inViewport && playback.playing}
           onDone={() => setInterludes((q) => q.slice(1))}
         />
