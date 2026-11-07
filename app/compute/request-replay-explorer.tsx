@@ -184,6 +184,19 @@ export function RequestReplayExplorer({
     film.seek(0);
     player.replay();
   };
+  // The Summary walks the four measures itself.
+  const summaryMetric = useRef(selectMetric);
+  useEffect(() => { summaryMetric.current = selectMetric; });
+  useEffect(() => {
+    const go = (e: Event) => {
+      const d = (e as CustomEvent<{ metric: RequestMeasure; seek?: number }>).detail;
+      summaryMetric.current(d.metric);
+      if (d.seek) window.setTimeout(() => film.seek(d.seek!), 60);
+    };
+    window.addEventListener("lab:replay-metric", go);
+    return () => window.removeEventListener("lab:replay-metric", go);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const aSegmentEnd = metric === "prefill" ? before.prefill : aDuration;
   const bSegmentEnd = metric === "prefill" ? after.prefill : bDuration;
   const differenceStart =

@@ -47,7 +47,7 @@ export function moduleBriefs(training: boolean, budget: number): Record<string, 
   const costPct = Math.round((100 * (rlFast.correctCost! - baseStatic.correctCost!)) / baseStatic.correctCost!);
   const pctLess = Math.round(100 * (1 - rlFast.correctCost! / rlStatic.correctCost!));
   return {
-    race: { does: "The same 96 requests on one clock, baseline against optimized", dealing: "Every request, as it waits, reads and writes", goal: "The same answers for less compute", impact: `*${pctLess}% less compute*, the same ${rlFast.correct} correct answers`, why: "the waiting wedge shrinks, and the optimized run finishes first" },
+    flow: { does: "The same 96 requests on one dial, phase by phase", dealing: "Every request, as it waits, reads, reasons and writes", goal: "The same answers for less compute", impact: `*${pctLess}% less compute*, the same ${rlFast.correct} correct answers`, why: "one full turn is the baseline; the inner rings stop sooner" },
     glossary: { does: "The vocabulary of serving, each term tied to this project", dealing: "Nine serving terms", goal: "Say what each one means here", impact: "*9 terms*, each with its own figure", why: "SSE, KV sizing, PagedAttention and more" },
     setup: { does: `Same answers for ${pctLess}% less compute`, dealing: "All 96 requests: how long each waits, its GPU time, and whether it was right", goal: "The same answers for less GPU time, through three levers", impact: `*${f(rlStatic.correctCost!, 2)} → ${f(rlFast.correctCost!, 2)} GPU-s* per correct answer`, why: "free-worker scheduling, prefix reuse, faster prefill and decode" },
     replay: { does: "Every request finishes sooner", dealing: "One request's whole life, then all 96 side by side", goal: "Answer every request sooner, with the answer unchanged", impact: `Median response *${f(med(rlStatic))} → ${f(med(rlFast))} s*`, why: "each request does less GPU work, so every queue drains sooner" },
@@ -58,7 +58,7 @@ export function moduleBriefs(training: boolean, budget: number): Record<string, 
     draft: { does: "A small draft model predicts tokens, the large model verifies them", dealing: "The large model writes one word per full pass", goal: "Let a small model guess ahead, and verify many words in one pass", impact: "*12 → 3* serial calls of the large model", why: "a small model drafts; the large one checks many words at once" },
     cache: { does: "Each request goes to where its prompt is already cached", dealing: "Several replicas: which one should take this request?", goal: "Send it to where its prompt is already in memory", impact: `First token *${CACHE_DELTA} ms sooner*`, why: "the router knows where each prefix is already cached" },
     overlap: { does: "The CPU prepares the next step while the GPU runs this one", dealing: "The GPU waits while the CPU prepares its next step", goal: "Prepare the next step during this one", impact: `Four steps: *${OVERLAP.baseline.finish} → ${OVERLAP.overlapped.finish} ms*`, why: "the CPU prepares the next step while the GPU runs this one" },
-    map: { does: "Which tasks each checkpoint solves", dealing: "Every serving mechanism on one clock", goal: "See how they work together on four requests", impact: "*10 mechanisms*, one system", why: "requests A to D, on one serving clock" },
+    map: { does: "Every mechanism working together on four requests", dealing: "Every serving mechanism on one clock", goal: "See how they work together on four requests", impact: "*10 mechanisms*, one system", why: "requests A to D, on one serving clock" },
   };
 }
 
@@ -124,10 +124,32 @@ export function ModuleBrief({ item, brief, path, onDone }: { item: ShowItem; bri
   );
 }
 
-/** A line across the whole blurred screen: the turns of the three-minute version. */
-export function LineCard({ text }: { text: string }) {
+/**
+ * In the Summary, each module is introduced before it plays: its title steps out of the rail to the
+ * middle of the screen, says in one sentence how to read what comes, and goes back.
+ */
+export function IntroCard({ item, text, ms }: { item: ShowItem; text: string; ms: number }) {
   const tr = useTr();
-  return createPortal(<div className="mb-veil mb-line" aria-live="polite"><p>{highlight(tr(text))}</p></div>, document.body);
+  const card = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const c = card.current, tile = document.querySelector<HTMLElement>(`[data-rail-key="${item.key}"]`);
+    if (!c || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const b = c.getBoundingClientRect(), a = tile?.getBoundingClientRect();
+    const from = a ? `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width}, ${a.height / b.height})` : "translateY(12px) scale(.96)";
+    c.animate([{ transformOrigin: "0 0", transform: from, opacity: 0.4 }, { transformOrigin: "0 0", transform: "none", opacity: 1 }], { duration: 620, easing: EASE, fill: "backwards" });
+    c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: ms - 300, fill: "forwards" });
+  }, [item.key, ms]);
+  return createPortal(
+    <div className="mb-veil mb-intro" aria-live="polite">
+      <div ref={card} className="mi-card">
+        <span className="mi-art" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
+        <h3>{tr(item.title)}</h3>
+        {item.term && <em>{tr(item.term)}</em>}
+        <p>{highlight(tr(text))}</p>
+      </div>
+    </div>,
+    document.body,
+  );
 }
 
 /**

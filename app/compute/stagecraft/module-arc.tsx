@@ -58,6 +58,8 @@ export function ModuleArc({
   const [beat, setBeat] = useState(0);
   const [t, setT] = useState(0);
   const [held, setHeld] = useState(false);
+  const directed = useRef(0);
+  useEffect(() => { if (!active) directed.current = 0; }, [active]);
   const [run, setRun] = useState(0);
   const [inView, setInView] = useState(false);
   const reduced = useSyncExternalStore(subscribeReduced, () => matchMedia(REDUCED).matches, () => false);
@@ -81,12 +83,14 @@ export function ModuleArc({
   useEffect(() => {
     if (!live || !timed) return;
     let raf = 0;
-    const start = performance.now() - t;
+    // A self-clocked film keeps its own pace; only drawn scenes can be played quicker.
+    const speed = directed.current && !timed.render ? directed.current : 1;
+    const start = performance.now() - t / speed;
     const tick = (now: number) => {
-      const next = now - start;
+      const next = (now - start) * speed;
       if (next >= timed.ms) {
         setT(timed.ms);
-        if (!held) {
+        if (!held && !directed.current) {
           if (beat < 3) { setBeat(beat + 1); setT(0); }
           else root.current?.parentElement?.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true }));
         }
@@ -133,9 +137,11 @@ export function ModuleArc({
     if (!active) return;
     let last = "";
     const goTo = (e: Event) => {
-      const d = (e as CustomEvent<{ id: string; beat: number }>).detail;
+      const d = (e as CustomEvent<{ id: string; beat: number; speed?: number }>).detail;
       if (d.id === last) return;
       last = d.id;
+      // The Summary plays a whole beat, a little quicker, and stops on its last frame; it moves itself on.
+      directed.current = d.speed ?? 0;
       setBeat(d.beat); setT(0); setExploring(false); setPaused(false); setRun((n) => n + 1);
     };
     window.addEventListener("lab:arc-go", goTo);

@@ -2313,7 +2313,6 @@ function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
     <ProjectSecondPage
       id={id}
       accent={training ? "rose" : "amber"}
-      training={training}
       name={training ? "Advanced post-training" : "Inference optimization"}
       title={training ? "What did the model learn? See every result" : `Same intelligence at ${INFERENCE_SAVING}% less compute, optimized under load`}
       enter={`${href}?labnav=show#${id}-study`}

@@ -37,3 +37,11 @@
 @media (max-width: 760px) { .mc-options { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .mc-card { animation: none; } }
 .mb-does { color: #f1f4f7; font: 450 22px/30px var(--font-geist-sans), sans-serif; letter-spacing: -.012em; }
+
+/* A module's introduction in the Summary: its picture, its name, how to read what comes. */
+.mb-intro { pointer-events: none; }
+.mi-card { width: min(760px, 90%); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.mi-art { display: block; width: 400px; height: 200px; margin-bottom: 14px; }
+.mi-card h3 { margin: 0; color: #fff; font: 500 40px/48px var(--font-geist-sans), sans-serif; letter-spacing: -.028em; }
+.mi-card em { color: #93a0ae; font: 400 16px/22px var(--font-geist-sans), sans-serif; font-style: normal; }
+.mi-card p { margin: 14px 0 0; color: #eef2f6; text-wrap: balance; font: 400 22px/32px var(--font-geist-sans), sans-serif; letter-spacing: -.01em; }

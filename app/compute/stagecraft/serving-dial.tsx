@@ -1,0 +1,355 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { inferenceStoryRuns } from "../lab-story-data";
+import { phaseTotals, servingPhases, type Phases } from "../serving-phases";
+import { highlight, useSummaryPause } from "./stage-meter";
+import "./serving-dial.css";
+
+/**
+ * The same 96 requests on one dial. One full turn is the baseline's whole run; the same clock hand
+ * sweeps both runs at once, so where the inner rings stop is how much sooner the optimized run ended.
+ * Every request is a block on one of two GPUs, coloured by what it is doing; the rim is the queue.
+ * The phases differ by a hundredfold, so the ledger beside the dial gives each its own scale.
+ */
+const INTRO = 3200, SWEEP = 16000, RESULT = 3000, TOUR = 2700, CLOSE = 2200;
+const SWEPT = INTRO + SWEEP, TOURED = SWEPT + RESULT, ROWS = ["wait", "read", "reason", "write"] as const;
+const FILM = TOURED + TOUR * ROWS.length + CLOSE;
+type Phase = (typeof ROWS)[number];
+const INK: Record<Phase, string> = { wait: "#a79bff", read: "#ffc267", reason: "#63d4df", write: "#b8e986" };
+const NAME: Record<Phase, string> = { wait: "Waiting for a GPU", read: "Reading the prompt", reason: "Reasoning", write: "Writing the answer" };
+const NOTE: Record<Phase, string> = { wait: "mean seconds per request", read: "GPU-s, all 96 · prefill", reason: "GPU-s, all 96 · decode", write: "GPU-s, all 96 · decode" };
+const LEVERS = [
+  { name: "Free-worker scheduling", run: 1 },
+  { name: "+ Prefix reuse", run: 2 },
+  { name: "+ Faster prefill & decode", run: 3 },
+] as const;
+const f = (v: number, d = 0) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const ease = (u: number) => u * u * (3 - 2 * u);
+const BINS = 360;
+
+/** How many requests are waiting at each of the dial's degrees. */
+const queueBins = (p: readonly Phases[], T: number) => Array.from({ length: BINS + 1 }, (_, i) => { const t = (i / BINS) * T; let n = 0; for (const q of p) if (q.arrival <= t && q.start > t) n++; return n; });
+
+export function ServingDial({ active = true, onRound }: { active?: boolean; onRound?: () => void }) {
+  const runs = useMemo(() => inferenceStoryRuns("shared-prefix"), []);
+  const phases = useMemo(() => runs.map(servingPhases), [runs]);
+  const T = useMemo(() => Math.max(...phases[0].map((q) => q.finish)), [phases]);
+  const bins = useMemo(() => phases.map((p) => queueBins(p, T)), [phases, T]);
+  const tot0 = useMemo(() => phaseTotals(phases[0]), [phases]);
+  const [lever, setLever] = useState(2);
+  const [playing, setPlaying] = useState(true);
+  const [picked, setPicked] = useState<Phase | null>(null);
+  const [line, setLine] = useState("");
+  const root = useRef<HTMLDivElement>(null);
+  const canvas = useRef<HTMLCanvasElement>(null), slider = useRef<HTMLInputElement>(null);
+  const cells = useRef<Record<string, HTMLElement | null>>({});
+  const clock = useRef(0), morph = useRef({ from: 3, to: 3, at: -1e9, fresh: false }), hover = useRef<{ x: number; y: number } | null>(null);
+  const round = useRef(onRound);
+  useEffect(() => { round.current = onRound; });
+  const state = useRef({ playing, picked });
+  useEffect(() => { state.current = { playing, picked }; }, [playing, picked]);
+  useSummaryPause(() => setPlaying(false), () => setPlaying(true), active);
+  useEffect(() => {
+    const dive = () => { clock.current = Math.max(clock.current, TOURED); setPlaying(false); };
+    const resume = () => setPlaying(true);
+    window.addEventListener("lab:dive", dive);
+    window.addEventListener("lab:resume", resume);
+    return () => { window.removeEventListener("lab:dive", dive); window.removeEventListener("lab:resume", resume); };
+  }, []);
+
+  useEffect(() => {
+    const c = canvas.current;
+    if (!c || !active) return;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) clock.current = TOURED;
+    root.current?.querySelectorAll<HTMLElement>("[data-k]").forEach((el) => { cells.current[el.dataset.k!] = el; });
+    let raf = 0, last = performance.now(), fired = false, lastLine = "";
+    const put = (k: string, v: string) => { const el = cells.current[k]; if (el && el.textContent !== v) el.textContent = v; };
+    const bar = (k: string, u: number) => { const el = cells.current[k]; if (el) el.style.transform = `scaleX(${u.toFixed(4)})`; };
+    const draw = (now: number) => {
+      const dt = Math.min(64, now - last);
+      last = now;
+      const st = state.current;
+      if (st.playing && !reduced) {
+        clock.current = Math.min(FILM, clock.current + dt);
+        if (clock.current >= FILM && !fired) { fired = true; round.current?.(); }
+      }
+      const film = clock.current;
+      const t = Math.max(0, Math.min(1, (film - INTRO) / SWEEP)) * T;
+      // the optimized run, tweened when a lever changes
+      const mk = morph.current;
+      if (mk.fresh) { mk.fresh = false; mk.at = now; }
+      const k = ease(Math.min(1, (now - mk.at) / 800));
+      const P0 = phases[mk.from], P1 = phases[mk.to];
+      const B: readonly Phases[] = k >= 1 ? P1 : P1.map((q, i) => {
+        const a = P0[i], m = (x: number, y: number) => x + (y - x) * k;
+        return { ...q, start: m(a.start, q.start), finish: m(a.finish, q.finish), read: m(a.read, q.read), reason: m(a.reason, q.reason), write: m(a.write, q.write), wait: m(a.wait, q.wait) };
+      });
+      const qB = bins[mk.to].map((n, i) => bins[mk.from][i] + (n - bins[mk.from][i]) * k);
+      const endA = T, endB = Math.max(...B.map((q) => q.finish));
+      const totB = phaseTotals(B);
+      // which phase is in focus
+      const toured = film >= TOURED && film < TOURED + TOUR * ROWS.length ? ROWS[Math.floor((film - TOURED) / TOUR)] : null;
+      const focus: Phase | null = st.picked ?? toured;
+      const w = c.clientWidth, h = c.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
+      if (w && h) {
+        if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+        const g = c.getContext("2d")!;
+        g.setTransform(dpr, 0, 0, dpr, 0, 0);
+        g.clearRect(0, 0, w, h);
+        const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 26;
+        const rad = (v: number) => (v / T) * Math.PI * 2 - Math.PI / 2;
+        const band = (r0: number, r1: number, a: number, b: number, ink: string, alpha = 1) => {
+          if (b <= a) return;
+          g.globalAlpha = alpha;
+          g.strokeStyle = ink;
+          g.lineWidth = (r1 - r0) * R;
+          g.beginPath();
+          g.arc(cx, cy, ((r0 + r1) / 2) * R, a, b);
+          g.stroke();
+          g.globalAlpha = 1;
+        };
+        const on = (p: Phase) => (focus && focus !== p ? 0.14 : 1);
+        const minRead = 1.3 / (R * 0.8); // radians: a prefill is drawn at least this wide so it can be seen
+        const RINGS = { a: [[0.82, 0.895], [0.735, 0.81]], b: [[0.585, 0.66], [0.5, 0.575]] };
+        // tracks
+        [...RINGS.a, ...RINGS.b].forEach(([r0, r1]) => band(r0, r1, 0, Math.PI * 2, "rgba(230,237,244,.045)"));
+        // time ticks, outside the rings
+        g.font = "400 12.5px ui-monospace, SFMono-Regular, Menlo, monospace";
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        for (let v = 0; v < T - 60; v += 200) {
+          const a = rad(v), x = (r: number) => cx + Math.cos(a) * r * R, y = (r: number) => cy + Math.sin(a) * r * R;
+          g.strokeStyle = "rgba(230,237,244,.28)";
+          g.lineWidth = 1;
+          g.beginPath();
+          g.moveTo(x(0.985), y(0.985));
+          g.lineTo(x(1.01), y(1.01));
+          g.stroke();
+          g.fillStyle = "#93a0ae";
+          g.fillText(v ? `${f(v)} s` : "0", x(1.065), y(1.065));
+        }
+        // the queue: outward from the baseline, inward from the optimized run
+        const peak = Math.max(...bins[0]);
+        const rim = (arr: readonly number[], base: number, dir: 1 | -1, height: number, end: number) => {
+          g.beginPath();
+          const stop = Math.min(BINS, Math.floor((Math.min(t, end) / T) * BINS));
+          for (let i = 0; i <= stop; i++) {
+            const a = rad((i / BINS) * T), r = (base + dir * (arr[i] / peak) * height) * R;
+            const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+            if (i) g.lineTo(x, y); else g.moveTo(x, y);
+          }
+          for (let i = stop; i >= 0; i--) { const a = rad((i / BINS) * T); g.lineTo(cx + Math.cos(a) * base * R, cy + Math.sin(a) * base * R); }
+          g.closePath();
+          g.globalAlpha = 0.7 * on("wait");
+          g.fillStyle = INK.wait;
+          g.fill();
+          g.globalAlpha = 1;
+        };
+        rim(bins[0], 0.905, 1, 0.075, endA);
+        rim(qB, 0.49, -1, 0.075, endB);
+        // every request, as far as the clock has reached
+        const blocks = (run: readonly Phases[], rings: number[][]) => {
+          for (const q of run) {
+            if (q.start >= t) continue;
+            const [r0, r1] = rings[q.worker % 2];
+            const a0 = rad(q.start), a1 = rad(q.start + q.read), a2 = rad(q.start + q.read + q.reason), a3 = rad(Math.min(t, q.finish));
+            const inset = 0.0016;
+            band(r0, r1, a1 + 0.001, Math.min(a2, a3) - inset, INK.reason, on("reason"));
+            if (a3 > a2) band(r0, r1, a2, a3 - inset, INK.write, on("write"));
+            band(r0, r1, a0, Math.max(a0 + minRead, a1), INK.read, on("read"));
+          }
+        };
+        blocks(phases[0], RINGS.a);
+        blocks(B, RINGS.b);
+        // the gap, once both runs are in
+        if (t >= endA - 1) {
+          const u = Math.min(1, (film - SWEPT) / 900);
+          g.globalAlpha = 0.16 * u;
+          g.strokeStyle = INK.read;
+          g.lineWidth = 0.255 * R;
+          g.beginPath();
+          g.arc(cx, cy, 0.5375 * R, rad(endB) + 0.01, rad(T) - 0.01);
+          g.stroke();
+          g.globalAlpha = 1;
+          if (!focus && endA - endB > 40) {
+            const mid = rad((endA + endB) / 2), x = cx + Math.cos(mid) * 0.5375 * R, y = cy + Math.sin(mid) * 0.5375 * R;
+            g.globalAlpha = u;
+            g.fillStyle = "#ffc267";
+            g.font = "500 17px ui-sans-serif, -apple-system, sans-serif";
+            g.fillText(`${f(endA - endB)} s sooner`, x, y);
+            g.globalAlpha = 1;
+          }
+        }
+        // the clock hand, with a fading trail
+        if (t > 0 && t < T) {
+          const a = rad(t), trail = 0.5;
+          const grad = g.createConicGradient(a - trail, cx, cy);
+          grad.addColorStop(0, "rgba(255,255,255,0)");
+          grad.addColorStop(trail / (Math.PI * 2), "rgba(255,255,255,.13)");
+          grad.addColorStop(trail / (Math.PI * 2) + 0.0001, "rgba(255,255,255,0)");
+          g.fillStyle = grad;
+          g.beginPath();
+          g.moveTo(cx, cy);
+          g.arc(cx, cy, 0.985 * R, a - trail, a);
+          g.closePath();
+          g.fill();
+        }
+        if (t < T) {
+          const a = rad(t);
+          g.strokeStyle = "#fff";
+          g.lineWidth = 1.5;
+          g.beginPath();
+          g.moveTo(cx + Math.cos(a) * 0.4 * R, cy + Math.sin(a) * 0.4 * R);
+          g.lineTo(cx + Math.cos(a) * 0.985 * R, cy + Math.sin(a) * 0.985 * R);
+          g.stroke();
+        }
+        // ring names, on their tracks at twelve o'clock
+        const tag = (text: string, r: number) => {
+          g.font = "500 13px ui-sans-serif, -apple-system, sans-serif";
+          g.textAlign = "right";
+          g.textBaseline = "middle";
+          const tw = g.measureText(text).width, x = cx - 10, y = cy - r * R;
+          g.fillStyle = "rgba(7,10,14,.92)";
+          g.beginPath();
+          g.roundRect(x - tw - 8, y - 11, tw + 14, 22, 11);
+          g.fill();
+          g.fillStyle = "#eef2f6";
+          g.fillText(text, x, y);
+          g.textAlign = "center";
+        };
+        tag("Baseline", 0.815);
+        tag("Optimized", 0.58);
+        // what each phase has cost so far
+        const sum = (run: readonly Phases[]) => {
+          const s = { wait: 0, read: 0, reason: 0, write: 0 };
+          let answered = 0, correct = 0;
+          for (const q of run) {
+            if (q.arrival > t) continue;
+            s.wait += Math.min(q.wait, t - q.arrival);
+            if (t > q.start) {
+              const u = t - q.start;
+              s.read += Math.min(q.read, u);
+              s.reason += Math.max(0, Math.min(q.reason, u - q.read));
+              s.write += Math.max(0, Math.min(q.write, u - q.read - q.reason));
+            }
+            if (q.finish <= t) { answered++; if (q.correct) correct++; }
+          }
+          return { ...s, answered, correct };
+        };
+        const a = sum(phases[0]), b = sum(B), n = phases[0].length;
+        const gpu0 = tot0.read + tot0.reason + tot0.write;
+        put("clock", `${f(t)} s`);
+        put("a-ans", String(a.answered));
+        put("b-ans", String(b.answered));
+        put("a-cor", String(a.correct));
+        put("b-cor", String(b.correct));
+        put("a-gpu", f(a.read + a.reason + a.write));
+        put("b-gpu", f(b.read + b.reason + b.write));
+        for (const p of ROWS) {
+          const scale = p === "wait" ? n : 1, digits = p === "read" ? 1 : 0;
+          put(`a-${p}`, f(a[p] / scale, digits));
+          put(`b-${p}`, f(b[p] / scale, digits));
+          bar(`bar-a-${p}`, a[p] / tot0[p]);
+          bar(`bar-b-${p}`, b[p] / tot0[p]);
+          const row = cells.current[`row-${p}`];
+          if (row) { const dim = focus && focus !== p ? "true" : "false"; if (row.dataset.dim !== dim) row.dataset.dim = dim; }
+          put(`d-${p}`, t >= T - 1 ? `−${f(100 * (1 - totB[p] / tot0[p]))}%` : "");
+        }
+        // hovering a block reads that request
+        const hv = hover.current, read = cells.current.readout;
+        if (read) {
+          let text = "";
+          if (hv) {
+            const dx = hv.x - cx, dy = hv.y - cy, r = Math.hypot(dx, dy) / R;
+            const ang = (Math.atan2(dy, dx) + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2), v = (ang / (Math.PI * 2)) * T;
+            const hit = (run: readonly Phases[], rings: number[][], label: string) => {
+              const ring = rings.findIndex(([r0, r1]) => r >= r0 && r <= r1);
+              if (ring < 0 || v > t) return;
+              const q = run.find((x) => x.worker % 2 === ring && x.start <= v && x.finish >= v);
+              if (q) text = `${label}: request ${q.id + 1}|waited ${f(q.wait)} s · read ${f(q.read, 2)} s · reasoned ${f(q.reason, 1)} s · wrote ${f(q.write, 1)} s`;
+            };
+            hit(phases[0], RINGS.a, "Baseline");
+            hit(B, RINGS.b, "Optimized");
+          }
+          if (read.dataset.text !== text) {
+            read.dataset.text = text;
+            read.hidden = !text;
+            const [x, y] = text.split("|");
+            (read.children[0] as HTMLElement).textContent = x ?? "";
+            (read.children[1] as HTMLElement).textContent = y ?? "";
+          }
+        }
+        // the sentence on top
+        const pctNow = Math.round(100 * (1 - (totB.read + totB.reason + totB.write) / gpu0));
+        const correctB = B.filter((q) => q.correct).length;
+        const fm = (p: Phase, d: number) => `${f(tot0[p] / (p === "wait" ? n : 1), d)} → ${f(totB[p] / (p === "wait" ? n : 1), d)}`;
+        const next = st.picked
+          ? `${NAME[st.picked]}: *${fm(st.picked, st.picked === "read" ? 1 : 0)} ${st.picked === "wait" ? "s per request" : "GPU-s"}*`
+          : film < INTRO ? "One full turn is the baseline's whole run. *Outer rings: baseline. Inner rings: optimized.*"
+          : film < INTRO + 6500 ? "Each block is one request on one of two GPUs: *blue reasons, green writes the answer*"
+          : t < endB ? "The violet rim is the queue: *how many requests are waiting right now*"
+          : t < T ? "The optimized run has answered all 96; *the baseline is still working*"
+          : film < TOURED ? `The same ${correctB} correct answers with *${pctNow}% less compute*`
+          : toured === "wait" ? `Waiting: *${fm("wait", 0)} s* per request`
+          : toured === "read" ? `Reading the prompt: *${fm("read", 1)} GPU-s*, the shared prefix is read once`
+          : toured === "reason" ? `Reasoning: *${fm("reason", 0)} GPU-s*, every step moves half the bytes`
+          : toured === "write" ? `Writing the answer: *${fm("write", 0)} GPU-s*, for the same answers`
+          : `The same ${correctB} correct answers with *${pctNow}% less compute*`;
+        if (next !== lastLine) { lastLine = next; setLine(next); }
+        if (slider.current && document.activeElement !== slider.current) slider.current.value = String(film);
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    raf = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(raf);
+  }, [active, phases, bins, T, tot0]);
+
+  const go = (i: number) => {
+    morph.current = { from: morph.current.to, to: LEVERS[i].run, at: 0, fresh: true };
+    setLever(i);
+  };
+  return (
+    <div ref={root} className="sd-root">
+      <p className="sd-line" key={line}>{highlight(line)}</p>
+      <div className="sd-main">
+        <div className="sd-dial">
+          <canvas ref={canvas} className="sd-canvas" role="img" aria-label="A dial on one clock: the baseline's two GPUs on the outer rings, the optimized run's on the inner rings; each request is a block coloured by phase, and the rims show the queue" onPointerMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); hover.current = { x: e.clientX - r.left, y: e.clientY - r.top }; }} onPointerLeave={() => { hover.current = null; }} />
+          <div className="sd-center">
+            <b data-k="clock">0 s</b>
+            <span>answered, of 96</span>
+            <div className="sd-duel"><i data-tone="base" data-k="a-ans">0</i><i data-tone="opt" data-k="b-ans">0</i></div>
+            <div className="sd-names"><small>baseline</small><small>optimized</small></div>
+          </div>
+          <div className="sd-readout" hidden data-k="readout"><strong /><span /></div>
+        </div>
+        <aside className="sd-ledger">
+          <h4>Where the time went <small>each row on its own scale</small></h4>
+          {ROWS.map((p) => (
+            <button key={p} type="button" className="sd-row" data-k={`row-${p}`} aria-pressed={picked === p} onClick={() => setPicked((c) => (c === p ? null : p))} style={{ ["--ink" as string]: INK[p] }}>
+              <span className="sd-row-head"><i aria-hidden="true" /><strong>{NAME[p]}</strong><em data-k={`d-${p}`} /></span>
+              <span className="sd-note">{NOTE[p]}</span>
+              <span className="sd-bars">
+                <span className="sd-bar" data-run="base"><u data-k={`bar-a-${p}`} /></span><b data-k={`a-${p}`}>0</b>
+                <span className="sd-bar" data-run="opt"><u data-k={`bar-b-${p}`} /></span><b data-k={`b-${p}`}>0</b>
+              </span>
+            </button>
+          ))}
+          <div className="sd-sum">
+            <div><span>Correct answers</span><b data-tone="base" data-k="a-cor">0</b><b data-tone="opt" data-k="b-cor">0</b></div>
+            <div><span>GPU-seconds used</span><b data-tone="base" data-k="a-gpu">0</b><b data-tone="opt" data-k="b-gpu">0</b></div>
+            <p>Decode is split by the thinking budget in this simulated lab. A prefill is drawn wider than its real size, so it can be seen.</p>
+          </div>
+        </aside>
+      </div>
+      <div className="sd-controls">
+        <button type="button" className="sd-play" onClick={() => { if (clock.current >= FILM) clock.current = 0; setPlaying((p) => !p); }} aria-label={playing ? "Pause" : "Play"}>{playing ? "Ⅱ" : "▷"}</button>
+        <input ref={slider} type="range" min={0} max={FILM} step={50} defaultValue={0} aria-label="Move the clock" onChange={(e) => { clock.current = Number(e.target.value); }} />
+        <div className="sd-levers" role="group" aria-label="Which levers the optimized run has">
+          {LEVERS.map((s, i) => <button key={s.name} type="button" aria-pressed={i === lever} onClick={() => go(i)}>{s.name}</button>)}
+        </div>
+      </div>
+    </div>
+  );
+}

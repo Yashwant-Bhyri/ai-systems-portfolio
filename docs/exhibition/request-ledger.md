@@ -197,3 +197,19 @@ Target viewport stays 1512×860.
 | 14 | Modules must move on by themselves | Done and tested on every module. |
 | 15 | A from-scratch multi-dimensional manifold, for post-training only: switch axes and see different truths | Done. `manifold.tsx`: 96 tasks, three models, six dimensions, four views, any three axes, drag to turn. |
 | 16 | One robust, perceptive picture for inference | Done. `serving-race.tsx`: two runs mirrored on one clock, every request drawn as it waits, reads and writes. |
+
+## Round 15 (2026-11-08)
+
+| Request | Status |
+|---|---|
+| Whole space first: section titles fill the centre, then compress to the left ~20%; the next section takes 80% | Done: `TitleBoard` |
+| Redo every title SVG, sized and styled as one family; fix glossary colours | Done: `glyphs.tsx`, `glyphs.css` (colours no longer scoped to a parent) |
+| Rethink inference module names | Done: name on top, technique beneath |
+| Replace the serving race, at least separate prefill, reasoning, answer by colour | Done: `serving-dial.tsx`; phases from `serving-phases.ts`, each with its own scale in the ledger |
+| Second page: how a request is served and what each lever saved must be prominent | Done on both projects: two large live doors, the laboratory titles beneath |
+| Summary replay shows all four measures | Done |
+| Nothing cut off: head lines, Policy × runtime, Speculative decoding, What more thinking buys, Lean RL | Done: clip lengths follow the figures' clocks; measured at exit |
+| Inference Summary: section 1, back to the board, section 2, then the choice | Done |
+| Introduce before playing, including the first picture and post-training | Done: `IntroCard` before every module |
+| What is coming next, bottom left | Done: always shown |
+| One agent per page, owning that page | Launched after this commit |
