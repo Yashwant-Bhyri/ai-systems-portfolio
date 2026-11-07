@@ -942,6 +942,15 @@ export function ComputeLabStudy({
   const block = labNav === "bar";
   const reelItems: readonly ReelItem[] = railItems;
   const navLabel = labNav === "side" ? "Go deeper" : training ? "Go deeper · post-training laboratory" : "Go deeper · same intelligence, cheaper execution";
+  const summaryTicks = clip !== null ? (
+    <span className="sb-ticks" role="group" aria-label={tr("Summary progress")}>
+      {clips.map((c, i) => c.intro || c.board ? null : (
+        <button key={i} type="button" data-on={i === clip || undefined} data-done={i < clip || undefined} aria-label={`${tr("Moment")} ${i + 1}`} onClick={() => goClip(i)}>
+          {i === clip && <i key={`${clip}-${clipHeld}`} style={{ animationDuration: `${c.ms}ms`, animationPlayState: clipHeld ? "paused" : "running" }} />}
+        </button>
+      ))}
+    </span>
+  ) : null;
   const railSection = clip !== null ? sectionOf(clips, clip) : 0, twoSections = boardAt(clips) >= 0;
   const clipNext = clip !== null ? upNext(clips, clip).next : null;
   const railNext = clip === null
@@ -1037,15 +1046,7 @@ export function ComputeLabStudy({
               <div className="sm-sub">
                 <span className="sm-name">{tr(clip !== null ? clips.slice(0, clip + 1).reverse().find((c) => c.title)?.key === key && clips[clip].title ? clips[clip].title! : item?.title ?? "" : item?.title ?? "")}{item?.term && <i> · {tr(item.term)}</i>}</span>
                 {clip === null && <StageMeter moduleKey={`${currentKey}|${chapter}`} rest={brief ? tr(brief.why) : undefined} />}
-                {clip !== null && (
-                  <span className="sb-ticks" role="group" aria-label={tr("Summary progress")}>
-                    {clips.map((c, i) => c.intro || c.board ? null : (
-                      <button key={i} type="button" data-on={i === clip || undefined} data-done={i < clip || undefined} aria-label={`${tr("Moment")} ${i + 1}`} onClick={() => goClip(i)}>
-                        {i === clip && <i key={`${clip}-${clipHeld}`} style={{ animationDuration: `${c.ms}ms`, animationPlayState: clipHeld ? "paused" : "running" }} />}
-                      </button>
-                    ))}
-                  </span>
-                )}
+                {summaryTicks}
               </div>
             </div>
           );
