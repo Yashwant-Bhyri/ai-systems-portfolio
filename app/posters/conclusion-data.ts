@@ -10,6 +10,8 @@ const f = (v: number, d = 0) => v.toLocaleString("en-US", { minimumFractionDigit
 const R = inferenceStoryRuns("shared-prefix");
 const meanPrefillMs = (r: (typeof R)[number]) => (1000 * r.tasks.reduce((a, t) => a + t.prefill, 0)) / r.tasks.length;
 const pct = Math.round(100 * (1 - R[3].correctCost! / R[0].correctCost!));
+/** Read by the second page's headline. */
+export const INFERENCE_SAVING = pct;
 
 export const INFERENCE_CONCLUSION: ConclusionSpec = {
   verdict: `The same ${R[0].correct} correct answers from the same model, with *${pct}% less GPU time per answer*, and the slowest requests answered ${f(R[0].p95 - R[3].p95)} s sooner`,

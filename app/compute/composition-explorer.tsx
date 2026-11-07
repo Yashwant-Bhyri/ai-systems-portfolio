@@ -115,27 +115,19 @@ export function CompositionExplorer({
   const id = useId();
   const showing = presentation ? true : localPlayer.running;
   const meterLine = phase === 0 ? `Baseline: ${reference.label}, ${number(reference.accuracy)}% correct at ${number(reference.correctCost!, 2)} GPU-s each`
-    : phase === 1 ? `${mechanisms[0].name} moves the model up: ${number(mechanisms[0].after.accuracy - mechanisms[0].before.accuracy)} percentage points`
-    : phase === 2 ? `${mechanisms[1].name} moves it left: ${number(Math.abs(mechanisms[1].delta), 2)} GPU-s less per correct answer`
+    : phase === 1 ? `${mechanisms[0].name}: accuracy ${number(mechanisms[0].before.accuracy)}% → ${number(mechanisms[0].after.accuracy)}%`
+    : phase === 2 ? `${mechanisms[1].name}: cost ${number(mechanisms[1].before.correctCost!, 2)} → ${number(mechanisms[1].after.correctCost!, 2)} GPU-s per correct answer, accuracy unchanged`
     : phase === 3 ? `Final: ${target.label}, ${number(target.accuracy)}% correct at ${number(target.correctCost!, 2)} GPU-s each`
-    : "Both changes together, compared with where we started";
+    : `Together: accuracy ${number(reference.accuracy)}% → ${number(target.accuracy)}%, cost ${number(reference.correctCost!, 2)} → ${number(target.correctCost!, 2)} GPU-s per correct answer`;
   useEffect(() => {
     if (showing) emitMeter({ text: meterLine, step: phase + 1, total: 5, tone: phase === 0 ? "baseline" : phase === 4 ? "delta" : "optimized" });
   }, [meterLine, phase, showing]);
-  // The highlights run opens a figure at its best moment.
-  useEffect(() => {
-    const go = (e: Event) => film.seek((e as CustomEvent<number>).detail);
-    window.addEventListener("lab:figure-seek", go);
-    return () => window.removeEventListener("lab:figure-seek", go);
-    // the film's seek is stable for one mounted figure
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   // Freeze on each move: what it did to accuracy, then what it did to cost.
   const moments = useMemo(() => {
     const atPhase = (p: number) => { for (let t = 0; t < COMPOSITION_FILM_MS; t += 100) if (compositionMotion(t).phase === p) return t + 1800; return COMPOSITION_FILM_MS; };
     return [
-      { at: atPhase(1), headline: `${mechanisms[0].name}: *+${number(mechanisms[0].after.accuracy - mechanisms[0].before.accuracy)} percentage points*`, parts: [{ label: "before", value: `${number(mechanisms[0].before.accuracy)}%`, tone: "baseline" as const }, { label: "after", value: `${number(mechanisms[0].after.accuracy)}%`, tone: "optimized" as const }], cause: "training moves the model up the curve" },
-      { at: atPhase(2), headline: `${mechanisms[1].name}: *${number(Math.abs(mechanisms[1].delta), 2)} GPU-s less* per correct answer`, cause: "serving moves it left, with the answers unchanged" },
+      { at: atPhase(1), headline: `${mechanisms[0].name}: *accuracy +${number(mechanisms[0].after.accuracy - mechanisms[0].before.accuracy)} points*`, parts: [{ label: "before", value: `${number(mechanisms[0].before.accuracy)}%`, tone: "baseline" as const }, { label: "after", value: `${number(mechanisms[0].after.accuracy)}%`, tone: "optimized" as const }] },
+      { at: atPhase(2), headline: `${mechanisms[1].name}: *${number(Math.abs(mechanisms[1].delta), 2)} GPU-s less* per correct answer`, parts: [{ label: "before", value: `${number(mechanisms[1].before.correctCost!, 2)} GPU-s`, tone: "baseline" as const }, { label: "after", value: `${number(mechanisms[1].after.correctCost!, 2)} GPU-s`, tone: "optimized" as const }], cause: "same answers, same accuracy" },
     ];
   }, [mechanisms]);
   useFreezeMoments(presentation ? [] : moments, localPlayer.readTime, localPlayer.running, localPlayer.pause, localPlayer.resume, lens);

@@ -49,3 +49,12 @@
 .sm-focus[data-tone="problem"] { --hl: #ff8f86; }
 .sm-focus[data-tone="problem"] strong { color: #fff; }
 @media (prefers-reduced-motion: reduce) { .hl { animation: none; background-size: 100% 100%; color: #0b1016; } .sm-line, .sm-focus { animation: none; } }
+
+/* The head of the stage: what this is and what improves, then what is happening now. */
+.sm-head { flex: 1 1 auto; min-width: 0; align-self: center; display: flex; flex-direction: column; gap: 2px; }
+.sm-title { margin: 0; display: flex; align-items: baseline; gap: 12px; min-width: 0; white-space: nowrap; overflow: hidden; padding-block: 2px; color: #fff; font: 500 clamp(17px, 1.4vw, 21px)/1.3 var(--font-geist-sans), sans-serif; letter-spacing: -.012em; }
+.sm-title strong { font-weight: 500; flex: 0 0 auto; }
+.sm-title span { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #dfe6ec; font-weight: 400; }
+.sm-head .sm-voice { flex: 0 0 auto; align-self: stretch; color: #aab6c2; font: 400 14px/20px var(--font-geist-sans), sans-serif; letter-spacing: 0; }
+.sm-head .sm-voice[data-on="false"] { display: none; }
+.sm-head .sm-line { padding-block: 0; margin-block: 0; }

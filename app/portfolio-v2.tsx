@@ -32,7 +32,7 @@ import { ProjectPoster } from "./posters/posters";
 import { ProjectSecondPage } from "./project-second-page";
 import { LabPreview } from "./compute/stagecraft/lab-preview";
 import { ConclusionBoard, conclusionFromProof, type ConclusionSpec } from "./conclusion-board";
-import { INFERENCE_CONCLUSION, TRAINING_CONCLUSION } from "./posters/conclusion-data";
+import { INFERENCE_CONCLUSION, INFERENCE_SAVING, TRAINING_CONCLUSION } from "./posters/conclusion-data";
 
 const assetPath = (path: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 
@@ -2303,15 +2303,16 @@ function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
     <ProjectSecondPage
       id={id}
       accent={training ? "rose" : "amber"}
-      title={training ? "Advanced post-training" : "Inference optimization engine"}
-      line={training ? "One base model, made smarter on maths and coding, then made affordable" : "The same intelligence for less GPU time, and serving that holds under load"}
+      training={training}
+      kicker={training ? "Advanced post-training" : "Inference optimization"}
+      headline={training ? "One model. Almost *three times* the answers." : `The same answers. *${INFERENCE_SAVING}% less* GPU time.`}
       href={href}
-      blocks={[
-        { key: "microscope", label: "Component microscope", href: `${href}#${id}-microscope`, node: training
+      doors={[
+        { key: "results", question: training ? "What changed inside the model?" : `Where does the ${INFERENCE_SAVING}% come from?`, name: "Results laboratory", href: `${href}#${id}-study`, node: <LabPreview training={training} /> },
+        { key: "microscope", question: training ? "How does each training step work?" : "How is a request actually served?", name: "Component microscope", href: `${href}#${id}-microscope`, node: training
           ? <MiniMicroscope id={id} accent="rose" brand="ADVANCED POST-TRAINING" steps={TRAINING_STEPS} Visual={TrainingVisual} proof={TRAINING_PROOF} conclusion={TRAINING_CONCLUSION} />
           : <MiniMicroscope id={id} accent="amber" brand="INFERENCE OPTIMIZATION ENGINE" steps={INFERENCE_STEPS} Visual={InferenceVisual} proof={INFERENCE_PROOF} conclusion={INFERENCE_CONCLUSION} /> },
-        { key: "results", label: "Results laboratory", href: `${href}#${id}-study`, node: <LabPreview training={training} /> },
-        { key: "poster", label: "The result on one page", href, node: <ProjectPoster domain={domain} live /> },
+        { key: "poster", question: training ? "Which steps gave how much?" : "What did each lever save?", name: "The result on one page", href, node: <ProjectPoster domain={domain} live /> },
       ]}
     />
   );

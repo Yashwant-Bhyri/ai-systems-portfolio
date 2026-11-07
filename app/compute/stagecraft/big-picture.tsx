@@ -31,7 +31,7 @@ const LINES: readonly (readonly [number, string])[] = [
   [22000, "All of it happens on this path, and *each lever works on one part*"],
 ];
 const MOVES = [[9400, 11900], [12200, 14700], [15000, 18200]] as const;
-const FLOW_AT = 21800, FLOW_STEP = 2600, TOTAL = FLOW_AT + 1200 + FLOW_STEP * 3 + 1800;
+const FLOW_AT = 21800, FLOW_STEP = 3600, END_AT = FLOW_AT + 1200 + FLOW_STEP * 3, TOTAL = END_AT + 5200;
 /** What each lever has bought by the time its points have moved. */
 const mean = (r: (typeof RUNS)[number], k: "prefill") => r.tasks.reduce((a, q) => a + q[k], 0) / r.tasks.length;
 const RESULTS = [
@@ -40,7 +40,7 @@ const RESULTS = [
   `${f(RUNS[2].correctCost!, 2)} → ${f(RUNS[3].correctCost!, 2)} GPU-s per correct answer`,
 ];
 
-function draw(c: HTMLCanvasElement, t: number) {
+function draw(c: HTMLCanvasElement, t: number, bare = false) {
   const w = c.clientWidth, h = c.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
   if (!w || !h) return;
   if (c.width !== Math.round(w * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
@@ -84,10 +84,10 @@ function draw(c: HTMLCanvasElement, t: number) {
   line([0, 0, 0.1], [0, 0, 0.9], "rgba(230,237,244,.3)");
   line([0, 0, 0.9], [1, 0, 0.9], "rgba(230,237,244,.3)");
   line([0, 0, 0.9], [0, 1, 0.9], "rgba(230,237,244,.3)");
-  label(0.5, -0.12, 0.9, `GPU time per request, 0 to ${f(X_MAX)} GPU-s`, "#c9d2db", 15);
-  label(-0.02, 1.06, 0.9, `Waiting, 0 to ${f(Y_MAX)} s`, "#c9d2db", 15);
-  label(0.98, 1.03, 0.9, "Correct answers", "#b8e986", 16, "right");
-  label(0.98, 1.03, 0.1, "Wrong answers", "#a9b6c2", 16, "right");
+  if (!bare) label(0.5, -0.12, 0.9, `GPU time per request, 0 to ${f(X_MAX)} GPU-s`, "#c9d2db", 15);
+  if (!bare) label(-0.02, 1.06, 0.9, `Waiting, 0 to ${f(Y_MAX)} s`, "#c9d2db", 15);
+  if (!bare) label(0.98, 1.03, 0.9, "Correct answers", "#b8e986", 16, "right");
+  if (!bare) label(0.98, 1.03, 0.1, "Wrong answers", "#a9b6c2", 16, "right");
   // the points move lever by lever; correct/wrong never changes
   const k = MOVES.map(([a, b]) => ease.io(prog(t, a, b)));
   const spot = prog(t, 4200, 4900) * (1 - prog(t, 7700, 8200));
@@ -115,7 +115,33 @@ function draw(c: HTMLCanvasElement, t: number) {
   g.globalAlpha = 1;
 }
 
-export function BigPicture({ active, fast = false }: { active: boolean; fast?: boolean }) {
+/** The moving cloud alone, for the project's second page; reports GPU time per correct answer as it falls. */
+const LOOP = { from: 7000, to: 19500, hold: 4000 };
+export function CloudBackdrop({ onCost }: { onCost: (cost: number, lever: number) => void }) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const report = useRef(onCost);
+  useEffect(() => { report.current = onCost; });
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const span = LOOP.to - LOOP.from + LOOP.hold;
+      const local = (now - start) % span;
+      const t = Math.min(LOOP.to, LOOP.from + local);
+      if (canvas.current) draw(canvas.current, t + (now - start) * 0, true);
+      const k = MOVES.map(([a, b]) => ease.io(prog(t, a, b)));
+      let c = RUNS[0].correctCost!;
+      k.forEach((v, m) => { c += (RUNS[m + 1].correctCost! - RUNS[m].correctCost!) * v; });
+      report.current(c, MOVES.findIndex(([a, b]) => t >= a && t <= b + 300));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return <canvas ref={canvas} className="sp-canvas" aria-hidden="true" />;
+}
+
+export function BigPicture({ active }: { active: boolean }) {
   const tr = useTr();
   const canvas = useRef<HTMLCanvasElement>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -123,8 +149,6 @@ export function BigPicture({ active, fast = false }: { active: boolean; fast?: b
   const [playing, setPlaying] = useState(true);
   const clock = useRef(0);
   const fired = useRef(false);
-  const rate = useRef(1);
-  useEffect(() => { rate.current = fast ? 1.7 : 1; }, [fast]);
   const seek = (v: number) => { clock.current = v; setT(v); if (canvas.current) draw(canvas.current, v); };
 
   useEffect(() => {
@@ -136,7 +160,7 @@ export function BigPicture({ active, fast = false }: { active: boolean; fast?: b
       const dt = Math.min(64, now - last);
       last = now;
       if (playing) {
-        clock.current = Math.min(TOTAL, clock.current + dt * rate.current);
+        clock.current = Math.min(TOTAL, clock.current + dt);
         setT(clock.current);
         if (clock.current >= TOTAL && !fired.current) {
           fired.current = true;
@@ -162,10 +186,10 @@ export function BigPicture({ active, fast = false }: { active: boolean; fast?: b
   const flow = prog(t, FLOW_AT, FLOW_AT + 700);
   const leverAt = (i: number) => FLOW_AT + 1200 + i * FLOW_STEP;
   const tags = [0, 1, 2].filter((i) => t >= leverAt(i)).length;
-  const lit = tags ? LEVERS[tags - 1].parts : null;
+  const lit = tags && t < END_AT ? LEVERS[tags - 1].parts : null;
   // The levers stay pinned from the moment they are named; the one at work is marked.
   const named = t >= 7000 ? [0, 1, 2].filter((i) => t >= 7300 + i * 450) : [];
-  const moving = flow > 0.5 ? tags - 1 : MOVES.findIndex(([a, b]) => t >= a - 200 && t < b + 200);
+  const moving = t >= END_AT ? -1 : flow > 0.5 ? tags - 1 : MOVES.findIndex(([a, b]) => t >= a - 200 && t < b + 200);
   const cost = (() => {
     const k = MOVES.map(([a, b]) => ease.io(prog(t, a, b)));
     let c = RUNS[0].correctCost!;
@@ -173,7 +197,9 @@ export function BigPicture({ active, fast = false }: { active: boolean; fast?: b
     return c;
   })();
   const line = useMemo(() => { let cur = ""; for (const [at, text] of LINES) if (t >= at) cur = text; return cur; }, [t]);
-  const flowLine = tags ? `*${LEVERS[tags - 1].name}* works on ${LEVERS[tags - 1].where}` : null;
+  const finale = t >= END_AT;
+  const flowLine = finale ? `All three together: *${f(RUNS[0].correctCost!, 2)} → ${f(RUNS[3].correctCost!, 2)} GPU-s* per correct answer, the same ${RUNS[3].correct} correct`
+    : tags ? `*${LEVERS[tags - 1].name}* works on ${LEVERS[tags - 1].where}` : null;
   const shown = flowLine ?? line;
   return (
     <div ref={root} className="bp-root" data-flow={flow > 0.5 || undefined}>

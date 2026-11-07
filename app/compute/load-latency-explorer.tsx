@@ -182,14 +182,6 @@ export function LoadLatencyExplorer({ baseline, optimized, onPolicy, evidence, i
   const seek = (time: number) => { setSelected(null); film.seek(time); };
   const replay = () => { setSelected(null); film.seek(0); player.replay(); };
   const compareReady = !frame.tail || frame.sort === 1;
-  // The highlights run opens a figure at its best moment.
-  useEffect(() => {
-    const go = (e: Event) => localFilm.seek((e as CustomEvent<number>).detail);
-    window.addEventListener("lab:figure-seek", go);
-    return () => window.removeEventListener("lab:figure-seek", go);
-    // the film's seek is stable for one mounted figure
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   // Freeze on the two results: the widest gap in the queue, then the slow tail.
   const moments = useMemo(() => {
     const maxArrival = Math.max(...baseline.tasks.map(task => task.arrival)), maxFinish = Math.max(...runs.flatMap(run => run.tasks.map(task => task.finish)));

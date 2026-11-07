@@ -6,14 +6,6 @@ const D = (s: number) => `${s}s`;
 
 /* ── Inference · Part 1 ───────────────────────────────────────────────── */
 
-export function GlyphHighlights() {
-  // A strip of frames with a playhead crossing them: every module's best moment, in a row.
-  return <svg viewBox={VB}>
-    {[0, 1, 2, 3, 4, 5].map((i) => <rect key={i} x={14 + i * 36} y={30} width={30} height={46} rx={4} className={i % 2 ? "g-g" : "g-a"} opacity={0.45 + i * 0.09} />)}
-    <rect x={14} y={24} width={2.5} height={58} rx={1} className="g-ink"><animate attributeName="x" values="14;226" dur={D(5.4)} repeatCount="indefinite" /></rect>
-  </svg>;
-}
-
 export function GlyphBigPicture() {
   // A turning cloud of requests: the points fall as the levers act.
   const pts = [[38, 40], [62, 28], [86, 52], [108, 34], [132, 62], [156, 44], [178, 70], [200, 54]];

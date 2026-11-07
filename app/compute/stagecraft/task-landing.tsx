@@ -67,7 +67,7 @@ export function TaskLanding({ budget, active }: { budget: number; active: boolea
 
   const line = t < HOLD ? `Base: the ability line passes ${data.runs[0].correct} of 96 tasks`
     : atEnd ? `${data.runs[0].correct} → ${run.correct} tasks solved: the line moved from ${data.abilities[0].toFixed(2)} to ${ability.toFixed(2)}`
-    : `${STEPS[to].name} ${STEPS[to].how}: the line moves right`;
+    : `${STEPS[to].name} ${STEPS[to].how}: ${data.runs[from].correct} → ${data.runs[to].correct} tasks solved`;
   useEffect(() => { if (active) emitMeter({ text: line, step: settled + 1, total: STEPS.length, tone: atEnd ? "delta" : "optimized" }); }, [active, line, settled, atEnd]);
   useEffect(() => {
     if (!active || !atEnd) return;

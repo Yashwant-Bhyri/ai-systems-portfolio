@@ -9,7 +9,7 @@ const [W = 1512, H = 860, ONLY] = process.argv.slice(2);
 const OUT = new URL("./out/fit/", import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 const MODULES = {
-  inference: ["setup", "replay", "composition", "latency", "film", "pressure", "draft", "cache", "overlap", "map", "glossary"],
+  inference: ["setup", "replay", "composition", "latency", "film", "pressure", "draft", "cache", "overlap", "map"],
   "post-training": ["inside", "terrain", "learn", "frontier", "curves", "tasks", "film", "fleet", "map", "audit"],
 };
 const SEC = { inference: "inference-study", "post-training": "post-training-study" };

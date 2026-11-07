@@ -161,3 +161,19 @@ Target viewport stays 1512×860.
 | 7 | Bring back the original pill for moving between modules | Done in its style: appears once a module is finished, ring loading. It sits in the rail rather than floating, so it cannot cover a scrubber. **To confirm with Yash.** |
 | 8 | After a short version: study in detail, or go on to the next part | Done. A planned fork; going on starts by itself after 14 s where there is a next part on the page. |
 | 9 | Inference names: one or two are too big | Done. Prefill / decode scheduling → Chunked prefill; Serving system overview → System map. |
+
+## Round 13 (2026-11-08): no "short version"; say what improved; a striking second page
+| # | Ask | Status |
+|---|---|---|
+| 1 | Intro titles move too fast | Done. Each title now holds about 1.9 s, up from 0.85 s. |
+| 2 | Remove "short version" and "serving glossary" from the titles; start with the important modules | Done. Both are gone from the rail and the intro. The glossary still opens from its direct link. |
+| 3 | Rename inference modules so names say something | Done. Titles now say the outcome, with the technique beside it, for example "Fewer calls to the large model" (Speculative decoding). |
+| 4 | Say in the title what improves and what happens | Done. The stage head names the module, its number and why, on every module. |
+| 5 | Big picture does not complete; check its timing | Done. The flow gets longer per lever, and a closing state with all three together. |
+| 6 | Toggle bar and scrubbing do not work properly | Done and tested. Cause: my own listener re-rendered in the middle of a slider event and threw the click away. Scrubbing also no longer triggers a freeze, and touching anything ends one. Policy × runtime had no scrubber in this layout; it has one now. |
+| 7 | Inference summary duplicated the big picture; no flow in either summary. A good summary, not a short one | Done. No separate summary. The modules are told in order at full length, then a planned stop asks: check it in detail, or go on. |
+| 8 | No vague statements like "moves left": say accuracy rose, cost fell, with numbers | Done for the lines that said moves left/up/right. They now state accuracy and cost with numbers. |
+| 9 | "Holding up when load arrives" is bad; say optimized serving under load | Done. Second: optimized serving under load. |
+| 10 | Second page is not striking; make it enticing enough that people go in | Done. One enormous number moving in step with the live picture behind it, one sentence, one button, three live doors with a question each. |
+| 11 | Task by task: a blinking box on the number that changes (22 of 32) | Done. A box blinks three times on each score that changes. |
+| 12 | Post-training order: learning from outcomes second, then skill gained, then frontier, then accuracy | Done. Inside the model, learning from outcomes, skill gained, accuracy against cost, what more thinking buys, elastic RL, task by task; then the detail. |

@@ -1,77 +1,84 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { CloudBackdrop } from "./compute/stagecraft/big-picture";
+import { TerrainBackdrop } from "./compute/stagecraft/scan/capability-terrain";
+import { highlight } from "./compute/stagecraft/stage-meter";
 import "./project-second-page.css";
 
 /**
- * A project's second page: one large live block with two smaller live blocks stacked
- * beside it on a slight curve. Each block carries its own tab. The page cycles on its
- * own, the blocks trading places; a click brings a small block forward, or opens the
- * large one in the project.
+ * A project's second page has one job: make people go inside. One enormous result,
+ * moving in sync with the picture behind it, one sentence, one button, and three doors
+ * below. Each door is a live window into the real thing, with a question it answers.
  */
-export type Block = { key: string; label: string; href: string; node: ReactNode };
-const DESIGN = { w: 1512, h: 860 };
-const HOLD = 11000;
-const GAP = 16;
+export type Door = { key: string; question: string; name: string; href: string; node: ReactNode };
+const DESIGN_W = 1512;
 
-export function ProjectSecondPage({ id, accent, title, line, href, blocks }: { id: string; accent: string; title: string; line: string; href: string; blocks: readonly Block[] }) {
-  const root = useRef<HTMLElement>(null);
-  const stage = useRef<HTMLDivElement>(null);
-  const [center, setCenter] = useState(1);
-  const [seen, setSeen] = useState(false);
-  const [inView, setInView] = useState(false);
-  const [size, setSize] = useState({ w: 1400, h: 660 });
+const TRAINING_STEPS = ["Base", "SFT", "RL", "2× budget", "4× budget", "Lean RL"];
+function TrainingHero({ on }: { on: boolean }) {
+  const [state, setState] = useState({ stage: 0, solved: 28 });
+  return (
+    <>
+      <div className="sp-bg">{on && <TerrainBackdrop onStage={(stage, solved) => setState({ stage, solved })} />}</div>
+      <div className="sp-number"><b key={state.solved}>{state.solved}</b><span>of 96 maths, logic and coding<br />tasks solved</span></div>
+      <ol className="sp-steps">{TRAINING_STEPS.map((s, i) => <li key={s} data-on={i === state.stage || undefined} data-done={i < state.stage || undefined}>{s}</li>)}</ol>
+    </>
+  );
+}
+const INFERENCE_STEPS = ["Free-worker scheduling", "Prefix reuse", "Faster prefill & decode"];
+function InferenceHero({ on }: { on: boolean }) {
+  const [state, setState] = useState({ cost: 41.4, lever: -1 });
+  const last = useRef(0);
+  return (
+    <>
+      <div className="sp-bg">{on && <CloudBackdrop onCost={(cost, lever) => { const now = performance.now(); if (now - last.current > 60) { last.current = now; setState({ cost, lever }); } }} />}</div>
+      <div className="sp-number"><b>{state.cost.toFixed(2)}</b><span>GPU-seconds per correct answer,<br />down from 41.40</span></div>
+      <ol className="sp-steps">{INFERENCE_STEPS.map((s, i) => <li key={s} data-on={i === state.lever || undefined}>{s}</li>)}</ol>
+    </>
+  );
+}
 
+function DoorView({ door, seen }: { door: Door; seen: boolean }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [k, setK] = useState(0.3);
   useEffect(() => {
-    const el = root.current, st = stage.current;
-    if (!el || !st) return;
-    const io = new IntersectionObserver(([e]) => { setInView(e.isIntersecting); if (e.isIntersecting) setSeen(true); }, { threshold: 0.35 });
-    io.observe(el);
-    const ro = new ResizeObserver(([e]) => setSize({ w: e.contentRect.width, h: e.contentRect.height }));
-    ro.observe(st);
-    return () => { io.disconnect(); ro.disconnect(); };
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setK(e.contentRect.width / DESIGN_W));
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
+  return (
+    <div ref={box} className="sp-door">
+      {/* The link sits beside the live page, not around it: a scripted click inside must never navigate. */}
+      <div className="sp-live" style={{ transform: `scale(${k})` }}><div className="sp-frame" inert>{seen ? door.node : null}</div></div>
+      <a className="sp-door-text" href={door.href}><strong>{door.question}</strong><small>{door.name} <i aria-hidden="true">↗</i></small></a>
+    </div>
+  );
+}
+
+export function ProjectSecondPage({ id, accent, training, kicker, headline, href, doors }: { id: string; accent: string; training: boolean; kicker: string; headline: string; href: string; doors: readonly Door[] }) {
+  const root = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(false);
+  const [seen, setSeen] = useState(false);
   useEffect(() => {
-    if (!inView || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = window.setTimeout(() => setCenter((c) => (c + 1) % blocks.length), HOLD);
-    return () => window.clearTimeout(t);
-  }, [inView, center, blocks.length]);
-
-  // Two small blocks stacked exactly as tall as the large one; together they fill the width.
-  const ratio = DESIGN.h / DESIGN.w;
-  const large = Math.min((2 * ratio * size.w - (2 * ratio - 1) * GAP) / (3 * ratio), size.h / ratio);
-  const small = (large * ratio - GAP) / 2 / ratio;
-  const total = large + GAP + small;
-  const left = (size.w - total) / 2, top = (size.h - large * ratio) / 2;
-  const slot = (o: number) => o === 0
-    ? { x: left, y: top, k: large / DESIGN.w }
-    : { x: left + large + GAP, y: o === 1 ? top : top + (small * ratio) + GAP, k: small / DESIGN.w };
-
+    const el = root.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => { setInView(e.isIntersecting); if (e.isIntersecting) setSeen(true); }, { threshold: 0.2 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   return (
     <section ref={root} id={`${id}-second`} className={`sp-page vx-page vx-accent-${accent}`} data-vx-page>
-      <header className="sp-head">
-        <div>
-          <h2>{title}</h2>
-          <p>{line}</p>
-        </div>
-        <a className="sp-cta" href={href}>Click here to explore the whole project <i aria-hidden="true">↗</i></a>
-      </header>
-      <div ref={stage} className="sp-stage">
-        {blocks.map((b, i) => {
-          const o = (i - center + blocks.length) % blocks.length;
-          const s = slot(o);
-          return (
-            <article key={b.key} className="sp-block" data-main={o === 0 || undefined} aria-label={b.label} style={{ width: DESIGN.w, height: DESIGN.h, transform: `translate(${s.x}px, ${s.y}px) scale(${s.k})`, zIndex: o === 0 ? 2 : 1 }}>
-              <div className="sp-frame" inert>{seen ? b.node : null}</div>
-              <span className="sp-tab" style={{ transform: `scale(${1 / s.k})` }}>
-                {b.label}
-                {o === 0 && <b key={center} style={{ animationDuration: `${HOLD}ms`, animationPlayState: inView ? "running" : "paused" }} />}
-              </span>
-              <a className="sp-hit" href={b.href} aria-label={o === 0 ? `Open ${b.label}` : `Show ${b.label}`} onClick={(e) => { if (o !== 0) { e.preventDefault(); setCenter(i); } }} />
-            </article>
-          );
-        })}
+      <div className="sp-hero">
+        <span className="sp-kicker">{kicker}</span>
+        <h2>{highlight(headline)}</h2>
+        {training ? <TrainingHero on={inView} /> : <InferenceHero on={inView} />}
+        <a className="sp-cta" href={href}>Go inside the project <i aria-hidden="true">↗</i></a>
       </div>
+      <nav className="sp-doors" aria-label="Three ways in">
+        {doors.map((d) => <DoorView key={d.key} door={d} seen={seen} />)}
+      </nav>
     </section>
   );
 }

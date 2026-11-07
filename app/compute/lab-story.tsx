@@ -118,14 +118,11 @@ export function LabStory({
   });
   // The frontier has its own module near the top of post-training.
   const steps = training ? TRAINING_STORY.slice(0, 5) : INFERENCE_STORY;
-  // In the highlights run a chapter plays without its framing scenes.
-  const [quiet, setQuiet] = useState<null | { frame: boolean }>(null);
   const [seenStep, setSeenStep] = useState(playback.step);
   if (seenStep !== playback.step) {
     const prev = seenStep, next = playback.step;
     setSeenStep(next);
-    if (quiet) setInterludes(quiet.frame && training && LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" }] : []);
-    else if (training) setInterludes(unseen(true, LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" }] : []));
+    if (training) setInterludes(unseen(true, LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" }] : []));
     else
       setInterludes(unseen(false, [
         ...(FILM_ARCS[prev] && next === prev + 1 ? [{ step: prev, kind: "impact" as const }] : []),
@@ -226,20 +223,6 @@ export function LabStory({
     pauseRef.current = playback.pause;
     resumeRef.current = () => { if (playback.finished) playback.select(step); playback.resume(); };
   });
-  const goRef = useRef((step: number, at: number, frame: boolean) => { void step; void at; void frame; });
-  useEffect(() => {
-    goRef.current = (n, at, frame) => {
-      setQuiet({ frame });
-      setInterludes(frame && training && LEARN_ARCS[n] ? [{ step: n, kind: "mechanism" }] : []);
-      setUndo(false); playback.select(n); playback.resume();
-      if (at) window.setTimeout(() => playback.seek(at), 60);
-    };
-  });
-  useEffect(() => {
-    const go = (e: Event) => { const d = (e as CustomEvent<{ training: boolean; step: number; at?: number; frame?: boolean }>).detail; if (d.training === training) goRef.current(d.step, d.at ?? 0, !!d.frame); };
-    window.addEventListener("lab:film-go", go);
-    return () => window.removeEventListener("lab:film-go", go);
-  }, [training]);
   useEffect(() => {
     const dive = () => { setInterludes([]); pauseRef.current(); };
     const resume = () => resumeRef.current();

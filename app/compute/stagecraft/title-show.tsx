@@ -77,7 +77,7 @@ export function TileGrid({ items, open, wide = false, onOpen }: { items: readonl
  * turn. A click on any card starts there; "Skip" starts at the first module.
  */
 export type IntroStep = { kind: "line"; text: string; ms: number } | { kind: "path"; index: number };
-const LIFT = 500, CARD = 850, SETTLE = 300;
+const LIFT = 700, CARD = 1900, SETTLE = 400;
 type Now = { kind: "idle" } | { kind: "line"; text: string; ms: number } | { kind: "path"; index: number };
 
 export function LabLanding({

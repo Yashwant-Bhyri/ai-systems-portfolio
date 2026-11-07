@@ -140,9 +140,9 @@
 .lab-flow-show .lf-fit .pr-float { display: none; }
 
 /* ── Policy × runtime: the plot takes the stage; the note on the curve says what moved it ── */
-.lab-flow-show .lf-fit :is(.cxp-lenses, .cxp-direction, .cxp-pan, .cxp-mechanisms, .cxp-cohort, .cxp-audit, .cxp-evidence, .cxp-active-step) { display: none; }
+.lab-flow-show .lf-fit :is(.cxp-lenses, .cxp-pan, .cxp-mechanisms, .cxp-cohort, .cxp-audit, .cxp-evidence, .cxp-active-step) { display: none; }
 .lab-flow-show .lf-fit .cxp-stage { grid-template-columns: minmax(0, 1fr) 300px; }
-.lab-flow-show .lf-fit .cxp-plot { max-height: calc(var(--lf-room) - 20px); margin-inline: auto; }
+.lab-flow-show .lf-fit .cxp-plot { max-height: calc(var(--lf-room) - 64px); margin-inline: auto; }
 .lab-flow-show .lf-fit .cxp-readout { margin: 12px 18px 12px 8px; padding: 16px; align-self: center; }
 .lab-flow-show .lf-fit .rs-context-bar { top: 8px; }
 
@@ -282,7 +282,7 @@
 .lab-flow-show .lf-fit .sc-stage:not(.sc-terrain) { height: clamp(220px, 30svh, 300px); }
 
 /* The head: the lab's name beside the rail, the voice aligned with the stage. */
-.cs-study.lab-flow-show .lb-head { align-items: center; gap: 12px; min-height: 44px; padding-left: 6px; }
+.cs-study.lab-flow-show .lb-head { align-items: center; gap: 12px; min-height: 52px; padding-left: 6px; }
 .cs-study.lab-flow-show .lb-head h2 { flex: 0 0 var(--tr-w); margin: 0; color: #aab6c2; font: 450 14.5px/1.2 var(--font-geist-sans), sans-serif; letter-spacing: 0; white-space: normal; }
 @media (max-width: 1380px) { .cs-study.lab-flow-show .lb-head h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .cs-study.lab-flow-show .lb-head { padding-left: calc(var(--tr-w) + 18px); } }
 
@@ -309,3 +309,13 @@
 .rs-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: rs-draw .9s cubic-bezier(.22,1,.36,1) forwards; }
 @keyframes rs-draw { to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) { .rs-draw { animation: none; stroke-dashoffset: 0; } }
+
+/* Policy × runtime keeps only its transport from the row above the plot. */
+.lab-flow-show .lf-fit .cxp-direction { padding: 4px 16px; min-height: 0; border: 0; }
+.lab-flow-show .lf-fit .cxp-direction > :not(.cxp-transport) { display: none; }
+.lab-flow-show .lf-fit .cxp-direction .cxp-transport { width: 100%; }
+
+/* Task by task: the score that just changed blinks. */
+.rs-score-box { fill: none; stroke-width: 2; animation: rs-score-box 1.1s ease-in-out 3 both; }
+@keyframes rs-score-box { 0%, 100% { opacity: .35; fill: transparent; } 50% { opacity: 1; fill: rgba(255,255,255,.1); } }
+@media (prefers-reduced-motion: reduce) { .rs-score-box { animation: none; opacity: .6; } }

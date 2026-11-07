@@ -57,9 +57,9 @@ function useLabEvent<T>(name: string, reset: string) {
 }
 
 /** The voice: one plain line at the head of the stage. */
-export function StageMeter({ moduleKey, override }: { moduleKey: string; override?: NonNullable<MeterDetail> | null }) {
+export function StageMeter({ moduleKey, rest }: { moduleKey: string; rest?: string }) {
   const heard = useLabEvent<NonNullable<MeterDetail>>("lab:meter", moduleKey);
-  const m = override ?? heard;
+  const m = heard ?? (rest ? { text: rest } as NonNullable<MeterDetail> : null);
   return (
     <div className="sm-voice" data-on={m ? "true" : "false"} data-tone={m?.tone ?? "neutral"} aria-live="polite">
       {m && <span key={m.text} className="sm-line">{highlight(m.text.replace(/\.$/, ""))}</span>}
@@ -112,22 +112,33 @@ export function useFreezeMoments(moments: readonly FreezeMoment[], readTime: () 
   useEffect(() => { passed.current = new Set(); }, [runKey]);
   useEffect(() => {
     if (!running || frozen || !document.querySelector(".lab-flow-show")) return;
+    let last = live.current.readTime();
     const id = window.setInterval(() => {
       const { moments: list, readTime: read, pause: stop } = live.current;
       const t = read();
+      const jumped = Math.abs(t - last) > 900;
+      last = t;
+      // A scrub is the visitor looking: moments it passes do not interrupt, and scrubbing back re-arms them.
+      if (jumped) { list.forEach((m, k) => { if (m.at <= t) passed.current.add(k); else passed.current.delete(k); }); return; }
       const i = list.findIndex((m, k) => !passed.current.has(k) && t >= m.at);
       if (i < 0) return;
-      // moments already behind the clock (a seek) count as seen; only the latest one plays
-      list.forEach((m, k) => { if (m.at <= t) passed.current.add(k); });
-      const latest = list.reduce((best, m, k) => (m.at <= t ? k : best), i);
+      passed.current.add(i);
       stop();
-      emitFocus(list[latest]);
+      emitFocus(list[i]);
       setFrozen(true);
-      window.setTimeout(() => {
+      let over = false;
+      const release = () => {
+        if (over) return;
+        over = true;
+        window.clearTimeout(timer);
+        window.removeEventListener("pointerdown", release, true);
         emitFocus(null);
         setFrozen(false);
         live.current.resume();
-      }, list[latest].hold ?? 3400);
+      };
+      const timer = window.setTimeout(release, list[i].hold ?? 3400);
+      // Touching anything ends the freeze at once, so a pause or a scrub is never swallowed.
+      window.addEventListener("pointerdown", release, true);
     }, 120);
     return () => window.clearInterval(id);
   }, [running, frozen]);

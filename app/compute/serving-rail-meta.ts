@@ -14,11 +14,11 @@ export const PRESSURE_GAP = { whole: gap("whole"), chunked: gap("chunked") };
 export const OVERLAP = overlapStudy("balanced", 4);
 export const CACHE_DELTA = cacheRoutingStudy().delta;
 export type ServingKey = "pressure" | "draft" | "cache" | "overlap" | "map" | "glossary";
-export const SERVING_RAIL: readonly { key: ServingKey; title: string; term: string; value: string; unit: string; Glyph: ComponentType }[] = [
-  { key: "pressure", title: "Chunked prefill", term: "chunked prefill · per-iteration token budget", value: `${PRESSURE_GAP.whole.toFixed(0)} → ${PRESSURE_GAP.chunked.toFixed(1)} ms`, unit: "worst token gap in request 1's stream", Glyph: GlyphChunked },
-  { key: "draft", title: "Speculative decoding", term: "draft model guesses · target model verifies", value: "12 → 3", unit: "serial target-model calls", Glyph: GlyphDraft },
-  { key: "cache", title: "Cache-aware routing", term: "warm prefix vs. memory pressure", value: `−${CACHE_DELTA} ms`, unit: "first token on the warm replica", Glyph: GlyphCacheRoute },
-  { key: "overlap", title: "CPU / GPU overlap", term: "host prepares step n+1 during step n", value: `${OVERLAP.baseline.finish} → ${OVERLAP.overlapped.finish} ms`, unit: "four decode steps, two streams", Glyph: GlyphOverlap },
-  { key: "map", title: "System map", term: "requests A–D on one serving clock", value: "10", unit: "mechanisms on one serving clock", Glyph: GlyphServingMap },
-  { key: "glossary", title: "Serving glossary", term: "SSE · KV sizing · PagedAttention · …", value: "9", unit: "serving terms, each linked to the microscope", Glyph: GlyphKVSizing },
+export const SERVING_RAIL: readonly { key: ServingKey; title: string; technique: string; term: string; value: string; unit: string; Glyph: ComponentType }[] = [
+  { key: "pressure", title: "Long prompts stop stalling answers", technique: "Chunked prefill", term: "chunked prefill · per-iteration token budget", value: `${PRESSURE_GAP.whole.toFixed(0)} → ${PRESSURE_GAP.chunked.toFixed(1)} ms`, unit: "worst token gap in request 1's stream", Glyph: GlyphChunked },
+  { key: "draft", title: "Fewer calls to the large model", technique: "Speculative decoding", term: "draft model guesses · target model verifies", value: "12 → 3", unit: "serial target-model calls", Glyph: GlyphDraft },
+  { key: "cache", title: "Requests go to their cache", technique: "Cache-aware routing", term: "warm prefix vs. memory pressure", value: `−${CACHE_DELTA} ms`, unit: "first token on the warm replica", Glyph: GlyphCacheRoute },
+  { key: "overlap", title: "The GPU stops waiting on the CPU", technique: "CPU/GPU overlap", term: "host prepares step n+1 during step n", value: `${OVERLAP.baseline.finish} → ${OVERLAP.overlapped.finish} ms`, unit: "four decode steps, two streams", Glyph: GlyphOverlap },
+  { key: "map", title: "All of it on one serving clock", technique: "System map", term: "requests A–D on one serving clock", value: "10", unit: "mechanisms on one serving clock", Glyph: GlyphServingMap },
+  { key: "glossary", title: "Serving glossary", technique: "Serving glossary", term: "SSE · KV sizing · PagedAttention · …", value: "9", unit: "serving terms, each linked to the microscope", Glyph: GlyphKVSizing },
 ];

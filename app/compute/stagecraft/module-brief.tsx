@@ -6,6 +6,7 @@ import { useTr } from "../../exhibit/i18n";
 import { highlight } from "./stage-meter";
 import type { ShowItem } from "./title-show";
 import { POLICIES, simulateLab } from "../lab-simulation";
+import { FRONTIER_COST } from "../../exhibit/policy/data.ts";
 import { latencyDistribution } from "../load-latency-model";
 import { CACHE_DELTA, OVERLAP, PRESSURE_GAP } from "../serving-rail-meta";
 import "./module-brief.css";
@@ -15,7 +16,7 @@ import "./module-brief.css";
  * steps out of the rail to the middle, saying what we are dealing with, the goal, and
  * the impact with its number. It then returns to the rail. Once per visit; a click or key ends it.
  */
-export type Brief = { dealing: string; goal: string; impact: string; title?: string };
+export type Brief = { dealing: string; goal: string; impact: string; why: string; title?: string };
 
 const f = (v: number, d = 0) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return (s[47] + s[48]) / 2; };
@@ -26,16 +27,16 @@ export function moduleBriefs(training: boolean, budget: number): Record<string, 
     const base1 = simulateLab(0, 1), lean = simulateLab(3, 4), base = simulateLab(0, budget), rl = simulateLab(2, budget);
     const r8 = simulateLab(2, 8);
     return {
-      learn: { dealing: "Eight attempts at the same task, and the tests that grade them", goal: "Make the attempts that pass more likely, with no teacher", impact: `*${simulateLab(1, 1).correct} → ${simulateLab(2, 1).correct} of 96* tasks solved` },
-      frontier: { dealing: "Accuracy against GPU time per correct answer, move by move", goal: "Three times the answers without three times the cost", impact: `*${base1.correct} → ${lean.correct} of 96*, then the serving runtime takes the cost down` },
-      inside: { dealing: "The model's 36 layers, while it answers one coding task", goal: "See where training really changed how it reasons", impact: "*7 of 50 words* now differ from the base model" },
-      terrain: { dealing: "All 96 tasks, at six stages of training", goal: "Clear more tasks at every stage", impact: `*${base1.correct} → ${lean.correct} of 96* tasks solved` },
-      curves: { dealing: `${POLICIES.length} checkpoints, each given more and more GPU time`, goal: "The most correct answers for the least compute", impact: `*${r8.correct} of 96* for the RL checkpoint at 8× thinking budget` },
-      tasks: { dealing: "Every task, stacked from easiest to hardest", goal: "Move the model's ability line to the right", impact: `*+${rl.correct - base.correct} tasks* over the line` },
-      film: { dealing: "One base model and four training moves", goal: "Smarter first, then leaner", impact: `*${base1.correct} → ${lean.correct} of 96* solved, step by step` },
-      fleet: { dealing: "64 GPUs doing RL, stopping at a barrier every step", goal: "Let any free GPU take any role, so nobody waits", impact: "*4 → 7 RL steps* in the same 14 minutes" },
-      map: { dealing: "One square per task, at every checkpoint", goal: "See which tasks changed, not only the score", impact: `*+${rl.correct - base.correct} tasks*, net, at ${budget}× thinking budget` },
-      audit: { dealing: "Every gain and every loss, task by task", goal: "Catch any task that training broke", impact: "*Each lost task* is named, not averaged away" },
+      inside: { dealing: "The model's 36 layers, while it answers one coding task", goal: "See where training really changed how it reasons", impact: "*7 of 50 words* now differ from the base model", why: "the layers that moved most are the ones writing the words that changed" },
+      learn: { dealing: "Eight attempts at the same task, and the tests that grade them", goal: "Make the attempts that pass more likely, with no teacher", impact: `*${simulateLab(1, 1).correct} → ${simulateLab(2, 1).correct} of 96* tasks solved`, why: "attempts that beat their group's average get written more often" },
+      terrain: { dealing: "All 96 tasks, at six stages of training", goal: "Clear more tasks at every stage", impact: `*${base1.correct} → ${lean.correct} of 96* tasks solved`, why: "each thing the model learned raises more tasks above the line" },
+      frontier: { dealing: "Accuracy against GPU time per correct answer, move by move", goal: "Three times the answers without three times the cost", impact: `*${base1.correct} → ${lean.correct} of 96*, at ${f(FRONTIER_COST.start, 2)} → ${f(FRONTIER_COST.runtime, 2)} GPU-s per answer`, why: "training raises accuracy, then the serving runtime takes the cost back down" },
+      curves: { dealing: `${POLICIES.length} checkpoints, each given more and more GPU time`, goal: "The most correct answers for the least compute", impact: `*${r8.correct} of 96* for the RL checkpoint at 8× thinking budget`, why: "a trained model gains far more from extra thinking than the base model" },
+      fleet: { dealing: "64 GPUs doing RL, stopping at a barrier every step", goal: "Let any free GPU take any role, so nobody waits", impact: "*4 → 7 RL steps* in the same 14 minutes", why: "no barrier: each GPU keeps its identity and changes role" },
+      map: { dealing: "One square per task, at every checkpoint", goal: "See which tasks changed, not only the score", impact: `*+${rl.correct - base.correct} tasks*, net, at ${budget}× thinking budget`, why: "maths, multi-step logic and repository tasks all gain" },
+      film: { dealing: "One base model and four training moves", goal: "Smarter first, then leaner", impact: `*${base1.correct} → ${lean.correct} of 96* solved, step by step`, why: "each move shown, then measured on the same 96 tasks" },
+      tasks: { dealing: "Every task, stacked from easiest to hardest", goal: "Raise the model's ability past more of them", impact: `*+${rl.correct - base.correct} tasks* within reach`, why: "ability rises, so harder tasks fall below it" },
+      audit: { dealing: "Every gain and every loss, task by task", goal: "Catch any task that training broke", impact: "*Each lost task* is named, not averaged away", why: "a better score can hide a task that broke" },
     };
   }
   const baseStatic = simulateLab(0, budget, false, "shared-prefix");
@@ -44,17 +45,16 @@ export function moduleBriefs(training: boolean, budget: number): Record<string, 
   const med = (r: typeof rlFast) => median(r.tasks.map((t) => t.latency));
   const costPct = Math.round((100 * (rlFast.correctCost! - baseStatic.correctCost!)) / baseStatic.correctCost!);
   return {
-    setup: { dealing: "First: how we serve the same intelligence with cheaper execution", goal: "The same answers for less GPU time, through three levers", impact: `*${f(rlStatic.correctCost!, 2)} → ${f(rlFast.correctCost!, 2)} GPU-s* per correct answer` },
-    replay: { dealing: "One request's whole life, then all 96 side by side", goal: "Answer every request sooner, with the answer unchanged", impact: `Median response *${f(med(rlStatic))} → ${f(med(rlFast))} s*` },
-    composition: { dealing: "Two separate levers: what the model knows, and how it is served", goal: "More correct answers, without the bill growing with them", impact: `*${baseStatic.correct} → ${rlFast.correct} of 96* correct, at ${Math.abs(costPct)}% ${costPct > 0 ? "more" : "less"} GPU time per answer` },
-    latency: { dealing: "The queue: what a person sending a request feels", goal: "Shorten the wait of the slowest requests", impact: `Slowest 5%: *${f(p95(rlStatic))} → ${f(p95(rlFast))} s*` },
-    film: { title: "The experiment, lever by lever", dealing: "The same 96 requests, changing one thing at a time", goal: "Find out what each lever really saves", impact: `*${f(rlStatic.correctCost!, 2)} → ${f(rlFast.correctCost!, 2)} GPU-s* per correct answer` },
-    pressure: { dealing: "Long prompts and live answers share every GPU step", goal: "Never let a long prompt freeze an answer mid-stream", impact: `Worst pause *${f(PRESSURE_GAP.whole)} → ${f(PRESSURE_GAP.chunked, 1)} ms*` },
-    draft: { dealing: "The large model writes one word per full pass", goal: "Let a small model guess ahead, and verify many words in one pass", impact: "*12 → 3* serial calls of the large model" },
-    cache: { dealing: "Several replicas: which one should take this request?", goal: "Send it to where its prompt is already in memory", impact: `First token *${CACHE_DELTA} ms sooner*` },
-    overlap: { dealing: "The GPU waits while the CPU prepares its next step", goal: "Prepare the next step during this one", impact: `Four steps: *${OVERLAP.baseline.finish} → ${OVERLAP.overlapped.finish} ms*` },
-    map: { dealing: "Every serving mechanism on one clock", goal: "See how they work together on four requests", impact: "*10 mechanisms*, one system" },
-    glossary: { dealing: "The vocabulary of serving under load", goal: "Nine terms, each one tied to this project", impact: "*9 terms*, and this part ends here" },
+    setup: { dealing: "All 96 requests: how long each waits, its GPU time, and whether it was right", goal: "The same answers for less GPU time, through three levers", impact: `*${f(rlStatic.correctCost!, 2)} → ${f(rlFast.correctCost!, 2)} GPU-s* per correct answer`, why: "free-worker scheduling, prefix reuse, faster prefill and decode" },
+    replay: { dealing: "One request's whole life, then all 96 side by side", goal: "Answer every request sooner, with the answer unchanged", impact: `Median response *${f(med(rlStatic))} → ${f(med(rlFast))} s*`, why: "each request does less GPU work, so every queue drains sooner" },
+    composition: { dealing: "Two separate levers: what the model knows, and how it is served", goal: "More correct answers, without the bill growing with them", impact: `*${baseStatic.correct} → ${rlFast.correct} of 96* correct, at ${Math.abs(costPct)}% ${costPct > 0 ? "more" : "less"} GPU time per answer`, why: "training raises accuracy; faster serving takes back most of the extra cost" },
+    latency: { dealing: "The queue: what a person sending a request feels", goal: "Shorten the wait of the slowest requests", impact: `Slowest 5%: *${f(p95(rlStatic))} → ${f(p95(rlFast))} s*`, why: "workers free up sooner, so the requests at the back wait far less" },
+    film: { dealing: "The same 96 requests, changing one thing at a time", goal: "Find out what each lever really saves", impact: `*${f(rlStatic.correctCost!, 2)} → ${f(rlFast.correctCost!, 2)} GPU-s* per correct answer`, why: "scheduling, then prefix reuse, then faster execution" },
+    pressure: { dealing: "Long prompts and live answers share every GPU step", goal: "Never let a long prompt freeze an answer mid-stream", impact: `Worst pause *${f(PRESSURE_GAP.whole)} → ${f(PRESSURE_GAP.chunked, 1)} ms*`, why: "the prompt is read in chunks between answer steps" },
+    draft: { dealing: "The large model writes one word per full pass", goal: "Let a small model guess ahead, and verify many words in one pass", impact: "*12 → 3* serial calls of the large model", why: "a small model drafts; the large one checks many words at once" },
+    cache: { dealing: "Several replicas: which one should take this request?", goal: "Send it to where its prompt is already in memory", impact: `First token *${CACHE_DELTA} ms sooner*`, why: "the router knows where each prefix is already cached" },
+    overlap: { dealing: "The GPU waits while the CPU prepares its next step", goal: "Prepare the next step during this one", impact: `Four steps: *${OVERLAP.baseline.finish} → ${OVERLAP.overlapped.finish} ms*`, why: "the CPU prepares the next step while the GPU runs this one" },
+    map: { dealing: "Every serving mechanism on one clock", goal: "See how they work together on four requests", impact: "*10 mechanisms*, one system", why: "requests A to D, on one serving clock" },
   };
 }
 

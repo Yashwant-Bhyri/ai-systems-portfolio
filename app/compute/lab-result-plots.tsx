@@ -176,6 +176,8 @@ export function CapabilityShiftPlot({
                     </g>
                   );
                 })}
+                {/* The score that changes with the checkpoint gets a box that blinks, so the eye goes there. */}
+                {trained && <rect key={b} x={968} y={startY - 6} width={92} height={42} rx={7} className="rs-score-box" stroke={color} />}
                 <text
                   x={trained ? 980 : 530}
                   y={startY + 24}
