@@ -117,4 +117,23 @@
 .lab-flow-show .lf-fit .so-controls .so-inputs { display: none; }
 .lab-flow-show .lf-fit .so-heading { padding: 10px 24px 2px; padding-right: 460px; }
 .lab-flow-show .lf-fit .so-heading h3 { font-size: 22px; }
-.lab-flow-show .lf-fit .so-diagram { max-height: calc(var(--lf-system) - 92px); }
+.lab-flow-show .lf-fit .so-diagram { max-height: calc(var(--lf-system) - 124px); }
+
+/* ── Serving glossary: nine slots, filled one term at a time ──────────── */
+.lab-flow-show .lf-fit .gb-root { position: relative; height: var(--lf-room); display: flex; flex-direction: column; padding: 10px 18px 12px; box-sizing: border-box; }
+.lab-flow-show .lf-fit .gb-head h3 { font-size: 20px; }
+.lab-flow-show .lf-stage .lf-fit .gb-grid { flex: 1 1 auto; min-height: 0; margin-top: 8px; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.lab-flow-show .lf-fit .gb-card { position: relative; min-height: 0; overflow: hidden; border: 1px solid rgba(230,237,244,.07); border-radius: 8px; padding: 8px 12px; grid-template-rows: minmax(0, 1fr) auto auto auto; background: #0a0f15; transition: transform .52s cubic-bezier(.2,.75,.2,1), box-shadow .4s, border-color .4s, opacity .4s; transform-origin: center; }
+.lab-flow-show .lf-fit .gb-glyph { height: auto; min-height: 0; }
+.lab-flow-show .lf-fit .gb-card strong { font-size: 15px; }
+.lab-flow-show .lf-fit .gb-card em { font: 400 12.5px/1.3 var(--font-geist-sans), sans-serif; color: #aab6c2; }
+.lab-flow-show .lf-fit .gb-value small { font: 400 12.5px/1.3 var(--font-geist-sans), sans-serif; color: #aab6c2; }
+.lab-flow-show .lf-fit .gb-card > button { position: absolute; top: 6px; right: 6px; }
+/* An empty slot is a quiet outline. */
+.lab-flow-show .lf-fit .gb-card[data-state="empty"] { background: none; border-style: dashed; border-color: rgba(230,237,244,.1); pointer-events: none; }
+.lab-flow-show .lf-fit .gb-card[data-state="empty"] > * { opacity: 0; }
+/* The open term: large, in the middle, above everything. */
+.lab-flow-show .lf-fit .gb-card[data-state="open"] { z-index: 12; overflow: visible; border-color: color-mix(in srgb, var(--active-accent) 60%, transparent); box-shadow: 0 30px 90px rgba(0,0,0,.65), 0 0 50px color-mix(in srgb, var(--active-accent) 14%, transparent); }
+.lab-flow-show .lf-fit .gb-root[data-opening] .gb-card[data-state="placed"] { opacity: .35; filter: grayscale(.7) blur(1px); }
+/* The cursor's sweep: each term lifts as it passes. */
+.lab-flow-show .lf-fit .gb-card[data-hot] { z-index: 6; transform: translateY(-4px) scale(1.03); border-color: color-mix(in srgb, var(--active-accent) 70%, transparent); box-shadow: 0 14px 40px rgba(0,0,0,.45), 0 0 34px color-mix(in srgb, var(--active-accent) 18%, transparent); }

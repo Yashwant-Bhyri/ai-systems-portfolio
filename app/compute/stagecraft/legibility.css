@@ -9,4 +9,4 @@
 .lab-flow-show .lf-stage .ls-small { font-size: 12px; }
 .lab-flow-show .lf-stage .tl-median-label { font-size: 11px; }
 /* The glossary's figures are drawn 400 wide; two columns keep them at full size. */
-.lab-flow-show .lf-stage .gb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lab-flow-show .lf-stage .gb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }

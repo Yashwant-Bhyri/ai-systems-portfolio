@@ -3,6 +3,7 @@
    SMIL keeps them off the React clock; GlossaryBoard restarts them together
    when the board comes into view and pauses them when it leaves. */
 import type { ReactNode } from "react";
+import { simulateStream } from "../stream-continuity-model";
 
 const VB = "0 0 400 120";
 const DUR = "6s";
@@ -152,7 +153,11 @@ export function FigQuant() {
 /* ── Observability: four signals, each a value and its trace. ── */
 export function FigObserve() {
   const spark = (seed: number) => Array.from({ length: 24 }, (_, i) => `${i ? "L" : "M"}${(i * 190) / 23} ${22 - Math.abs(Math.sin(i * 1.3 + seed) * Math.cos(i * 0.4 + seed)) * 20}`).join("");
-  const m = [["first token", "105 ms"], ["worst token gap", "10.3 ms"], ["KV in use", "82%"], ["prefix hits", "93.8%"]];
+  // the chunked run from the prefill / decode module: the numbers its dashboard would show
+  const run = simulateStream({ policy: "chunked", tokenBudget: 16, capacityPages: 24 });
+  const t = run.requests[0].tokenMs;
+  const gap = t.slice(1).reduce((worst, ms, i) => Math.max(worst, ms - t[i]), 0);
+  const m = [["first token", `${(run.requests[2].ttftMs ?? 0).toFixed(0)} ms`], ["worst token gap", `${gap.toFixed(1)} ms`], ["KV in use", `${Math.round((100 * run.peakReservationPages) / run.capacityPages)}%`], ["prefix hits", "93.8%"]];
   return <Fig label="Observability: time to first token, worst token gap, KV use and prefix hit rate">
     {m.map(([k, v], i) => <g key={k} transform={`translate(${(i % 2) * 210} ${Math.floor(i / 2) * 60})`}>
       <text y={12} className="gf-t">{k}</text>

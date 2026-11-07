@@ -46,18 +46,23 @@ const DEMOS: Record<string, readonly CursorStep[]> = {
   ],
 };
 import { SERVING_RAIL, type ServingKey } from "./serving-rail-meta";
+import { inferenceStoryRuns } from "./lab-story-data";
+import { idleAt, schedulingStudy } from "./scheduling-study-math";
 import { FigAutoscale, FigBatching, FigEngines, FigFlash, FigKVSizing, FigObserve, FigPaged, FigQuant, FigSSE } from "./stagecraft/glossary-figures";
 
 /* Serving terms each get one silhouette and one number; values come from the
    lab's own model or from Qwen3-4B arithmetic (36 layers, 8 KV heads × 128). */
 const microscope = (step: number) => () => window.dispatchEvent(new CustomEvent("cx:microscope", { detail: { chapter: "inference", step } }));
 const IN_MICROSCOPE = "In the microscope ↗";
+// Idle worker-seconds with work waiting, in the eight-request scheduling preview.
+const SCHEDULING = (() => { const runs = inferenceStoryRuns("shared-prefix"); return schedulingStudy(runs[0], runs[1]); })();
+const IDLE_WAITING = idleAt(SCHEDULING.gaps, SCHEDULING.horizon);
 const GLOSSARY: ReelItem[] = [
   { key: "sse", title: "Streaming over SSE", term: "one event per token", value: "0", unit: "pages held after a disconnect", Glyph: FigSSE, onOpen: microscope(7), openLabel: IN_MICROSCOPE },
   { key: "kv", title: "KV cache sizing", term: "2 × 36 layers × 8 KV heads × 128 × 2 B", value: "144 KiB", unit: "per token · 12 users at 32k on 80 GB", Glyph: FigKVSizing },
   { key: "paged", title: "PagedAttention", term: "16-token pages · block table", value: "≤ 15", unit: "tokens wasted per sequence", Glyph: FigPaged, onOpen: microscope(1), openLabel: IN_MICROSCOPE },
   { key: "flash", title: "FlashAttention", term: "tiled · online softmax", value: "0", unit: "N × N score writes to HBM", Glyph: FigFlash, onOpen: microscope(2), openLabel: IN_MICROSCOPE },
-  { key: "batch", title: "Continuous batching", term: "admit at every iteration", value: "11.65 → 0", unit: "worker-s idle with work waiting", Glyph: FigBatching, onOpen: microscope(0), openLabel: IN_MICROSCOPE },
+  { key: "batch", title: "Continuous batching", term: "admit at every iteration", value: `${IDLE_WAITING.toFixed(2)} → 0`, unit: "worker-s idle with work waiting", Glyph: FigBatching, onOpen: microscope(0), openLabel: IN_MICROSCOPE },
   { key: "quant", title: "Quantization", term: "FP8 · INT4 AWQ", value: "8.04 → 2.01", unit: "GB of weights per decode step", Glyph: FigQuant, onOpen: microscope(3), openLabel: IN_MICROSCOPE },
   { key: "observe", title: "Observability", term: "time to first token · worst token gap · prefix hits", value: "93.8%", unit: "prefix hit · 90 of 96", Glyph: FigObserve, onOpen: microscope(6), openLabel: IN_MICROSCOPE },
   { key: "engines", title: "vLLM · TRT-LLM · SGLang", term: "paged KV · compiled FP8 · radix prefix tree", Glyph: FigEngines, onOpen: microscope(2), openLabel: IN_MICROSCOPE },
@@ -413,7 +418,7 @@ export function ServingUnderLoad() {
         </Suspense>
       </RetainedLabPanel>
       <RetainedLabPanel active={view === "glossary"} id={`${id}-glossary`} label="Serving glossary">
-        <GlossaryBoard items={GLOSSARY.map((g) => (g.key === "kv" ? { ...g, onOpen: () => show("loop", "cache"), openLabel: "Open the KV capacity study ↗" } : g))} />
+        <GlossaryBoard active={view === "glossary"} items={GLOSSARY.map((g) => (g.key === "kv" ? { ...g, onOpen: () => show("loop", "cache"), openLabel: "Open the KV capacity study ↗" } : g))} />
       </RetainedLabPanel>
       {railSlot && createPortal(labNav === "bar"
         ? <ModuleBar label="Optimized serving under load" items={railItems} />

@@ -419,7 +419,7 @@ const TRAINING_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "What did the model learn?", short: "Post-training", techniques: ["SFT + LoRA", "Correctness RL", "More thought", "Lean RL", "Elastic RL"] },
 ];
 /** Modules without a scripted demonstration stay on stage this long before the show moves on. */
-const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 24000, tasks: 22000, inside: 40000, terrain: 36000 };
+const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 40000, tasks: 22000, inside: 40000, terrain: 36000 };
 /** The next module's ring fills over this long once the current one has told its story. */
 const COUNTDOWN = 5200;
 
@@ -659,6 +659,8 @@ export function ComputeLabStudy({
   }, [show, landingPhase, currentKey]);
   useEffect(() => {
     if (!show || landingPhase === "on" || phase !== "done" || !labInView) return;
+    // The show ends on its last module; it does not loop back to the start.
+    if (order.indexOf(currentKey) === order.length - 1) return;
     const id = window.setTimeout(() => openKeyRef.current(nextKey), COUNTDOWN);
     return () => window.clearTimeout(id);
   }, [show, landingPhase, phase, labInView, nextKey]);
@@ -684,7 +686,7 @@ export function ComputeLabStudy({
         current={currentKey}
         now={nowLabel}
         next={nextKey}
-        phase={phase}
+        phase={order.indexOf(currentKey) === order.length - 1 ? "running" : phase}
         countdownMs={COUNTDOWN}
         onOpen={openKey}
         onLanding={training ? undefined : () => setLandingPhase("on")}
