@@ -176,7 +176,7 @@ export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; 
   problem: {
     label: "Problem / Bottleneck", title: "Writing an answer takes one large-model call per word, one after another", ms: PROBLEM_MS, Scene: Problem,
     meter: [[0, "Qwen3-4B writes the answer one word per call"], [900, "Call after call: each one waits for the word before it"], [8000, "12 calls for 12 words"]],
-    bottleneck: { at: 8300, headline: "12 calls for 12 tokens: serialized computation", effect: "every token is a full pass over 8 GB of weights, and the next cannot start until this one ends, so latency grows with every token" },
+    bottleneck: { at: 8300, headline: "*12 calls for 12 tokens*: serialized computation", effect: "Every token is a full pass over 8 GB of weights, one after another" },
   },
   mechanism: {
     label: "Optimized solution", title: "An EAGLE-3 draft head guesses ahead; Qwen3-4B checks every guess in one pass", ms: 19000, render: (on) => <DraftFilm active={on} />,
@@ -186,7 +186,7 @@ export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; 
   system: {
     label: "In our system", title: "The same 12-word answer, both ways, one clock", ms: SYS_MS, Scene: SpecSystem,
     meter: [[0, `One word per call: ${MIXED.baselineCalls} passes of Qwen3-4B, one after another`], [SYS_A, `Round 1: the draft head guesses 4 words; Qwen3-4B keeps ${MIXED.rounds[0].accepted}`], [SYS_A + 2500, `Round 2: all ${MIXED.rounds[1].accepted} guesses kept`], [SYS_A + 5000, `Round 3: all ${MIXED.rounds[2].accepted} guesses kept`], [SYS_B, `${MIXED.baselineCalls} → ${MIXED.targetCalls} serial calls`]],
-    focus: { at: SYS_B + 1400, headline: `The same answer in ${MIXED.targetCalls} passes of Qwen3-4B, not ${MIXED.baselineCalls}`, parts: [{ label: "one word per call", value: `${SPEC_TIME.serial.toFixed(0)} ms`, tone: "baseline" }, { label: "draft, then verify", value: `${SPEC_TIME.speculative.toFixed(0)} ms`, tone: "optimized" }, { label: "Δ", value: `−${(SPEC_TIME.serial - SPEC_TIME.speculative).toFixed(0)} ms`, tone: "delta" }], cause: "one pass of the large model can verify a whole run of cheap guesses" },
+    focus: { at: SYS_B + 1400, headline: `The same answer in *${MIXED.targetCalls} passes* of Qwen3-4B, not ${MIXED.baselineCalls}`, parts: [{ label: "one word per call", value: `${SPEC_TIME.serial.toFixed(0)} ms`, tone: "baseline" }, { label: "draft, then verify", value: `${SPEC_TIME.speculative.toFixed(0)} ms`, tone: "optimized" }, { label: "Δ", value: `−${(SPEC_TIME.serial - SPEC_TIME.speculative).toFixed(0)} ms`, tone: "delta" }], cause: "one pass of the large model can verify a whole run of cheap guesses" },
   },
   ledger: { metric: "Serial Qwen3-4B calls for the 12-word answer", unit: "calls", baseline: MIXED.baselineCalls, optimized: MIXED.targetCalls, baselineLabel: "One word per call", optimizedLabel: "Draft, then verify" },
   impact: {

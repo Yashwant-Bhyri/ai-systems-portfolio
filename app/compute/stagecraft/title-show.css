@@ -132,63 +132,66 @@
   .ts-shadow[data-drift] .ts-drift, .lab-flow-show .lf-stage, .ts-fade { animation: none; }
 }
 
-/* ── Quiet rail ─────────────────────────────────────────────────────────── */
-.lab-flow-show .lf-body:not([data-landing]):has(.tr-rail) { grid-template-columns: 58px minmax(0, 1fr); gap: 14px; }
-.tr-rail { position: relative; height: 100%; }
-.tr-strip { display: flex; flex-direction: column; gap: 14px; height: 100%; padding: 4px 0; opacity: .55; transition: opacity .4s; }
-.tr-rail:is(:hover, :has(:focus-visible)) .tr-strip { opacity: 1; }
-.tr-group { display: flex; flex-direction: column; gap: 4px; }
-.tr-path { color: #6f7c89; font: 500 10.5px/1 var(--font-geist-mono), monospace; font-style: normal; padding: 0 0 2px 6px; }
+/* ── The rail: titles above, controls below; nothing floats over the stage ── */
+.lab-flow-show { --tr-w: 150px; }
+.lab-flow-show .lf-body:not([data-landing]):has(.tr-rail) { grid-template-columns: var(--tr-w) minmax(0, 1fr); gap: 12px; padding-left: 6px; }
+.tr-rail { position: relative; height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.tr-strip { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
+.vx-shell .tr-back { flex: 0 0 auto; padding: 0 0 0 8px !important; font: 400 13px/20px var(--font-geist-sans), sans-serif !important; letter-spacing: 0; color: #93a0ae !important; }
+.tr-group { display: flex; flex-direction: column; gap: 2px; }
+.tr-path { padding: 0 0 4px 8px; color: #93a0ae; font: 500 13px/16px var(--font-geist-sans), sans-serif; font-style: normal; }
 .tr-group[data-on] .tr-path { color: var(--active-accent); }
-.vx-shell .tr-tile { position: relative; display: block; width: 52px; height: 30px; padding: 3px 4px !important; border: 0; border-radius: 5px; background: none; cursor: pointer;
-  filter: grayscale(1) brightness(.8); opacity: .6; transition: filter .3s, opacity .3s, background .3s; }
-.tr-tile .ts-glyph { width: 100%; height: 100%; }
-.vx-shell .tr-tile[data-on] { filter: none; opacity: 1; background: color-mix(in srgb, var(--active-accent) 12%, transparent); box-shadow: inset 2px 0 0 var(--active-accent); }
-.vx-shell .tr-tile[data-next] { filter: none; opacity: .9; animation: tr-pulse 1.6s ease-in-out infinite; }
-@keyframes tr-pulse { 50% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--active-accent) 45%, transparent); } }
-.tr-panel { position: absolute; left: 58px; top: 0; z-index: 40; width: 300px; max-height: calc(100svh - 110px); overflow: auto; padding: 12px 14px; border-radius: 10px;
-  background: rgba(8,11,15,.97); box-shadow: 0 24px 60px -20px rgba(0,0,0,.9), inset 0 0 0 1px rgba(230,237,244,.08);
-  opacity: 0; transform: translateX(-8px); pointer-events: none; transition: opacity .25s, transform .25s; }
-.tr-rail:is(:hover, :has(:focus-visible)) .tr-panel { opacity: 1; transform: none; pointer-events: auto; }
-.tr-panel-group { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
-.vx-shell .tr-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 7px 8px !important; border: 0; border-radius: 6px; background: none; color: #c9d2db; text-align: left; cursor: pointer; }
-.vx-shell .tr-row:hover, .vx-shell .tr-row[data-on] { background: rgba(255,255,255,.04); color: #f3f6f9; }
-.tr-row strong { font: 500 13.5px/1.25 var(--font-geist-sans), sans-serif; }
-.tr-row small { color: var(--active-accent); font: 500 11.5px/1 var(--font-geist-mono), monospace; white-space: nowrap; }
-.tr-now { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.vx-shell .tr-next { position: fixed; left: 24px; bottom: 22px; z-index: 45; display: flex; align-items: center; gap: 10px; max-width: 300px; padding: 10px 14px 10px 12px !important; border: 0; border-radius: 22px;
-  background: rgba(10,14,19,.95); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 40%, transparent), 0 16px 40px -18px rgba(0,0,0,.9);
-  color: #eef2f6; text-align: left; cursor: pointer; animation: ts-fade .4s both; }
-.tr-next span { display: flex; flex-direction: column; gap: 2px; font: 500 13px/1.2 var(--font-geist-sans), sans-serif; }
-.tr-next small { color: var(--active-accent); font: 500 10.5px/1 var(--font-geist-mono), monospace; letter-spacing: .06em; }
-.tr-next[data-phase="done"] .ts-ring-run { animation: ts-ring linear forwards; }
-.tr-intro { position: fixed; left: 0; top: 0; z-index: 60; display: flex; align-items: center; gap: 22px; width: 560px; padding: 26px 30px; border-radius: 14px; pointer-events: none;
-  background: radial-gradient(120% 90% at 20% 0%, color-mix(in srgb, var(--active-accent) 12%, transparent), rgba(10,14,19,.97) 70%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 40%, transparent), 0 40px 90px -30px rgba(0,0,0,.95); transform-origin: 0 0; }
-.tr-intro .ts-glyph { width: 200px; height: 100px; }
-.tr-intro div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.tr-intro small { color: #9aa6b2; font: 500 11.5px/1 var(--font-geist-mono), monospace; }
-.tr-intro strong { color: #f3f6f9; font: 500 26px/1.15 var(--font-geist-sans), sans-serif; letter-spacing: -.02em; }
-.tr-intro .ts-value mark { font-size: 22px; }
-.tr-intro :is(.g-t, .g-code) { display: none; }
+.vx-shell .tr-tile { display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 2px 8px !important; border: 0; border-radius: 6px; background: none; cursor: pointer; text-align: left; color: #aab6c2; font: 400 13px/16px var(--font-geist-sans), sans-serif; transition: background .16s, color .16s; }
+.tr-tile .ts-glyph { width: 32px; height: 20px; filter: grayscale(1) brightness(.75); }
+.vx-shell .tr-tile:hover { color: #eef2f6; background: rgba(255,255,255,.04); }
+.vx-shell .tr-tile[data-on] { color: #fff; background: rgba(255,255,255,.07); box-shadow: inset 2px 0 0 var(--active-accent); }
+.tr-tile[data-on] .ts-glyph { filter: none; }
+.tr-ctl { flex: 0 0 auto; display: flex; flex-direction: column; gap: 2px; padding-top: 12px; border-top: 1px solid rgba(230,237,244,.08); }
+.tr-state { display: flex; align-items: center; gap: 8px; padding: 0 8px 4px; color: #aab6c2; font: 400 13px/16px var(--font-geist-sans), sans-serif; }
+.tr-state > i { flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: #b8e986; }
+.tr-ctl[data-phase="done"] .tr-state > i { background: var(--active-accent); }
+.tr-ctl[data-phase="taken"] .tr-state > i { background: #9cc5f5; }
+.vx-shell .tr-act { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 4px 8px !important; border: 0; border-radius: 6px; background: none; color: #eef2f6; text-align: left; cursor: pointer; font: 400 13px/16px var(--font-geist-sans), sans-serif; transition: background .16s, color .16s; }
+.vx-shell .tr-act:hover, .vx-shell .tr-act:focus-visible { background: rgba(255,255,255,.06); color: #fff; }
+.tr-act > b { flex: 0 0 18px; color: var(--active-accent); font: 500 13px/1 var(--font-geist-mono), monospace; text-align: center; }
+.vx-shell .tr-go { margin-top: 4px; padding-block: 8px !important; background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(230,237,244,.1); }
+.tr-go > .ts-ring { flex: 0 0 18px; }
+.tr-go .tr-label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tr-go small { color: #93a0ae; font: 400 12px/16px var(--font-geist-sans), sans-serif; }
+.tr-go[data-phase="done"] .ts-ring-run { animation: ts-ring linear forwards; }
+@media (max-width: 1380px) {
+  .lab-flow-show { --tr-w: 54px; }
+  .tr-rail .tr-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .vx-shell .tr-tile { grid-template-columns: 1fr; justify-items: center; padding-inline: 2px !important; }
+  .tr-tile .ts-glyph { width: 44px; height: 24px; }
+  .tr-state { justify-content: center; padding-inline: 0; font-size: 0; }
+  .vx-shell .tr-act { justify-content: center; padding-inline: 0 !important; }
+  .tr-act > b { flex: 0 0 auto; }
+}
 @media (max-width: 900px) { .tr-rail { display: none; } .lab-flow-show .lf-body:has(.tr-rail) { grid-template-columns: 1fr; } }
 
-/* ── The opening: one branch at a time, then the line that starts the show ── */
+/* ── The opening: one line or one branch at a time, over the blurred landing ── */
 .ts-landing { position: relative; }
 .ts-path { transition: transform .7s cubic-bezier(.2,.75,.2,1), filter .7s, opacity .7s, box-shadow .7s, border-color .7s; transform-origin: 50% 40%; }
-.ts-landing[data-step]:not([data-step="idle"]) .ts-path:not([data-lift]) { filter: blur(2.5px) grayscale(.7) brightness(.7); opacity: .5; }
-.ts-path[data-lift] { transform: scale(1.018); border-color: color-mix(in srgb, var(--active-accent) 55%, transparent); box-shadow: 0 24px 70px rgba(0,0,0,.5), 0 0 0 1px color-mix(in srgb, var(--active-accent) 30%, transparent), 0 0 60px color-mix(in srgb, var(--active-accent) 12%, transparent); z-index: 2; }
-.ts-landing[data-step="line"] .ts-path { filter: blur(5px) grayscale(.8) brightness(.45); opacity: .35; }
-.ts-card { transition: box-shadow .35s, background .35s, transform .35s cubic-bezier(.2,.75,.2,1); }
-.ts-card[data-hot] { transform: translateY(-4px) scale(1.035); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 70%, transparent), 0 14px 40px rgba(0,0,0,.45), 0 0 34px color-mix(in srgb, var(--active-accent) 18%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--active-accent) 10%, transparent), transparent) !important; z-index: 2; }
+.ts-landing[data-step="path"] .ts-path:not([data-lift]) { filter: blur(6px) grayscale(.8) brightness(.45); opacity: .4; }
+.ts-path[data-lift] { transform: scale(1.012); border-color: color-mix(in srgb, var(--active-accent) 55%, transparent); z-index: 2; }
+.ts-landing[data-step="line"] .ts-path { filter: blur(9px) grayscale(.85) brightness(.4); opacity: .4; }
+.ts-card { transition: box-shadow .18s, background .18s; }
+.ts-card[data-hot] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 70%, transparent); background: rgba(255,255,255,.05) !important; z-index: 2; }
 .ts-cursor { position: absolute; left: 0; top: 0; z-index: 9; pointer-events: none; transition: transform .42s cubic-bezier(.2,.75,.2,1); filter: drop-shadow(0 3px 6px rgba(0,0,0,.6)); }
 .ts-opening {
-  position: absolute; z-index: 10; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: min(980px, 90%); margin: 0; text-align: center;
-  font: 450 clamp(30px, 3.2vw, 46px)/1.2 var(--font-geist-sans), sans-serif; letter-spacing: -.025em; color: #f2f5f8;
+  position: absolute; z-index: 10; left: 50%; top: 46%; transform: translate(-50%, -50%);
+  width: min(1040px, 90%); margin: 0; text-align: center; pointer-events: none; text-wrap: balance;
+  font: 450 clamp(34px, 3.5vw, 54px)/1.18 var(--font-geist-sans), sans-serif; letter-spacing: -.028em; color: #f6f8fa;
   animation: ts-opening 2.7s cubic-bezier(.2,.75,.2,1) both;
 }
-.ts-opening em { color: var(--active-accent); font-style: italic; }
-@keyframes ts-opening { 0% { opacity: 0; transform: translate(-50%, -44%); } 18%, 82% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -54%); } }
+@keyframes ts-opening { 0% { opacity: 0; transform: translate(-50%, calc(-50% + 12px)); } 14%, 86% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, calc(-50% - 8px)); } }
+.vx-shell .ts-skip { position: absolute; z-index: 11; right: 6px; bottom: 6px; padding: 8px 12px; border: 0; background: none; color: #93a0ae; cursor: pointer; font: 450 13.5px/1 var(--font-geist-sans), sans-serif; }
+.vx-shell .ts-skip:hover { color: #fff; }
 .cs-study.lab-flow-show .ts-landing { flex: 1 1 auto; min-height: 0; }
+.ts-landing[data-single] { grid-template-columns: minmax(0, 1fr); }
+.ts-landing[data-single] .ts-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ts-landing:not([data-single]) .ts-path[data-first] .ts-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ts-card { min-width: 0; overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .ts-path, .ts-card, .ts-cursor { transition: none; } .ts-opening { animation: none; } }
+.ts-card .hl { animation-delay: 0s; animation-duration: .24s; }

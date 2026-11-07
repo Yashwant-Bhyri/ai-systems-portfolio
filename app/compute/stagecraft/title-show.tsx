@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from "react";
-import { createPortal } from "react-dom";
 import { useTr } from "../../exhibit/i18n";
+import { Highlight, highlight } from "./stage-meter";
 import "./title-show.css";
 
 /**
@@ -22,8 +22,6 @@ export type ShowItem = {
   Glyph?: ComponentType;
   /** 0 or 1: which pathway the module belongs to. */
   pathway: number;
-  /** Chapter names, for the experiment. */
-  chapters?: readonly string[];
 };
 export type Pathway = { n: string; title: string; short: string; techniques: readonly string[] };
 export type Rects = Map<string, DOMRect>;
@@ -38,31 +36,35 @@ function collect(root: HTMLElement | null): Rects {
 
 /* ── Landing: both pathways, every module, one page ─────────────────────── */
 /**
- * The opening, about eight seconds: branch 01 lifts and then steps back;
- * branch 02 lifts while a cursor walks its titles; then one line says where
- * we begin, and branch 01 starts. A click anywhere chooses at once.
+ * The opening is a script told over the blurred landing: a line in large type,
+ * then each branch lifts while its titles light up in turn. A click on any title
+ * starts there; "Skip" starts at the first module.
  */
-const INTRO = { p1: 300, p2: 1900, walk: 2300, card: 520, line: 600, read: 2700 } as const;
-type IntroStep = "idle" | "p1" | "p2" | "line";
+export type IntroStep = { kind: "line"; text: string; ms: number } | { kind: "path"; index: number };
+const LIFT = 800, CARD = 520, SETTLE = 350;
+type Now = { kind: "idle" } | { kind: "line"; text: string; ms: number } | { kind: "path"; index: number };
 
 export function LabLanding({
-  pathways, items, leaving, onStart,
+  pathways, items, leaving, script, onStart,
 }: {
   pathways: readonly Pathway[];
   items: readonly ShowItem[];
   leaving: boolean;
+  script: readonly IntroStep[];
   onStart: (key: string, from: Rects) => void;
 }) {
   const tr = useTr();
   const root = useRef<HTMLDivElement>(null);
-  const [step, setStep] = useState<IntroStep>("idle");
+  const [now, setNow] = useState<Now>({ kind: "idle" });
   const [hot, setHot] = useState<string | null>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const start = (key: string) => onStart(key, collect(root.current));
   const startRef = useRef(start);
   useEffect(() => { startRef.current = start; });
-  const second = items.filter((i) => i.pathway === 1);
-  const total = INTRO.walk + second.length * INTRO.card + INTRO.line + INTRO.read;
+  const first = items.find((i) => i.pathway === 0)!;
+  // The lab re-renders often during the script; only the script itself may restart it.
+  const itemsRef = useRef(items);
+  useEffect(() => { itemsRef.current = items; });
   useEffect(() => {
     const el = root.current;
     if (!el || leaving) return;
@@ -77,42 +79,44 @@ export function LabLanding({
     };
     const run = () => {
       clear();
-      at(INTRO.p1, () => { setStep("p1"); emitIntro(pathways[0], 1); });
-      at(INTRO.p2, () => { setStep("p2"); emitIntro(pathways[1], 2); });
-      second.forEach((item, i) => at(INTRO.walk + i * INTRO.card, () => { setHot(item.key); setCursor(centre(item.key)); }));
-      const lineAt = INTRO.walk + second.length * INTRO.card + INTRO.line;
-      at(lineAt - INTRO.line, () => { setHot(null); setCursor(null); });
-      at(lineAt, () => { setStep("line"); window.dispatchEvent(new CustomEvent("lab:meter", { detail: null })); });
-      at(lineAt + INTRO.read, () => startRef.current(items.find((i) => i.pathway === 0)!.key));
+      let t = 200;
+      for (const step of script) {
+        if (step.kind === "line") {
+          at(t, () => { setHot(null); setCursor(null); setNow(step); });
+          t += step.ms;
+        } else {
+          const own = itemsRef.current.filter((i) => i.pathway === step.index);
+          at(t, () => { setHot(null); setCursor(null); setNow(step); });
+          t += LIFT;
+          own.forEach((item, i) => at(t + i * CARD, () => { setHot(item.key); setCursor(centre(item.key)); }));
+          t += own.length * CARD + SETTLE;
+        }
+      }
+      at(t, () => startRef.current(itemsRef.current[0].key));
     };
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) run();
-      else { clear(); setStep("idle"); setHot(null); setCursor(null); }
+      else { clear(); setNow({ kind: "idle" }); setHot(null); setCursor(null); }
     }, { threshold: 0.55 });
     io.observe(el);
     return () => { io.disconnect(); clear(); };
-    // second is derived from items
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leaving, items, pathways]);
+  }, [leaving, script]);
   return (
-    <div ref={root} className="ts-landing" data-leaving={leaving || undefined} data-step={step} data-armed={step !== "idle" || undefined} style={{ ["--ts-auto" as string]: `${total}ms` }}>
+    <div ref={root} className="ts-landing" data-leaving={leaving || undefined} data-step={now.kind} data-single={pathways.length === 1 || undefined}>
       {pathways.map((p, pi) => {
         const own = items.filter((i) => i.pathway === pi);
         return (
-          <section key={p.n} className="ts-path" data-first={pi === 0 || undefined} data-lift={(step === "p1" && pi === 0) || (step === "p2" && pi === 1) || undefined}>
+          <section key={p.n} className="ts-path" data-first={pi === 0 || undefined} data-lift={(now.kind === "path" && now.index === pi) || undefined}>
             <button type="button" className="ts-path-head" onClick={() => start(own[0].key)}>
               <i>{p.n}</i>
               <strong>{tr(p.title)}</strong>
-              <span className="ts-techniques">{p.techniques.map((t) => <em key={t}>{tr(t)}</em>)}</span>
-              {pi === 0 && <b className="ts-auto" aria-hidden="true" />}
             </button>
             <div className="ts-cards" data-count={own.length}>
               {own.map((item, i) => (
-                <button key={item.key} type="button" className="ts-card" data-show-key={item.key} data-lead={(pi === 0 && i === 0) || undefined} data-hot={hot === item.key || undefined} onClick={() => start(item.key)}>
+                <button key={item.key} type="button" className="ts-card" data-show-key={item.key} data-lead={(pi === 0 && i === 0 && pathways.length > 1) || undefined} data-hot={hot === item.key || undefined} onClick={() => start(item.key)}>
                   <span className="ts-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
-                  <strong>{tr(item.title)}</strong>
+                  <strong>{hot === item.key ? <Highlight>{tr(item.title)}</Highlight> : tr(item.title)}</strong>
                   {item.value && <span className="ts-value"><mark>{item.value}</mark>{item.unit && <small>{tr(item.unit)}</small>}</span>}
-                  {item.chapters && <ol className="ts-chapters">{item.chapters.map((c) => <li key={c}>{tr(c)}</li>)}</ol>}
                 </button>
               ))}
             </div>
@@ -124,17 +128,12 @@ export function LabLanding({
           <svg viewBox="0 0 22 22" width="22" height="22"><path d="M3 2l15 8-6.5 1.8L9 18z" fill="#f4f7fa" stroke="#0b1016" strokeWidth="1.3" strokeLinejoin="round" /></svg>
         </span>
       )}
-      {step === "line" && (
-        <p className="ts-opening">
-          {tr("First: how we serve the same intelligence with")} <em>{tr("cheaper execution")}</em>
-        </p>
+      {now.kind === "line" && (
+        <p key={now.text} className="ts-opening" style={{ animationDuration: `${now.ms}ms` }}>{highlight(tr(now.text))}</p>
       )}
+      <button type="button" className="ts-skip" onClick={() => start(first.key)}>{tr("Skip the introduction ▸")}</button>
     </div>
   );
-}
-
-function emitIntro(p: Pathway, n: number) {
-  window.dispatchEvent(new CustomEvent("lab:meter", { detail: { text: `Branch ${p.n} · ${p.title}`, step: n, total: 2, tone: "neutral" } }));
 }
 
 /* ── The show: a fixed left column beside the stage ────────────────────── */
@@ -237,116 +236,63 @@ export function TitleShow({
   );
 }
 
-/* ── The quiet rail (round 6, second pass) ──────────────────────────────
-   The column took width from the modules and kept moving beside them. Now the
-   titles sit in a narrow, dim rail. When a module starts, its tile steps out to
-   the centre of the stage, holds a moment, and returns to the rail; then the
-   module has the stage. Hovering the rail opens the full list over the stage
-   (an overlay, so nothing beneath moves). */
+/* ── The rail: the module titles, and what to do next, in one quiet column ──
+   Nothing here floats over the stage, so it can never sit on a scrubber. Beneath
+   the titles: stay on this module, dive into it, or go on to the next one. */
 export function TitleRail({
-  items, pathways, current, now, next, phase, countdownMs, onOpen, onLanding,
+  items, pathways, current, next, phase, countdownMs, last, onOpen, onLanding, onStay, onKeepPlaying, onDive,
 }: {
   items: readonly ShowItem[];
   pathways: readonly Pathway[];
   current: string;
-  now: string;
   next: string;
   phase: "running" | "done" | "taken";
   countdownMs: number;
+  /** The module on stage is the last one. */
+  last: boolean;
   onOpen: (key: string) => void;
   onLanding?: () => void;
+  onStay: () => void;
+  onKeepPlaying: () => void;
+  onDive: () => void;
 }) {
   const tr = useTr();
-  const root = useRef<HTMLElement>(null);
-  const intro = useRef<HTMLDivElement>(null);
   const cur = items.find((i) => i.key === current) ?? items[0];
   const nxt = items.find((i) => i.key === next) ?? items[0];
-  const [shown, setShown] = useState<{ item: ShowItem; accent: string } | null>(null);
-
-  // A new module: its tile steps out of the rail to the stage's centre, then goes back.
-  const lastKey = useRef<string | null>(null);
-  useEffect(() => {
-    if (lastKey.current === current) return;
-    const first = lastKey.current === null;
-    lastKey.current = current;
-    if (first || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    setShown({ item: cur, accent: root.current ? getComputedStyle(root.current).getPropertyValue("--active-accent") : "#ffc267" });
-    const id = window.setTimeout(() => setShown(null), 2300);
-    return () => window.clearTimeout(id);
-  }, [current, cur]);
-  useLayoutEffect(() => {
-    const card = intro.current, rail = root.current;
-    if (!card || !rail || !shown) return;
-    const tile = rail.querySelector<HTMLElement>(`[data-rail-key="${shown.item.key}"]`);
-    const stage = rail.closest(".lf-body")?.querySelector<HTMLElement>(".lf-stage");
-    if (!tile || !stage) return;
-    // measure the card where it really sits (fixed at 0, 0), never mid-animation
-    card.getAnimations().forEach((an) => an.cancel());
-    const a = tile.getBoundingClientRect(), s = stage.getBoundingClientRect();
-    const c = { left: 0, top: 0, width: card.offsetWidth, height: card.offsetHeight };
-    // the card lives on <body> at (0, 0): centre it on the stage across, on the screen down
-    const cx = s.left + s.width / 2 - c.width / 2 - c.left, cy = window.innerHeight / 2 + 30 - c.height / 2 - c.top;
-    const fromRail = `translate(${a.left - c.left}px, ${a.top - c.top}px) scale(${a.width / c.width}, ${a.height / c.height})`;
-    card.animate([
-      // out to the centre, hold, back to the rail; each leg eased on its own
-      { transform: fromRail, opacity: 0.4, offset: 0, easing: "cubic-bezier(.2,.75,.2,1)" },
-      { transform: `translate(${cx}px, ${cy}px)`, opacity: 1, offset: 0.24 },
-      { transform: `translate(${cx}px, ${cy}px)`, opacity: 1, offset: 0.72, easing: "cubic-bezier(.5,0,.75,0)" },
-      { transform: fromRail, opacity: 0, offset: 1 },
-    ], { duration: 2300, fill: "both" });
-  }, [shown]);
-
+  const state = phase === "taken" ? "Yours to explore" : phase === "done" ? (last ? "Finished" : "Finished, moving on") : "Playing";
   return (
-    <aside ref={root} className="tr-rail" aria-label={tr("Laboratory modules")}>
+    <aside className="tr-rail" aria-label={tr("Laboratory modules")}>
       <div className="tr-strip">
+        {onLanding && <button type="button" className="ts-back tr-back" onClick={onLanding} aria-label={tr("Replay the introduction")}><span className="tr-label">{tr("Introduction")}</span></button>}
         {pathways.map((p, pi) => (
           <div key={p.n} className="tr-group" data-on={cur.pathway === pi || undefined}>
-            <i className="tr-path">{p.n}</i>
+            <i className="tr-path">{p.n}<span className="tr-label"> {tr(p.short)}</span></i>
             {items.filter((i) => i.pathway === pi).map((i) => (
-              <button key={i.key} type="button" className="tr-tile" data-rail-key={i.key} data-on={i === cur || undefined} data-next={(i === nxt && phase !== "running") || undefined}
+              <button key={i.key} type="button" className="tr-tile" data-on={i === cur || undefined} title={tr(i.title)}
                 onClick={() => onOpen(i.key)} aria-label={tr(i.title)} aria-current={i === cur ? "step" : undefined}>
                 <span className="ts-glyph" aria-hidden="true">{i.Glyph && <i.Glyph />}</span>
+                <span className="tr-label">{tr(i.title)}</span>
               </button>
             ))}
           </div>
         ))}
       </div>
-      {/* the full list, over the stage, while the rail is hovered or focused */}
-      <div className="tr-panel">
-        {onLanding && <button type="button" className="ts-back" onClick={onLanding}>{tr("Both pathways")}</button>}
-        {pathways.map((p, pi) => (
-          <div key={p.n} className="tr-panel-group">
-            <span className="ts-pathname"><i>{p.n}</i>{tr(p.short)}</span>
-            {items.filter((i) => i.pathway === pi).map((i) => (
-              <button key={i.key} type="button" className="tr-row" data-on={i === cur || undefined} onClick={() => onOpen(i.key)}>
-                <strong>{tr(i.title)}</strong>
-                {i.value && <small>{i.value}</small>}
-              </button>
-            ))}
-          </div>
-        ))}
+      <div className="tr-ctl" data-phase={phase}>
+        <span className="tr-state" aria-live="polite"><i />{tr(state)}</span>
+        {phase === "taken"
+          ? <button type="button" className="tr-act" onClick={onKeepPlaying} title={tr("Keep playing")}><b aria-hidden="true">▷</b><span className="tr-label">{tr("Keep playing")}</span></button>
+          : <button type="button" className="tr-act" onClick={onStay} title={tr("Stay on this one")}><b aria-hidden="true">Ⅱ</b><span className="tr-label">{tr("Stay on this one")}</span></button>}
+        <button type="button" className="tr-act" onClick={onDive} title={tr("Dive deeper")}><b aria-hidden="true">⌕</b><span className="tr-label">{tr("Dive deeper")}</span></button>
+        {!last && (
+          <button type="button" className="tr-act tr-go" data-phase={phase} onClick={() => onOpen(nxt.key)} title={`${tr("Next")}: ${tr(nxt.title)}`}>
+            <svg className="ts-ring" viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="10" cy="10" r="8" />
+              <circle key={`${nxt.key}-${phase}`} cx="10" cy="10" r="8" className="ts-ring-run" style={{ animationDuration: `${countdownMs}ms` }} />
+            </svg>
+            <span className="tr-label"><small>{tr("Next")}</small>{tr(nxt.title)}</span>
+          </button>
+        )}
       </div>
-      <span className="tr-now" aria-live="polite">{tr(now)}</span>
-      {phase !== "running" && (
-        <button type="button" className="tr-next" data-phase={phase} onClick={() => onOpen(nxt.key)}>
-          <svg className="ts-ring" viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="10" cy="10" r="8" />
-            <circle key={`${nxt.key}-${phase}`} cx="10" cy="10" r="8" className="ts-ring-run" style={{ animationDuration: `${countdownMs}ms` }} />
-          </svg>
-          <span><small>{tr(phase === "done" ? "Next" : "Open next")}</small>{tr(nxt.title)}</span>
-        </button>
-      )}
-      {shown && createPortal(
-        <div ref={intro} className="tr-intro" aria-hidden="true" style={{ ["--active-accent" as string]: shown.accent }}>
-          <span className="ts-glyph">{shown.item.Glyph && <shown.item.Glyph />}</span>
-          <div>
-            <small>{pathways[shown.item.pathway].n} · {tr(pathways[shown.item.pathway].short)}</small>
-            <strong>{tr(shown.item.title)}</strong>
-            {shown.item.value && <span className="ts-value"><mark>{shown.item.value}</mark>{shown.item.unit && <small>{tr(shown.item.unit)}</small>}</span>}
-          </div>
-        </div>,
-        document.body,
-      )}
     </aside>
   );
 }

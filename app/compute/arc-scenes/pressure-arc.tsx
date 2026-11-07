@@ -213,7 +213,7 @@ export const PRESSURE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBe
   problem: {
     label: "Problem / Bottleneck", title: "A long new prompt stalls an answer that is already streaming", ms: PROBLEM_MS, Scene: Problem,
     meter: [[0, "Request 1 is streaming its answer, one token per step"], [2600, "Request 3 arrives with an 8,192-token document"], [4200, "The engine reads the whole document in one step"], [8200, `Request 1 has waited ${(gapW.b - gapW.a).toFixed(0)} ms without a token`]],
-    bottleneck: { at: 8800, headline: `One 8,192-token prompt freezes a live answer for ${(gapW.b - gapW.a).toFixed(0)} ms`, effect: "prefill and decode share each engine step, so every long prompt stalls every answer being streamed on that GPU" },
+    bottleneck: { at: 8800, headline: `One 8,192-token prompt freezes a live answer for *${(gapW.b - gapW.a).toFixed(0)} ms*`, effect: "Prefill and decode share each engine step" },
   },
   mechanism: {
     label: "Optimized solution", title: "Optimized solution, chunked prefill: decode every live answer first, then read at most 1,024 input tokens", ms: MECH_MS, Scene: Mechanism,
@@ -224,7 +224,7 @@ export const PRESSURE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBe
   system: {
     label: "In our system", title: "The same four requests under both schedulers, one clock", ms: SYS_MS, Scene: PressureSystem,
     meter: [[0, "Whole prefill: requests 1 and 2 stream, one token per step"], [2200, "Request 3 arrives: one step reads all 8,192 tokens"], [SYS_A, "Chunked prefill: the same requests, the same arrivals"], [SYS_A + 2200, "Each step decodes first, then reads a slice of the document"], [SYS_B, `Worst pause ${(gapW.b - gapW.a).toFixed(0)} → ${(gapC.b - gapC.a).toFixed(1)} ms`]],
-    focus: { at: SYS_B + 1400, headline: `The worst pause in a live answer: ${(gapW.b - gapW.a).toFixed(0)} → ${(gapC.b - gapC.a).toFixed(1)} ms`, parts: [{ label: "whole prefill", value: `${(gapW.b - gapW.a).toFixed(0)} ms`, tone: "baseline" }, { label: "chunked", value: `${(gapC.b - gapC.a).toFixed(1)} ms`, tone: "optimized" }, { label: "Δ", value: `−${((gapW.b - gapW.a) - (gapC.b - gapC.a)).toFixed(0)} ms`, tone: "delta" }], cause: "every live answer gets a token before the next slice of the document is read" },
+    focus: { at: SYS_B + 1400, headline: `The worst pause in a live answer: *${(gapW.b - gapW.a).toFixed(0)} → ${(gapC.b - gapC.a).toFixed(1)} ms*`, parts: [{ label: "whole prefill", value: `${(gapW.b - gapW.a).toFixed(0)} ms`, tone: "baseline" }, { label: "chunked", value: `${(gapC.b - gapC.a).toFixed(1)} ms`, tone: "optimized" }, { label: "Δ", value: `−${((gapW.b - gapW.a) - (gapC.b - gapC.a)).toFixed(0)} ms`, tone: "delta" }], cause: "every live answer gets a token before the next slice of the document is read" },
   },
   impact: {
     label: "Impact", title: "A smoother stream, paid for with a later first token", ms: 9000,

@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import "./focus.css";
 
 /**
- * Two shared guides for every module in the show, so no module needs a text
- * block at the bottom of its figure:
+ * Three shared guides for every module in the show:
  *
- *  - the live meter: one line in the lab head (the most visible free space)
- *    saying what is happening right now, with the step it is on;
+ *  - the highlight: the lab's one mark. Write `*phrase*` in any line and a single
+ *    highlighter stroke wipes across that phrase, and only that phrase;
+ *  - the voice: one plain line at the head of the stage, large and unboxed, for
+ *    modules whose own heading does not already narrate;
  *  - focus: the stage goes grey, soft and quiet except the elements marked
- *    `data-focus-spot`, which glow; a large caption at the top of the stage
- *    reads the result (baseline → optimized, Δ, and its cause).
+ *    `data-focus-spot`; one line of large type and at most one line of numbers
+ *    sit directly on the dimmed picture, with no box around them.
  *
  * Modules emit; the lab renders. `emitMeter(null)` / `emitFocus(null)` clear.
  */
@@ -29,6 +30,16 @@ export type FocusDetail = {
   tone?: Tone;
 } | null;
 
+/** The lab's one highlight: a highlighter stroke across one phrase. */
+export function Highlight({ children }: { children: ReactNode }) {
+  return <span className="hl">{children}</span>;
+}
+/** "Depends on *three things*": the starred phrase gets the stroke. */
+export function highlight(text: string): ReactNode {
+  return text.split(/\*([^*]+)\*/).map((part, i) => (i % 2 ? <Highlight key={i}>{part}</Highlight> : part));
+}
+const plain = (text: string) => text.replace(/\*/g, "");
+
 export const emitMeter = (detail: MeterDetail) => window.dispatchEvent(new CustomEvent("lab:meter", { detail }));
 export const emitFocus = (detail: FocusDetail) => window.dispatchEvent(new CustomEvent("lab:focus", { detail }));
 
@@ -45,27 +56,22 @@ function useLabEvent<T>(name: string, reset: string) {
   return value;
 }
 
-/** The one-line live meter, rendered in the lab head. */
+/** The voice: one plain line at the head of the stage. */
 export function StageMeter({ moduleKey }: { moduleKey: string }) {
   const m = useLabEvent<NonNullable<MeterDetail>>("lab:meter", moduleKey);
   return (
-    <div className="sm-meter" data-on={m ? "true" : "false"} data-tone={m?.tone ?? "neutral"} aria-live="polite">
-      {m && (
-        <>
-          <i aria-hidden="true" />
-          <span key={m.text}>{m.text}</span>
-          {m.total ? (
-            <b aria-label={`step ${m.step ?? 0} of ${m.total}`}>
-              {Array.from({ length: m.total }, (_, k) => <em key={k} data-done={k < (m.step ?? 0) || undefined} />)}
-            </b>
-          ) : null}
-        </>
-      )}
+    <div className="sm-voice" data-on={m ? "true" : "false"} data-tone={m?.tone ?? "neutral"} aria-live="polite">
+      {m && <span key={m.text} className="sm-line">{highlight(m.text.replace(/\.$/, ""))}</span>}
+      {m?.total ? (
+        <b aria-label={`step ${m.step ?? 0} of ${m.total}`}>
+          {Array.from({ length: m.total }, (_, k) => <em key={k} data-done={k < (m.step ?? 0) || undefined} />)}
+        </b>
+      ) : null}
     </div>
   );
 }
 
-/** Focus: dims the stage and states the result in large type at its top. */
+/** Focus: dims the stage; one line and its numbers sit directly on the picture. */
 export function FocusCaption({ moduleKey }: { moduleKey: string }) {
   const f = useLabEvent<NonNullable<FocusDetail>>("lab:focus", moduleKey);
   const own = useRef<HTMLDivElement>(null);
@@ -77,16 +83,16 @@ export function FocusCaption({ moduleKey }: { moduleKey: string }) {
   }, [f]);
   if (!f) return <div ref={own} hidden />;
   return (
-    <div ref={own} className="sm-focus" role="status" key={f.headline} data-place={f.place ?? "top"} data-tone={f.tone ?? "neutral"}>
-      <strong>✦ {f.headline}</strong>
+    <div ref={own} className="sm-focus" role="status" aria-label={plain(f.headline)} key={f.headline} data-place={f.place ?? "center"} data-tone={f.tone ?? "neutral"}>
+      <strong>{highlight(f.headline)}</strong>
       {f.parts?.length ? (
         <span className="sm-parts">
           {f.parts.map((p, k) => (
-            <span key={k} data-tone={p.tone ?? "neutral"}><small>{p.label}</small> {p.value}</span>
+            <span key={k} data-tone={p.tone ?? "neutral"}>{p.value}<small>{p.label}</small></span>
           ))}
         </span>
       ) : null}
-      {f.cause && <p>{f.tone === "problem" ? <small>at scale</small> : <small>because</small>} {f.cause}</p>}
+      {f.cause && <p>{f.cause}</p>}
     </div>
   );
 }

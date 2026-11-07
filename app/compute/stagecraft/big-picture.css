@@ -1,0 +1,11 @@
+/* The opening graph: full stage, one line of large type, its own small transport. */
+.bp-root { position: relative; height: var(--lf-room, 700px); overflow: hidden; }
+.bp-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bp-flow { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-46%); padding: 0 24px; }
+.bp-line { position: absolute; z-index: 3; left: 50%; top: 22px; transform: translateX(-50%); width: min(1120px, calc(100% - 48px)); margin: 0; text-align: center; color: #f6f8fa; text-wrap: balance;
+  font: 500 clamp(24px, 2.25vw, 34px)/1.22 var(--font-geist-sans), sans-serif; letter-spacing: -.024em;  animation: bp-line .4s cubic-bezier(.22,1,.36,1) both; }
+@keyframes bp-line { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translateX(-50%); } }
+.bp-transport { position: absolute; z-index: 4; left: 24px; right: 24px; bottom: 8px; display: flex; align-items: center; gap: 12px; }
+.vx-shell .bp-transport button { flex: 0 0 auto; min-width: 30px; height: 30px; padding: 0 8px; border: 0; border-radius: 6px; background: rgba(255,255,255,.05); color: #eef2f6; cursor: pointer; font: 450 13px/1 var(--font-geist-sans), sans-serif; }
+.bp-transport input { flex: 1 1 auto; accent-color: var(--active-accent); }
+@media (prefers-reduced-motion: reduce) { .bp-line { animation: none; } }

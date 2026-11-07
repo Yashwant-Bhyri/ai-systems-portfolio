@@ -24,9 +24,9 @@ export function ClusterPanel({ baseline, target, taskId }: { baseline: LabRun; t
       if (p < 1) { raf = requestAnimationFrame(tick); return; }
       timer = window.setTimeout(() => {
         emitFocus({
-          headline: `Half of all requests are answered ${f(s.medianLatency[0] - s.medianLatency[1])} s sooner`,
-          parts: [{ label: "baseline median", value: `${f(s.medianLatency[0])} s`, tone: "baseline" }, { label: "optimized median", value: `${f(s.medianLatency[1])} s`, tone: "optimized" }, { label: "Δ", value: `−${Math.round((100 * (s.medianLatency[0] - s.medianLatency[1])) / s.medianLatency[0])}%`, tone: "delta" }],
-          cause: "each request does less GPU work, so every queue behind it drains sooner",
+          headline: `Half of all requests finish *${f(s.medianLatency[0] - s.medianLatency[1])} s sooner*`,
+          parts: [{ label: "baseline median", value: `${f(s.medianLatency[0])} s`, tone: "baseline" }, { label: "optimized median", value: `${f(s.medianLatency[1])} s`, tone: "optimized" }],
+          cause: "less GPU work per request, so every queue drains sooner",
           place: "left",
         });
         off = window.setTimeout(() => emitFocus(null), HOLD);

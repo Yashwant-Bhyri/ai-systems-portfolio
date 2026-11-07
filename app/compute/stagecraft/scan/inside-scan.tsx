@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTr } from "../../../exhibit/i18n";
 import { mountRelief } from "./relief";
+import { emitMeter } from "../stage-meter";
 import { BASE_WOULD, LAYERS, TOKENS, buildLearnScan, changeColor } from "./learn-data";
 import "./scan.css";
 
@@ -12,7 +13,7 @@ import "./scan.css";
  * through the relief, the flat field and the answer together; where the base
  * model would have written another word, the answer shows that word struck out.
  */
-const LOOP = 20000, SCAN = 15500;
+const SCAN = 15500;
 const T = TOKENS.length;
 
 export function InsideScan({ active }: { active: boolean }) {
@@ -22,6 +23,13 @@ export function InsideScan({ active }: { active: boolean }) {
   const heat = useRef<HTMLCanvasElement>(null);
   const labels = useRef<SVGSVGElement>(null);
   const [front, setFront] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const root = useRef<HTMLDivElement>(null);
+  const clock = useRef(0);
+  const playRef = useRef(true);
+  useEffect(() => { playRef.current = playing; }, [playing]);
+  const told = useRef(false);
+  const [time, setTime] = useState(0);
 
   useEffect(() => {
     const host = relief.current;
@@ -72,26 +80,48 @@ export function InsideScan({ active }: { active: boolean }) {
       g.fillText("base agrees", 0, gridH + 18);
     };
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let raf = 0, last = -1;
-    const start = performance.now();
+    let raf = 0, last = -1, prev = performance.now(), drawn = -1;
+    if (reduced) clock.current = SCAN;
     const tick = (now: number) => {
-      const t = reduced ? SCAN : (now - start) % LOOP;
-      const k = Math.min(T, (t / SCAN) * T);
-      r.update((c) => (k - c) * 1.6);
-      r.render();
-      drawHeat(k);
-      const n = Math.floor(k);
-      if (n !== last) { last = n; setFront(n); }
-      if (!reduced) raf = requestAnimationFrame(tick);
+      const dt = Math.min(64, now - prev);
+      prev = now;
+      if (playRef.current && clock.current < SCAN) clock.current = Math.min(SCAN, clock.current + dt);
+      if (clock.current !== drawn) {
+        drawn = clock.current;
+        const k = Math.min(T, (clock.current / SCAN) * T);
+        r.update((c) => (k - c) * 1.6);
+        r.render();
+        drawHeat(k);
+        const n = Math.floor(k);
+        if (n !== last) { last = n; setFront(n); }
+        setTime(clock.current);
+        // one pass tells the story; the picture then holds until the visitor moves on
+        if (clock.current >= SCAN && !told.current) {
+          told.current = true;
+          window.setTimeout(() => root.current?.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true })), 2600);
+        }
+      }
+      raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); r.dispose(); };
   }, [scan, active]);
 
+  // Dive deeper stops the scan with its scrubber free; keep playing runs it again.
+  useEffect(() => {
+    if (!active) return;
+    const dive = () => setPlaying(false);
+    const resume = () => { if (clock.current >= SCAN) { clock.current = 0; told.current = false; } setPlaying(true); };
+    window.addEventListener("lab:dive", dive);
+    window.addEventListener("lab:resume", resume);
+    return () => { window.removeEventListener("lab:dive", dive); window.removeEventListener("lab:resume", resume); };
+  }, [active]);
+  useEffect(() => { if (active) emitMeter({ text: `Reading the answer word by word: ${Math.min(front, T)} of ${T}`, tone: "optimized" }); }, [active, front]);
+
   const flips = [...BASE_WOULD.keys()];
   const seen = flips.filter((t) => t < front).length;
   return (
-    <div className="sc-root sc-rose">
+    <div ref={root} className="sc-root sc-rose">
       <header className="sc-head">
         <div>
           <span className="sc-kicker">{tr("After SFT and GRPO, on one coding task: first_item([]) crashes. Fix it.")}</span>
@@ -117,6 +147,10 @@ export function InsideScan({ active }: { active: boolean }) {
           );
         })}
       </p>
+      <div className="sc-transport">
+        <button type="button" aria-label={tr(playing && time < SCAN ? "Pause" : "Play")} onClick={() => { if (clock.current >= SCAN) { clock.current = 0; told.current = false; setPlaying(true); } else setPlaying((p) => !p); }}>{playing && time < SCAN ? "Ⅱ" : "▷"}</button>
+        <input type="range" min={0} max={SCAN} step={50} value={time} aria-label={tr("Move the scan through the answer")} onChange={(e) => { clock.current = Number(e.target.value); setTime(clock.current); }} />
+      </div>
       <footer className="sc-legend">
         <span className="sc-ramp"><i />{tr("unchanged → most changed")}</span>
         <span><s>{tr("struck")}</s> {tr("= what the base model would have written at that point")}</span>

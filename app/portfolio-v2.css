@@ -7412,3 +7412,17 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .vx-map-pulse { display: none; }
 }
+
+
+/* Conclusion: the stage has no signal console here, so its rows are window + io rail.
+   With the console's row still reserved, the whole conclusion was squeezed into a 38 px strip. */
+.vx-walkthrough[data-stage-kind="conclusion"] .vx-operational-stage { grid-template-rows: minmax(0, 1fr) auto; }
+.vx-walkthrough[data-stage-kind="conclusion"] .vx-visual-window { min-height: 0; display: block; overflow: hidden; }
+.vx-walkthrough[data-stage-kind="conclusion"] .vx-project-conclusion { height: 100%; box-sizing: border-box; padding: 24px 32px; gap: 16px; }
+.vx-conclusion-heading > span { letter-spacing: 0; text-transform: none; font: 500 14px/20px var(--font-geist-sans), sans-serif; }
+.vx-conclusion-focus > span { letter-spacing: 0; font: 500 14px/20px var(--font-geist-mono), monospace; }
+.vx-conclusion-focus > strong { text-shadow: none; font-weight: 500; line-height: 1.1; letter-spacing: -.03em; }
+.vx-conclusion-focus { background: none; }
+.vx-conclusion-focus > p { font-size: 16px; }
+.vx-conclusion-rail button { color: #93a0ae; }
+.vx-conclusion-rail button > i, .vx-conclusion-rail button > span { font: 400 13px/16px var(--font-geist-sans), sans-serif; }

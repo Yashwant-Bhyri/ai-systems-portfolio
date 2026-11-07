@@ -1,0 +1,21 @@
+/* The whole screen blurs; three lines say what this module is. */
+.mb-veil { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; padding: 24px; cursor: pointer;
+  background: rgba(5,8,12,.62); -webkit-backdrop-filter: blur(16px) saturate(.45); backdrop-filter: blur(16px) saturate(.45);
+  animation: mb-veil .4s cubic-bezier(.22,1,.36,1) both; }
+@keyframes mb-veil { from { opacity: 0; } }
+.mb-card { width: min(1000px, 100%); display: flex; flex-direction: column; gap: 8px; }
+.mb-path { color: var(--active-accent, #ffc267); font: 500 16px/1.2 var(--font-geist-sans), sans-serif; animation: mb-rise .6s cubic-bezier(.22,1,.36,1) both; }
+.mb-card h3 { margin: 0 0 24px; color: #fff; font: 500 clamp(40px, 4vw, 56px)/1.08 var(--font-geist-sans), sans-serif; letter-spacing: -.03em; animation: mb-rise .7s cubic-bezier(.22,1,.36,1) .05s both; }
+.mb-card dl { margin: 0; display: flex; flex-direction: column; gap: 16px; }
+.mb-card dl > div { display: grid; grid-template-columns: 192px minmax(0, 1fr); align-items: baseline; gap: 20px; opacity: 0; transform: translateY(12px); transition: opacity .45s cubic-bezier(.22,1,.36,1), transform .45s cubic-bezier(.22,1,.36,1); }
+.mb-card dl > div[data-on] { opacity: 1; transform: none; }
+.mb-card dt { color: #aab6c2; font: 450 17px/1.3 var(--font-geist-sans), sans-serif; }
+.mb-card dd { margin: 0; color: #f1f4f7; font: 450 clamp(21px, 1.9vw, 27px)/1.3 var(--font-geist-sans), sans-serif; letter-spacing: -.015em; text-wrap: balance; }
+.mb-card dl > div[data-big] { margin-top: 8px; }
+.mb-card dl > div[data-big] dd { color: #fff; font-size: clamp(28px, 2.7vw, 40px); font-weight: 500; line-height: 1.2; letter-spacing: -.025em; }
+.mb-time { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--active-accent, #ffc267); transform-origin: 0 50%; animation: mb-time linear both; }
+@keyframes mb-time { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.mb-skip { position: absolute; right: 28px; bottom: 22px; color: #93a0ae; font: 450 14px/1 var(--font-geist-sans), sans-serif; }
+@keyframes mb-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (max-width: 760px) { .mb-card dl > div { grid-template-columns: 1fr; gap: 4px; } }
+@media (prefers-reduced-motion: reduce) { .mb-veil, .mb-path, .mb-card h3, .mb-time { animation: none; } .mb-card dl > div { transition: none; } }

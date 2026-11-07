@@ -4,53 +4,14 @@ import { simulateLab } from "../lab-simulation";
 import { ease, prog } from "../../exhibit/engine";
 import type { ArcBeat, SceneProps } from "../stagecraft/module-arc";
 
-/* Post-training, told the way the serving modules are told. The film opens on
-   the goal; each move then starts with what it is and how the model learns from
-   it, on the one coding task the lab follows throughout (first_item). These
-   scenes are teaching examples; every count comes from the lab's 96-task model. */
+/* Post-training, told the way the serving modules are told. Each move starts with
+   what it is and how the model learns from it, on the one coding task the lab
+   follows throughout (first_item). These scenes are teaching examples; every
+   count comes from the lab's 96-task model. */
 const RUN = { base: simulateLab(0, 1), sft: simulateLab(1, 1), rl: simulateLab(2, 1), rl4: simulateLab(2, 4), lean: simulateLab(3, 4) };
 const perTask = (r: typeof RUN.base) => r.tokens / r.n;
 const f = (v: number) => v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 const C = { rose: "#f3a0bc", ok: "#b8e986", bad: "#ff8f86", ink: "#eef2f6", dim: "#5e6a76", amber: "#ffc267", blue: "#9cc5f5" };
-
-/* ── The goal ─────────────────────────────────────────────────────────── */
-const MOVES = [
-  { name: "SFT + LoRA", what: "Imitate verified reasoning", how: "changes a small part of the weights", to: `${RUN.base.correct} → ${RUN.sft.correct}`, unit: "solved", tone: C.rose },
-  { name: "GRPO", what: "Learn from outcomes", how: "attempts that pass their tests become more likely", to: `${RUN.sft.correct} → ${RUN.rl.correct}`, unit: "solved", tone: C.rose },
-  { name: "4× thinking budget", what: "Give it more thought", how: "same weights, more room to reason at run time", to: `${RUN.rl.correct} → ${RUN.rl4.correct}`, unit: "solved", tone: C.amber },
-  { name: "Lean RL", what: "Make thought count", how: "reward correct answers, charge for every token", to: `${Math.round(100 * (1 - perTask(RUN.lean) / perTask(RUN.rl4)))}% fewer`, unit: "tokens, same answers", tone: C.ok },
-] as const;
-
-function LearnGoal({ t }: SceneProps) {
-  const head = ease.out(prog(t, 100, 800));
-  return (
-    <div className="ci-board">
-      <p className="ci-problem" style={{ opacity: head, transform: `translateY(${(1 - head) * 8}px)` }}>
-        The goal: the <b>same base model, smarter</b>. Today it solves <b>{RUN.base.correct} of 96</b> maths, logic and coding tasks.
-      </p>
-      <p className="ci-depends" style={{ opacity: prog(t, 1800, 2500) }}>It gets there through <b>four moves</b>. Each one is shown first, then measured on the same 96 tasks:</p>
-      <ol className="ci-levers">
-        {MOVES.map((m, i) => {
-          const at = 2800 + i * 1500;
-          const k = ease.out(prog(t, at, at + 600));
-          return (
-            <li key={m.name} className="ci-lever" data-lit={(t >= at && t < at + 1500) || undefined} style={{ opacity: k, transform: `translateY(${(1 - k) * 12}px)`, ["--ci-tone" as string]: m.tone }}>
-              <span className="ci-part">{m.what}</span>
-              <strong className="ci-value" style={{ fontSize: 24 }}>{m.to}</strong>
-              <i className="ci-arrow" aria-hidden="true">←</i>
-              <span className="ci-name"><em>{i + 1}</em>{m.name}</span>
-              <span className="ci-does">{m.how}</span>
-            </li>
-          );
-        })}
-      </ol>
-    </div>
-  );
-}
-export const LEARN_INTRO: ArcBeat = {
-  label: "the goal", title: "What did the model learn, and how?", ms: 11000, Scene: LearnGoal,
-  meter: [[0, `Starting point: the base model solves ${RUN.base.correct} of 96 tasks`], [2800, "Move 1: imitate verified reasoning"], [4300, "Move 2: learn from test outcomes"], [5800, "Move 3: give it more thinking budget"], [7300, "Move 4: make every token count"]],
-};
 
 /* ── SFT: copy a verified trace, token by token ───────────────────────── */
 const TRACE = ["if", "not", "xs", ":", "return", "None", "return", "xs", "[0]"];

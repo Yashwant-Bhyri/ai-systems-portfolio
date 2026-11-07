@@ -9,8 +9,8 @@ const [W = 1512, H = 860, ONLY] = process.argv.slice(2);
 const OUT = new URL("./out/fit/", import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 const MODULES = {
-  inference: ["film", "composition", "replay", "latency", "pressure", "draft", "cache", "overlap", "map", "glossary"],
-  "post-training": ["film", "inside", "terrain", "map", "curves", "tasks", "fleet", "audit"],
+  inference: ["setup", "replay", "composition", "latency", "film", "pressure", "draft", "cache", "overlap", "map", "glossary"],
+  "post-training": ["inside", "terrain", "curves", "tasks", "film", "fleet", "map", "audit"],
 };
 const SEC = { inference: "inference-study", "post-training": "post-training-study" };
 
@@ -55,7 +55,7 @@ for (const [route, keys] of Object.entries(MODULES)) {
       const n = await chapters.count();
       for (let i = 0; i < n; i++) {
         await chapters.nth(i).click(); await p.waitForTimeout(500);
-        for (let k = 0; k < 2; k++) { const s = p.locator(".ma-interlude header button"); if (await s.count()) { await s.first().click(); await p.waitForTimeout(400); } }
+        for (let k = 0; k < 3; k++) { const s = p.locator(".ma-interlude header button"); if (await s.count()) { await s.first().click(); await p.waitForTimeout(400); } }
         await p.mouse.move(+W - 40, +H - 40); await p.waitForTimeout(6000);
         rows.push(await measure(p, `${tag} ch${i + 1}`, `${tag}-ch${i + 1}`));
       }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo } from "react";
-import { emitFocus, emitMeter } from "./stagecraft/stage-meter";
+import { emitFocus } from "./stagecraft/stage-meter";
 import type { LabRun } from "./lab-simulation";
 import { Hotspot, type Inspectors } from "./lab-story-scenes";
 import { useFilmTime } from "./use-film-time";
@@ -543,24 +543,14 @@ export function PrefixReuseReveal({
     shared = study.request.cacheHit;
   const handoff = reduced ? Number(frame.handoff >= 0.5) : frame.handoff;
   const readMs = (seconds: number) => (seconds * 1000).toFixed(0);
-  // The guide lives in the meter, one line at a time; the result gets the focus moment.
-  const line = frame.beat < 1 ? "Request 1 reads the whole contract and builds its keys and values"
-    : frame.beat === 1 ? "Those KV pages stay in GPU memory, ready to reuse"
-    : frame.beat === 2 ? `Request 7 matches the first ${format(study.savedTokens)} tokens and computes only its ${format(study.request.computedInputTokens)}-token question`
-    : frame.beat === 3 ? "The same request on both paths, on one clock"
-    : shared ? `Prompt reading ${readMs(study.reference.prefill)} → ${readMs(study.request.prefill)} ms; the answer itself still costs ${fmtS(study.request.decode)} GPU-s`
-    : "No prefix match, so nothing is skipped";
-  useEffect(() => {
-    if (!playing) return;
-    emitMeter({ text: line, step: frame.beat + 1, total: PREFIX_MOMENTS.length, tone: frame.beat >= 4 ? "delta" : "neutral" });
-  }, [line, frame.beat, playing]);
+  // The heading above is the voice; the result gets the focus moment.
   const landed = shared && frame.beat >= 5;
   useEffect(() => {
     if (!landed) return;
     emitFocus({
-      headline: `Request 7 reads its prompt ${Math.round(study.reference.prefill / study.request.prefill)}× faster`,
-      parts: [{ label: "baseline", value: `${readMs(study.reference.prefill)} ms`, tone: "baseline" }, { label: "prefix reuse", value: `${readMs(study.request.prefill)} ms`, tone: "optimized" }, { label: "Δ", value: `−${format(study.savedTokens)} input tokens`, tone: "delta" }],
-      cause: `its first ${format(study.savedTokens)} tokens were already in the KV cache from request ${study.producer.id + 1}`,
+      headline: `Request 7 reads its prompt *${Math.round(study.reference.prefill / study.request.prefill)}× faster*`,
+      parts: [{ label: "baseline", value: `${readMs(study.reference.prefill)} ms`, tone: "baseline" }, { label: "prefix reuse", value: `${readMs(study.request.prefill)} ms`, tone: "optimized" }],
+      cause: `its first ${format(study.savedTokens)} tokens were already cached`,
       place: "bottom",
     });
     return () => { emitFocus(null); };

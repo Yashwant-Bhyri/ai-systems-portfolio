@@ -96,7 +96,7 @@ export const FLEET_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat;
   problem: {
     label: "Problem / Bottleneck", title: "Synchronous RL: every GPU waits for the slowest rollout before anyone trains", ms: PROBLEM_MS, Scene: Problem,
     meter: [[0, "Each GPU writes its rollouts; answers vary a lot in length"], [3200, "Faster GPUs finish first, and then they wait"], [7200, `GPU ${SLOWEST + 1} is the slowest, so 63 GPUs wait for it`]],
-    bottleneck: { at: PROBLEM_MS - 3200, headline: `RL is sequential at the fleet level: 64 GPUs sit idle ${idlePct}% of the time`, effect: "one barrier per step means the slowest rollout sets the pace for every GPU, and that gets worse as the fleet grows" },
+    bottleneck: { at: PROBLEM_MS - 3200, headline: `64 GPUs sit idle *${idlePct}% of the time*`, effect: "One barrier per step: the slowest rollout sets the pace for all of them" },
   },
   mechanism: {
     label: "Elastic RL: the idea", title: "Elastic RL, after QwenGyre (arXiv 2609.33848): a GPU that finishes its rollout starts training at once", ms: IDEA_MS, Scene: Idea,

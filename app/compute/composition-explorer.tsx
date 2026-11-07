@@ -127,9 +127,8 @@ export function CompositionExplorer({
     if (!landed) return;
     const pp = target.accuracy - reference.accuracy, gpu = target.correctCost! - reference.correctCost!;
     emitFocus({
-      headline: `${reference.correct} → ${target.correct} correct answers of 96, at ${Math.abs(Math.round((100 * gpu) / reference.correctCost!))}% ${gpu > 0 ? "more" : "less"} GPU-s per answer`,
+      headline: `*${reference.correct} → ${target.correct} correct answers* of 96`,
       parts: [{ label: "baseline", value: `${number(reference.accuracy)}% · ${number(reference.correctCost!, 2)} GPU-s`, tone: "baseline" }, { label: "optimized", value: `${number(target.accuracy)}% · ${number(target.correctCost!, 2)} GPU-s`, tone: "optimized" }, { label: "Δ", value: `+${number(pp)} pp · ${gpu > 0 ? "+" : "−"}${number(Math.abs(gpu), 2)} GPU-s`, tone: "delta" }],
-      cause: `${mechanisms[0].name} raises accuracy and cost; ${mechanisms[1].name} takes ${number(Math.abs(mechanisms[1].delta), 2)} GPU-s back`,
       place: "bottom",
     });
     return () => { emitFocus(null); };

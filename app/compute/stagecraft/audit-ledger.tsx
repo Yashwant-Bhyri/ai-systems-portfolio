@@ -16,9 +16,8 @@ export function AuditLedger({ active }: { active: boolean }) {
     if (!active) return;
     emitMeter({ text: `Every step, checked task by task: ${GAINED} gained, ${LOST} lost`, tone: "delta" });
     const on = window.setTimeout(() => emitFocus({
-      headline: `A better score can hide a task that broke: ${LOST} did`,
+      headline: `A better score can hide a break: *${LOST} tasks did*`,
       parts: [{ label: "gained", value: String(GAINED), tone: "optimized" }, { label: "lost", value: String(LOST), tone: "problem" }, { label: "net", value: `+${GAINED - LOST} tasks`, tone: "delta" }],
-      cause: "each lost task is named below, so it can be checked and fixed rather than averaged away",
       place: "top",
     }), 6000);
     const off = window.setTimeout(() => emitFocus(null), 12000);

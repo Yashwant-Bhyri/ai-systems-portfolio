@@ -107,6 +107,15 @@ export function GhostCursor({
     };
   }, [root]);
 
+  // The rail's "dive deeper" hands the controls over; "keep playing" gives the demonstration back.
+  useEffect(() => {
+    if (!enabled) return;
+    const dive = () => setTaken(true);
+    const resume = () => { setTaken(false); setRun((n) => n + 1); };
+    window.addEventListener("lab:dive", dive);
+    window.addEventListener("lab:resume", resume);
+    return () => { window.removeEventListener("lab:dive", dive); window.removeEventListener("lab:resume", resume); };
+  }, [enabled]);
   const live = enabled && inView && !taken && !reduced;
 
   const place = useCallback((x: number, y: number, ms: number) => {

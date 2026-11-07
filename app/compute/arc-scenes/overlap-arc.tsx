@@ -114,7 +114,7 @@ export const OVERLAP_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBea
   problem: {
     label: "Problem / Bottleneck", title: "The GPU waits while the CPU prepares each step and hands back its token", ms: PROBLEM_MS, Scene: Problem,
     meter: [[0, "CPU prepares step 1 while the GPU waits"], [1500, "GPU runs step 1"], [3200, "CPU delivers the token, then prepares step 2: the GPU waits again"]],
-    bottleneck: { at: PROBLEM_MS - 3000, headline: `The GPU sits idle ${S.baseline.gpuIdle} of every ${S.baseline.finish} ms, waiting for the CPU`, effect: `each decode step pays ${S.inputs.prepare + S.inputs.deliver} ms of host work in series, so an expensive GPU loses throughput to CPU bookkeeping` },
+    bottleneck: { at: PROBLEM_MS - 3000, headline: `The GPU sits idle *${S.baseline.gpuIdle} of every ${S.baseline.finish} ms*, waiting for the CPU`, effect: `Each decode step pays ${S.inputs.prepare + S.inputs.deliver} ms of host work in series` },
   },
   mechanism: {
     label: "Optimized solution", title: "Optimized solution, overlap: the CPU prepares step n+1 while the GPU is still running step n", ms: MECH_MS, Scene: Mechanism,

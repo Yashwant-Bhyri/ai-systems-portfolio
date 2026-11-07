@@ -103,3 +103,24 @@ Target viewport: the user's MacBook (3024×1964 Retina, which "looks like" 1512�
 | 31 | Where the 96 tasks land: reimagine the graph | Done. Tasks stacked by difficulty with an ability line that sweeps right. |
 | 32 | Elastic RL: explain elastic RL and the QwenGyre idea; impact communicated | Done. Bottleneck, the idea (crediting QwenGyre), ledger and lesson. |
 | 33 | Regression audit: communicate, not just represent | Done. Step-by-step ledger naming each lost task, plus a focus moment. |
+
+## Round 10 (2026-11-07): direct attention, order by impact, free controls
+Target viewport stays 1512×860.
+
+| # | Ask | Status |
+|---|---|---|
+| 1 | Lab intro uses the full-screen blur: "Inference optimization can be done in two ways"; left branch lifts and its titles light up, then the right branch and its titles, then the explanation starts | Done. Line, left branch and its titles, right branch and its titles, then the line that starts the show. Skip link at the corner. |
+| 2 | The explanatory pill (live meter) is out of focus; find a better way | Done. No pill. A film's or arc's own heading is the voice; other modules get one large plain line at the head of the stage. |
+| 3 | The focus pop-up (dim page, one pill) is too blocky and too wordy; make it clean | Done. No box: one large line and at most a line of numbers on the dimmed picture, wording cut down. |
+| 4 | Revisiting a module: the scrubber and pause cannot be used; the module rushes on | Done and tested. A finished module stays when revisited, arcs restart from the problem, framing scenes play once, and a finished film replays the chapter on screen. |
+| 5 | "Open next" pill blocks the toggle bar and re-exploring | Done. The floating pill is gone; Next lives in the rail, and the pause and scrubber test as clickable. Using any stage control stops auto-advance. |
+| 6 | Every component states, full screen: what we deal with, the exact goal, the impact | Done. Full-screen brief on first opening: we are looking at, the goal, the impact with its number, computed from the model. |
+| 7 | Inference opens on a moving 3D graph (GPU time, correctness, waiting), not on a sentence of numbers; highlight the slowest 5%; then "depends on three things" | Done. `big-picture.tsx`: 96 requests on GPU time, waiting and correct/wrong sheets, turning camera, slowest 5% marked, each lever moves the points. |
+| 8 | One central highlight theme (sparkles) that marks one phrase, not a whole pill | Done, as a highlighter stroke rather than sparkles (unslop lists sparkles and shimmer as AI tells). See `design-direction.md`. |
+| 9 | Before baseline: the request-to-answer flowchart, which component each technique touches; narrow onto that component; what happens, what we did, impact in numbers | Done. `flow-board.tsx`: the whole path in the big picture, then each chapter narrows to its stop: what happens, what we changed, impact. |
+| 10 | Order by visual impact: define the experiment quickly, then Execution replay, then Policy × runtime; the detailed experiment later; baseline made easier to consume | Done. Big picture, Execution replay, Policy × runtime, Queue & latency, then The experiment. The baseline now opens on the path before its detail; the baseline film itself is unchanged. |
+| 11 | Inside each module, under the title cards on the left: keep playing, dive deeper, or go to the next one | Done. Rail under the titles: Stay on this one / Keep playing, Dive deeper, Next, with a state line. |
+| 12 | Post-training: better introduction; start with Inside the model, then Capability terrain, then the other visual ones | Done. New introduction; Inside the model, Capability terrain, Compute curves, Where the tasks land, How it learned, Elastic RL, Capability map, Regression audit. |
+| 13 | Capability terrain: unclear whether it is running, replaying, or time to move on | Done. One pass, chosen stages, Raise it again, and a state line in the rail. Inside the model also runs once, with a scrubber. |
+| 14 | Component microscope: endless floating marquees and the pill; refer to the original. **Later, not this round** | Later |
+| 15 | Component microscope: the Conclusion stage is broken | Fixed. The conclusion was squeezed into a 38 px row by a grid rule of mine. Copy also made plain. |

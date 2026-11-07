@@ -6,6 +6,17 @@ const D = (s: number) => `${s}s`;
 
 /* ── Inference · Part 1 ───────────────────────────────────────────────── */
 
+export function GlyphBigPicture() {
+  // A turning cloud of requests: the points fall as the levers act.
+  const pts = [[38, 40], [62, 28], [86, 52], [108, 34], [132, 62], [156, 44], [178, 70], [200, 54]];
+  return <svg viewBox={VB}>
+    <path d="M26 16V96L118 112L226 88" className="g-axis" />
+    {pts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={5} className={i % 3 === 2 ? "g-m" : "g-g"}>
+      <animate attributeName="cy" values={`${y};${y + 24};${y + 24};${y}`} keyTimes="0;.45;.92;1" dur={D(5.4)} begin={D(i * 0.08)} repeatCount="indefinite" />
+    </circle>)}
+  </svg>;
+}
+
 export function GlyphExperiment() {
   // Three interventions remove three slices of the same bar.
   const parts = [[0, 46, "g-r"], [46, 62, "g-a"], [108, 22, "g-c"]] as const;

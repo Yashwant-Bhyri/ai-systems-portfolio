@@ -1,0 +1,40 @@
+/* Redline pass over the lab, after unslop by Damir Sokolovsky (@heydamir, CC BY 4.0):
+   quiet chrome, no shimmer or glints, sentence case, and the colour left to the figures.
+   See docs/exhibition/design-direction.md. Imported last. */
+
+/* No shimmer, no glints, no pulsing halo on numbers: a number that matters is large and solid. */
+@keyframes cx-shine { from, to { background-position: 0 0; } }
+@keyframes cx-shine-2 { from, to { background-position: 0 0; } }
+@keyframes cx-shine-soft { from, to { background-position: 0 0; } }
+@keyframes cx-glow { from, to { filter: none; } }
+@keyframes cx-svg-glint { from, to { filter: none; } }
+@keyframes cx-glint { from, to { opacity: 0; } }
+@keyframes cx-glint-2 { from, to { opacity: 0; } }
+.lab-flow-show .lf-stage * { -webkit-text-fill-color: currentcolor; }
+.lab-flow-show .lf-stage :is(.cx-shine, .cx-hero-num, .bo-measure strong, .sq-ledger-result strong, .pr-gain strong, .rg-final-equation strong)::after,
+.lab-flow-show .lf-stage :is(.cx-hero-num, .sq-ledger-result strong)::before { content: none; }
+
+/* Sentence case, normal tracking below display sizes, no italic emphasis. */
+.lab-flow-show .lf-stage * { text-transform: none; }
+.lab-flow-show .lf-stage :is(em, i, .prs-note) { font-style: normal; }
+.lab-flow-show .lf-stage :is(small, .rr-delta small, .cx-hero-unit, .tl-label, .tl-head span, .sc-kicker, .gc-tag, .df-small, .df-kicker, .prs-axis-label, .prs-total-tag, .prs-kicker, .tl-axis-label, .so-idle-label, .br-root) { letter-spacing: 0; }
+.lab-flow-show .lf-stage .so-idle-label { font-weight: 500; }
+.lab-flow-show .lf-stage { font-variant-numeric: tabular-nums; }
+
+/* Depth from surface steps and hairlines, not glows. */
+.vx-shell.vx-shell .lab-flow-show .ll-percentiles button[aria-pressed="true"] { box-shadow: none; }
+.lab-flow-show .lf-stage .prs-lenses button[aria-pressed="true"] i { box-shadow: none; }
+.lab-flow-show .lf-stage :is(.prs-dot, .br-lines path[data-on="true"], .cx-focus-floor) { filter: none; }
+.lab-flow-show .lf-fit .gb-card[data-state="open"] { box-shadow: 0 24px 64px rgba(0,0,0,.55); }
+.lab-flow-show .lf-fit .gb-card[data-hot] { transform: none; box-shadow: none; }
+
+/* The stage's first row: tabs with a modest radius, and the voice beside them. */
+.vx-shell .lab-flow-show .ma-beats button { border-radius: 8px; height: 32px; line-height: 30px; font-weight: 400; font-size: 13px; }
+.lab-flow-show .ma-beats { gap: 4px; min-height: 48px; padding-inline: 16px; }
+.lab-flow-show .ma-title { margin-left: 16px; min-width: 0; padding-block: 4px; color: #f6f8fa; font: 500 clamp(15px, 1.2vw, 18px)/1.3 var(--font-geist-sans), sans-serif; letter-spacing: -.01em; animation: sm-in .4s cubic-bezier(.22,1,.36,1); }
+.lab-flow-show .ma-lesson { color: #fff; font-weight: 500; }
+.lab-flow-show .ma-choke { padding: 12px 24px; background: none; border-bottom: 1px solid rgba(230,237,244,.08); }
+.lab-flow-show .ma-choke span { color: #fff; font-weight: 500; }
+
+/* The ghost cursor's "show me" chip gives way to the rail's "keep playing". */
+.vx-shell .lab-flow-show .gc-replay { display: none; }

@@ -206,7 +206,7 @@ export const CACHE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat;
   problem: {
     label: "Problem / Bottleneck", title: "Least-loaded routing recomputes a prefix another replica already holds", ms: PROBLEM_MS, Scene: Problem,
     meter: [[0, "A new request arrives: a 4,096-token shared prefix and its own question"], [900, "The router picks the least-loaded replica: B, which is empty"], [2000, "Replica B recomputes all 6 pages of the prompt"], [8000, `First token after ${S.cold.firstToken} ms`]],
-    bottleneck: { at: 8400, headline: `${S.promptBlocks} pages prefilled again; ${S.warm.reuse} were already cached on replica A`, effect: "routing by load alone ignores where KV pages live, so GPUs keep recomputing prefixes the fleet already holds" },
+    bottleneck: { at: 8400, headline: `*${S.promptBlocks} pages prefilled again*; ${S.warm.reuse} were already cached on replica A`, effect: "Routing by load alone ignores where KV pages live" },
   },
   mechanism: {
     label: "Optimized solution", title: "Optimized solution, cache-aware routing: go where the prefix lives, even after a short wait", ms: MECH_MS, Scene: Mechanism,
@@ -217,7 +217,7 @@ export const CACHE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat;
   system: {
     label: "In our system", title: "The same request on both replicas, one clock", ms: SYS_MS, Scene: CacheSystem,
     meter: [[0, "Least-loaded: replica B has room, so it recomputes all 6 pages"], [SYS_A, "Cache-aware: replica A holds the prefix but its memory is full"], [SYS_A + 1400, `The request waits ${S.warm.start} ms for request R to release its pages`], [SYS_A + 2600, `Then only ${S.warm.prefillBlocks} pages need prefill`], [SYS_B, `First token ${S.cold.firstToken} → ${S.warm.firstToken} ms`]],
-    focus: { at: SYS_B + 1400, headline: `Same request, first token ${S.delta} ms sooner`, parts: [{ label: "least-loaded", value: `${S.cold.firstToken} ms`, tone: "baseline" }, { label: "cache-aware", value: `${S.warm.firstToken} ms`, tone: "optimized" }, { label: "Δ", value: `−${S.delta} ms`, tone: "delta" }], cause: `${S.warm.reuse} of ${S.promptBlocks} prompt pages were already in replica A's KV cache` },
+    focus: { at: SYS_B + 1400, headline: `Same request, first token *${S.delta} ms sooner*`, parts: [{ label: "least-loaded", value: `${S.cold.firstToken} ms`, tone: "baseline" }, { label: "cache-aware", value: `${S.warm.firstToken} ms`, tone: "optimized" }, { label: "Δ", value: `−${S.delta} ms`, tone: "delta" }], cause: `${S.warm.reuse} of ${S.promptBlocks} prompt pages were already in replica A's KV cache` },
   },
   impact: {
     label: "Impact", title: "A faster first token, until the wait for space outgrows the reuse", ms: 9000,

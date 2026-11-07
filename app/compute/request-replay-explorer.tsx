@@ -149,7 +149,7 @@ export function RequestReplayExplorer({
   const id = useId();
   const stage = useRef<HTMLDivElement>(null);
   const [leader, setLeader] = useState<string | null>(null);
-  const meterLine = `Request ${taskId + 1}, ${METRICS.find((item) => item.id === metric)!.label.toLowerCase()}: ${number(values[0])} → ${number(values[1])} ${delivery ? "s" : "GPU-s"}`;
+  const meterLine = `Request ${taskId + 1}, ${METRICS.find((item) => item.id === metric)!.label.toLowerCase().replace("gpu", "GPU")}: ${number(values[0])} → ${number(values[1])} ${delivery ? "s" : "GPU-s"}`;
   useEffect(() => { emitMeter({ text: meterLine, tone: "optimized" }); }, [meterLine]);
   const selectRequest = (next: number) => {
     if (presentation) {

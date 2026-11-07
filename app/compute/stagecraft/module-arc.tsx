@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ComponentType, 
 import { useTr } from "../../exhibit/i18n";
 import { ease, prog } from "../../exhibit/engine";
 import { useStageHold } from "./stage-hold";
-import { emitFocus, emitMeter, type Tone } from "./stage-meter";
+import { emitFocus, highlight, type Tone } from "./stage-meter";
 import "./module-arc.css";
 import "./system-board.css";
 
@@ -126,11 +126,23 @@ export function ModuleArc({
   const lines = timed?.meter;
   let line = beat === 2 ? `${labels[2]}: ${systemTitle}` : timed?.title ?? "";
   if (lines) for (const [at, text] of lines) if (shownT >= at) line = text;
+  // Keep playing and dive deeper, from the rail.
   useEffect(() => {
     if (!active) return;
-    emitMeter({ text: tr(line), step: beat + 1, total: 4, tone: beat === 0 ? "problem" : beat === 3 ? "delta" : beat === 1 ? "optimized" : "neutral" });
-  }, [active, line, beat, tr]);
-  useEffect(() => () => { emitMeter(null); }, []);
+    const dive = () => { setHeld(true); if (system) { setBeat(2); setT(0); setExploring(true); } };
+    const resume = () => { setHeld(false); setExploring(false); if (beat === 3 && t >= impact.ms) { setBeat(0); setT(0); } setRun((n) => n + 1); };
+    window.addEventListener("lab:dive", dive);
+    window.addEventListener("lab:resume", resume);
+    return () => { window.removeEventListener("lab:dive", dive); window.removeEventListener("lab:resume", resume); };
+  }, [active, system, beat, t, impact.ms]);
+  // Coming back to an arc that has finished starts it again from its problem.
+  // (A hidden Activity reconnects its effects when it returns, so this runs on every return.)
+  const finishedAt = useRef({ beat, t, ms: impact.ms });
+  useEffect(() => { finishedAt.current = { beat, t, ms: impact.ms }; });
+  useEffect(() => {
+    const f = finishedAt.current;
+    if (active && f.beat === 3 && f.t >= f.ms) { setBeat(0); setT(0); setHeld(false); setExploring(false); setRun((n) => n + 1); }
+  }, [active]);
   // The bottleneck is stated centrally once the problem has played out.
   const choke = beat === 0 ? problem.bottleneck : undefined;
   const choked = !!choke && active && shownT >= choke.at;
@@ -156,7 +168,7 @@ export function ModuleArc({
             {beat === i && beats[i] && <b className="ma-progress" style={{ transform: `scaleX(${Math.min(1, shownT / beats[i]!.ms)})` }} />}
           </button>
         ))}
-        <span className="ma-title" key={beat}>{tr(timed ? timed.title : systemTitle)}</span>
+        <span className="ma-title" key={line}>{highlight(tr(line))}</span>
         {beat === 2 && system && (
           <button type="button" className="sb-explore-btn" aria-pressed={exploring} onClick={() => { setExploring((v) => !v); root.current?.dispatchEvent(new CustomEvent("lab:module-taken", { bubbles: true })); }}>
             {tr(exploring ? "Back to the walkthrough" : "Explore the full model ▸")}
@@ -261,7 +273,7 @@ export function makeImpact(spec: ImpactSpec): ComponentType<SceneProps> {
     if (spec.Figure)
       return (
         <div className="ma-impact" data-board>
-          {spec.lesson && <p className="ma-lesson" style={{ opacity: prog(t, 200, 900) }}>✦ {tr(spec.lesson)}</p>}
+          {spec.lesson && <p className="ma-lesson" style={{ opacity: prog(t, 200, 900) }}>{tr(spec.lesson)}</p>}
           <header className="ma-board">
             {hero}
             <p className="ma-cause" style={{ opacity: prog(t, 2800, 3400) }}>{tr(spec.cause)}</p>
@@ -272,7 +284,7 @@ export function makeImpact(spec: ImpactSpec): ComponentType<SceneProps> {
       );
     return (
       <div className="ma-impact">
-        {spec.lesson && <p className="ma-lesson" style={{ opacity: prog(t, 200, 900) }}>✦ {tr(spec.lesson)}</p>}
+        {spec.lesson && <p className="ma-lesson" style={{ opacity: prog(t, 200, 900) }}>{tr(spec.lesson)}</p>}
         <div className="ma-hero-col">{hero}<p className="ma-cause" style={{ opacity: prog(t, 2800, 3400) }}>{tr(spec.cause)}</p></div>
         {bars}
       </div>
@@ -289,14 +301,9 @@ export function makeImpact(spec: ImpactSpec): ComponentType<SceneProps> {
 export function FilmInterlude({ beat, kicker, live, onDone, doneLabel }: { beat: ArcBeat; kicker: string; live: boolean; onDone: () => void; doneLabel?: string }) {
   const tr = useTr();
   const [t, setT] = useState(0);
-  // The live meter narrates the interlude too.
+  // The heading is the voice: it says what is happening now.
   let line = beat.title;
   if (beat.meter) for (const [at, text] of beat.meter) if (t >= at) line = text;
-  useEffect(() => {
-    if (!live) return;
-    emitMeter({ text: tr(line), tone: beat.label === "Impact" ? "delta" : beat.bottleneck ? "problem" : "neutral" });
-    return () => { emitMeter(null); };
-  }, [live, line, beat, tr]);
   const reduced = useSyncExternalStore(subscribeReduced, () => matchMedia(REDUCED).matches, () => false);
   const done = useRef(onDone);
   useEffect(() => { done.current = onDone; });
@@ -319,12 +326,12 @@ export function FilmInterlude({ beat, kicker, live, onDone, doneLabel }: { beat:
     <div className="ma-interlude" role="region" aria-label={`${tr(kicker)}: ${tr(beat.title)}`}>
       <header>
         <span><i>{tr(kicker)}</i> · {tr(beat.label)}</span>
-        <strong>{tr(beat.title)}</strong>
+        <strong key={line}>{highlight(tr(line))}</strong>
         <button type="button" onClick={onDone}>{tr(doneLabel ?? (beat.label === "Impact" ? "Continue ▸" : "Skip to our system ▸"))}</button>
         <b className="ma-progress" style={{ transform: `scaleX(${Math.min(1, (reduced ? beat.ms : t) / beat.ms)})` }} />
       </header>
       {beat.bottleneck && (
-        <p className="ma-choke"><b>{tr("Bottleneck")}</b> <span>{tr(beat.bottleneck.headline)}</span> <em>{tr(beat.bottleneck.effect)}</em></p>
+        <p className="ma-choke"><b>{tr("Bottleneck")}</b> <span>{highlight(tr(beat.bottleneck.headline))}</span></p>
       )}
       <div className="ma-scene">{beat.Scene && <beat.Scene t={reduced ? beat.ms : t} />}</div>
     </div>

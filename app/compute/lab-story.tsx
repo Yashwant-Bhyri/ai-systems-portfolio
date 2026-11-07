@@ -3,8 +3,8 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { FilmInterlude } from "./stagecraft/module-arc";
 import { FILM_ARCS } from "./arc-scenes/film-arcs";
-import { CHEAP_INTRO } from "./arc-scenes/film-intro";
-import { LEARN_ARCS, LEARN_INTRO } from "./arc-scenes/learn-arcs";
+import { FLOW_ZOOMS } from "./stagecraft/flow-board";
+import { LEARN_ARCS } from "./arc-scenes/learn-arcs";
 import { useTr } from "../exhibit/i18n";
 import { createPortal } from "react-dom";
 import { useSlot } from "./stagecraft/use-slot";
@@ -55,6 +55,12 @@ const RuntimeGainsReveal = lazy(() => import("./runtime-gains-reveal").then(modu
 
 const ROOM_CHAPTERS = new Set([2, 4, 5]);
 
+/* Each framing scene plays once per visit: going back to a chapter goes straight to the chapter. */
+type Interlude = { step: number; kind: "flow" | "mechanism" | "impact" };
+const SEEN_FRAMES = new Set<string>();
+const frameKey = (training: boolean, f: Interlude) => `${training}-${f.step}-${f.kind}`;
+const unseen = (training: boolean, list: Interlude[]) => list.filter((f) => !SEEN_FRAMES.has(frameKey(training, f)));
+
 export function LabStory({
   training,
   evidence,
@@ -72,8 +78,8 @@ export function LabStory({
   const [undo, setUndo] = useState(false),
     [budget, setBudget] = useState(4),
     [workload, setWorkload] = useState<Workload>("shared-prefix");
-  // A technique chapter is framed by "how it works" before it and its impact after it; the film holds meanwhile.
-  const [interludes, setInterludes] = useState<{ step: number; kind: "intro" | "mechanism" | "impact" }[]>([{ step: -1, kind: "intro" }]);
+  // A chapter is framed by where it works and how before it, and by its impact after it; the film holds meanwhile.
+  const [interludes, setInterludes] = useState<Interlude[]>(() => unseen(training, training ? [] : [{ step: 0, kind: "flow" }]));
   const { ref, ...playback } = useStudyPlayback(training ? 6 : 5, 0, {
     // Hovering or pinning an inspection explains; it never stops the film.
     held: undo || interludes.length > 0,
@@ -94,21 +100,23 @@ export function LabStory({
   if (seenStep !== playback.step) {
     const prev = seenStep, next = playback.step;
     setSeenStep(next);
-    if (training) setInterludes(LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" as const }] : []);
+    if (training) setInterludes(unseen(true, LEARN_ARCS[next] ? [{ step: next, kind: "mechanism" }] : []));
     else
-      setInterludes([
+      setInterludes(unseen(false, [
         ...(FILM_ARCS[prev] && next === prev + 1 ? [{ step: prev, kind: "impact" as const }] : []),
+        ...(FLOW_ZOOMS[next] ? [{ step: next, kind: "flow" as const }] : []),
         ...(FILM_ARCS[next] ? [{ step: next, kind: "mechanism" as const }] : []),
-      ]);
+      ]));
   }
   const interlude = interludes[0];
   const interludeBeat = useMemo(
     () => (!interlude ? null
-      : interlude.kind === "intro" ? (training ? LEARN_INTRO : CHEAP_INTRO)
+      : interlude.kind === "flow" ? FLOW_ZOOMS[interlude.step]
       : training ? LEARN_ARCS[interlude.step].mechanism
       : interlude.kind === "mechanism" ? FILM_ARCS[interlude.step].mechanism : FILM_ARCS[interlude.step].impact(workload)),
     [interlude, workload, training],
   );
+  useEffect(() => { if (interlude) SEEN_FRAMES.add(frameKey(training, interlude)); }, [interlude, training]);
   const slotId = training ? "training-chapters-slot" : "inference-chapters-slot";
   const slot = useSlot(slotId);
   // When the last chapter ends, hand over to whatever comes next (the second branch).
@@ -178,10 +186,24 @@ export function LabStory({
   const toggleStory = () => {
     clear();
     setUndo(false);
-    if (playback.finished) replay();
+    // A finished film replays the chapter on screen, not the whole film from its first chapter.
+    if (playback.finished) { playback.select(step); playback.resume(); }
     else if (!isWatching) playback.resume();
     else playback.pause();
   };
+  // Dive deeper: stop here with the scrubber free. Keep playing: carry on from here.
+  const pauseRef = useRef(playback.pause), resumeRef = useRef(() => {});
+  useEffect(() => {
+    pauseRef.current = playback.pause;
+    resumeRef.current = () => { if (playback.finished) playback.select(step); playback.resume(); };
+  });
+  useEffect(() => {
+    const dive = () => { setInterludes([]); pauseRef.current(); };
+    const resume = () => resumeRef.current();
+    window.addEventListener("lab:dive", dive);
+    window.addEventListener("lab:resume", resume);
+    return () => { window.removeEventListener("lab:dive", dive); window.removeEventListener("lab:resume", resume); };
+  }, []);
   // The chapter list lives in the laboratory's side rail when the rail is present.
   const chaptersNav = (
     <nav
@@ -241,8 +263,8 @@ export function LabStory({
         <FilmInterlude
           key={`${interlude.step}-${interlude.kind}-${workload}`}
           beat={interludeBeat}
-          kicker={interlude.kind === "intro" ? (training ? "Post-training" : "The problem") : training ? LEARN_ARCS[interlude.step].name : FILM_ARCS[interlude.step].name}
-          doneLabel={interlude.kind === "intro" ? (training ? "Start with the base model ▸" : "Start with the baseline ▸") : training ? "Skip to the results ▸" : undefined}
+          kicker={interlude.kind === "flow" ? steps[interlude.step].name : training ? LEARN_ARCS[interlude.step].name : FILM_ARCS[interlude.step].name}
+          doneLabel={interlude.kind === "flow" ? "Continue ▸" : training ? "Skip to the results ▸" : undefined}
           live={playback.inViewport && playback.playing}
           onDone={() => setInterludes((q) => q.slice(1))}
         />

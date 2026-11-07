@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTr } from "../../../exhibit/i18n";
 import { POLICIES, TASKS, hashTask, simulateLab } from "../../lab-simulation";
 import { mountRelief } from "./relief";
-import { emitMeter } from "../stage-meter";
+import { emitFocus, emitMeter } from "../stage-meter";
 import "./scan.css";
 
 /**
@@ -36,6 +36,12 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
   const relief = useRef<HTMLDivElement>(null);
   const labels = useRef<SVGSVGElement>(null);
   const [stage, setStage] = useState(0);
+  const [finished, setFinished] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  // The land follows `k`: the clock raises it once; a chosen stage or a replay moves it from there.
+  const goal = useRef<number | null>(null);
+  const k = useRef(0);
+  const [run, setRun] = useState(0);
   const field = useMemo(() => STAGES.map((s) => ORDER.map((id) => {
     const { m, regression } = margin(s.policy, s.budget, id);
     const solved = m > 0 && !regression;
@@ -77,27 +83,57 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
     svg?.querySelector("[data-hard]")?.setAttribute("x", String(ends[1].x));
     svg?.querySelector("[data-hard]")?.setAttribute("y", String(ends[1].y + 18));
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let raf = 0, last = -1;
-    const start = performance.now();
+    let raf = 0, last = -1, prev = performance.now(), drawn = -1;
+    const END = STAGES.length;
+    k.current = reduced ? END : 0;
+    goal.current = null;
     const tick = (now: number) => {
-      // One pass: each checkpoint rises in turn, and the finished terrain holds.
-      const t = reduced ? RISE : Math.min(RISE, now - start);
-      const k = Math.min(STAGES.length, (t / RISE) * STAGES.length);
-      // each checkpoint row rises in turn, sweeping from easy to hard tasks
-      r.update((c, row) => (stageOf(row) < 0 ? 1 : Math.min(1, Math.max(0, (k - stageOf(row)) * 1.6 - (c / ORDER.length) * 0.6))));
-      r.render();
-      const n = Math.min(STAGES.length - 1, Math.floor(k));
+      const dt = Math.min(64, now - prev);
+      prev = now;
+      if (goal.current === null) k.current = Math.min(END, k.current + (dt / RISE) * END);
+      else {
+        // a chosen stage: the land settles there and stays
+        const d = goal.current - k.current;
+        k.current += Math.sign(d) * Math.min(Math.abs(d), dt / 420);
+      }
+      if (k.current !== drawn) {
+        drawn = k.current;
+        // each checkpoint row rises in turn, sweeping from easy to hard tasks
+        r.update((c, row) => (stageOf(row) < 0 ? 1 : Math.min(1, Math.max(0, (k.current - stageOf(row)) * 1.6 - (c / ORDER.length) * 0.6))));
+        r.render();
+      }
+      const n = Math.max(0, Math.min(END - 1, Math.ceil(k.current) - 1));
       if (n !== last) { last = n; setStage(n); }
-      if (!reduced && now - start < RISE) raf = requestAnimationFrame(tick);
+      setFinished(goal.current === null && k.current >= END);
+      raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); r.dispose(); };
-  }, [field, active]);
+  }, [field, active, run]);
 
-  const stageLine = stage === 0 ? `Base: ${solvedCounts[0]} of 96 tasks rise above the ground` : `${STAGES[stage].label}: ${solvedCounts[stage - 1]} → ${solvedCounts[stage]} tasks solved`;
+  // Keep playing raises the land again; dive deeper stops it where it is, with the stages to choose from.
+  useEffect(() => {
+    if (!active) return;
+    const dive = () => { goal.current = Math.max(1, Math.ceil(k.current)); };
+    const resume = () => setRun((n) => n + 1);
+    window.addEventListener("lab:dive", dive);
+    window.addEventListener("lab:resume", resume);
+    return () => { window.removeEventListener("lab:dive", dive); window.removeEventListener("lab:resume", resume); };
+  }, [active]);
+  // Once the land has risen, say what it means and that the module is done.
+  useEffect(() => {
+    if (!active || !finished) return;
+    const a = solvedCounts[0], b = solvedCounts[STAGES.length - 1];
+    const on = window.setTimeout(() => emitFocus({ headline: `Training raised *${b - a} tasks* above the ground`, parts: [{ label: "base", value: `${a} of 96`, tone: "baseline" }, { label: "lean RL", value: `${b} of 96`, tone: "optimized" }], place: "bottom" }), 900);
+    const off = window.setTimeout(() => { emitFocus(null); root.current?.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true })); }, 5400);
+    return () => { window.clearTimeout(on); window.clearTimeout(off); emitFocus(null); };
+  }, [active, finished, solvedCounts]);
+
+  const stageLine = finished ? `Finished: ${solvedCounts[0]} → ${solvedCounts[STAGES.length - 1]} tasks solved. Choose a stage to look again`
+    : stage === 0 ? `Base: ${solvedCounts[0]} of 96 tasks rise above the ground` : `${STAGES[stage].label}: ${solvedCounts[stage - 1]} → ${solvedCounts[stage]} tasks solved`;
   useEffect(() => { if (active) emitMeter({ text: stageLine, step: stage + 1, total: STAGES.length, tone: "optimized" }); }, [active, stageLine, stage]);
   return (
-    <div className="sc-root sc-rose">
+    <div ref={root} className="sc-root sc-rose">
       <header className="sc-head">
         <div>
           <span className="sc-kicker">{tr("96 synthetic tasks · six checkpoints")}</span>
@@ -108,6 +144,14 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
           <small>{tr(`of 96 solved · ${STAGES[stage].label}`)}</small>
         </div>
       </header>
+      <nav className="sc-steps" aria-label={tr("Training stages")}>
+        {STAGES.map((s, i) => (
+          <button key={s.label} type="button" aria-pressed={i === stage} data-done={i < stage || (finished && i <= stage) || undefined} onClick={() => { goal.current = i + 1; }}>
+            {tr(s.label)}<b>{solvedCounts[i]}</b>
+          </button>
+        ))}
+        <button type="button" className="sc-again" onClick={() => setRun((n) => n + 1)}>{tr("Raise it again")}</button>
+      </nav>
       <div className="sc-stage sc-terrain">
         <div ref={relief} className="sc-relief" />
         <svg ref={labels} className="sc-labels" aria-hidden="true">

@@ -48,12 +48,14 @@ import "./stagecraft/explorers.css";
 import "./stagecraft/block.css";
 import "./stagecraft/lab-flow.css";
 import "./stagecraft/legibility.css";
+import "./stagecraft/polish.css";
 import { ModuleBar, type RailItem } from "./stagecraft/side-rail";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { LabNavSwitcher, useLabNav } from "./stagecraft/lab-nav";
-import { LabLanding, TitleRail, type Pathway, type ShowItem } from "./stagecraft/title-show";
+import { LabLanding, TitleRail, type IntroStep, type Pathway, type ShowItem } from "./stagecraft/title-show";
+import { ModuleBrief, moduleBriefs } from "./stagecraft/module-brief";
+import { BigPicture } from "./stagecraft/big-picture";
 import { SERVING_RAIL } from "./serving-rail-meta";
-import { INFERENCE_STORY, TRAINING_STORY } from "./lab-story-data";
 import { TaskLanding } from "./stagecraft/task-landing";
 import { FleetModule } from "./stagecraft/fleet-module";
 import { ModuleArc } from "./stagecraft/module-arc";
@@ -64,6 +66,7 @@ import { useTr } from "../exhibit/i18n";
 import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 import {
   GlyphAudit,
+  GlyphBigPicture,
   GlyphCapability,
   GlyphComposition,
   GlyphCurves,
@@ -411,14 +414,25 @@ function TaskReadout({
 }
 
 const INFERENCE_PATHWAYS: readonly Pathway[] = [
-  { n: "01", title: "Same intelligence, cheaper execution", short: "Cheaper execution", techniques: ["Free-worker scheduling", "Prefix reuse (KV cache)", "Faster prefill & decode rates"] },
-  { n: "02", title: "Optimized serving under load", short: "Optimized serving under load", techniques: ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"] },
+  { n: "01", title: "Serving the same intelligence at cheaper execution", short: "Cheaper execution", techniques: ["Free-worker scheduling", "Prefix reuse (KV cache)", "Faster prefill & decode rates"] },
+  { n: "02", title: "Optimized serving under load", short: "Serving under load", techniques: ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"] },
 ];
 const TRAINING_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "What did the model learn?", short: "Post-training", techniques: ["SFT + LoRA", "Correctness RL", "More thought", "Lean RL", "Elastic RL"] },
 ];
+const INFERENCE_INTRO: readonly IntroStep[] = [
+  { kind: "line", text: "Inference optimization can be done in *two ways*", ms: 2800 },
+  { kind: "path", index: 0 },
+  { kind: "path", index: 1 },
+  { kind: "line", text: "First: how we serve the same intelligence with *cheaper execution*", ms: 3000 },
+];
+const TRAINING_INTRO: readonly IntroStep[] = [
+  { kind: "line", text: "One base model, made *smarter* on maths and coding", ms: 3000 },
+  { kind: "path", index: 0 },
+  { kind: "line", text: "First, look *inside the model*", ms: 2400 },
+];
 /** Modules without a scripted demonstration stay on stage this long before the show moves on. */
-const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 40000, tasks: 22000, inside: 40000, terrain: 36000 };
+const DWELL: Record<string, number> = { composition: 26000, map: 100000, glossary: 40000, tasks: 22000 };
 /** The next module's ring fills over this long once the current one has told its story. */
 const COUNTDOWN = 5200;
 
@@ -429,8 +443,8 @@ export function ComputeLabStudy({
 }) {
   const training = domain === "training",
     [inferencePart, setInferencePart] = useState<"cheaper" | "load">("cheaper"),
-    [mode, setMode] = useState<"watch" | "explore" | "present">("watch"),
-    [view, setView] = useState(0),
+    [mode, setMode] = useState<"setup" | "watch" | "explore" | "present">(training ? "explore" : "setup"),
+    [view, setView] = useState(training ? 5 : 1),
     { ref, ...playback } = useStudyPlayback(4, training ? 2 : 3, {
       enabled: mode === "explore" && training,
     }),
@@ -444,7 +458,14 @@ export function ComputeLabStudy({
   const stageRef = useRef<HTMLDivElement>(null);
   const fitRef = useRef<HTMLDivElement>(null);
   // Title show: the landing (inference only), the flight from it, and which module is telling its story.
-  const [landingPhase, setLandingPhase] = useState<"on" | "leaving" | "off">(training ? "off" : "on");
+  const [landingPhase, setLandingPhase] = useState<"on" | "leaving" | "off">("on");
+  // Before a module opens for the first time, the whole screen says what it is.
+  const [briefKey, setBriefKey] = useState<string | null>(null);
+  const pendingOpen = useRef<{ key: string; auto: boolean } | null>(null);
+  const briefed = useRef(new Set<string>());
+  // A module that has finished once is the visitor's on any later visit: it never hurries them on.
+  const seen = useRef(new Set<string>());
+  const [resumed, setResumed] = useState(0);
   const [servingKey, setServingKey] = useState("pressure");
   const [chapter, setChapter] = useState("");
   const [status, setStatus] = useState<{ key: string; phase: "running" | "done" | "taken" }>({ key: "", phase: "running" });
@@ -539,6 +560,10 @@ export function ComputeLabStudy({
     setMode("watch");
     toStage();
   };
+  const openSetup = () => {
+    setMode("setup");
+    toStage();
+  };
   const chapterSlot = <div id={`${domain}-chapters-slot`} className="sr-chapters" />;
   // Every tab value is computed from the same scenario its module opens on:
   // the RL checkpoint at the lab's thought allowance.
@@ -548,22 +573,24 @@ export function ComputeLabStudy({
   const rlStatic = simulateLab(2, budget, false, workload), rlFast = simulateLab(2, budget, true, workload);
   const p95 = (r: LabRun) => latencyDistribution(r, 95).threshold.latency;
   const fmt = (v: number, d = 2) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  // In order of what a visitor should see first: the most striking pictures open, the detail follows.
   const railItems: RailItem[] = training
     ? [
-        { key: "film", title: "The experiment", term: "base → SFT → RL → 4× thinking budget → lean RL", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "inside", title: "Inside the model", term: "base → RL checkpoint · 36 layers × 50 tokens", value: "7 of 50", unit: "words the base model would have written differently", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
         { key: "terrain", title: "Capability terrain", term: "96 tasks × six checkpoints", value: `+${simulateLab(3, 4).correct - simulateLab(0, 1).correct}`, unit: "tasks raised above the line, base → lean RL", Glyph: GlyphTerrain, onOpen: () => openView(6), current: mode === "explore" && view === 6 },
-        { key: "map", title: "Capability map", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "curves", title: "Compute curves", term: "1× · 2× · 4× · 8× thinking budget", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thinking budget", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
-        { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thought`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
+        { key: "tasks", title: "Where the 96 tasks land", term: "difficulty × GPU-s per task", value: `+${solvedGain}`, unit: `tasks solved · base → RL checkpoint at ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
+        { key: "film", title: "How it learned", term: "base → SFT → RL → 4× thinking budget → lean RL", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphFrontier, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "fleet", title: "Elastic RL on 64 GPUs", term: "rollout ↔ training role per GPU · after QwenGyre", value: "4 → 7", unit: "RL steps in 14 min · 1.96×", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
-        { key: "audit", title: "Regression audit", term: "gains beside losses", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thought`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "map", title: "Capability map", term: "every task, every checkpoint", value: `+${solvedGain}`, unit: `net tasks · RL checkpoint at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "audit", title: "Regression audit", term: "gains beside losses", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thinking budget`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
-        { key: "film", title: "The experiment", term: "free-worker scheduling → prefix reuse → faster rates", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
-        { key: "composition", title: "Policy × runtime", term: "training lifts accuracy · serving cuts cost · both at once", value: `${simulateLab(0, budget, false, workload).correct} → ${rlFast.correct}`, unit: (() => { const pct = Math.round(reductionPercent(simulateLab(0, budget, false, workload).correctCost!, rlFast.correctCost!)!); return `of 96 correct · ${Math.abs(pct)}% ${pct >= 0 ? "less" : "more"} GPU-s per correct answer`; })(), Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "setup", title: "The big picture", term: "96 requests · three levers", value: `${fmt(simulateLab(2, 2, false, "shared-prefix", { scheduler: "barrier", reuse: false, fastKernels: false }).p95, 0)} s`, unit: "the slowest 5% wait, today", Glyph: GlyphBigPicture, onOpen: openSetup, current: mode === "setup" },
         { key: "replay", title: "Execution replay", term: "any of the 96 requests", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "composition", title: "Policy × runtime", term: "training lifts accuracy · serving cuts cost · both at once", value: `${simulateLab(0, budget, false, workload).correct} → ${rlFast.correct}`, unit: (() => { const pct = Math.round(reductionPercent(simulateLab(0, budget, false, workload).correctCost!, rlFast.correctCost!)!); return `of 96 correct · ${Math.abs(pct)}% ${pct >= 0 ? "less" : "more"} GPU-s per correct answer`; })(), Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "latency", title: "Queue & latency", term: "arrival → completion, ranked", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s · p95 response", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "film", title: "The experiment", term: "free-worker scheduling → prefix reuse → faster rates", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
       ];
   // Deep links from the project overview: #inference-study/replay opens that module.
   const railRef = useRef(railItems);
@@ -593,22 +620,22 @@ export function ComputeLabStudy({
   const show = labNav === "show";
   const pathways = training ? TRAINING_PATHWAYS : INFERENCE_PATHWAYS;
   const showItems: ShowItem[] = [
-    ...railItems.map((m) => ({
-      key: m.key, title: m.title, term: m.term, value: m.value, unit: m.unit, Glyph: m.Glyph, pathway: 0,
-      chapters: m.key === "film" ? (training ? TRAINING_STORY : INFERENCE_STORY).map((c) => c.name) : undefined,
-    })),
+    ...railItems.map((m) => ({ key: m.key, title: m.title, term: m.term, value: m.value, unit: m.unit, Glyph: m.Glyph, pathway: 0 })),
     ...(training ? [] : SERVING_RAIL.map((m) => ({ ...m, pathway: 1 }))),
   ];
-  const currentKey = !training && inferencePart === "load" ? servingKey : railItems.find((i) => i.current)?.key ?? "film";
+  const currentKey = !training && inferencePart === "load" ? servingKey : railItems.find((i) => i.current)?.key ?? railItems[0].key;
   const order = showItems.map((i) => i.key);
   const nextKey = order[(order.indexOf(currentKey) + 1) % order.length];
+  const lastModule = order.indexOf(currentKey) === order.length - 1;
   const phase = status.key === currentKey ? status.phase : "running";
-  const nowLabel = currentKey === "film" ? chapter || "The experiment" : showItems.find((i) => i.key === currentKey)?.title ?? "";
+  const briefs = useMemo(() => moduleBriefs(training, budget), [training, budget]);
   const openSeq = useRef(0);
-  const openKey = (key: string) => {
+  const reveal = (key: string, auto: boolean) => {
     const seq = ++openSeq.current;
     setLandingPhase((p) => (p === "on" ? "off" : p));
     if (key === "film" && currentKey !== "film") setFilmRun((n) => n + 1);
+    // Coming back to a module is for looking again: it stays until the visitor moves on.
+    if (!auto && seen.current.has(key)) setStatus({ key, phase: "taken" });
     if (!training && SERVING_RAIL.some((m) => m.key === key)) {
       setInferencePart("load");
       // The serving lab loads lazily; ask until it has mounted, unless the visitor has moved on.
@@ -619,6 +646,21 @@ export function ComputeLabStudy({
       if (!training) setInferencePart("cheaper");
       railRef.current.find((item) => item.key === key)?.onOpen();
     }
+  };
+  const openKey = (key: string, auto = false) => {
+    if (show && briefs[key] && !briefed.current.has(key)) {
+      briefed.current.add(key);
+      pendingOpen.current = { key, auto };
+      setBriefKey(key);
+      return;
+    }
+    reveal(key, auto);
+  };
+  const endBrief = () => {
+    const p = pendingOpen.current;
+    pendingOpen.current = null;
+    setBriefKey(null);
+    if (p) reveal(p.key, p.auto);
   };
   const openKeyRef = useRef(openKey);
   const currentRef = useRef(currentKey);
@@ -650,19 +692,45 @@ export function ComputeLabStudy({
     io.observe(el);
     return () => { el.removeEventListener("lab:module-round", done); el.removeEventListener("lab:module-taken", taken); io.disconnect(); };
   }, [ref]);
+  // Using any control on the stage (a scrubber, a pause, a tab) stops the show from moving on by itself.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || !show) return;
+    const take = (e: Event) => {
+      if (!e.isTrusted) return;
+      const t = e.target as HTMLElement | null;
+      if (!t?.closest?.("button, input, select, summary, [role='button'], [role='slider']")) return;
+      if (t.closest(".ma-interlude button")) return;
+      setStatus({ key: currentRef.current, phase: "taken" });
+    };
+    stage.addEventListener("pointerdown", take, true);
+    stage.addEventListener("keydown", take, true);
+    return () => { stage.removeEventListener("pointerdown", take, true); stage.removeEventListener("keydown", take, true); };
+  }, [show]);
+  useEffect(() => { if (phase === "done") seen.current.add(currentKey); }, [phase, currentKey]);
   useEffect(() => {
     const ms = DWELL[currentKey];
     if (!show || landingPhase === "on" || !ms) return;
     const id = window.setTimeout(() => setStatus((s) => (s.key === currentKey && s.phase === "taken" ? s : { key: currentKey, phase: "done" })), ms);
     return () => window.clearTimeout(id);
-  }, [show, landingPhase, currentKey]);
+  }, [show, landingPhase, currentKey, resumed]);
   useEffect(() => {
-    if (!show || landingPhase === "on" || phase !== "done" || !labInView) return;
+    if (!show || landingPhase === "on" || phase !== "done" || !labInView || briefKey) return;
     // The show ends on its last module; it does not loop back to the start.
-    if (order.indexOf(currentKey) === order.length - 1) return;
-    const id = window.setTimeout(() => openKeyRef.current(nextKey), COUNTDOWN);
+    if (lastModule) return;
+    const id = window.setTimeout(() => openKeyRef.current(nextKey, true), COUNTDOWN);
     return () => window.clearTimeout(id);
-  }, [show, landingPhase, phase, labInView, nextKey]);
+  }, [show, landingPhase, phase, labInView, nextKey, briefKey, lastModule]);
+  const stayHere = () => setStatus({ key: currentKey, phase: "taken" });
+  const keepPlaying = () => {
+    setStatus({ key: currentKey, phase: "running" });
+    setResumed((n) => n + 1);
+    window.dispatchEvent(new Event("lab:resume"));
+  };
+  const diveDeeper = () => {
+    setStatus({ key: currentKey, phase: "taken" });
+    window.dispatchEvent(new Event("lab:dive"));
+  };
   const landingOn = show && landingPhase === "on";
 
   // The reel orientations keep the stage at its natural size; "bar" is the one-screen block.
@@ -683,12 +751,15 @@ export function ComputeLabStudy({
         items={showItems}
         pathways={pathways}
         current={currentKey}
-        now={nowLabel}
         next={nextKey}
-        phase={order.indexOf(currentKey) === order.length - 1 ? "running" : phase}
+        phase={phase}
+        last={lastModule}
         countdownMs={COUNTDOWN}
-        onOpen={openKey}
-        onLanding={training ? undefined : () => setLandingPhase("on")}
+        onOpen={(key) => openKey(key)}
+        onLanding={() => setLandingPhase("on")}
+        onStay={stayHere}
+        onKeepPlaying={keepPlaying}
+        onDive={diveDeeper}
       />
     </div>
   ) : (
@@ -751,7 +822,15 @@ export function ComputeLabStudy({
       </div>
       <div className={block ? "lb-body" : "lf-body"} data-landing={landingOn || undefined}>
         {show && landingPhase !== "off" && (
-          <LabLanding pathways={pathways} items={showItems} leaving={landingPhase === "leaving"} onStart={startShow} />
+          <LabLanding pathways={pathways} items={showItems} leaving={landingPhase === "leaving"} script={training ? TRAINING_INTRO : INFERENCE_INTRO} onStart={startShow} />
+        )}
+        {briefKey && briefs[briefKey] && (
+          <ModuleBrief
+            title={showItems.find((i) => i.key === briefKey)?.title ?? ""}
+            brief={briefs[briefKey]}
+            path={pathways[showItems.find((i) => i.key === briefKey)?.pathway ?? 0].short}
+            onDone={endBrief}
+          />
         )}
         {labNav !== "dock" && !landingOn && navNode}
         <div ref={stageRef} className={block ? "lb-stage" : "lf-stage"} hidden={landingOn}>
@@ -795,6 +874,11 @@ export function ComputeLabStudy({
           </button>
           {training && <span>Watch → intervene → inspect</span>}
         </div>
+        {!training && (
+          <RetainedLabPanel active={mode === "setup"} id={`${domain}-big-picture`} label="The big picture">
+            <BigPicture active={mode === "setup" && landingPhase === "off" && labInView && inferencePart === "cheaper"} />
+          </RetainedLabPanel>
+        )}
         <RetainedLabPanel
           active={mode === "watch"}
           id={`${domain}-experiment`}
@@ -1096,9 +1180,9 @@ export function ComputeLabStudy({
               ) : view === 3 ? (
                 <TaskLanding budget={budget} active={mode === "explore"} />
               ) : view === 5 ? (
-                <InsideScan active={mode === "explore" && view === 5} />
+                <InsideScan active={mode === "explore" && view === 5 && landingPhase === "off" && !briefKey} />
               ) : view === 6 ? (
-                <CapabilityTerrain active={mode === "explore" && view === 6} />
+                <CapabilityTerrain active={mode === "explore" && view === 6 && !briefKey} />
               ) : view === 4 ? (
                 <ModuleArc active={mode === "explore" && view === 4} {...FLEET_ARC}><FleetModule active={mode === "explore"} /></ModuleArc>
               ) : (

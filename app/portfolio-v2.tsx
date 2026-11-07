@@ -1528,6 +1528,8 @@ function StageSignalConsole({ step, active, calm = false }: { step: StoryStep; a
   );
 }
 
+const sentence = (label: string) => label.charAt(0) + label.slice(1).toLowerCase();
+
 function ProjectConclusion({
   name,
   metrics,
@@ -1561,11 +1563,11 @@ function ProjectConclusion({
   return (
     <div className="vx-project-conclusion" data-complete={completedCycle || reducedMotion}>
       <div className="vx-conclusion-heading">
-        <span>SYSTEM CONCLUSION</span>
-        <strong>{name}, resolved into the signals that matter.</strong>
+        <span>System conclusion</span>
+        <strong>What this system comes down to</strong>
       </div>
       <div className="vx-conclusion-focus" key={`${metric.label}-${active}`}>
-        <span>{String(active + 1).padStart(2, "0")} / {String(metrics.length).padStart(2, "0")} · {metric.label}</span>
+        <span>{active + 1} of {metrics.length} · {sentence(metric.label)}</span>
         <strong>{metric.value}</strong>
         <p>{metric.detail}</p>
       </div>
@@ -1581,15 +1583,15 @@ function ProjectConclusion({
               if (index === metrics.length - 1) setCompletedCycle(true);
             }}
           >
-            <i>{String(index + 1).padStart(2, "0")}</i>
-            <span>{item.label}</span>
+            <i>{index + 1}</i>
+            <span>{sentence(item.label)}</span>
             <b />
           </button>
         ))}
       </div>
       {signals && signals.length > 0 ? (
         <div className="vx-conclusion-signal-rail" aria-label={`${name} complete engineering signal rail`}>
-          <span><i />FULL SYSTEM SIGNAL RAIL</span>
+          <span><i />Full system signal rail</span>
           <button type="button" className="vx-signal-rail-toggle" disabled={reducedMotion} onClick={() => setRailPaused(p => !p)}>{reducedMotion ? "Reduced motion" : railPaused ? "▷ Play signal rail" : "Ⅱ Pause signal rail"}</button>
           <SignalTicker
             items={signals}
@@ -1636,7 +1638,7 @@ function SystemWalkthrough({
   const step: StoryStep = isConclusion
     ? {
         label: "Conclusion",
-        title: "The complete system resolves into six recruiter-ready signals.",
+        title: "The complete system, in six signals",
         explanation: "Product, contribution, runtime, output, impact, and reliability take the stage one at a time for a fast final revision.",
         annotation: "The completed walkthrough resolves its strongest product, runtime, output, impact, and reliability evidence into one recruiter-ready summary.",
         annotationHighlights: [],

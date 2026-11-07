@@ -280,3 +280,8 @@
 .lab-flow-show .lf-fit .tt-plot { max-height: calc(var(--lf-room) - 198px); }
 .lab-flow-show .lf-fit .sc-root { padding-block: 10px 12px; }
 .lab-flow-show .lf-fit .sc-stage:not(.sc-terrain) { height: clamp(220px, 30svh, 300px); }
+
+/* The head: the lab's name beside the rail, the voice aligned with the stage. */
+.cs-study.lab-flow-show .lb-head { align-items: center; gap: 12px; min-height: 44px; padding-left: 6px; }
+.cs-study.lab-flow-show .lb-head h2 { flex: 0 0 var(--tr-w); margin: 0; color: #aab6c2; font: 450 14.5px/1.2 var(--font-geist-sans), sans-serif; letter-spacing: 0; white-space: normal; }
+@media (max-width: 1380px) { .cs-study.lab-flow-show .lb-head h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .cs-study.lab-flow-show .lb-head { padding-left: calc(var(--tr-w) + 18px); } }
