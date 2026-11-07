@@ -105,12 +105,10 @@ const InferenceFigureTour = lazy(() =>
 
 /* The cursor performs each figure's own controls, so nobody has to discover them. */
 const REPLAY_DEMO: readonly CursorStep[] = [
-  { target: ".rr-cohort-plot", action: "sweep", drive: ".rr-request-slider input", from: 1, to: 96, duration: 9000, label: "All 96 requests", hold: 900 },
-  { target: ".rr-request-slider input", action: "range", value: 7, label: "Request 7 · shared prefix", hold: 6000 },
-  { target: ".rr-measure-chapters button:nth-child(2)", label: "Input only", hold: 8200 },
-  { target: ".rr-measure-chapters button:nth-child(3)", label: "Answer only", hold: 8200 },
-  { target: ".rr-measure-chapters button:nth-child(4)", label: "Wait + execute", hold: 8200 },
-  { target: ".rr-measure-chapters button:nth-child(1)", label: "Total GPU work", hold: 8200 },
+  { target: ".rr-measure-chapters button:nth-child(2)", label: "Total GPU work", hold: 8200 },
+  { target: ".rr-measure-chapters button:nth-child(3)", label: "Input only", hold: 8200 },
+  { target: ".rr-measure-chapters button:nth-child(4)", label: "Answer only", hold: 8200 },
+  { target: ".rr-measure-chapters button:nth-child(1)", label: "Wait + execute", hold: 8200 },
 ]
 const LATENCY_DEMO: readonly CursorStep[] = [
   // The film plays to its end (ranking, then the rank scan); only then does the cursor walk the percentiles.

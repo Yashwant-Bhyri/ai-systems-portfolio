@@ -1,4 +1,5 @@
 "use client";
+import { emitFocus, emitMeter } from "./stagecraft/stage-meter";
 
 import {
   useEffect,
@@ -112,6 +113,28 @@ export function CompositionExplorer({
   const activeMetric = contribution?.metric ?? hover ?? metric;
   const { reference, target, referenceIndex, targetIndex } = compare;
   const id = useId();
+  const showing = presentation ? true : localPlayer.running;
+  const meterLine = phase === 0 ? `Baseline: ${reference.label}, ${number(reference.accuracy)}% correct at ${number(reference.correctCost!, 2)} GPU-s each`
+    : phase === 1 ? `${mechanisms[0].name} moves the model up: ${number(mechanisms[0].after.accuracy - mechanisms[0].before.accuracy)} percentage points`
+    : phase === 2 ? `${mechanisms[1].name} moves it left: ${number(Math.abs(mechanisms[1].delta), 2)} GPU-s less per correct answer`
+    : phase === 3 ? `Final: ${target.label}, ${number(target.accuracy)}% correct at ${number(target.correctCost!, 2)} GPU-s each`
+    : "Both changes together, compared with where we started";
+  useEffect(() => {
+    if (showing) emitMeter({ text: meterLine, step: phase + 1, total: 5, tone: phase === 0 ? "baseline" : phase === 4 ? "delta" : "optimized" });
+  }, [meterLine, phase, showing]);
+  const landed = phase === 4 && lens === "combined";
+  useEffect(() => {
+    if (!landed) return;
+    const pp = target.accuracy - reference.accuracy, gpu = target.correctCost! - reference.correctCost!;
+    emitFocus({
+      headline: `${reference.correct} → ${target.correct} correct answers of 96, at ${Math.abs(Math.round((100 * gpu) / reference.correctCost!))}% ${gpu > 0 ? "more" : "less"} GPU-s per answer`,
+      parts: [{ label: "baseline", value: `${number(reference.accuracy)}% · ${number(reference.correctCost!, 2)} GPU-s`, tone: "baseline" }, { label: "optimized", value: `${number(target.accuracy)}% · ${number(target.correctCost!, 2)} GPU-s`, tone: "optimized" }, { label: "Δ", value: `+${number(pp)} pp · ${gpu > 0 ? "+" : "−"}${number(Math.abs(gpu), 2)} GPU-s`, tone: "delta" }],
+      cause: `${mechanisms[0].name} raises accuracy and cost; ${mechanisms[1].name} takes ${number(Math.abs(mechanisms[1].delta), 2)} GPU-s back`,
+      place: "bottom",
+    });
+    return () => { emitFocus(null); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [landed]);
   const stage = useRef<HTMLDivElement>(null);
   const [link, setLink] = useState<string | null>(null);
   const maxCost =
@@ -562,6 +585,7 @@ export function CompositionExplorer({
                   >
                     <g
                       className="cxp-contribution-geometry"
+                      data-focus-spot={lens === "combined" ? "" : undefined}
                       opacity={reached ? 1 : 0}
                       pointerEvents="none"
                     >
@@ -589,6 +613,24 @@ export function CompositionExplorer({
                             strokeWidth="1.5"
                           />
                         )}
+                      {lens === "combined" && progress > 0.9 && distance > 0.5 && (() => {
+                        const pp = step.after.accuracy - step.before.accuracy;
+                        const gpu = step.after.correctCost! - step.before.correctCost!;
+                        const my = (sy + ty) / 2;
+                        // Training's note sits right of and below its line, clear of the point labels.
+                        const cx = (sx + tx) / 2 + (index === 0 ? 96 : 0), cy = my;
+                        const label = `${pp === 0 ? "0 pp" : `${pp > 0 ? "+" : "−"}${number(Math.abs(pp))} pp`} · ${gpu > 0 ? "+" : "−"}${number(Math.abs(gpu), 2)} GPU-s`;
+                        // Training rises to the right, so its note sits under the line; serving is flat, so its note sits above.
+                        const ly = index === 0 ? cy + 62 : cy - 58;
+                        return (
+                          <g className="cxp-curve-note" opacity={progress}>
+                            <path d={`M${index === 0 ? (sx + tx) / 2 : cx} ${cy}L${cx} ${index === 0 ? ly - 18 : ly + 26}`} stroke={VIOLET} strokeDasharray="2 3" />
+                            <rect x={cx - 128} y={ly - 18} width={256} height={44} rx={8} fill="#141022" stroke={VIOLET} />
+                            <text x={cx} y={ly} textAnchor="middle" fill="#efe6ff" fontSize="14" fontWeight="500">{step.name}</text>
+                            <text x={cx} y={ly + 17} textAnchor="middle" fill="#d3b6ff" fontSize="13" className="cxp-curve-value">{label}</text>
+                          </g>
+                        );
+                      })()}
                       {index === 0 && lens !== "combined" && distance > 0.5 && (
                         <g opacity={progress}>
                           <path
@@ -700,6 +742,7 @@ export function CompositionExplorer({
                   aria-pressed={selected === index}
                   aria-label={`${point.label}: ${number(point.accuracy)} percent accuracy, ${number(point.correctCost, 2)} GPU-seconds per correct answer`}
                   className="cxp-point"
+                  data-focus-spot={index === referenceIndex || index === targetIndex ? "" : undefined}
                   data-quiet={quiet(index)}
                   onClick={() => select(index)}
                   onFocus={player.pause}

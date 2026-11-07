@@ -138,3 +138,55 @@
 /* The cursor's sweep: each term lifts as it passes. */
 .lab-flow-show .lf-fit .gb-card[data-hot] { z-index: 6; transform: translateY(-4px) scale(1.03); border-color: color-mix(in srgb, var(--active-accent) 70%, transparent); box-shadow: 0 14px 40px rgba(0,0,0,.45), 0 0 34px color-mix(in srgb, var(--active-accent) 18%, transparent); }
 .lab-flow-show .lf-fit .pr-float { display: none; }
+
+/* ── Policy × runtime: the plot takes the stage; the note on the curve says what moved it ── */
+.lab-flow-show .lf-fit :is(.cxp-lenses, .cxp-direction, .cxp-pan, .cxp-mechanisms, .cxp-cohort, .cxp-audit, .cxp-evidence, .cxp-active-step) { display: none; }
+.lab-flow-show .lf-fit .cxp-stage { grid-template-columns: minmax(0, 1fr) 300px; }
+.lab-flow-show .lf-fit .cxp-plot { max-height: calc(var(--lf-room) - 20px); margin-inline: auto; }
+.lab-flow-show .lf-fit .cxp-readout { margin: 12px 18px 12px 8px; padding: 16px; align-self: center; }
+.lab-flow-show .lf-fit .rs-context-bar { top: 8px; }
+
+/* ── Execution replay: one request on the left, all 96 on the right ───── */
+.rc-panel { display: none; }
+.lab-flow-show .lf-fit .rc-panel { display: block; }
+.rc-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.rc-head strong { color: #f1f4f7; font: 500 17px/1.2 var(--font-geist-sans), sans-serif; }
+.rc-head span { display: inline-flex; align-items: center; gap: 6px; color: #aab6c2; font: 400 13px/1 var(--font-geist-sans), sans-serif; }
+.rc-head i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-left: 6px; }
+.rc-plot { display: block; width: 100%; height: auto; margin-top: 4px; }
+.rc-tick { fill: #93a0ae; font: 400 12px var(--font-geist-mono), monospace; }
+.rc-axis { fill: #aab6c2; font: 400 13px var(--font-geist-sans), sans-serif; }
+.rc-table { width: 100%; margin-top: 4px; border-collapse: collapse; }
+.rc-table th { padding: 3px 0; color: #c9d2db; font: 450 14px/1.2 var(--font-geist-sans), sans-serif; text-align: left; }
+.rc-table td { padding: 3px 0 3px 8px; font: 500 15px/1.2 var(--font-geist-mono), monospace; text-align: right; font-variant-numeric: tabular-nums; }
+.rc-table td[data-tone="base"] { color: #9cc5f5; }
+.rc-table td[data-tone="opt"] { color: #b8e986; }
+.rc-table td[data-tone="arrow"], .rc-table td[data-tone="unit"] { color: #7d8a97; font-size: 12px; }
+.rc-table td[data-tone="delta"] { color: #d3b6ff; }
+.lab-flow-show .lf-fit :is(.rr-cohort, .rr-accounting, .rr-cause, .rr-evidence) { display: none; }
+.lab-flow-show .lf-fit .rr-tools label { display: none; }
+.lab-flow-show .lf-fit .rr-measure-chapters { min-height: 0; }
+.lab-flow-show .lf-fit .rr-measure-chapters button { padding-block: 6px; min-height: 0; }
+.lab-flow-show .lf-fit .rr-measure-chapters button span { display: none; }
+.lab-flow-show .lf-fit .rr-stage { grid-template-columns: minmax(0, 1fr) 480px; align-items: start; min-height: 0; }
+.lab-flow-show .lf-fit .rr-plot { max-height: calc(var(--lf-room) - 200px); }
+.lab-flow-show .lf-fit .rr-transport { padding-block: 4px; min-height: 0; }
+.lab-flow-show .lf-fit .rr-transport button:not(:first-child) { display: none; }
+.lab-flow-show .lf-fit .rr-stage > aside { margin: 6px 14px 6px 0; padding: 12px 16px; max-height: calc(var(--lf-room) - 110px); overflow: hidden; }
+.lab-flow-show .lf-fit .rr-stage > aside h4 { margin: 0 0 4px; font-size: 16px; }
+.lab-flow-show .lf-fit .rr-values { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lab-flow-show .lf-fit .rr-values strong { font-size: 22px; }
+.lab-flow-show .lf-fit .rr-delta { margin: 4px 0 6px; }
+.lab-flow-show .lf-fit .rr-stage > aside .rr-values > div i { display: none; }
+.lab-flow-show .lf-fit .rr-stage > aside .rr-values > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.lab-flow-show .lf-fit .rr-stage > aside .rr-delta small { display: inline; margin-left: 8px; }
+.lab-flow-show .lf-fit .rr-explorer { display: flex; flex-direction: column; height: var(--lf-room); }
+.lab-flow-show .lf-fit .rr-stage { flex: 1 1 auto; }
+.lab-flow-show .lf-fit .rc-plot { max-height: 262px; }
+.lab-flow-show .lf-fit .rr-tools { flex-wrap: nowrap; }
+.lab-flow-show .lf-fit .rr-stage > aside { display: flex; flex-direction: column; gap: 6px; }
+.lab-flow-show .lf-fit .rr-stage > aside .rc-panel { order: -1; }
+.lab-flow-show .lf-fit .rr-stage > aside h4 { display: none; }
+.lab-flow-show .lf-fit .rr-values strong { font-size: 18px; }
+.lab-flow-show .lf-fit .rr-delta { margin: 0; }
+.lab-flow-show .lf-fit .rr-delta .cx-hero-num { font-size: 22px; }

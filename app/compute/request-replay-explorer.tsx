@@ -22,6 +22,8 @@ import {
 import { useStudyPlayback } from "./use-study-playback";
 import { useFilmTime } from "./use-film-time";
 import type { DirectedView, RequestViewState } from "./explorer-state";
+import { ClusterPanel } from "./cluster-panel";
+import { emitMeter } from "./stagecraft/stage-meter";
 import "./request-replay-explorer.css";
 
 const BLUE = "#9cc5f5",
@@ -32,6 +34,12 @@ const BLUE = "#9cc5f5",
 const number = (value: number, digits = 2) =>
   value.toLocaleString("en-US", { maximumFractionDigits: digits });
 const METRICS = [
+  {
+    id: "latency",
+    label: "Response latency",
+    detail: "Queue + execution · elapsed seconds",
+    title: "End-to-end response latency",
+  },
   {
     id: "service",
     label: "Total GPU work",
@@ -49,12 +57,6 @@ const METRICS = [
     label: "Answer generation",
     detail: "Decode only · GPU-seconds",
     title: "Answer generation cost",
-  },
-  {
-    id: "latency",
-    label: "Response latency",
-    detail: "Queue + execution · elapsed seconds",
-    title: "End-to-end response latency",
   },
 ] as const;
 const MODES = [
@@ -81,7 +83,7 @@ export function RequestReplayExplorer({
   );
   const [taskId, setTaskId] = useState(initial?.taskId ?? 6);
   const [metric, setMetric] = useState<RequestMeasure>(
-    initial?.metric ?? "service",
+    initial?.metric ?? "latency",
   );
   const target = useMemo(
     () =>
@@ -147,6 +149,8 @@ export function RequestReplayExplorer({
   const id = useId();
   const stage = useRef<HTMLDivElement>(null);
   const [leader, setLeader] = useState<string | null>(null);
+  const meterLine = `Request ${taskId + 1}, ${METRICS.find((item) => item.id === metric)!.label.toLowerCase()}: ${number(values[0])} → ${number(values[1])} ${delivery ? "s" : "GPU-s"}`;
+  useEffect(() => { emitMeter({ text: meterLine, tone: "optimized" }); }, [meterLine]);
   const selectRequest = (next: number) => {
     if (presentation) {
       presentation.inspect({
@@ -653,6 +657,7 @@ export function RequestReplayExplorer({
                     : "Both lanes start when a worker takes this request. Queue waiting is outside this view."}
           </p>
           <div className="rr-evidence">{evidence(target, player.pause)}</div>
+          <ClusterPanel baseline={baseline} target={target} taskId={taskId} />
         </aside>
         {settled && leader && (
           <svg className="rr-leader" aria-hidden="true">

@@ -66,3 +66,5 @@
 .sm-focus[data-tone="problem"] { border-color: rgba(255, 143, 134, .6); box-shadow: 0 18px 60px rgba(0,0,0,.55), 0 0 40px rgba(255, 143, 134, .14); }
 .sm-focus[data-tone="problem"] strong { color: #ffd3cf; }
 .sm-focus[data-tone="problem"] p small { color: #ff8f86; }
+.sm-focus[data-place="left"] { left: 30%; top: auto; bottom: 90px; max-width: 760px; }
+.lf-stage[data-focus="on"] .rc-panel[data-focus-spot]::after { display: none; }
