@@ -115,3 +115,27 @@
 .ma-interlude .ma-impact[data-board] { padding-top: 14px; gap: 14px; }
 .ma-interlude .ma-impact[data-board] .ma-board { padding-bottom: 14px; }
 .ma-interlude .ma-impact[data-board] .ma-figure svg { max-height: calc(100svh - 520px); min-height: 260px; }
+
+/* ── Beside the problem and the solution: the arc's ledger ──────────── */
+.ma-stagewrap { display: block; }
+.ma-stagewrap[data-ledger] { display: grid; grid-template-columns: minmax(0, 1fr) 250px; align-items: center; }
+.ma-ledger { display: flex; flex-direction: column; gap: 14px; margin: 18px 22px 18px 0; padding: 18px 18px 16px; border: 1px solid rgba(230,237,244,.08); border-radius: 12px; background: rgba(255,255,255,.02); }
+.ml-metric { color: #dfe6ec; font: 500 15px/1.3 var(--font-geist-sans), sans-serif; }
+.ml-row { display: grid; grid-template-columns: 1fr auto; row-gap: 6px; align-items: baseline; transition: opacity .5s; }
+.ml-row small { color: #9aa7b4; font: 450 13px/1 var(--font-geist-sans), sans-serif; }
+.ml-row b { font: 500 26px/1 var(--font-geist-mono), monospace; letter-spacing: -.03em; }
+.ml-row b small { font: 400 12px var(--font-geist-mono), monospace; letter-spacing: 0; }
+.ml-row[data-tone="base"] b { color: #9cc5f5; }
+.ml-row[data-tone="opt"] b { color: #b8e986; }
+.ml-row i { grid-column: 1 / -1; display: block; height: 8px; border-radius: 4px; background: #9cc5f5; transition: width .9s cubic-bezier(.2,.75,.2,1); }
+.ml-row[data-tone="opt"] i { background: #b8e986; }
+.ml-row[data-tone="opt"]:not([data-on]) { opacity: .45; }
+.ml-delta { color: #d3b6ff; font: 500 20px/1.1 var(--font-geist-mono), monospace; opacity: 0; transform: translateY(6px); transition: opacity .6s, transform .6s; }
+.ml-delta[data-on] { opacity: 1; transform: none; }
+.ml-delta small { color: #b9a3e0; font-size: 14px; }
+.ml-where { padding-top: 10px; border-top: 1px solid rgba(230,237,244,.07); color: #aab6c2; font: 450 13px/1.35 var(--font-geist-sans), sans-serif; }
+.ma-lesson { margin: 0; padding: 18px 34px 0; color: #fff1d6; font: 500 23px/1.3 var(--font-geist-sans), sans-serif; letter-spacing: -.015em; }
+.ma-impact .ma-lesson { grid-column: 1 / -1; padding: 0; }
+@media (max-width: 1100px) { .ma-stagewrap[data-ledger] { grid-template-columns: 1fr; } .ma-ledger { margin: 0 18px 18px; } }
+.vx-shell .ma-beats button { flex: 0 0 auto; }
+.ma-title { min-width: 0; flex: 1 1 auto; }

@@ -24,6 +24,9 @@ export type FocusDetail = {
   parts?: readonly { label: string; value: string; tone?: Tone }[];
   /** Why it happened, one short clause. */
   cause?: string;
+  /** Where the caption sits on the stage (default top). */
+  place?: "top" | "center" | "bottom";
+  tone?: Tone;
 } | null;
 
 export const emitMeter = (detail: MeterDetail) => window.dispatchEvent(new CustomEvent("lab:meter", { detail }));
@@ -74,7 +77,7 @@ export function FocusCaption({ moduleKey }: { moduleKey: string }) {
   }, [f]);
   if (!f) return <div ref={own} hidden />;
   return (
-    <div ref={own} className="sm-focus" role="status" key={f.headline}>
+    <div ref={own} className="sm-focus" role="status" key={f.headline} data-place={f.place ?? "top"} data-tone={f.tone ?? "neutral"}>
       <strong>✦ {f.headline}</strong>
       {f.parts?.length ? (
         <span className="sm-parts">
@@ -83,7 +86,7 @@ export function FocusCaption({ moduleKey }: { moduleKey: string }) {
           ))}
         </span>
       ) : null}
-      {f.cause && <p><small>because</small> {f.cause}</p>}
+      {f.cause && <p>{f.tone === "problem" ? <small>at scale</small> : <small>because</small>} {f.cause}</p>}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { PROMPT_BLOCK_TOKENS, STREAM_COSTS, simulateStream, type StreamTrace } from "../stream-continuity-model";
 import { ease, prog } from "../../exhibit/engine";
-import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
+import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
 
 /* Prefill / decode scheduling, as a full circle. Every block and tick is the
    lab's own stream model (four requests, 16-token budget, 24 KV pages). */
@@ -61,7 +61,7 @@ function Lanes({ trace, now, chunked }: { trace: StreamTrace; now: number; chunk
       {/* request 1's tokens, as they reach the user */}
       {r1.tokenMs.filter((ms) => ms <= now).map((ms) => <rect key={ms} x={x(ms) - 1.5} y={176} width={3} height={36} rx={1.5} fill={C.dec} />)}
       {gapShown > 0 && (
-        <g opacity={gapShown}>
+        <g opacity={gapShown} data-focus-spot>
           <path d={`M${x(gap.a)} 162V154H${x(gap.b)}V162`} fill="none" stroke={chunked ? C.dec : C.red} strokeWidth={2} />
           <rect x={x(gap.a) + 2} y={178} width={(gap.b - gap.a) * PX - 4} height={32} fill={chunked ? C.dec : C.red} opacity={0.1} />
           <text x={(x(gap.a) + x(gap.b)) / 2} y={144} textAnchor="middle" className="ma-n" style={{ fill: chunked ? C.dec : C.red }}>
@@ -151,13 +151,23 @@ function Streams({ t }: SceneProps) {
 const PROBLEM_MS = 11500, MECH_MS = 13500;
 const gapW = worstGap(WHOLE), gapC = worstGap(CHUNKED);
 
-export const PRESSURE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string } = {
-  problem: { label: "Problem", title: "A long new prompt stalls an answer that is already streaming", ms: PROBLEM_MS, Scene: Problem },
-  mechanism: { label: "How it works", title: "Chunked prefill: answers first, then a small slice of the new input", ms: MECH_MS, Scene: Mechanism },
+export const PRESSURE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; ledger?: ArcLedger } = {
+  problem: {
+    label: "Problem / Bottleneck", title: "A long new prompt stalls an answer that is already streaming", ms: PROBLEM_MS, Scene: Problem,
+    meter: [[0, "Request 1 is streaming its answer, one token per step"], [2600, "Request 3 arrives with an 8,192-token document"], [4200, "The engine reads the whole document in one step"], [8200, `Request 1 has waited ${(gapW.b - gapW.a).toFixed(0)} ms without a token`]],
+    bottleneck: { at: 8800, headline: `One 8,192-token prompt freezes a live answer for ${(gapW.b - gapW.a).toFixed(0)} ms`, effect: "prefill and decode share each engine step, so every long prompt stalls every answer being streamed on that GPU" },
+  },
+  mechanism: {
+    label: "Optimized solution", title: "Optimized solution, chunked prefill: decode every live answer first, then read at most 1,024 input tokens", ms: MECH_MS, Scene: Mechanism,
+    meter: [[0, "Every step decodes the live answers first"], [2600, "Then it reads at most 1,024 tokens of the document"], [5600, "The document is read in 9 slices, between tokens"], [10000, `Worst pause now ${(gapC.b - gapC.a).toFixed(1)} ms; the document's first token comes a little later`]],
+  },
+  ledger: { metric: "Worst pause in request 1's answer", unit: "ms", baseline: gapW.b - gapW.a, optimized: gapC.b - gapC.a, digits: 1, baselineLabel: "Whole prefill", optimizedLabel: "Chunked prefill" },
   systemTitle: "The same four requests in our serving model",
   impact: {
     label: "Impact", title: "A smoother stream, paid for with a later first token", ms: 9000,
+    meter: [[0, `Worst pause ${(gapW.b - gapW.a).toFixed(0)} → ${(gapC.b - gapC.a).toFixed(1)} ms for the same four requests`], [3600, "The price: the long document's first token arrives later"]],
     Scene: makeImpact({
+      lesson: `Live answers stop freezing: the worst pause is ${Math.round((gapW.b - gapW.a) / (gapC.b - gapC.a))}× shorter. The user who sent the long document pays ${((CHUNKED.requests[2].ttftMs ?? 0) - (WHOLE.requests[2].ttftMs ?? 0)).toFixed(0)} ms for it.`,
       from: gapW.b - gapW.a, to: gapC.b - gapC.a, unit: "ms", digits: 1, what: "Worst pause in request 1's answer",
       cause: `Request 3's 8,192-token document is read about 1,000 tokens at a time beside request 1's decoding, instead of in one ${(WHOLE.steps.find((st) => st.prefill.some((p) => p.id === 3))!.durationMs).toFixed(0)} ms step. Costs: Qwen3-4B on one H100, calibrated roofline.`,
       base: "Whole prefill", optimized: "Chunked prefill",

@@ -4,7 +4,7 @@ import { DraftFilm } from "../stagecraft/draft-film";
 import { draftStudy, TARGET_UNITS } from "../draft-verification-model";
 import { ease, prog } from "../../exhibit/engine";
 import { STEP_OVERHEAD, bandwidth, decodeBytes } from "../calibration";
-import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
+import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
 
 /* Speculative decoding, as a full circle. The sentence and every count come
    from the lab's draft-verification model (12 target units, 4-token drafts). */
@@ -20,7 +20,6 @@ function Problem({ t }: SceneProps) {
   const step = 7200 / words.length;
   const n = Math.min(words.length, Math.floor(prog(t, 700, 700 + 7200) * words.length + (t >= 700 ? 1 : 0)));
   const pulse = t >= 700 && n < words.length + 1 ? 1 - prog((t - 700) % step, 0, step * 0.8) : 0;
-  const last = prog(t, 8200, 9000);
   return <svg viewBox="0 0 1100 440" role="img" aria-label="Without speculation the large model runs once per word: twelve words, twelve serial calls">
     {/* the large model */}
     <rect x={40} y={110} width={260} height={190} rx={14} fill="rgba(255,194,103,.05)" stroke={C.acc} strokeOpacity={0.35 + 0.65 * pulse} strokeWidth={1.5 + 2 * pulse} />
@@ -34,7 +33,8 @@ function Problem({ t }: SceneProps) {
       <text key={i} x={PLACED[i]} y={140} className="ma-word" style={{ fill: i === n - 1 && n <= words.length ? C.acc : C.ink }} opacity={ease.out(prog(t, 700 + i * step, 700 + i * step + 300))}>{w}</text>
     ))}
 
-    {/* the calls, one after another */}
+    {/* the calls, one after another: what the bottleneck caption points at */}
+    <g data-focus-spot>
     <text x={380} y={214} className="ma-l">large-model calls, in series</text>
     {words.map((_, i) => (
       <rect key={i} x={380 + i * 56} y={228} width={48} height={36} rx={4} fill={C.acc} opacity={i < n ? 0.85 : 0.08} />
@@ -42,15 +42,19 @@ function Problem({ t }: SceneProps) {
     {words.map((_, i) => i < n && <text key={`n${i}`} x={404 + i * 56} y={252} textAnchor="middle" className="ma-l" style={{ fill: "#1a1205" }}>{i + 1}</text>)}
     <text x={380} y={330} className="ma-big" style={{ fill: C.acc }}>{Math.max(0, n)}</text>
     <text x={450} y={330} className="ma-k">{n === 1 ? "call" : "calls"} for {Math.max(0, n)} {n === 1 ? "word" : "words"}</text>
-    <text x={380} y={392} className="ma-h2" opacity={last}>Each call waits for the one before it: the next word depends on this one.</text>
+    </g>
   </svg>;
 }
 
-/* Wall time, calibrated (calibration.ts): the target, Qwen3-4B, reads 8 GB per step; the
-   draft, Qwen3-0.6B (published: 0.6 B parameters, 28 layers, 8 KV heads × 128), reads ~1.2 GB.
-   A verification pass over five positions is still one memory-bound read of the target. */
+/* Wall time, calibrated (calibration.ts). The target, Qwen3-4B, reads 8 GB per step. The draft is
+   an EAGLE-3 head trained for Qwen3-4B (AngelSlim/Qwen3-4B_eagle3, the drafter TensorRT-LLM lists for
+   this model): one decoder layer that reads the target's own hidden states, a feature-fusion layer
+   and a 32k-token draft vocabulary, about 0.2 B parameters (estimated from that architecture), plus
+   one layer of KV cache. A verification pass over the drafted positions is still one memory-bound
+   read of the target. */
+export const DRAFT_MODEL = { name: "EAGLE-3 head for Qwen3-4B", id: "AngelSlim/Qwen3-4B_eagle3", params: 0.2e9 } as const;
 const TARGET_MS = (STEP_OVERHEAD + decodeBytes(10_000, false) / bandwidth()) * 1000;
-const DRAFT_MS = (STEP_OVERHEAD + (0.6e9 * 2 + 10_000 * 2 * 28 * 8 * 128 * 2) / bandwidth()) * 1000;
+const DRAFT_MS = (STEP_OVERHEAD + (DRAFT_MODEL.params * 2 + 10_000 * 2 * 1 * 8 * 128 * 2) / bandwidth()) * 1000;
 const timeOf = (st: ReturnType<typeof draftStudy>) => st.rounds.reduce((a, r) => a + r.proposal.length * DRAFT_MS + TARGET_MS, 0);
 export const SPEC_TIME = { serial: MIXED.baselineCalls * TARGET_MS, speculative: timeOf(MIXED), aligned: timeOf(ALIGNED), miss: timeOf(MISS) };
 
@@ -98,13 +102,23 @@ function Modes({ t }: SceneProps) {
   </svg>;
 }
 
-export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string } = {
-  problem: { label: "Problem", title: "Writing an answer takes one large-model call per word, one after another", ms: PROBLEM_MS, Scene: Problem },
-  mechanism: { label: "How it works", title: "A small model guesses ahead; the large model checks every guess in one pass", ms: 19000, render: (on) => <DraftFilm active={on} /> },
+export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; ledger?: ArcLedger } = {
+  problem: {
+    label: "Problem / Bottleneck", title: "Writing an answer takes one large-model call per word, one after another", ms: PROBLEM_MS, Scene: Problem,
+    meter: [[0, "Qwen3-4B writes the answer one word per call"], [900, "Call after call: each one waits for the word before it"], [8000, "12 calls for 12 words"]],
+    bottleneck: { at: 8300, headline: "12 calls for 12 tokens: serialized computation", effect: "every token is a full pass over 8 GB of weights, and the next cannot start until this one ends, so latency grows with every token" },
+  },
+  mechanism: {
+    label: "Optimized solution", title: `Optimized solution: a draft model (${DRAFT_MODEL.name}) guesses ahead; Qwen3-4B checks every guess in one pass`, ms: 19000, render: (on) => <DraftFilm active={on} />,
+    meter: [[0, "The answer so far"], [2000, `Draft model (${DRAFT_MODEL.name}) is drafting the next words`], [3600, "Qwen3-4B verifies all drafted words in one pass"], [4800, "3 accepted, the 4th rejected: everything after it is dropped"], [6000, "Qwen3-4B writes its own word in place of the rejected one"], [7600, "4 words from 1 large-model call"], [10600, "Round 2: the first guess is wrong, so the draft is wasted"], [15600, "Speculation pays only when the guesses are good"]],
+  },
   systemTitle: "Round by round, in our draft-verification model",
+  ledger: { metric: "Serial Qwen3-4B calls for the 12-word answer", unit: "calls", baseline: MIXED.baselineCalls, optimized: MIXED.targetCalls, baselineLabel: "One word per call", optimizedLabel: "Draft, then verify" },
   impact: {
     label: "Impact", title: "Fewer serial calls, as long as the guesses are good", ms: 9000,
+    meter: [[0, `${MIXED.baselineCalls} → ${MIXED.targetCalls} serial calls for the same answer`], [3600, "The price: drafted words that get thrown away"]],
     Scene: makeImpact({
+      lesson: `The same answer needs ${MIXED.baselineCalls - MIXED.targetCalls} fewer serial passes of Qwen3-4B, so it arrives ${(SPEC_TIME.serial / SPEC_TIME.speculative).toFixed(2)}× sooner, but only while the drafts are mostly right.`,
       from: MIXED.baselineCalls, to: MIXED.targetCalls, unit: "calls", digits: 0,
       what: "Serial large-model calls for the same 12-word answer",
       cause: `Each verification pass keeps every guess up to the first wrong one, plus one word of its own. In wall time on one H100 that is ${SPEC_TIME.serial.toFixed(0)} → ${SPEC_TIME.speculative.toFixed(0)} ms for the answer: the draft model's steps are cheap but not free.`,

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ComponentType, 
 import { useTr } from "../../exhibit/i18n";
 import { ease, prog } from "../../exhibit/engine";
 import { useStageHold } from "./stage-hold";
+import { emitFocus, emitMeter } from "./stage-meter";
 import "./module-arc.css";
 
 /**
@@ -20,20 +21,27 @@ export type ArcBeat = {
   Scene?: ComponentType<SceneProps>;
   /** …or an existing self-clocked film, told whether it is on screen. */
   render?: (on: boolean) => ReactNode;
+  /** What the live meter says during the beat: [from ms, line]. */
+  meter?: readonly (readonly [number, string])[];
+  /** Problem beats: the bottleneck, stated centrally once the scene has shown it. */
+  bottleneck?: { at: number; headline: string; effect: string };
 };
+/** The arc's one measure, tracked beside the scenes: where we started, where we ended up. */
+export type ArcLedger = { metric: string; unit: string; baseline: number; optimized: number; digits?: number; baselineLabel?: string; optimizedLabel?: string };
 
-const LABELS = ["Problem", "How it works", "In our system", "Impact"] as const;
+const LABELS = ["Problem / Bottleneck", "Optimized solution", "In our system", "Impact"] as const;
 const REDUCED = "(prefers-reduced-motion: reduce)";
 const subscribeReduced = (notify: () => void) => { const m = matchMedia(REDUCED); m.addEventListener("change", notify); return () => m.removeEventListener("change", notify); };
 
 export function ModuleArc({
-  active, problem, mechanism, impact, systemTitle, systemMs = 90000, labels = LABELS, children,
+  active, problem, mechanism, impact, systemTitle, systemMs = 90000, labels = LABELS, ledger, children,
 }: {
   active: boolean;
   problem: ArcBeat;
   mechanism: ArcBeat;
   impact: ArcBeat;
   systemTitle: string;
+  ledger?: ArcLedger;
   /** Fallback length of the system beat when the module has no scripted demonstration. */
   systemMs?: number;
   /** The four step names, when a module tells its circle in other words. */
@@ -107,6 +115,25 @@ export function ModuleArc({
 
   const go = (i: number) => { setBeat(i); setT(0); setRun((n) => n + 1); };
   const shownT = reduced && timed ? timed.ms : t;
+
+  // The live meter narrates the beat; the system beat names the module unless it speaks for itself.
+  const lines = timed?.meter;
+  let line = beat === 2 ? `${labels[2]}: ${systemTitle}` : timed?.title ?? "";
+  if (lines) for (const [at, text] of lines) if (shownT >= at) line = text;
+  useEffect(() => {
+    if (!active) return;
+    emitMeter({ text: tr(line), step: beat + 1, total: 4, tone: beat === 0 ? "problem" : beat === 3 ? "delta" : beat === 1 ? "optimized" : "neutral" });
+  }, [active, line, beat, tr]);
+  useEffect(() => () => { emitMeter(null); }, []);
+  // The bottleneck is stated centrally once the problem has played out.
+  const choke = beat === 0 ? problem.bottleneck : undefined;
+  const choked = !!choke && active && shownT >= choke.at;
+  useEffect(() => {
+    if (!choked || !choke) return;
+    emitFocus({ headline: tr(choke.headline), cause: tr(choke.effect), place: "bottom", tone: "problem" });
+    return () => { emitFocus(null); };
+  }, [choked, choke, tr]);
+  const half = timed ? shownT >= timed.ms * 0.45 : false;
   return (
     <div ref={root} className="ma-root" data-beat={beat}>
       <nav className="ma-beats" aria-label={tr("The module, step by step")}>
@@ -118,9 +145,42 @@ export function ModuleArc({
         ))}
         <span className="ma-title" key={beat}>{tr(timed ? timed.title : systemTitle)}</span>
       </nav>
-      {timed && <div className="ma-scene" key={beat} data-film={timed.render ? true : undefined}>{timed.render ? timed.render(live) : timed.Scene && <timed.Scene t={shownT} />}</div>}
+      {timed && (
+        <div className="ma-stagewrap" data-ledger={ledger && beat < 2 ? true : undefined}>
+          <div className="ma-scene" key={beat} data-film={timed.render ? true : undefined}>{timed.render ? timed.render(live) : timed.Scene && <timed.Scene t={shownT} />}</div>
+          {ledger && beat < 2 && <ArcLedgerView ledger={ledger} beat={beat} revealed={beat > 0 && half} />}
+        </div>
+      )}
       <div className="ma-system" hidden={beat !== 2}>{children}</div>
     </div>
+  );
+}
+
+/** The arc's measure, beside the problem and the solution: baseline first, then the optimized value and Δ. */
+function ArcLedgerView({ ledger, beat, revealed }: { ledger: ArcLedger; beat: number; revealed: boolean }) {
+  const tr = useTr();
+  const d = ledger.digits ?? 0;
+  const max = Math.max(ledger.baseline, ledger.optimized);
+  const delta = ledger.optimized - ledger.baseline;
+  const pct = Math.round((100 * Math.abs(delta)) / Math.max(ledger.baseline, 1e-9));
+  return (
+    <aside className="ma-ledger" aria-label={tr("Where we started and where we end up")}>
+      <span className="ml-metric">{tr(ledger.metric)}</span>
+      <div className="ml-row" data-tone="base" data-focus-spot>
+        <small>{tr(ledger.baselineLabel ?? "Baseline")}</small>
+        <b>{num(ledger.baseline, d)}<small> {tr(ledger.unit)}</small></b>
+        <i style={{ width: `${(100 * ledger.baseline) / max}%` }} />
+      </div>
+      <div className="ml-row" data-tone="opt" data-on={revealed || undefined}>
+        <small>{tr(ledger.optimizedLabel ?? "Optimized")}</small>
+        <b>{revealed ? num(ledger.optimized, d) : "?"}<small> {tr(ledger.unit)}</small></b>
+        <i style={{ width: revealed ? `${(100 * ledger.optimized) / max}%` : "0%" }} />
+      </div>
+      <div className="ml-delta" data-on={revealed || undefined}>
+        Δ {delta < 0 ? "−" : "+"}{num(Math.abs(delta), d)} {tr(ledger.unit)} <small>{delta < 0 ? "−" : "+"}{pct}%</small>
+      </div>
+      <span className="ml-where">{beat === 0 ? tr("Now: the baseline and its bottleneck") : revealed ? tr("Next: the same technique in our system") : tr("Now: the optimized solution")}</span>
+    </aside>
   );
 }
 
@@ -130,6 +190,8 @@ export type ImpactSpec = {
   what: string;
   cause: string;
   base: string; optimized: string;
+  /** What the visitor should take away, in one sentence: read first, in large type. */
+  lesson?: string;
   /** The honest price of the gain; `from` is left out when it is a single amount, not a change. */
   cost?: { what: string; from?: number; to: number; unit: string; digits?: number };
   /** An optional result figure drawn under the bars. */
@@ -181,6 +243,7 @@ export function makeImpact(spec: ImpactSpec): ComponentType<SceneProps> {
     if (spec.Figure)
       return (
         <div className="ma-impact" data-board>
+          {spec.lesson && <p className="ma-lesson" style={{ opacity: prog(t, 200, 900) }}>✦ {tr(spec.lesson)}</p>}
           <header className="ma-board">
             {hero}
             <p className="ma-cause" style={{ opacity: prog(t, 2800, 3400) }}>{tr(spec.cause)}</p>
@@ -191,6 +254,7 @@ export function makeImpact(spec: ImpactSpec): ComponentType<SceneProps> {
       );
     return (
       <div className="ma-impact">
+        {spec.lesson && <p className="ma-lesson" style={{ opacity: prog(t, 200, 900) }}>✦ {tr(spec.lesson)}</p>}
         <div className="ma-hero-col">{hero}<p className="ma-cause" style={{ opacity: prog(t, 2800, 3400) }}>{tr(spec.cause)}</p></div>
         {bars}
       </div>

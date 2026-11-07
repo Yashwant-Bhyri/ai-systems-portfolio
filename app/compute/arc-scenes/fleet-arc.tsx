@@ -2,7 +2,7 @@
 
 import { FLEET, GPUS, colocated, elastic, type Segment } from "../../exhibit/policy/fleet-model";
 import { ease, prog } from "../../exhibit/engine";
-import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
+import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
 
 /* Elastic RL on 64 GPUs, as a full circle: the barrier problem, QwenGyre's idea
    (arXiv 2609.33848: a device keeps its identity while its role changes), what
@@ -90,7 +90,7 @@ function Raster({ t }: SceneProps) {
 }
 
 export const FLEET_LABELS = ["Problem", "The QwenGyre idea", "What we built", "Impact"] as const;
-export const FLEET_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; systemMs: number; labels: readonly string[] } = {
+export const FLEET_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; systemMs: number; labels: readonly string[]; ledger?: ArcLedger } = {
   labels: FLEET_LABELS,
   problem: { label: "Problem", title: "Synchronous RL: every GPU waits for the slowest rollout before anyone trains", ms: PROBLEM_MS, Scene: Problem },
   mechanism: { label: "The QwenGyre idea", title: "Each GPU keeps its identity and changes role the moment its own rollout ends", ms: IDEA_MS, Scene: Idea },

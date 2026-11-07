@@ -2,7 +2,7 @@
 
 import { ANSWER_STREAMS, overlapStudy, type OverlapLane } from "../scheduling-overlap-model";
 import { ease, prog } from "../../exhibit/engine";
-import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
+import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
 
 /* CPU/GPU overlap, as a full circle. Every interval is the lab's overlap model
    (balanced host: prepare 3 ms, GPU step 8 ms, deliver 2 ms; four decode steps). */
@@ -38,14 +38,14 @@ function Lanes({ lane, now, overlapped }: { lane: OverlapLane; now: number; over
       block(s.deliver.start, s.deliver.end, 110, C.send, `send ${s.index + 1}`, `d${s.index}`),
     ])}
     {idle.filter((g) => g.end > g.start && now > g.start).map((g, i) => (
-      <rect key={i} x={x(g.start) + 1} y={212} width={Math.max(0, (Math.min(g.end, now) - g.start) * PX - 2)} height={40} rx={3} fill="none" stroke={C.idle} strokeDasharray="4 3" strokeWidth={1.5} />
+      <rect key={i} data-focus-spot x={x(g.start) + 1} y={212} width={Math.max(0, (Math.min(g.end, now) - g.start) * PX - 2)} height={40} rx={3} fill="none" stroke={C.idle} strokeDasharray="4 3" strokeWidth={1.5} />
     ))}
     {lane.steps.map((s) => now >= s.deliver.end && (
       <text key={s.index} x={x(s.deliver.end)} y={334} textAnchor="middle" className="ma-word" style={{ fill: C.ink }}>{words[s.index]}</text>
     ))}
     <path d={`M${x(now)} 96V350`} stroke="#eef2f6" strokeOpacity={0.35} />
     <text x={x(END)} y={380} textAnchor="end" className="ma-l">{Math.round(now)} ms</text>
-    <g transform="translate(860 40)">
+    <g transform="translate(860 40)" data-focus-spot>
       <text x={0} y={0} className="ma-l">GPU idle so far</text>
       <text x={0} y={36} className="ma-big" style={{ fill: idleSoFar > 6 ? C.idle : C.gpu }}>{Math.round(idleSoFar)}<tspan className="ma-l" dx={8}>ms</tspan></text>
     </g>
@@ -110,13 +110,23 @@ function Hosts({ t }: SceneProps) {
   </svg>;
 }
 
-export const OVERLAP_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string } = {
-  problem: { label: "Problem", title: "The GPU waits while the CPU prepares each step and hands back its token", ms: PROBLEM_MS, Scene: Problem },
-  mechanism: { label: "How it works", title: "Overlap: the CPU prepares step n+1 while the GPU is still running step n", ms: MECH_MS, Scene: Mechanism },
+export const OVERLAP_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; ledger?: ArcLedger } = {
+  problem: {
+    label: "Problem / Bottleneck", title: "The GPU waits while the CPU prepares each step and hands back its token", ms: PROBLEM_MS, Scene: Problem,
+    meter: [[0, "CPU prepares step 1 while the GPU waits"], [1500, "GPU runs step 1"], [3200, "CPU delivers the token, then prepares step 2: the GPU waits again"]],
+    bottleneck: { at: PROBLEM_MS - 3000, headline: `The GPU sits idle ${S.baseline.gpuIdle} of every ${S.baseline.finish} ms, waiting for the CPU`, effect: `each decode step pays ${S.inputs.prepare + S.inputs.deliver} ms of host work in series, so an expensive GPU loses throughput to CPU bookkeeping` },
+  },
+  mechanism: {
+    label: "Optimized solution", title: "Optimized solution, overlap: the CPU prepares step n+1 while the GPU is still running step n", ms: MECH_MS, Scene: Mechanism,
+    meter: [[0, "CPU prepares step 2 while the GPU runs step 1"], [3000, "The GPU moves straight from step to step"], [MECH_MS - 2800, `Four steps finish in ${S.overlapped.finish} ms instead of ${S.baseline.finish} ms`]],
+  },
+  ledger: { metric: "Four decode steps, two answer streams", unit: "ms", baseline: S.baseline.finish, optimized: S.overlapped.finish, digits: 1, baselineLabel: "In series", optimizedLabel: "Overlapped" },
   systemTitle: "Two answer streams on our serving clock",
   impact: {
     label: "Impact", title: "The same GPU work, finished sooner", ms: 9000,
+    meter: [[0, `Four decode steps: ${S.baseline.finish} → ${S.overlapped.finish} ms`], [3600, "The gain tracks host cost: no CPU overhead means nothing to hide"]],
     Scene: makeImpact({
+      lesson: `The GPU does exactly the same work but waits ${S.baseline.gpuIdle - S.overlapped.gpuIdle} ms less, so each token is ${Math.round((100 * S.savedElapsed) / S.baseline.finish)}% cheaper in time. The slower the host, the bigger the gain.`,
       from: S.baseline.finish, to: S.overlapped.finish, unit: "ms", digits: 1,
       what: "Four decode steps for two answer streams",
       cause: `The CPU's ${S.inputs.prepare} ms of preparation and ${S.inputs.deliver} ms of delivery now hide under the GPU's ${S.inputs.gpu} ms step; GPU idle time falls from ${S.baseline.gpuIdle} to ${S.overlapped.gpuIdle} ms.`,

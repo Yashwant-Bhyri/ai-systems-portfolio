@@ -5,7 +5,7 @@ import { STEP_OVERHEAD, fmtMs, kvBytesPerToken, prefillSeconds, rateCard, weight
 import { BATCHING } from "../batching-result";
 import type { LabRun, Workload } from "../lab-simulation";
 import { ease, prog } from "../../exhibit/engine";
-import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
+import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
 
 /* The cheaper-execution pathway's three techniques, each told around its film
    chapter: how it works (a general scene) before the chapter, the measured

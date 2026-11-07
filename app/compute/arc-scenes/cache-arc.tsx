@@ -2,7 +2,7 @@
 
 import { cacheRoutingStudy } from "../cache-routing-model";
 import { ease, prog } from "../../exhibit/engine";
-import { makeImpact, type ArcBeat, type SceneProps } from "../stagecraft/module-arc";
+import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
 
 /* Cache-aware routing, as a full circle. Pages, waits and first-token times are
    the lab's cache-routing model on calibrated costs: 12 KV pages of 1,024 tokens
@@ -27,6 +27,7 @@ function Replica({ y, title, note, pages, highlight }: { y: number; title: strin
 }
 
 function Timeline({ now, warm, ghost }: { now: number; warm: boolean; ghost?: boolean }) {
+  // the bottleneck caption points at this chart
   const row = (r: typeof S.warm, y: number, label: string, faint: boolean) => {
     const vis = (a: number, b: number) => Math.max(0, Math.min(b, now) - a);
     return <g opacity={faint ? 0.35 : 1}>
@@ -36,7 +37,7 @@ function Timeline({ now, warm, ghost }: { now: number; warm: boolean; ghost?: bo
       {now >= r.firstToken && <g><path d={`M${tx(r.firstToken)} ${y - 3}l9 23-9 23-9-23z`} fill={C.out} /><text x={tx(r.firstToken) + 14} y={y + 28} className="ma-n" style={{ fill: C.out }}>{r.firstToken} ms</text></g>}
     </g>;
   };
-  return <g>
+  return <g data-focus-spot>
     <text x={T0} y={112} className="ma-k">time to first token</text>
     <path d={`M${tx(0)} 262H${tx(HORIZON)}`} className="ma-axis" />
     {[0, 40, 80, 120].filter((v) => v <= HORIZON).map((v) => <text key={v} x={tx(v)} y={284} textAnchor="middle" className="ma-l">{v}</text>)}
@@ -129,13 +130,23 @@ function Crossover({ t }: SceneProps) {
   </svg>;
 }
 
-export const CACHE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string } = {
-  problem: { label: "Problem", title: "Least-loaded routing recomputes a prefix another replica already holds", ms: PROBLEM_MS, Scene: Problem },
-  mechanism: { label: "How it works", title: "Cache-aware routing: go where the prefix lives, even if that means a short wait", ms: MECH_MS, Scene: Mechanism },
+export const CACHE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; systemTitle: string; ledger?: ArcLedger } = {
+  problem: {
+    label: "Problem / Bottleneck", title: "Least-loaded routing recomputes a prefix another replica already holds", ms: PROBLEM_MS, Scene: Problem,
+    meter: [[0, "A new request arrives: a 4,096-token shared prefix and its own question"], [900, "The router picks the least-loaded replica: B, which is empty"], [2000, "Replica B recomputes all 6 pages of the prompt"], [8000, `First token after ${S.cold.firstToken} ms`]],
+    bottleneck: { at: 8400, headline: `${S.promptBlocks} pages prefilled again; ${S.warm.reuse} were already cached on replica A`, effect: "routing by load alone ignores where KV pages live, so GPUs keep recomputing prefixes the fleet already holds" },
+  },
+  mechanism: {
+    label: "Optimized solution", title: "Optimized solution, cache-aware routing: go where the prefix lives, even after a short wait", ms: MECH_MS, Scene: Mechanism,
+    meter: [[0, "The same request, routed by where its prefix lives"], [900, "The router picks replica A, which holds the prefix"], [2000, `A waits ${S.warm.release} ms for free KV pages`], [4400, `Reuses ${S.warm.reuse} cached pages and prefills only ${S.warm.prefillBlocks}`], [9000, `First token after ${S.warm.firstToken} ms`]],
+  },
+  ledger: { metric: "Time to the first token, same request", unit: "ms", baseline: S.cold.firstToken, optimized: S.warm.firstToken, baselineLabel: "Least-loaded", optimizedLabel: "Cache-aware" },
   systemTitle: "Warm prefix versus memory pressure, in our cache model",
   impact: {
     label: "Impact", title: "A faster first token, until the wait for space outgrows the reuse", ms: 9000,
+    meter: [[0, `First token ${S.cold.firstToken} → ${S.warm.firstToken} ms for the same request`], [3600, `Past a ${S.crossover ?? 0} ms wait for pages, the cold replica wins again`]],
     Scene: makeImpact({
+      lesson: `Going to the replica that holds the prefix gives the first token ${S.delta} ms sooner, as long as its pages free up within ${S.crossover ?? 0} ms. Beyond that, the cold replica is faster.`,
       from: S.cold.firstToken, to: S.warm.firstToken, unit: "ms", digits: 0,
       what: "Time to the first token for the same request",
       cause: `${S.warm.reuse} of ${S.promptBlocks} prompt blocks were already cached on replica A, so only ${S.warm.prefillBlocks} needed prefill, even after waiting ${S.warm.release} ms for free pages.`,

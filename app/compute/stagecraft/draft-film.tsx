@@ -171,14 +171,14 @@ export function DraftFilm({ active }: { active: boolean }) {
         <g ref={draftCard} opacity={0.5}>
           <rect x={DRAFT.x} y={DRAFT.y} width={DRAFT.w} height={DRAFT.h} rx={12} className="df-agent df-agent-draft" />
           {[0, 1, 2, 3].map((k) => <rect key={k} x={DRAFT.x + 18} y={DRAFT.y + 26 + k * 16} width={48} height={8} rx={2} fill={C.acc} opacity={0.35 + k * 0.12} />)}
-          <text x={DRAFT.x + 84} y={DRAFT.y + 40} className="df-agent-name">{tr("Draft model")}</text>
-          <text x={DRAFT.x + 84} y={DRAFT.y + 68} className="df-agent-meta">{tr("small and fast")}</text>
+          <text x={DRAFT.x + 84} y={DRAFT.y + 40} className="df-agent-name">{tr("Draft model · EAGLE-3")}</text>
+          <text x={DRAFT.x + 84} y={DRAFT.y + 68} className="df-agent-meta">{tr("one layer on Qwen3-4B")}</text>
           <text x={DRAFT.x + 84} y={DRAFT.y + 94} className="df-agent-meta">{tr("guesses 5 words ahead")}</text>
         </g>
         <g ref={targetCard} opacity={0.5}>
           <rect x={TARGET.x} y={TARGET.y} width={TARGET.w} height={TARGET.h} rx={12} className="df-agent df-agent-target" />
           {Array.from({ length: 10 }, (_, k) => <rect key={k} x={TARGET.x + 18} y={TARGET.y + 22 + k * 12} width={48} height={7} rx={2} fill="#9fb4c8" opacity={0.3 + k * 0.06} />)}
-          <text x={TARGET.x + 84} y={TARGET.y + 42} className="df-agent-name">{tr("Target model")}</text>
+          <text x={TARGET.x + 84} y={TARGET.y + 42} className="df-agent-name">{tr("Qwen3-4B · target")}</text>
           <text x={TARGET.x + 84} y={TARGET.y + 72} className="df-agent-meta">{tr("decides every word")}</text>
           <text x={TARGET.x + 84} y={TARGET.y + 100} className="df-agent-meta">{tr("checks five in one pass")}</text>
           <text x={TARGET.x + 84} y={TARGET.y + 128} className="df-agent-meta">{tr("writes its own on a miss")}</text>
