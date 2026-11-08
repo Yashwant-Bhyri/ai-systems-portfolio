@@ -50,6 +50,8 @@ function flip(root: HTMLElement | null, before: Rects | null, stagger = 18) {
       { transformOrigin: "0 0", transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width}, ${a.height / b.height})` },
       { transformOrigin: "0 0", transform: "none" },
     ], { ...MOVE, delay: Math.min(i, 8) * stagger, fill: "backwards" });
+    // A stretched title is never shown: the words fade in once the card has nearly landed.
+    el.querySelectorAll<HTMLElement>(".tb-text, .tb-art").forEach((c) => c.animate([{ opacity: 0 }, { opacity: 0, offset: 0.75 }, { opacity: 1 }], { ...MOVE, delay: Math.min(i, 8) * stagger, fill: "backwards" }));
   });
 }
 export const boardRects = (): Rects => {
@@ -63,17 +65,18 @@ export const railRects = (): Rects => {
   return m;
 };
 
-function BoardTile({ item, lit, compact, onOpen }: { item: ShowItem; lit: boolean; compact: boolean; onOpen: (key: string) => void }) {
+function BoardTile({ item, lit, compact, delay = 0, onOpen }: { item: ShowItem; lit: boolean; compact: boolean; delay?: number; onOpen: (key: string) => void }) {
   const tr = useTr();
   const art = useRef<HTMLSpanElement>(null);
   // Only the lit tile's picture moves.
   useEffect(() => {
     const svg = art.current?.querySelector("svg");
     if (!svg) return;
-    if (lit && !matchMedia("(prefers-reduced-motion: reduce)").matches) svg.unpauseAnimations(); else svg.pauseAnimations();
+    if (lit && !matchMedia("(prefers-reduced-motion: reduce)").matches) svg.unpauseAnimations();
+    else { svg.pauseAnimations(); if (svg.getCurrentTime() < 1) svg.setCurrentTime(5); }
   }, [lit]);
   return (
-    <button type="button" className="tb-tile" data-lit={lit} data-show-key={item.key} onClick={() => onOpen(item.key)}>
+    <button type="button" className="tb-tile" data-lit={lit} data-show-key={item.key} style={compact ? undefined : { animationDelay: `${delay}ms` }} onClick={() => onOpen(item.key)}>
       <span ref={art} className="tb-art" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
       <span className="tb-text">
         <strong>{tr(item.title)}</strong>
@@ -164,7 +167,7 @@ export function TitleBoard({
                     const at = counts.slice(0, r).reduce((a, c) => a + c, 0);
                     return (
                       <div key={at} className="tb-row">
-                        {own.slice(at, at + count).map((item) => <BoardTile key={item.key} item={item} compact={false} lit={items.indexOf(item) === lit} onOpen={(k) => onStart(k, collect(root.current))} />)}
+                        {own.slice(at, at + count).map((item) => <BoardTile delay={focus > 0 || overlay ? 700 + own.indexOf(item) * 40 : own.indexOf(item) * 40} key={item.key} item={item} compact={false} lit={items.indexOf(item) === lit} onOpen={(k) => onStart(k, collect(root.current))} />)}
                       </div>
                     );
                   })}
@@ -182,10 +185,10 @@ export function TitleBoard({
    Summary is one part, made of the best moments. In detail is the other, with every module.
    The part you are in stays open; the other folds to its name. Beneath: stay, dive, or go on.
    Nothing here floats over the stage. */
-export type RailGroup = { key: string; label: string; items: readonly { key: string; title: string; section?: string }[]; onOpen: () => void; /** A section of this part that is not open now. */ also?: { label: string; onOpen: () => void } };
+export type RailGroup = { key: string; label: string; items: readonly { key: string; title: string; section?: string }[]; onOpen: () => void; /** A section of this part that is not open now, and whether it comes first. */ also?: { label: string; onOpen: () => void }; alsoFirst?: boolean; count?: number };
 export type SummaryControls = { held: boolean; first: boolean; last: boolean; onBack: () => void; onToggle: () => void; onForward: () => void };
 export function TitleRail({
-  groups, active, current, next, phase, countdownMs, last, afterLast, held, summary, from, onItem, onNext, onLanding, onStay, onKeepPlaying, onDive,
+  groups, active, current, next, phase, countdownMs, last, afterLast, held, summary, ringKey, ringDelay = 0, from, onItem, onNext, onLanding, onStay, onKeepPlaying, onDive,
 }: {
   groups: readonly RailGroup[];
   /** Which part is open. */
@@ -201,6 +204,10 @@ export function TitleRail({
   held?: boolean;
   /** Back, pause and forward, while the Summary plays. */
   summary?: SummaryControls;
+  /** Restarts the Next ring, e.g. when the visitor steps back. */
+  ringKey?: string | number;
+  /** How far into its countdown the ring already is, in ms. */
+  ringDelay?: number;
   /** Where the titles were on the board, to fly from. */
   from?: Rects | null;
   onItem: (key: string) => void;
@@ -221,6 +228,7 @@ export function TitleRail({
         { transformOrigin: "0 0", transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width}, ${a.height / b.height})`, opacity: 0.6 },
         { transformOrigin: "0 0", transform: "none", opacity: 1 },
       ], { ...MOVE, delay: Math.min(i, 8) * 18, fill: "backwards" });
+      el.querySelector(".tr-label")?.animate([{ opacity: 0 }, { opacity: 0, offset: 0.75 }, { opacity: 1 }], { ...MOVE, delay: Math.min(i, 8) * 18, fill: "backwards" });
     });
   }, [from]);
   const state = phase === "taken" ? "Yours to explore" : phase === "done" ? (last ? "Finished" : "Finished, moving on") : "Playing";
@@ -232,7 +240,8 @@ export function TitleRail({
           const open = g.key === active;
           return (
             <div key={g.key} className="tr-group" data-on={open || undefined}>
-              <button type="button" className="tr-part" aria-expanded={open} onClick={g.onOpen}>{tr(g.label)}<i aria-hidden="true">{open ? "" : g.items.length}</i></button>
+              <button type="button" className="tr-part" aria-expanded={open} onClick={g.onOpen}>{tr(g.label)}<i aria-hidden="true">{open ? "" : g.count ?? g.items.length}</i></button>
+              {open && g.also && g.alsoFirst && <button type="button" className="tr-also" data-first onClick={g.also.onOpen}>{tr(g.also.label)} ▸</button>}
               {open && g.items.map((i, k) => (
                 <div key={i.key}>
                   {i.section && i.section !== g.items[k - 1]?.section && <span className="tr-section">{tr(i.section)}</span>}
@@ -241,7 +250,7 @@ export function TitleRail({
                   </button>
                 </div>
               ))}
-              {open && g.also && <button type="button" className="tr-also" onClick={g.also.onOpen}>{tr(g.also.label)}</button>}
+              {open && g.also && !g.alsoFirst && <button type="button" className="tr-also" onClick={g.also.onOpen}>{tr(g.also.label)} ▸</button>}
             </div>
           );
         })}
@@ -250,9 +259,9 @@ export function TitleRail({
         <span className="tr-state" aria-live="polite"><i />{tr(state)}</span>
         {summary ? (
           <div className="tr-transport" role="group" aria-label={tr("Summary controls")}>
-            <button type="button" onClick={summary.onBack} disabled={summary.first} aria-label={tr("Back one moment")}>◂</button>
-            <button type="button" onClick={summary.onToggle} aria-label={tr(summary.held ? "Keep playing" : "Pause")}>{summary.held ? "▷" : "Ⅱ"}</button>
-            <button type="button" onClick={summary.onForward} disabled={summary.last} aria-label={tr("Forward one moment")}>▸</button>
+            <button type="button" onClick={summary.onBack} disabled={summary.first} aria-label={tr("Back one moment")} title={tr("Back one moment")}><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M10 2 4 7l6 5Z" fill="currentColor" /></svg></button>
+            <button type="button" onClick={summary.onToggle} aria-label={tr(summary.held ? "Keep playing" : "Pause")} title={tr(summary.held ? "Keep playing" : "Pause")}>{summary.held ? <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4 2l7 5-7 5Z" fill="currentColor" /></svg> : <svg viewBox="0 0 14 14" aria-hidden="true"><rect x="3" y="2" width="3" height="10" rx="1" fill="currentColor" /><rect x="8" y="2" width="3" height="10" rx="1" fill="currentColor" /></svg>}</button>
+            <button type="button" onClick={summary.onForward} disabled={summary.last} aria-label={tr("Forward one moment")} title={tr("Forward one moment")}><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4 2l6 5-6 5Z" fill="currentColor" /></svg></button>
           </div>
         ) : phase === "taken" || held
           ? <button type="button" className="tr-act" onClick={onKeepPlaying} title={tr("Keep playing")}><b aria-hidden="true">▷</b><span className="tr-label">{tr("Keep playing")}</span></button>
@@ -268,7 +277,7 @@ export function TitleRail({
           <button type="button" className="tr-next" data-phase={phase} onClick={onNext} title={`${tr("Next")}: ${tr(next)}`}>
             <svg className="ts-ring" viewBox="0 0 20 20" aria-hidden="true">
               <circle cx="10" cy="10" r="8" />
-              {(phase === "done" || summary) && <circle key={`${next}-${countdownMs}`} cx="10" cy="10" r="8" className="ts-ring-run" style={{ animationDuration: `${countdownMs}ms`, animationPlayState: summary?.held ? "paused" : "running" }} />}
+              {(phase === "done" || summary) && <circle key={`${next}-${countdownMs}-${ringKey ?? ""}`} cx="10" cy="10" r="8" className="ts-ring-run" style={{ animationDuration: `${countdownMs}ms`, animationDelay: `${-ringDelay}ms`, animationPlayState: summary?.held ? "paused" : "running" }} />}
             </svg>
             <span><small>{tr("Next")}</small>{tr(next)}</span>
           </button>

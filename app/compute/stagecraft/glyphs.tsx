@@ -69,13 +69,12 @@ export function GlyphReplay() {
 /** Training lifts the point; serving brings it back. One move up, one move across. */
 export function GlyphComposition() {
   return <Svg>
-    {seq(9, (x) => seq(4, (y) => <circle key={`${x}-${y}`} cx={24 + x * 24} cy={22 + y * 26} r={1.1} className="f-dim" />))}
+    {seq(9, (x) => seq(4, (y) => <circle key={`${x}-${y}`} cx={24 + x * 24} cy={22 + y * 26} r={1.4} className="f-mid" />))}
     <path d="M176 100V36" className="s-a" strokeWidth={2.5} strokeLinecap="round" fill="none" />
     <path d="M176 36H84" className="s-t" strokeWidth={2.5} strokeLinecap="round" fill="none" />
-    <path d="M169 45l7-10 7 10" className="s-a" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
     <path d="M93 29l-10 7 10 7" className="s-t" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
     <circle cx={176} cy={100} r={5} className="f-mid" />
-    <circle r={8} className="f-ink"><animateMotion path="M176 100V36H84" keyPoints="0;.41;.41;1;1;0" keyTimes="0;.28;.42;.72;.94;1" calcMode="linear" {...loop(9)} /></circle>
+    <circle r={6} className="f-ink"><animateMotion path="M176 100V36H84" keyPoints="0;.41;.41;1;1;0" keyTimes="0;.28;.42;.72;.94;1" calcMode="linear" {...loop(9)} /></circle>
   </Svg>;
 }
 /** Every request, slowest last: the slowest 5% is where the gap is widest. */
@@ -165,9 +164,9 @@ export function GlyphOverlap() {
     {cpu.map((x) => <rect key={x} x={x} y={y + 18} width={cw} height={14} rx={3} className="f-p" />)}
   </g>;
   return <Svg>
-    {pair(12, [12, 78, 144, 210 - 18], [58, 124, 190], 44, 18)}
-    {pair(70, [12, 58, 104, 150], [36, 82, 128], 44, 18)}
-    <path d="M196 62V112" className="s-a" strokeWidth={2} strokeDasharray="2 4" />
+    {pair(12, [12, 72, 132, 192], [51, 111, 171], 38, 18)}
+    {pair(70, [12, 52, 92, 132], [34, 74, 114], 38, 18)}
+    <path d="M171 62V112" className="s-a" strokeWidth={2} strokeDasharray="2 4" />
     <path d="M12 62H228" className="s-dim" strokeWidth={1} />
   </Svg>;
 }

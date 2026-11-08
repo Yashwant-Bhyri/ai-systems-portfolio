@@ -162,18 +162,20 @@ export function ChoiceCard({ headline, study, onward, auto }: { headline: string
   const tr = useTr();
   const go = useRef(study.onPick);
   useEffect(() => { go.current = study.onPick; });
+  // The countdown waits while the pointer is on the card.
+  const [hold, setHold] = useState(false);
   useEffect(() => {
-    if (!auto) return;
+    if (!auto || hold) return;
     const id = window.setTimeout(() => go.current?.(), CHOICE_MS);
     return () => window.clearTimeout(id);
-  }, [auto]);
+  }, [auto, hold]);
   const option = (o: ChoiceOption, primary: boolean) => {
     const body = (
       <>
         <strong>{tr(o.title)}</strong>
         <span>{tr(o.detail)}</span>
         {primary && auto && (
-          <svg className="ts-ring" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" /><circle cx="10" cy="10" r="8" className="ts-ring-run" style={{ animation: `ts-ring ${CHOICE_MS}ms linear forwards` }} /></svg>
+          <svg className="ts-ring" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" /><circle cx="10" cy="10" r="8" className="ts-ring-run" style={{ animation: `ts-ring ${CHOICE_MS}ms linear forwards`, animationPlayState: hold ? "paused" : "running" }} /></svg>
         )}
       </>
     );
@@ -183,7 +185,7 @@ export function ChoiceCard({ headline, study, onward, auto }: { headline: string
   };
   return createPortal(
     <div className="mb-veil mc-veil" role="dialog" aria-label={tr("Where to next")}>
-      <div className="mc-card">
+      <div className="mc-card" onPointerEnter={() => setHold(true)} onPointerLeave={() => setHold(false)}>
         <p className="mc-head">{highlight(tr(headline))}</p>
         <div className="mc-options">{option(study, true)}{option(onward, false)}</div>
       </div>

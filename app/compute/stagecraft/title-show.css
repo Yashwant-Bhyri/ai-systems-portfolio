@@ -170,3 +170,15 @@
 .tr-section { padding: 6px 8px 1px; font-size: 12px; line-height: 15px; }
 .tr-strip { gap: 6px; }
 @media (max-width: 1380px) { .lab-flow-show { --tr-w: 54px; } }
+/* Review fixes: rings that show outside the lab, grouped ticks, readable transport, steady Next. */
+.ts-ring .ts-ring-run { stroke: var(--active-accent, #ffc267); }
+.vx-shell .sb-ticks button { width: 16px; height: 20px; }
+.sb-ticks button::before, .sb-ticks button i { top: 9px; height: 3px; }
+.sb-ticks button[data-module] { margin-left: 8px; }
+.sb-ticks button[data-section] { margin-left: 18px; }
+.tr-transport svg { width: 14px; height: 14px; display: block; margin: 0 auto; }
+.vx-shell .tr-next { min-height: 66px; }
+.vx-shell .tr-also { margin-top: 8px; padding: 6px 8px; color: #aab6c2; font: 500 13.5px/18px var(--font-geist-sans), sans-serif; }
+.vx-shell .tr-also[data-first] { margin: 0 0 8px; border-top: 0; border-bottom: 1px solid rgba(230,237,244,.08); }
+.tb-value mark { font-size: 16px; }
+.tb-head p { font-size: 20px; line-height: 28px; }

@@ -48,3 +48,27 @@
 .vx-shell .sd-levers button:hover { color: #fff; }
 .vx-shell .sd-levers button[aria-pressed="true"] { background: rgba(255,255,255,.09); color: #fff; box-shadow: inset 0 0 0 1px rgba(230,237,244,.18); }
 @media (prefers-reduced-motion: reduce) { .sd-line { animation: none; } }
+
+/* Round 15 review: the result, read once both runs are over; a legend for the two runs; levers that say what they are. */
+.sd-center .sd-end, .sd-center[data-done="true"] .sd-live, .sd-center[data-done="true"] .sd-duel, .sd-center[data-done="true"] .sd-names { display: none; }
+.sd-center[data-done="true"] .sd-end { display: block; margin-top: 4px; color: #93a0ae; font: 400 13px/18px var(--font-geist-sans), sans-serif; }
+.sd-center[data-done="true"] { width: 250px; }
+.sd-center[data-done="true"] > b { font-size: 28px; }
+.sd-root .sd-names small { font-size: 13px; }
+.sd-key { display: inline-flex; align-items: center; gap: 6px; color: #93a0ae; font: 400 13px/18px var(--font-geist-sans), sans-serif; }
+.sd-key i { display: inline-block; width: 16px; height: 6px; border-radius: 3px; background: #dfe6ec; }
+.sd-key i[data-run="base"] { opacity: .42; }
+.sd-key i[data-run="opt"] { margin-left: 8px; }
+.sd-bar { height: 10px; }
+.sd-bars b { font-size: 14.5px; }
+.sd-row-head em { font-size: 14px; }
+.sd-sum .sd-cols { padding-block: 0; }
+.sd-sum .sd-cols small { color: #93a0ae; font: 400 12.5px/16px var(--font-geist-sans), sans-serif; text-align: right; }
+.sd-sum .sd-total { color: #fff; font-size: 16px; }
+.sd-sum .sd-total b { font-size: 18px; }
+.sd-sum .sd-total em { margin-left: 6px; color: #ffc267; font: 500 15px/20px var(--font-geist-mono), monospace; font-style: normal; }
+.sd-levers > span { margin-right: 6px; color: #93a0ae; font: 400 13.5px/1 var(--font-geist-sans), sans-serif; white-space: nowrap; }
+.vx-shell .sd-levers button { color: #dfe6ec; font-size: 14.5px; }
+.sd-levers button i { margin-right: 6px; color: #93a0ae; font: 500 12.5px/1 var(--font-geist-mono), monospace; font-style: normal; }
+.sd-readout { left: 0; top: 0; bottom: auto; max-width: 340px; }
+.sd-readout span { white-space: nowrap; }

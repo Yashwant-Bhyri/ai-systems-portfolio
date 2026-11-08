@@ -18,7 +18,8 @@ const mean = (r: LabRun, k: "queueSeconds" | "prefill" | "decode") => r.tasks.re
 const f = (v: number, d = 0) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 
 const WAIT = `${f(mean(R[0], "queueSeconds"))} s`, READ = `${f(mean(R[0], "prefill"), 3)} s`, WRITE = `${f(mean(R[0], "decode"), 1)} s`;
-const TONE = { wait: "#ff8f86", read: "#ffc267", write: "#b8e986", quiet: "#8ea0b2" };
+// The same phase colours as the dial: violet waits, rose reads the prompt, green writes.
+const TONE = { wait: "#a79bff", read: "#ff9fb8", write: "#b8e986", quiet: "#8ea0b2" };
 export type FlowPart = "requests" | "queue" | "scheduler" | "prefill" | "decode" | "kv" | "weights" | "answers";
 type Box = { id: FlowPart; x: number; y: number; w: number; h: number; name: string; value?: string; tone: string; store?: boolean };
 const SIDE: Box[] = [
