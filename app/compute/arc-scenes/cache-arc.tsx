@@ -221,12 +221,12 @@ export const CACHE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat;
   },
   impact: {
     label: "Impact", title: "A faster first token, until the wait for space outgrows the reuse", ms: 9000,
-    meter: [[0, `First token ${S.cold.firstToken} → ${S.warm.firstToken} ms for the same request`], [3600, `Past a ${S.crossover ?? 0} ms wait for pages, the cold replica wins again`]],
+    meter: [[0, `First token ${S.cold.firstToken} → ${S.warm.firstToken} ms for the same request`], [3600, `Past an ${S.crossover ?? 0} ms wait for pages, the cold replica wins again`]],
     Scene: makeImpact({
       lesson: `Going to the replica that holds the prefix gives the first token ${S.delta} ms sooner, as long as its pages free up within ${S.crossover ?? 0} ms. Beyond that, the cold replica is faster.`,
       from: S.cold.firstToken, to: S.warm.firstToken, unit: "ms", digits: 0,
       what: "Time to the first token for the same request",
-      cause: `${S.warm.reuse} of ${S.promptBlocks} prompt blocks were already cached on replica A, so only ${S.warm.prefillBlocks} needed prefill, even after waiting ${S.warm.release} ms for free pages.`,
+      cause: `${S.warm.reuse} of ${S.promptBlocks} prompt pages were already cached on replica A, so only ${S.warm.prefillBlocks} needed prefill, even after waiting ${S.warm.release} ms for free pages.`,
       base: "Least-loaded (cold)", optimized: "Cache-aware (warm)",
       cost: { what: "Cost: waiting for free KV pages on the warm replica", from: 0, to: S.warm.start, unit: "ms", digits: 0 },
       Figure: Crossover,

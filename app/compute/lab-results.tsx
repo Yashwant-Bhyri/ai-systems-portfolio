@@ -435,6 +435,8 @@ const n2 = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 2, 
 const FINISH = (r: (typeof R_)[number]) => Math.max(...r.tasks.map((t) => t.finish));
 const P95 = (r: (typeof R_)[number]) => latencyDistribution(r, 95).threshold.latency;
 const BASE_CORRECT = simulateLab(0, 2, false, "shared-prefix").correct;
+const FLIPS2 = compareTasks(simulateLab(0, 2), simulateLab(2, 2));
+const LEAN_1X = simulateLab(3, 1).correct, LEAN_8X = simulateLab(3, 8).correct;
 const INFERENCE_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "Same intelligence at cheaper cost", short: "Same intelligence at cheaper cost", techniques: [], lead: `The same ${R_[3].correct} correct answers from the same model, with *${PCT_LESS}% less compute*: ${cost2(R_[0].correctCost!)} → ${cost2(R_[3].correctCost!)} GPU-seconds per correct answer` },
   { n: "02", title: "Serving under load", short: "Serving under load", techniques: [], lead: "Many requests share one GPU: *four techniques* keep every answer streaming, and the whole path on one clock" },
@@ -483,25 +485,25 @@ const INFERENCE_CLIPS: readonly Clip[] = [
 ];
 const TRAINING_CLIPS: readonly Clip[] = [
   intro("manifold", "Each dot is one task. *Lines join the same task across three models*; each view asks a different question"),
-  { key: "manifold", ms: 21600, line: "Every task, three models, six dimensions: each view tells a different truth" },
+  { key: "manifold", ms: 21600, line: `Every task, three models, six dimensions: ${T_.base.correct} → ${T_.lean.correct} of 96 cross from wrong to correct` },
   intro("inside", "One coding task, watched *layer by layer* inside the model as it answers"),
   { key: "inside", ms: 20500, line: "On one coding task: the layers that moved, and the words that changed" },
   intro("learn", "Eight attempts at one task. *The tests decide which ones survive*"),
   { key: "learn", ms: 17200, line: `Learning from outcomes: the tests decide which attempts survive, ${T_.sft.correct} → ${T_.rl.correct} of 96` },
   intro("terrain", "All 96 tasks, at *six stages of training*"),
-  { key: "terrain", ms: 21000, line: `Each thing it learned becomes skill: ${T_.base.correct} → ${T_.lean.correct} of 96 across six checkpoints` },
+  { key: "terrain", ms: 21000, line: `Six checkpoints: ${T_.base.correct} → ${T_.lean.correct} of 96 tasks solved` },
   intro("frontier", "Accuracy up the side, *GPU time per correct answer* along the bottom"),
-  { key: "frontier", ms: 17400, line: "Accuracy against GPU time per correct answer, move by move" },
+  { key: "frontier", ms: 17400, line: `Five moves: ${T_.base.correct} → ${T_.lean.correct} of 96 solved, and the cost per correct answer brought back down` },
   intro("curves", "Each checkpoint, given *more and more thinking budget*"),
-  { key: "curves", ms: 21500, line: "What more thinking buys each checkpoint" },
+  { key: "curves", ms: 21500, line: `More thinking: Lean RL solves ${LEAN_1X} → ${LEAN_8X} of 96 from a 1× to an 8× budget` },
   intro("film", "Reward correct answers, *charge for every token*", "Lean RL"),
-  { key: "film", title: "Lean RL", ms: 22000, film: { step: 4 }, line: `Lean RL: the same ${T_.lean.correct} answers, ${FEWER}% fewer tokens` },
+  { key: "film", title: "Lean RL", ms: 22000, film: { step: 4 }, line: `Lean RL: the same ${T_.lean.correct} tasks solved, ${FEWER}% fewer tokens` },
   intro("fleet", "64 GPUs doing RL together. *Who waits for whom?*"),
   ...arcClips("fleet", ["Problem: 64 GPUs wait at a barrier on every RL step", "Elastic RL: any free GPU takes any role", "Impact: almost twice the RL steps in the same time"], [11500, 12500, 9000]),
   intro("map", "One square per task: *which ones changed, not only the score*"),
-  { key: "map", ms: 21000, line: "Task by task: which ones changed" },
+  { key: "map", ms: 21000, line: `Task by task: ${FLIPS2.gained.length} newly correct, ${FLIPS2.lost.length} lost, at a 2× thinking budget` },
   intro("audit", "A better score can hide a task that broke. *Each one is named*"),
-  { key: "audit", ms: 21000, line: "And the ones that got worse, each one named" },
+  { key: "audit", ms: 21000, line: `${FLIPS2.lost.length} tasks got worse on the way; each one is named` },
 ];
 const boardAt = (clips: readonly Clip[]) => clips.findIndex((c) => c.board);
 /** The board itself still belongs to the first section: its titles fly out of the first section's rail. */
@@ -704,7 +706,7 @@ export function ComputeLabStudy({
   const railItems: RailItem[] = training
     ? [
         manifoldItem,
-        { key: "inside", title: "What changed inside the model", term: "Layer by layer", value: "7 of 50", unit: "words the base model would have written differently", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
+        { key: "inside", title: "What changed inside the model", term: "Layer by layer", value: "7 of 50", unit: "words rewritten by training", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
         { key: "learn", title: "Learning from outcomes", term: "GRPO", value: `${simulateLab(1, 1).correct} → ${simulateLab(2, 1).correct}`, unit: "of 96 tasks solved", Glyph: GlyphLearn, onOpen: () => openView(7), current: mode === "explore" && view === 7 },
         { key: "terrain", title: "Skill gained at each step", term: "96 tasks, six checkpoints", value: `+${simulateLab(3, 4).correct - simulateLab(0, 1).correct}`, unit: "tasks solved, base to lean RL", Glyph: GlyphTerrain, onOpen: () => openView(6), current: mode === "explore" && view === 6 },
         { key: "frontier", title: "Accuracy against GPU cost", term: "The frontier", value: "28 → 82", unit: "of 96 tasks solved", Glyph: GlyphFrontier, onOpen: () => openView(8), current: mode === "explore" && view === 8 },
@@ -873,9 +875,12 @@ export function ComputeLabStudy({
     if (!el) return;
     const done = () => { if (currentRef.current !== "summary") setStatus((s) => (s.key === currentRef.current && s.phase === "taken" ? s : { key: currentRef.current, phase: "done" })); };
     el.addEventListener("lab:module-round", done);
+    // Opening a module's own explorer hands it to the visitor, as "Stay on this one" does.
+    const taken = () => { if (currentRef.current !== "summary") setStatus({ key: currentRef.current, phase: "taken" }); };
+    el.addEventListener("lab:module-taken", taken);
     const io = new IntersectionObserver(([e]) => setLabInView(e.isIntersecting), { threshold: 0.3 });
     io.observe(el);
-    return () => { el.removeEventListener("lab:module-round", done); io.disconnect(); };
+    return () => { el.removeEventListener("lab:module-round", done); el.removeEventListener("lab:module-taken", taken); io.disconnect(); };
   }, [ref]);
   // Using the stage holds the show while the visitor is there. Only "Stay on this one" holds it for good;
   // a module that was used and then left alone moves on, so the show never just stops.

@@ -182,3 +182,5 @@
 .vx-shell .tr-also[data-first] { margin: 0 0 8px; border-top: 0; border-bottom: 1px solid rgba(230,237,244,.08); }
 .tb-value mark { font-size: 16px; }
 .tb-head p { font-size: 20px; line-height: 28px; }
+.vx-shell .tr-next { height: 66px; min-height: 0; }
+.tr-next span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }

@@ -57,3 +57,7 @@
 @media (max-width: 1200px) { .sp-stage { grid-template-columns: 1fr; } .sp-consequence { margin: 16px 24px; min-height: 0; } .sp-pan { display: block; } .sp-result-bars, .sp-live-answer { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; } .sp-result-links { display: none; } }
 @media (max-width: 600px) { .sp-header { align-items: flex-start; padding: 18px; gap: 12px; } .sp-header h3 { font-size: 21px; } .sp-header time { font-size: 20px; } .sp-header time small { white-space: normal; max-width: 75px; } .sp-consequence { margin: 16px; } .sp-controls { margin-inline: 18px; } .sp-transport { padding-inline: 18px; gap: 9px; } .sp-transport > button:last-child { display: none; } .sp-controls label { display: grid; gap: 8px; } .sp-moments { padding-inline: 18px; gap: 6px 17px; } }
 @media (prefers-reduced-motion: reduce) { .sp-lane > g > rect, .sp-lane > g > path, .sp-lane > g > g, .sp-lane > path { transition: none; } }
+.vx-shell .sp-header time small { display: block; font-size: 13px; line-height: 16px; text-align: right; }
+.vx-shell .sp-small { font-size: 13px; }
+.vx-shell .sp-chip-text { font-size: 12.5px; }
+.vx-shell :is(.sp-controls, .sp-two-effects button, .sp-transport time) { font-size: 13px; }

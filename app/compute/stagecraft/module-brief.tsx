@@ -11,6 +11,9 @@ import { latencyDistribution } from "../load-latency-model";
 import { CACHE_DELTA, OVERLAP, PRESSURE_GAP } from "../serving-rail-meta";
 import "./module-brief.css";
 
+/** Cards are drawn over the whole page, outside the lab, so they take the lab's accent with them. */
+const labAccent = () => (typeof document === "undefined" ? "" : document.querySelector(".rs-laboratory")?.className.match(/vx-accent-\w+/)?.[0] ?? "");
+
 /**
  * Before a module opens for the first time the whole screen blurs and its title card
  * steps out of the rail to the middle, saying what we are dealing with, the goal, and
@@ -54,7 +57,7 @@ export function moduleBriefs(training: boolean, budget: number): Record<string, 
     composition: { does: "A better model, served more cheaply", dealing: "Two separate levers: what the model knows, and how it is served", goal: "More correct answers, without the bill growing with them", impact: `*${baseStatic.correct} → ${rlFast.correct} of 96* correct, at ${Math.abs(costPct)}% ${costPct > 0 ? "more" : "less"} GPU time per answer`, why: "training raises accuracy; faster serving takes back most of the extra cost" },
     latency: { does: "Shorter queues, faster answers", dealing: "The queue: what a person sending a request feels", goal: "Shorten the wait of the slowest requests", impact: `The slowest 5% of requests: *${f(p95(rlStatic))} → ${f(p95(rlFast))} s*`, why: "workers free up sooner, so the requests at the back wait far less" },
     film: { does: "Four moves, each shown and then measured", dealing: "The same 96 requests, changing one thing at a time", goal: "Find out what each lever really saves", impact: `*${f(rlStatic.correctCost!, 2)} → ${f(rlFast.correctCost!, 2)} GPU-s* per correct answer`, why: "scheduling, then prefix reuse, then faster execution" },
-    pressure: { does: "Long prompts stop stalling live answers", dealing: "Long prompts and live answers share every GPU step", goal: "Never let a long prompt freeze an answer mid-stream", impact: `Worst pause *${f(PRESSURE_GAP.whole)} → ${f(PRESSURE_GAP.chunked, 1)} ms*`, why: "the prompt is read in chunks between answer steps" },
+    pressure: { does: "Long prompts stop stalling live answers", dealing: "Long prompts and live answers share every GPU step", goal: "Never let a long prompt freeze an answer mid-stream", impact: `Worst pause *${f(PRESSURE_GAP.whole, 1)} → ${f(PRESSURE_GAP.chunked, 1)} ms*`, why: "the prompt is read in chunks between answer steps" },
     draft: { does: "A small draft model predicts tokens, the large model verifies them", dealing: "The large model writes one word per full pass", goal: "Let a small model guess ahead, and verify many words in one pass", impact: "*12 → 3* serial calls of the large model", why: "a small model drafts; the large one checks many words at once" },
     cache: { does: "Each request goes to where its prompt is already cached", dealing: "Several replicas: which one should take this request?", goal: "Send it to where its prompt is already in memory", impact: `First token *${CACHE_DELTA} ms sooner*`, why: "the router knows where each prefix is already cached" },
     overlap: { does: "The CPU prepares the next step while the GPU runs this one", dealing: "The GPU waits while the CPU prepares its next step", goal: "Prepare the next step during this one", impact: `Four steps: *${OVERLAP.baseline.finish} → ${OVERLAP.overlapped.finish} ms*`, why: "the CPU prepares the next step while the GPU runs this one" },
@@ -107,7 +110,7 @@ export function ModuleBrief({ item, brief, path, onDone }: { item: ShowItem; bri
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return createPortal(
-    <div className="mb-veil" data-leaving={leaving || undefined} role="dialog" aria-label={`${tr(item.title)}: ${tr("what this is")}`} onClick={() => done.current()}>
+    <div className={`mb-veil ${labAccent()}`} data-leaving={leaving || undefined} role="dialog" aria-label={`${tr(item.title)}: ${tr("what this is")}`} onClick={() => done.current()}>
       <div ref={card} className="mb-card">
         <span className="ts-glyph rl-glyph mb-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
         <div className="mb-text">
@@ -140,7 +143,7 @@ export function IntroCard({ item, text, ms }: { item: ShowItem; text: string; ms
     c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: ms - 300, fill: "forwards" });
   }, [item.key, ms]);
   return createPortal(
-    <div className="mb-veil mb-intro" aria-live="polite">
+    <div className={`mb-veil mb-intro ${labAccent()}`} aria-live="polite">
       <div ref={card} className="mi-card">
         <span className="mi-art" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
         <h3>{tr(item.title)}</h3>
@@ -184,7 +187,7 @@ export function ChoiceCard({ headline, study, onward, auto }: { headline: string
       : <button key={o.title} type="button" className="mc-option" data-primary={primary || undefined} onClick={o.onPick}>{body}</button>;
   };
   return createPortal(
-    <div className="mb-veil mc-veil" role="dialog" aria-label={tr("Where to next")}>
+    <div className={`mb-veil mc-veil ${labAccent()}`} role="dialog" aria-label={tr("Where to next")}>
       <div className="mc-card" onPointerEnter={() => setHold(true)} onPointerLeave={() => setHold(false)}>
         <p className="mc-head">{highlight(tr(headline))}</p>
         <div className="mc-options">{option(study, true)}{option(onward, false)}</div>

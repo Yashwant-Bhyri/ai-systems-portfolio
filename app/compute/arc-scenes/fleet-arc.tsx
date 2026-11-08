@@ -85,7 +85,7 @@ function Raster({ t }: SceneProps) {
     {panel(B.segs.filter((sg) => sg.start < span), B.stepEnds.filter((e) => e <= span), 206, "Elastic roles", FLEET.utilB)}
     <path d={`M${L} 362H${R}`} className="ma-axis" />
     {Array.from({ length: Math.floor(span / 2) + 1 }, (_, i) => i * 2).map((m) => <text key={m} x={sx(m)} y={376} textAnchor="middle" className="ma-l">{m} min</text>)}
-    <text x={0} y={376} className="ma-l">numbered lines: an RL step completes</text>
+    <text x={0} y={398} className="ma-l">numbered lines: an RL step completes</text>
   </svg>;
 }
 

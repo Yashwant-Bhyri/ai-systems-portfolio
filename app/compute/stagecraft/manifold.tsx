@@ -328,7 +328,7 @@ export function Manifold({ dwell = 8000, active = true, compact = false, onRound
               ))}
             </tbody>
           </table>
-          <small>Medians across {spec.clouds[0].rows.length} synthetic {spec.noun}s; each point is joined to its own other self</small>
+          <small>Medians across {spec.clouds[0].rows.length} synthetic {spec.noun}s; lines join each task's three positions</small>
         </aside>
       </div>
       <div className="mf-controls">

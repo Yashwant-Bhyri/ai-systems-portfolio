@@ -186,7 +186,7 @@ export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; 
   system: {
     label: "In our system", title: "The same 12-word answer, both ways, one clock", ms: SYS_MS, Scene: SpecSystem,
     meter: [[0, `One word per call: ${MIXED.baselineCalls} passes of Qwen3-4B, one after another`], [SYS_A, `Round 1: the draft head guesses 4 words; Qwen3-4B keeps ${MIXED.rounds[0].accepted}`], [SYS_A + 2500, `Round 2: all ${MIXED.rounds[1].accepted} guesses kept`], [SYS_A + 5000, `Round 3: all ${MIXED.rounds[2].accepted} guesses kept`], [SYS_B, `${MIXED.baselineCalls} → ${MIXED.targetCalls} serial calls`]],
-    focus: { at: SYS_B + 1400, headline: `The same answer in *${MIXED.targetCalls} passes* of Qwen3-4B, not ${MIXED.baselineCalls}`, parts: [{ label: "one word per call", value: `${SPEC_TIME.serial.toFixed(0)} ms`, tone: "baseline" }, { label: "draft, then verify", value: `${SPEC_TIME.speculative.toFixed(0)} ms`, tone: "optimized" }, { label: "Δ", value: `−${(SPEC_TIME.serial - SPEC_TIME.speculative).toFixed(0)} ms`, tone: "delta" }], cause: "one pass of the large model can verify a whole run of cheap guesses" },
+    focus: { at: SYS_B + 1400, headline: `The same answer in *${MIXED.targetCalls} passes* of Qwen3-4B, not ${MIXED.baselineCalls}`, parts: [{ label: "one word per call", value: `${MIXED.baselineCalls} calls`, tone: "baseline" }, { label: "draft, then verify", value: `${MIXED.targetCalls} calls`, tone: "optimized" }, { label: "Δ", value: `−${MIXED.baselineCalls - MIXED.targetCalls}`, tone: "delta" }], cause: "one pass of the large model can verify a whole run of cheap guesses" },
   },
   ledger: { metric: "Serial Qwen3-4B calls for the 12-word answer", unit: "calls", baseline: MIXED.baselineCalls, optimized: MIXED.targetCalls, baselineLabel: "One word per call", optimizedLabel: "Draft, then verify" },
   impact: {
@@ -198,7 +198,7 @@ export const SPEC_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat; 
       what: "Serial large-model calls for the same 12-word answer",
       cause: `Each verification pass keeps every guess up to the first wrong one, plus one word of its own. In wall time on one H100 that is ${SPEC_TIME.serial.toFixed(0)} → ${SPEC_TIME.speculative.toFixed(0)} ms for the answer: the draft model's steps are cheap but not free.`,
       base: "One word per call", optimized: "Draft 4, verify once",
-      cost: { what: `Extra work: ${MIXED.draftTokens} drafted words, of which these were thrown away`, to: MIXED.draftTokens - MIXED.acceptedTokens, unit: "words", digits: 0 },
+      cost: { what: `Drafted words thrown away, of ${MIXED.draftTokens}`, to: MIXED.draftTokens - MIXED.acceptedTokens, unit: "words", digits: 0 },
       Figure: Modes,
     }),
   },

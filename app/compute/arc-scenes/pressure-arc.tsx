@@ -230,7 +230,7 @@ export const PRESSURE_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBe
     label: "Impact", title: "A smoother stream, paid for with a later first token", ms: 9000,
     meter: [[0, `Worst pause ${(gapW.b - gapW.a).toFixed(0)} → ${(gapC.b - gapC.a).toFixed(1)} ms for the same four requests`], [3600, "The price: the long document's first token arrives later"]],
     Scene: makeImpact({
-      lesson: `Live answers stop freezing: the worst pause is ${Math.round((gapW.b - gapW.a) / (gapC.b - gapC.a))}× shorter. The user who sent the long document pays ${((CHUNKED.requests[2].ttftMs ?? 0) - (WHOLE.requests[2].ttftMs ?? 0)).toFixed(0)} ms for it.`,
+      lesson: `Live answers stop freezing: the worst pause is about ${Math.round((gapW.b - gapW.a) / (gapC.b - gapC.a))}× shorter. The user who sent the long document pays ${((CHUNKED.requests[2].ttftMs ?? 0) - (WHOLE.requests[2].ttftMs ?? 0)).toFixed(0)} ms for it.`,
       from: gapW.b - gapW.a, to: gapC.b - gapC.a, unit: "ms", digits: 1, what: "Worst pause in request 1's answer",
       cause: `Request 3's 8,192-token document is read about 1,000 tokens at a time beside request 1's decoding, instead of in one ${(WHOLE.steps.find((st) => st.prefill.some((p) => p.id === 3))!.durationMs).toFixed(0)} ms step. Costs: Qwen3-4B on one H100, calibrated roofline.`,
       base: "Whole prefill", optimized: "Chunked prefill",

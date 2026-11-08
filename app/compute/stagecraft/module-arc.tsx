@@ -130,7 +130,7 @@ export function ModuleArc({
 
   // The live meter narrates the beat; the system beat names the module unless it speaks for itself.
   const lines = timed?.meter;
-  let line = beat === 2 ? `${labels[2]}: ${systemTitle}` : timed?.title ?? "";
+  let line = beat === 2 ? systemTitle : timed?.title ?? "";
   if (lines) for (const [at, text] of lines) if (shownT >= at) line = text;
   // The summary sends an arc straight to one beat.
   useEffect(() => {

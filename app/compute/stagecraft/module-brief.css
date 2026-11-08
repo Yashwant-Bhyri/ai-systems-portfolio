@@ -47,4 +47,3 @@
 .mi-card p { margin: 14px 0 0; color: #eef2f6; text-wrap: balance; font: 400 22px/32px var(--font-geist-sans), sans-serif; letter-spacing: -.01em; }
 /* An introduction leaves the rail sharp, so its controls never look disabled. */
 .mb-veil.mb-intro { left: calc(var(--tr-w, 204px) + 30px); }
-.mc-veil { --active-accent: #ffc267; }

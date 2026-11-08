@@ -150,3 +150,6 @@
 .ml-row b { white-space: nowrap; font-size: 22px; }
 .ml-row { grid-template-columns: 1fr; row-gap: 5px; }
 .ml-row i { grid-column: 1; }
+/* The optimized result is green, as its bar and ledger row are; amber stays for the head and the cost. */
+.ma-hero strong > span:not(.ma-from):not(.ma-arrow) { color: #b8e986; }
+.ma-title { white-space: normal; line-height: 1.25; text-overflow: clip; }
