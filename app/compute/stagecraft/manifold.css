@@ -36,4 +36,7 @@
 @media (prefers-reduced-motion: reduce) { .mf-truth, .mf-views b { animation: none; } }
 
 /* The view line is plain white; the head keeps the only highlight. */
-.mf-truth .sm-hl, .mf-truth mark, .mf-truth [data-hl] { background: none !important; color: #fff; font-weight: 600; box-shadow: none !important; }
+.mf-truth .hl { background: none !important; color: #fff; font-weight: 600; box-shadow: none !important; }
+.mf-readout > small { font-size: 12.5px; line-height: 16px; }
+.mf-root .mf-truth .hl { color: #fff !important; -webkit-text-fill-color: #fff; background: none !important; }
+.mf-root .mf-truth .hl::before, .mf-root .mf-truth .hl::after { display: none !important; }
