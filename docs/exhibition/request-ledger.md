@@ -213,3 +213,9 @@ Target viewport stays 1512×860.
 | Introduce before playing, including the first picture and post-training | Done: `IntroCard` before every module |
 | What is coming next, bottom left | Done: always shown |
 | One agent per page, owning that page | Launched after this commit |
+
+### Round 15, page owners
+
+Nine review agents each owned one page (two second pages, two Summaries, five groups of modules) and reported findings with screenshots. Applied: second pages (clickable, uncropped, readable live panels; result titles), dial (end state, colour roles, scrubber, lever demo, ledger), Summary (hand holds it, numbers in head lines, readable intros, ticks, transport), serving (explorer hand-over, formats, green results), post-training Summary and manifold, inference figures, curves, map and audit.
+
+Not yet done (reported, larger changes): head numbers that follow the visitor's chosen checkpoint and workload; per-view cursor tours for curves, map and audit; the map, curves and audit layouts that leave the stage's bottom empty; the microscope panel shown picture-only; Lean RL bars in Lean RL green; manifold axis-label collisions; film chapter 05 leading with the full 41.40 → 26.62.
