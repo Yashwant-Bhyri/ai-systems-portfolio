@@ -260,6 +260,28 @@ export function Manifold({ dwell = 8000, active = true, compact = false, onRound
           place(svg.querySelector<SVGTextElement>(`[data-lo="${i}"]`), axisEnds(i, -1));
           place(svg.querySelector<SVGTextElement>(`[data-hi="${i}"]`), axisEnds(i, 1));
         });
+        // No two labels overlap, and none leaves the stage: an end value gives way to an axis name,
+        // moving down by the overlap; then every label is kept inside the frame.
+        const texts = [...svg.querySelectorAll<SVGTextElement>("text")];
+        const box = (t: SVGTextElement) => { const g = t.getBBox(); return { l: g.x - 2, r: g.x + g.width + 2, t: g.y - 1, b: g.y + g.height + 1 }; };
+        for (let pass = 0; pass < 3; pass++) {
+          for (let p = 0; p < texts.length; p++) for (let q = p + 1; q < texts.length; q++) {
+            const A = box(texts[p]), B = box(texts[q]);
+            if (A.l >= B.r || B.l >= A.r || A.t >= B.b || B.t >= A.b) continue;
+            const mover = texts[q].classList.contains("mf-axis") && !texts[p].classList.contains("mf-axis") ? texts[p] : texts[q];
+            const other = mover === texts[p] ? B : A, me = mover === texts[p] ? A : B;
+            const down = me.t + me.b > other.t + other.b;
+            mover.setAttribute("y", String(Number(mover.getAttribute("y")) + (down ? other.b - me.t + 2 : -(me.b - other.t + 2))));
+          }
+        }
+        const W = el.clientWidth, H = el.clientHeight;
+        texts.forEach((t) => {
+          const b = box(t), x = Number(t.getAttribute("x")), y = Number(t.getAttribute("y"));
+          if (b.l < 6) t.setAttribute("x", String(x + 6 - b.l)); else if (b.r > W - 6) t.setAttribute("x", String(x - (b.r - W + 6)));
+          if (b.b > H - 6) t.setAttribute("y", String(y - (b.b - H + 6))); else if (b.t < 6) t.setAttribute("y", String(y + 6 - b.t));
+        });
+        a.forEach(() => {
+        });
       }
       raf = requestAnimationFrame(tick);
     };

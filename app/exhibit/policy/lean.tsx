@@ -60,12 +60,13 @@ export function PolicyLean({ active, mode, clock, tall }: RoomProps) {
         ctx.setLineDash([]);
       }
       const flash = changed.has(i) ? Math.max(0, 1 - Math.abs(carve - 0.6) * 3) : 0;
-      ctx.fillStyle = solved
-        ? `rgba(${T.roseRgb},${(0.7 + 0.3 * flash).toFixed(3)})`
-        : `rgba(${T.inkRgb},${(0.22 + 0.4 * flash).toFixed(3)})`;
+      // Lean RL is lime, as in the manifold and the thinking-budget chart
+      ctx.fillStyle = solved ? T.lime : `rgba(${T.inkRgb},${(0.22 + 0.4 * flash).toFixed(3)})`;
+      if (solved) ctx.globalAlpha = 0.7 + 0.3 * flash;
       ctx.fillRect(x, BASE - hB, BAR - 4, hB);
+      ctx.globalAlpha = 1;
       if (changed.has(i) && carve > 0.6) {
-        ctx.fillStyle = f.gained.includes(i) ? T.rose : T.red;
+        ctx.fillStyle = f.gained.includes(i) ? T.lime : T.red;
         ctx.fillRect(x, BASE + 6, BAR - 4, 4);
       }
     }
@@ -96,7 +97,7 @@ export function PolicyLean({ active, mode, clock, tall }: RoomProps) {
               <text className="ex-m">{tr(label)}</text>
               {key ? <>
                 <text ref={(e) => { vals.current[key] = e; }} y={44} className="ex-num-l" />
-                <text ref={(e) => { vals.current[`${key}d`] = e; }} x={L.read.delta} y={44} className="ex-num-l" style={{ fill: "var(--ex-rose)", fontSize: 26 }} />
+                <text ref={(e) => { vals.current[`${key}d`] = e; }} x={L.read.delta} y={44} className="ex-num-l" style={{ fill: "var(--ex-lime)", fontSize: 26 }} />
               </> : <text y={44} className="ex-num-l" style={i === 3 ? { fontSize: 26 } : undefined}>{fixed}</text>}
             </g>
           );

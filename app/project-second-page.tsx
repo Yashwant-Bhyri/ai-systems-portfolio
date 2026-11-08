@@ -23,7 +23,7 @@ function DoorView({ door, seen }: { door: Door; seen: boolean }) {
     return () => ro.disconnect();
   }, []);
   return (
-    <div className="sp-door">
+    <div className="sp-door" data-door={door.key}>
       <div ref={box} className="sp-window">
         {/* The link sits beside the live page, not around it: a scripted click inside must never navigate. */}
         <div className="sp-live" style={{ transform: `translateX(${Math.max(0, (w - DESIGN_W * k) / 2)}px) scale(${k})` }}><div className="sp-frame" inert>{seen ? door.node : null}</div></div>

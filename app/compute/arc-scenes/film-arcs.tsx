@@ -292,10 +292,11 @@ export const FILM_ARCS: Record<number, FilmArc> = {
       meter: [[0, "Every decode step reads all the weights plus the KV cache"], [RATES_MS * 0.45, "FP8 halves both, so each token moves half the bytes"]],
     },
     impact: (w) => {
-      const [a, b] = [RUNS[w][2], RUNS[w][3]];
-      return { label: "Impact", title: "The same answers, cheaper per answer", ms: 8500, Scene: makeImpact({
-        lesson: `This is the lever that moves the bill: each correct answer costs ${Math.round((100 * (a.correctCost! - b.correctCost!)) / a.correctCost!)}% less, and every queue behind it drains sooner (p95 ${fmt(a.p95)} → ${fmt(b.p95)} s).`,
-        from: a.correctCost!, to: b.correctCost!, unit: "GPU-s per correct answer", digits: 2, what: "Cost of each correct answer",
+      // The last lever closes the film, so its impact leads with all three levers together.
+      const [s, a, b] = [RUNS[w][0], RUNS[w][2], RUNS[w][3]];
+      return { label: "Impact", title: "All three levers: the same answers, cheaper per answer", ms: 8500, Scene: makeImpact({
+        lesson: `With all three levers, each correct answer costs ${Math.round((100 * (s.correctCost! - b.correctCost!)) / s.correctCost!)}% less, and the slowest requests are answered sooner (p95 ${fmt(s.p95)} → ${fmt(b.p95)} s). This last lever did most of it: ${a.correctCost!.toFixed(2)} → ${b.correctCost!.toFixed(2)}.`,
+        from: s.correctCost!, to: b.correctCost!, unit: "GPU-s per correct answer", digits: 2, what: "Cost of each correct answer, all three levers",
         cause: `Decode reads the weights every step: 8.04 GB in BF16, 4.02 GB in FP8, so an output token falls from ${fmtMs(rateCard(false).outputMs)} to ${fmtMs(rateCard(true).outputMs)} ms on one H100. Same tokens, same answers.`,
         base: "BF16", optimized: "FP8 weights and KV",
         Figure: Bytes,
