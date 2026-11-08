@@ -27,7 +27,7 @@
 .sp-questions { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .sp-door { position: relative; min-width: 0; display: flex; flex-direction: column; }
 .vx-shell .sp-window { position: relative; overflow: hidden; border-radius: 12px; background: #0a0f15; box-shadow: inset 0 0 0 1px rgba(230,237,244,.12); transition: box-shadow .2s; }
-.sp-page[data-layout="questions"] .sp-window { aspect-ratio: 1512 / 800; order: 2; }
+.sp-page[data-layout="questions"] .sp-window { aspect-ratio: 1512 / 860; order: 2; }
 .vx-shell .sp-door:hover .sp-window { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 70%, transparent); }
 .vx-shell .sp-page[data-layout="questions"] .sp-door { height: auto; overflow: visible; background: none; box-shadow: none; border-radius: 0; }
 .vx-shell .sp-page[data-layout="questions"] .sp-door-text { position: static; order: 1; display: flex; flex-direction: row; align-items: baseline; justify-content: space-between; gap: 16px; padding: 0 2px 8px; background: none; }
@@ -37,7 +37,7 @@
 .sp-band { flex: 1 1 auto; min-height: 0; display: flex; }
 .lc-band { flex: 1 1 auto; min-width: 0; display: flex; gap: 20px; }
 .lc-sec { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.lc-sec h4 { margin: 0; color: var(--active-accent); font: 500 14px/20px var(--font-geist-sans), sans-serif; }
+.lc-sec h4 { margin: 0; color: #c9d2db; font: 500 14px/20px var(--font-geist-sans), sans-serif; }
 .lc-row { flex: 1 1 auto; min-height: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
 .vx-shell .lc-card { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; overflow: hidden; border-radius: 10px; background: rgba(255,255,255,.022); box-shadow: inset 0 0 0 1px rgba(230,237,244,.07); color: #eef2f6; text-decoration: none; transition: background .2s, box-shadow .2s; }
 .vx-shell .lc-card:hover { background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 55%, transparent); }
@@ -45,3 +45,9 @@
 .lc-card strong { flex: 0 0 auto; font: 500 13px/17px var(--font-geist-sans), sans-serif; }
 @media (max-width: 1000px) { .sp-questions { grid-template-columns: 1fr; } .lc-band { flex-direction: column; } .lc-row { grid-auto-flow: row; grid-template-columns: repeat(2, 1fr); } .vx-shell .lc-card { height: 120px; } }
 .sp-door-text { color: #fff; text-decoration: none; }
+
+/* The whole live panel opens its depth: a link laid over it, beside the live page rather than around it. */
+.vx-shell .sp-window-link { position: absolute; left: 0; right: 0; bottom: 0; top: 36px; z-index: 1; border-radius: 12px; cursor: pointer; }
+.vx-shell .sp-window-link:focus-visible { outline: 2px solid var(--active-accent); outline-offset: 2px; }
+.lc-card strong { min-height: 34px; display: flex; align-items: flex-end; }
+.lc-val { flex: 0 0 auto; color: #e9eef3; font: 500 13px/16px var(--font-geist-mono), monospace; font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

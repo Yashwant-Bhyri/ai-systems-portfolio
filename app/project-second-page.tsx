@@ -28,6 +28,7 @@ function DoorView({ door, seen }: { door: Door; seen: boolean }) {
         {/* The link sits beside the live page, not around it: a scripted click inside must never navigate. */}
         <div className="sp-live" style={{ transform: `translateX(${Math.max(0, (w - DESIGN_W * k) / 2)}px) scale(${k})` }}><div className="sp-frame" inert>{seen ? door.node : null}</div></div>
       </div>
+      <a className="sp-window-link" href={door.href} aria-label={door.question} />
       <a className="sp-door-text" href={door.href}><strong>{door.question}</strong><small>{door.name} <i aria-hidden="true">↗</i></small></a>
     </div>
   );
@@ -39,7 +40,7 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors }
   useEffect(() => {
     const el = root.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setSeen(true); }, { threshold: 0.2 });
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setSeen(true); }, { threshold: 0, rootMargin: "100% 0px" });
     io.observe(el);
     return () => io.disconnect();
   }, []);

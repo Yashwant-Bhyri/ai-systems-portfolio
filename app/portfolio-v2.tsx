@@ -32,7 +32,7 @@ import { ProjectPoster } from "./posters/posters";
 import { ProjectSecondPage } from "./project-second-page";
 import { LabPreview } from "./compute/stagecraft/lab-preview";
 import { ConclusionBoard, conclusionFromProof, type ConclusionSpec } from "./conclusion-board";
-import { INFERENCE_CONCLUSION, INFERENCE_SAVING, TRAINING_CONCLUSION } from "./posters/conclusion-data";
+import { INFERENCE_CONCLUSION, INFERENCE_SAVING, TRAINING_RESULT, TRAINING_CONCLUSION } from "./posters/conclusion-data";
 
 const assetPath = (path: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 
@@ -1539,8 +1539,8 @@ function SystemWalkthrough({
   const step: StoryStep = isConclusion
     ? {
         label: "Conclusion",
-        title: "What the project did, and what it achieved",
-        explanation: "One sentence for the outcome, the measures behind it, and every piece of work beside what it bought.",
+        title: "What it did, and what it achieved",
+        explanation: "The outcome, the measures behind it, and what each piece of work bought.",
         annotation: "The completed walkthrough resolves its strongest product, runtime, output, impact, and reliability evidence into one recruiter-ready summary.",
         annotationHighlights: [],
         annotationSoftHighlights: ["recruiter-ready summary"],
@@ -2295,7 +2295,7 @@ function useExperienceMotion(shellRef: React.RefObject<HTMLElement | null>, redu
 function MiniMicroscope({ id, accent, brand, steps, Visual, proof, conclusion }: { id: string; accent: ProjectAccent; brand: string; steps: readonly StoryStep[]; Visual: VisualComponent; proof: readonly { label: string; value: string; detail: string }[]; conclusion: ConclusionSpec }) {
   const reducedMotion = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
-  const controller = useAutoplaySequence(steps.length + 1, 11800 / 1.8, ref, reducedMotion, {});
+  const controller = useAutoplaySequence(steps.length, 11800 / 1.8, ref, reducedMotion, { loop: true });
   return (
     <section ref={ref} className={`vx-case-microscope-page vx-case-${id} vx-accent-${accent}`}>
       <div className="vx-section-shell">
@@ -2314,14 +2314,14 @@ function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
       id={id}
       accent={training ? "rose" : "amber"}
       name={training ? "Advanced post-training" : "Inference optimization"}
-      title={training ? "What did the model learn? See every result" : `Same intelligence at ${INFERENCE_SAVING}% less compute, optimized under load`}
+      title={training ? `From ${TRAINING_RESULT.from} to ${TRAINING_RESULT.to} of 96 tasks solved, then kept with ${TRAINING_RESULT.fewer}% fewer tokens` : `Same intelligence at ${INFERENCE_SAVING}% less compute, optimized under load`}
       enter={`${href}?labnav=show#${id}-study`}
       lab={<LabPreview training={training} />}
       doors={[
-        { key: "microscope", question: training ? "How does each training step work?" : "How is a request actually served?", name: "Component microscope", href: `${href}#${id}-microscope`, node: training
+        { key: "microscope", question: training ? "How does each training step work?" : "How is a request actually served?", name: training ? "Step by step, in the microscope" : "Request by request, in the microscope", href: `${href}#${id}-microscope`, node: training
           ? <MiniMicroscope id={id} accent="rose" brand="ADVANCED POST-TRAINING" steps={TRAINING_STEPS} Visual={TrainingVisual} proof={TRAINING_PROOF} conclusion={TRAINING_CONCLUSION} />
           : <MiniMicroscope id={id} accent="amber" brand="INFERENCE OPTIMIZATION ENGINE" steps={INFERENCE_STEPS} Visual={InferenceVisual} proof={INFERENCE_PROOF} conclusion={INFERENCE_CONCLUSION} /> },
-        { key: "poster", question: training ? "What did each training step give?" : "What did each lever save?", name: "The result on one page", href, node: <ProjectPoster domain={domain} live /> },
+        { key: "poster", question: training ? "What did each training step give?" : "What did each lever save?", name: "Each result, in the laboratory", href: `${href}?labnav=show#${id}-study`, node: <ProjectPoster domain={domain} live /> },
       ]}
     />
   );

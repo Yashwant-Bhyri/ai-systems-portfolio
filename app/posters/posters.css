@@ -142,3 +142,41 @@
 .pa[data-spotting] .pa-measure[data-spot] { opacity: 1; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 50%, transparent); border-radius: 8px; transition: opacity .5s, background .5s, box-shadow .5s; }
 .pa[data-spotting] .pa-measure[data-spot] .pa-mini i { animation: pa-regrow .9s cubic-bezier(.65,0,.35,1); transform-origin: 0 50%; }
 @keyframes pa-regrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Live inside a second-page panel (shown at about 0.47×): its own layout, sized to be read there. */
+.pa[data-live] { padding: 44px 56px 30px; gap: 24px; }
+.pa[data-live] :is(.pa-head, .pa-also, .pa-load h3, .pa-cta) { display: none; }
+.pa[data-live] .pa-row { grid-template-columns: 330px minmax(0, 1fr); }
+.pa[data-live] .pa-num { font-size: 150px; }
+.pa[data-live].pa-grow .pa-num { color: #9cc5f5; }
+.pa[data-live].pa-grow[data-phase="4"] .pa-num { color: var(--active-accent); }
+.pa[data-live] .pa-bar { height: 110px; }
+.pa[data-live] .pa-unit { margin-left: 352px; color: #aab6c2; font-size: 27px; }
+.pa[data-live].pa-grow .pa-unit { margin-top: 150px; }
+.pa[data-live] .pa-slice-card strong { font-size: 30px; }
+.pa[data-live] .pa-slice-card em { color: var(--pa-c); font-size: 34px; }
+.pa[data-live] .pa-slice-card small, .pa[data-live] .pa-note span { display: none; }
+.pa[data-live].pa-grow .pa-slice[data-i="1"] .pa-slice-card { top: calc(100% + 130px); }
+.pa[data-live] .pa-note strong { font-size: 28px; }
+.pa[data-live] .pa-load { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pa[data-live].pa-grow .pa-load { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pa[data-live] .pa-load a[href$="/inside"] { display: none; }
+.pa[data-live] .pa-measure strong { font-size: 29px; }
+.pa[data-live] .pa-fromto { font-size: 62px; }
+.pa[data-live] .pa-fromto s { font-size: 42px; }
+.pa[data-live] .pa-measure small { font-size: 27px; }
+.pa[data-live] .pa-mini i { height: 10px; }
+.pa[data-live][data-spotting] .pa-slice:not([data-spot]) .pa-slice-card, .pa[data-live][data-spotting] .pa-measure:not([data-spot]) { opacity: .7; }
+
+/* Each falling lever keeps its caption level and clear of the next. */
+.pa-shrink .pa-slice[data-i="0"] .pa-slice-card { width: calc(100% - 250px); }
+.pa-shrink .pa-slice[data-i="1"] .pa-slice-card { top: calc(100% + 64px); }
+.pa-shrink:is([data-phase="2"], [data-phase="3"], [data-phase="4"]) .pa-slice .pa-slice-card { transform: rotate(1.2deg); }
+.pa-shrink:is([data-phase="2"], [data-phase="3"], [data-phase="4"]) .pa-slice[data-i="1"] .pa-slice-card { transform: rotate(-1.6deg); }
+.pa-slice-card em { color: var(--pa-c, #c7a6ff); }
+.pa[data-live].pa-shrink .pa-row { grid-template-columns: 380px minmax(0, 1fr); }
+.pa[data-live].pa-shrink .pa-num { font-size: 112px; }
+.pa[data-live].pa-shrink :is(.pa-unit, .pa-note) { margin-left: 402px; }
+/* In the panel both lever captions stand at the bar's right end, one above the other, level. */
+.pa[data-live].pa-shrink .pa-slice .pa-slice-card { left: auto; right: 0; width: 360px; text-align: right; transform: none; }
+.pa[data-live].pa-shrink .pa-slice[data-i="1"] .pa-slice-card { top: calc(100% + 118px); }

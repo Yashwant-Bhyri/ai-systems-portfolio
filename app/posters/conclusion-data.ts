@@ -12,9 +12,12 @@ const meanPrefillMs = (r: (typeof R)[number]) => (1000 * r.tasks.reduce((a, t) =
 const pct = Math.round(100 * (1 - R[3].correctCost! / R[0].correctCost!));
 /** Read by the second page's headline. */
 export const INFERENCE_SAVING = pct;
+const TR = [simulateLab(0, 1), simulateLab(2, 4), simulateLab(3, 4)];
+/** Read by post-training's second page: base to RL with 4× thinking budget, then lean RL's token saving. */
+export const TRAINING_RESULT = { from: TR[0].correct, to: TR[1].correct, fewer: Math.round(100 * (1 - TR[2].tokens / TR[2].n / (TR[1].tokens / TR[1].n))) };
 
 export const INFERENCE_CONCLUSION: ConclusionSpec = {
-  verdict: `The same ${R[0].correct} correct answers from the same model, with *${pct}% less GPU time per answer*, and the slowest requests answered ${f(R[0].p95 - R[3].p95)} s sooner`,
+  verdict: `The same ${R[0].correct} correct answers from the same model, with *${pct}% less GPU time per answer*, and the slowest requests answered ${f(Math.round(R[0].p95) - Math.round(R[3].p95))} s sooner`,
   measures: [
     { label: "GPU time per correct answer", from: f(R[0].correctCost!, 2), to: f(R[3].correctCost!, 2), unit: "GPU-s" },
     { label: "Slowest 5% of requests", from: f(R[0].p95), to: f(R[3].p95), unit: "seconds to answer" },

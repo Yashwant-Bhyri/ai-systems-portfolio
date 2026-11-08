@@ -72,11 +72,11 @@ export const TRAINING_LEDGER: LedgerSpec = {
   claim: `A 4B model goes from ${T[0].correct} to ${T[3].correct} of 96 tasks, then keeps them with ${Math.round(100 * (1 - perTask(T[4]) / perTask(T[3])))}% fewer tokens.`,
   cta: "Explore the training in depth",
   scale: 96, start: T[0].correct, end: T[3].correct, digits: 0,
-  unit: "of 96 synthetic tasks solved, base model to RL with 4× thought",
+  unit: "of 96 tasks solved",
   slices: [
     { key: "film", title: "SFT + LoRA", delta: `+${T[1].correct - T[0].correct} tasks`, cause: "trained on verified worked solutions", from: T[0].correct, to: T[1].correct, color: "#c7a6ff" },
-    { key: "film", title: "Correctness RL", delta: `+${T[2].correct - T[1].correct}`, cause: "rewarded for answers that pass", from: T[1].correct, to: T[2].correct, color: "#f3a0bc" },
-    { key: "film", title: "4× thought", delta: `+${T[3].correct - T[2].correct} tasks`, cause: "more room to reason at test time", from: T[2].correct, to: T[3].correct, color: "#ffc267" },
+    { key: "film", title: "Correctness RL", delta: `+${T[2].correct - T[1].correct} tasks`, cause: "rewarded for answers that pass", from: T[1].correct, to: T[2].correct, color: "#f3a0bc" },
+    { key: "film", title: "4× thinking budget", delta: `+${T[3].correct - T[2].correct} tasks`, cause: "more room to reason at test time", from: T[2].correct, to: T[3].correct, color: "#ffc267" },
   ],
   note: { title: "Base Qwen3-4B", text: `${T[0].correct} tasks solved before any training` },
   measuresTitle: "Inside the training",
@@ -84,7 +84,7 @@ export const TRAINING_LEDGER: LedgerSpec = {
     { key: "fleet", title: "Elastic RL on 64 GPUs", from: "4", to: "7", unit: "RL steps in the same 14 minutes", a: 4, b: 7 },
     { key: "film", title: "Lean RL", from: f(perTask(T[3]), 0), to: f(perTask(T[4]), 0), unit: `tokens per task, still ${T[4].correct} solved`, a: perTask(T[3]), b: perTask(T[4]) },
     { key: "inside", title: "Inside the model", to: "7 of 50", unit: "words the base model would have written differently" },
-    { key: "audit", title: "Regression audit", to: `+${flips.gained.length} / −${flips.lost.length}`, unit: "tasks gained and lost at 2× thought" },
+    { key: "audit", title: "Regression audit", to: `+${flips.gained.length} / −${flips.lost.length}`, unit: "tasks gained and lost, base vs RL at the same 2× budget" },
   ],
   also: [
     { key: "terrain", title: "Capability terrain", value: "96 tasks rising across six checkpoints" },

@@ -19,7 +19,7 @@ const TRAINING_ITEMS = (): ShowItem[] => {
     { key: "terrain", title: "Skill gained at each step", value: `+${lean.correct - base.correct}`, unit: "tasks", Glyph: GlyphTerrain, pathway: 0 },
     { key: "frontier", title: "Accuracy against GPU cost", value: `${base.correct} → ${lean.correct}`, unit: "of 96", Glyph: GlyphFrontier, pathway: 0 },
     { key: "curves", title: "What more thinking buys", value: "1× to 8×", unit: "thinking budget", Glyph: GlyphCurves, pathway: 0 },
-    { key: "fleet", title: "Training twice as fast on 64 GPUs", value: "4 → 7", unit: "RL steps", Glyph: GlyphFleet, pathway: 0 },
+    { key: "fleet", title: "Almost twice the RL steps on 64 GPUs", value: "4 → 7", unit: "RL steps", Glyph: GlyphFleet, pathway: 0 },
     { key: "tasks", title: "Which tasks it can now solve", value: "easy to hard", Glyph: GlyphTasks, pathway: 0 },
     { key: "audit", title: "What got worse", value: "each one named", Glyph: GlyphAudit, pathway: 0 },
   ];
@@ -28,11 +28,11 @@ const INFERENCE_ITEMS = (): ShowItem[] => {
   const s = simulateLab(2, 2, false, "shared-prefix"), o = simulateLab(2, 2, true, "shared-prefix");
   return [
     { key: "flow", title: "96 requests, one clock", value: `${f(s.correctCost!)} → ${f(o.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphDial, pathway: 0 },
-    { key: "setup", title: "Three levers, same answers", value: `${f(s.correctCost!)} → ${f(o.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphBigPicture, pathway: 0 },
+    { key: "setup", title: "Three levers, same answers", value: `${o.correct} of 96`, unit: "correct, unchanged", Glyph: GlyphBigPicture, pathway: 0 },
     { key: "replay", title: "How one request was served", value: `${f(s.tasks[6].gpuSeconds)} → ${f(o.tasks[6].gpuSeconds)}`, unit: "GPU-s", Glyph: GlyphReplay, pathway: 0 },
     { key: "composition", title: "Training meets serving", value: `${o.correct} of 96`, Glyph: GlyphComposition, pathway: 0 },
     { key: "latency", title: "The slowest 5% of requests", value: `${f(s.p95, 0)} → ${f(o.p95, 0)} s`, Glyph: GlyphLatency, pathway: 0 },
-    { key: "film", title: "One lever at a time", value: "lever by lever", Glyph: GlyphExperiment, pathway: 0 },
+    { key: "film", title: "One lever at a time", value: "3 levers", Glyph: GlyphExperiment, pathway: 0 },
     ...SERVING_RAIL.filter((m) => m.key !== "glossary").map((m) => ({ key: m.key, title: m.title, value: m.value, unit: m.unit, Glyph: m.Glyph, pathway: 1 })),
   ];
 };
@@ -50,11 +50,12 @@ export function LabPreview({ training }: { training: boolean }) {
     <div className="lc-band">
       {paths.map((p, pi) => (
         <section key={p.n} className="lc-sec" style={{ flexGrow: items.filter((i) => i.pathway === pi).length }}>
-          <h4>{p.short === "Post-training" ? "Results laboratory" : p.short}</h4>
+          <h4>{p.short === "Post-training" ? "Results laboratory" : pi === 0 ? `Results laboratory · ${p.short}` : p.short}</h4>
           <div className="lc-row">
             {items.filter((i) => i.pathway === pi).map((i) => (
               <a key={i.key} className="lc-card" href={`/${id}?labnav=show#${id}-study/${i.key}`}>
                 <span className="lc-art" aria-hidden="true">{i.Glyph && <i.Glyph />}</span>
+                {i.value && <em className="lc-val">{i.value}</em>}
                 <strong>{i.title}</strong>
               </a>
             ))}
