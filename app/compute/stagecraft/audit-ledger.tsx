@@ -30,7 +30,7 @@ export function AuditLedger({ active }: { active: boolean }) {
         {HOPS.map((h) => (
           <li key={h.to.key}>
             <span className="al-name">{h.from.name} → {h.to.name}</span>
-            <span className="al-count"><b data-tone="gain">+{h.gained.length}</b> <b data-tone="loss">−{h.lost.length}</b></span>
+            <span className="al-count"><b data-tone="gain">+{h.gained.length}</b> {h.lost.length ? <b data-tone="loss">−{h.lost.length}</b> : null}</span>
             <span className="al-ticks" aria-hidden="true">
               {h.gained.map((i) => <i key={i} data-tone="gain" />)}
               {h.lost.map((i) => <i key={i} data-tone="loss" />)}

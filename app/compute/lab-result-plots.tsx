@@ -190,14 +190,14 @@ export function CapabilityShiftPlot({
               </g>
             ))}
             <path
-              d={`M580 ${startY + 18}H675l-7-5m7 5l-7 5`}
+              d={`M600 ${startY + 18}H675l-7-5m7 5l-7 5`}
               fill="none"
               stroke={color}
               strokeOpacity=".6"
             />
             <path
               className="rs-flow"
-              d={`M580 ${startY + 18}H675`}
+              d={`M600 ${startY + 18}H675`}
               stroke={color}
               strokeDasharray="4 14"
             />
@@ -207,7 +207,7 @@ export function CapabilityShiftPlot({
               textAnchor="middle"
               className="rs-tick"
             >
-              +{gained} / −{lost}
+              {lost ? `+${gained} / −${lost}` : `+${gained}, none lost`}
             </text>
           </g>
         );
@@ -673,7 +673,7 @@ export function RegressionAuditPlot({
         fill="#38546b"
       />
       <text x="919" y="103" className="rs-point-name" fill="#f3a0bc">
-        Now correct
+        RL checkpoint correct
       </text>
       <text x="919" y="135" className="rs-score" fill="#f3a0bc">
         {after.correct}
@@ -696,7 +696,7 @@ export function RegressionAuditPlot({
         {after.n - after.correct}
       </text>
       <text x="460" y="51" className="rs-axis">
-        +{flips.gained.length} recovered
+        +{flips.gained.length} gained
       </text>
       <text x="650" y="51" className="rs-axis" fill="#ff8176">
         −{flips.lost.length} regressions

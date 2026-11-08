@@ -379,7 +379,7 @@ function LabMetrics({
         </strong>
         <i>
           {training
-            ? `${accuracyDelta >= 0 ? "+" : ""}${accuracyDelta.toFixed(1)} pp vs Base`
+            ? `${accuracyDelta >= 0 ? "+" : ""}${accuracyDelta.toFixed(1)} points vs Base`
             : run.optimized
               ? `${change >= 0 ? "−" : "+"}${Math.abs(change).toFixed(1)}% cost vs matched static`
               : "Matched static reference"}

@@ -1458,3 +1458,8 @@
     font-size: 32px;
   }
 }
+/* Review: the lab's own controls and readouts at a size that can be read. */
+.vx-shell .rs-segmented button { font-size: 13px; min-height: 32px; }
+.vx-shell .rs-policy-strip button { font-size: 13px; min-height: 32px; }
+.vx-shell :is(.rs-lab-metrics span, .rs-lab-metrics i, .rs-readout-label) { font-size: 12.5px; }
+.vx-shell .rs-lab-metrics > div:first-child strong { font-size: 24px; }
