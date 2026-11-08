@@ -70,3 +70,4 @@
 .ll-scan-delta { font: 500 15px var(--font-geist-mono), monospace; fill: #dcc4ff; paint-order: stroke; stroke: #0a151d; stroke-width: 4px; }
 .ll-lane { transition: opacity .5s, filter .5s; }
 .ll-lane[data-quiet="true"] { opacity: .3; filter: saturate(.25); }
+.vx-shell .ll-heading time small { display: inline; font-size: 11px; margin-left: 4px; }

@@ -16,7 +16,7 @@ const HOPS = [
   { verb: "SFT · LoRA", did: "Imitate verified traces", gain: "+18 solved", cost: hop(FRONTIER[0].slow, FRONTIER[1].slow) },
   { verb: "GRPO", did: "Reward what passes the tests", gain: "+11 −2", cost: hop(FRONTIER[1].slow, FRONTIER[2].slow) },
   { verb: "4× thinking budget", did: "Reason longer with the same weights", gain: "+27 solved", cost: hop(FRONTIER[2].slow, FRONTIER[3].slow) },
-  { verb: "Lean RL", did: "Penalize wasted tokens", gain: "same 82", cost: hop(FRONTIER[3].slow, FRONTIER[4].slow) },
+  { verb: "Lean RL", did: "Penalize wasted tokens", gain: "still 82", cost: hop(FRONTIER[3].slow, FRONTIER[4].slow) },
   { verb: "Serving", did: "Reuse prefixes, batch, fuse kernels", gain: "same 82", cost: hop(FRONTIER_COST.policy, FRONTIER_COST.runtime) },
 ] as const;
 

@@ -54,7 +54,7 @@
 .rr-delta small { color: #a99bc0; }
 @media (prefers-reduced-motion: reduce) { :is(.rr-delta, .ll-delta)[data-hero="true"] .cx-hero-num { animation: none; -webkit-text-fill-color: #dcc1ff; background: none; } }
 .rr-result .rr-values strong { transition: opacity .6s; }
-.rr-result:has(.rr-delta[data-hero="true"]) .rr-values strong { opacity: .62; }
+
 .ll-result:has(.ll-delta[data-hero="true"]) .ll-values strong { opacity: .62; }
 
 /* Scheduling ledger: the removed idle time is the hero once it is earned. */

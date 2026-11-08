@@ -126,7 +126,7 @@ const REPLAY_DEMO: readonly CursorStep[] = [
 ]
 const LATENCY_DEMO: readonly CursorStep[] = [
   // The film plays to its end (ranking, then the rank scan); only then does the cursor walk the percentiles.
-  { target: ".ll-explorer[data-done=\"true\"] .ll-percentiles button:nth-child(3)", label: "p99 · the slowest few", hold: 3600, waitFor: 70000 },
+  { target: ".ll-explorer[data-done=\"true\"] .ll-percentiles button:nth-child(3)", label: "p99 · the single slowest", hold: 3600, waitFor: 70000 },
   { target: ".ll-percentiles button:nth-child(1)", label: "p50 · the median", hold: 3600 },
   { target: ".ll-percentiles button:nth-child(2)", label: "p95 · the slow tail", hold: 4200 },
 ]

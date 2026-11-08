@@ -41,5 +41,5 @@ export function ClusterPanel({ baseline, target, taskId }: { baseline: LabRun; t
     io.observe(el);
     return () => { io.disconnect(); cancelAnimationFrame(raf); window.clearTimeout(timer); window.clearTimeout(off); emitFocus(null); };
   }, [baseline, target]);
-  return <div ref={root} className="rc-panel" data-focus-spot><RequestClusters baseline={baseline} target={target} taskId={taskId} k={k} /></div>;
+  return <div ref={root} className="rc-panel"><RequestClusters baseline={baseline} target={target} taskId={taskId} k={k} /></div>;
 }

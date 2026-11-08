@@ -128,7 +128,9 @@ export function RequestReplayExplorer({
   const bDuration = requestMeasure(after, metric);
   const frame = requestComparisonFrame(film.time, aDuration, bDuration);
   const end = Math.max(aDuration, bDuration);
-  const x = (value: number) => 160 + (525 * value) / Math.max(1, end);
+  const x = (value: number) => 160 + (525 * value) / Math.max(1e-6, end);
+  // Input processing takes a fraction of a second: its ticks read in milliseconds.
+  const tickText = (v: number) => (end < 1 ? `${number(v * 1000, 0)} ms` : `${number(v, 1)} s`);
   const settled = frame.focus === "delta";
   const values = [
     requestMeasure(before, metric),
@@ -334,9 +336,9 @@ export function RequestReplayExplorer({
                 s ·{" "}
                 {delivery
                   ? "since arrival"
-                  : phaseOnly
-                    ? `since ${metric} starts`
-                    : "since worker start"}
+                  : metric === "prefill" ? "GPU-s · input processing"
+                  : metric === "decode" ? "GPU-s · answer generation"
+                  : "GPU-s · total work"}
               </small>
             </time>
           </div>
@@ -379,7 +381,7 @@ export function RequestReplayExplorer({
                     className="rr-small"
                     textAnchor="middle"
                   >
-                    {number(tick * end, 1)} s
+                    {tickText(tick * end)}
                   </text>
                 </g>
               ))}
@@ -437,13 +439,13 @@ export function RequestReplayExplorer({
                     {!phaseOnly && delivery && frame.cursor >= wait && (
                       <g className="rr-mark">
                         <path d={`M${x(wait)} ${y - 36}V${y + 4}`} stroke="#a8b6c7" />
-                        <text x={x(wait) - 6} y={y - 40} textAnchor="end" className="rr-mark-text" fill="#c9d2db">worker starts at {number(wait, 1)} s</text>
+                        <text x={x(wait) - 6} y={y - 40} textAnchor="end" className="rr-mark-text" fill="#c9d2db">worker starts at {number(wait, 2)} s</text>
                       </g>
                     )}
                     {!phaseOnly && frame.cursor >= wait + task.prefill && (
                       <g className="rr-mark">
                         <path d={`M${x(wait + task.prefill)} ${y - 36}V${y + 4}`} stroke={AMBER} />
-                        <text x={x(wait + task.prefill) + 6} y={y - 40} className="rr-mark-text" fill={AMBER}>prefill done, tokens start at {number(wait + task.prefill, 2)} s</text>
+                        <text x={x(wait + task.prefill) + 6} y={y - 40} className="rr-mark-text" fill={AMBER}>input read, first word at {number(wait + task.prefill, 2)} s</text>
                       </g>
                     )}
                     {parts

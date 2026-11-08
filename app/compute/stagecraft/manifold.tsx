@@ -26,6 +26,7 @@ const rowsOf = (r: LabRun): Row[] => r.tasks.map((task) => ({ task, difficulty: 
 function trainingSpec(): Spec {
   const base = simulateLab(0, 1), rl = simulateLab(2, 4), lean = simulateLab(3, 4);
   const perTask = (r: LabRun) => r.tokens / r.n;
+  const solvedIn = (r: LabRun, family: number) => r.tasks.filter((t) => t.family === family && t.correct).length;
   return {
     noun: "task",
     dims: [
@@ -36,12 +37,12 @@ function trainingSpec(): Spec {
       { key: "gpu", label: "GPU time", unit: "GPU-s", read: (t) => t.task.gpuSeconds, digits: 1 },
       { key: "response", label: "Response time", unit: "s", read: (t) => t.task.latency },
     ],
-    clouds: [{ name: "Base model", color: "#7fb2ff", rows: rowsOf(base) }, { name: "RL, 4× thinking", color: "#f3a0bc", rows: rowsOf(rl) }, { name: "Lean RL", color: "#b8e986", rows: rowsOf(lean) }],
+    clouds: [{ name: "Base model", color: "#7fb2ff", rows: rowsOf(base) }, { name: "RL, 4× thinking", color: "#c9a6ff", rows: rowsOf(rl) }, { name: "Lean RL", color: "#b8e986", rows: rowsOf(lean) }],
     views: [
       { name: "The skill", axes: ["difficulty", "correct", "family"], truth: `Tasks cross from wrong to correct: *${base.correct} → ${lean.correct} of 96*` },
-      { name: "The cost of thinking", axes: ["difficulty", "tokens", "gpu"], truth: `More thinking costs more: *${f(perTask(base))} → ${f(perTask(rl))} tokens* per task` },
-      { name: "Lean RL", axes: ["tokens", "gpu", "correct"], truth: `The same ${lean.correct} correct in *${Math.round(100 * (1 - perTask(lean) / perTask(rl)))}% fewer tokens*` },
-      { name: "The families", axes: ["family", "correct", "difficulty"], truth: "*All three task families* gain, on the same tasks" },
+      { name: "The cost of thinking", axes: ["difficulty", "tokens", "gpu"], truth: `More thinking costs more: *${f(median(base.tasks.map((t) => t.tokens)))} → ${f(median(rl.tasks.map((t) => t.tokens)))} tokens* per task, median` },
+      { name: "Lean RL", axes: ["tokens", "gpu", "correct"], truth: `Still ${lean.correct} correct, in *${Math.round(100 * (1 - perTask(lean) / perTask(rl)))}% fewer tokens*` },
+      { name: "The families", axes: ["family", "correct", "difficulty"], truth: `Every family gains: *${["maths", "logic", "code"].map((n, fa) => `${n} ${solvedIn(base, fa)} → ${solvedIn(lean, fa)}`).join(", ")}* of 32` },
     ],
   };
 }
@@ -104,17 +105,18 @@ export function Manifold({ dwell = 8000, active = true, compact = false, onRound
     grid.position.y = -1.15;
     scene.add(grid);
 
-    const coords = (a: readonly [string, string, string], row: Row, jitterSeed: number) => a.map((k, i) => {
+    const coords = (a: readonly [string, string, string], row: Row, jitterSeed: number, model = 1) => a.map((k, i) => {
       const d = dimOf(k), sc = scales[k];
       const n = sc.hi > sc.lo ? ((sc.tr(d.read(row)) - sc.lo) / (sc.hi - sc.lo)) * 2 - 1 : 0;
       // categories spread a little so their points stay countable; each request keeps the same offset in every cloud
-      const j = d.binary ? (((jitterSeed * (i + 3) * 2654435761) % 1000) / 1000 - 0.5) * 0.36 : 0;
+      // …and each model sits a little to one side, so a model drawn on top never hides another
+      const j = d.binary ? (((jitterSeed * (i + 3) * 2654435761) % 1000) / 1000 - 0.5) * 0.3 + (model - 1) * 0.12 : 0;
       return n + j;
     });
     const n = spec.clouds[0].rows.length, m = spec.clouds.length, total = n * m;
     const from = new Float32Array(total * 3), to = new Float32Array(total * 3), col = new Float32Array(total * 3), cloudId = new Float32Array(total);
     const fill = (buf: Float32Array, a: readonly [string, string, string]) => spec.clouds.forEach((c, ci) => c.rows.forEach((row, ri) => {
-      const p = coords(a, row, row.task.id + 7);
+      const p = coords(a, row, row.task.id + 7, ci);
       buf.set(p, (ci * n + ri) * 3);
     }));
     spec.clouds.forEach((c, ci) => {
@@ -235,9 +237,10 @@ export function Manifold({ dwell = 8000, active = true, compact = false, onRound
       spec.clouds.forEach((_, i) => { const want = stateRef.current.hidden.includes(i) ? 0 : 1; shown[i] += (want - shown[i]) * 0.14; });
       uni.uShow.value.set(shown[0], shown[1], shown[2] ?? 0);
       lineUni.uAlpha.value = stateRef.current.hidden.length ? 0 : 0.16;
+      arrow.visible = stateRef.current.hidden.length === 0;
       const R = 6.5;
       camera.position.set(R * Math.sin(yaw) * Math.cos(pitch), R * Math.sin(pitch), R * Math.cos(yaw) * Math.cos(pitch));
-      camera.lookAt(0, 0, 0);
+      camera.lookAt(0, -0.2, 0);
       camera.updateMatrixWorld();
       const pos = arrowGeo.attributes.position as THREE.BufferAttribute;
       shells.forEach((s, i) => {
@@ -290,9 +293,11 @@ export function Manifold({ dwell = 8000, active = true, compact = false, onRound
   const fmtDim = (d: Dim, v: number) => (d.binary ? (d.ticks?.[Math.round(v)] ?? f(v)) : f(v, d.digits ?? (v < 10 ? 1 : 0)));
   const readings = axes.map((k) => {
     const d = dimOf(k);
-    const vals = spec.clouds.map((c) => (d.binary ? c.rows.filter((r) => d.read(r) >= 1).length : median(c.rows.map(d.read))));
+    // a family is not a count: for it, show how many of each family each model solves
+    const vals = spec.clouds.map((c) => (d.key === "family" ? c.rows.filter((r) => r.task.correct).length : d.binary ? c.rows.filter((r) => d.read(r) >= 1).length : median(c.rows.map(d.read))));
+    const byFamily = d.key === "family" ? spec.clouds.map((c) => [0, 1, 2].map((fa) => c.rows.filter((r) => r.task.family === fa && r.task.correct).length).join(" / ")) : null;
     const same = vals.every((x) => Math.abs(x - vals[0]) < 1e-6);
-    return { d, vals, same };
+    return { d, vals, same, byFamily };
   });
   const truth = custom ? null : spec.views[viewIx].truth;
   return (
@@ -320,15 +325,20 @@ export function Manifold({ dwell = 8000, active = true, compact = false, onRound
           </ul>
           <table>
             <tbody>
-              {readings.map(({ d, vals, same }) => (
-                <tr key={d.key} data-same={same || undefined}>
+              {readings.map(({ d, vals, same, byFamily }, ri) => byFamily ? (
+                <tr key={`${ri}-${d.key}`}>
+                  <th>Solved, maths / logic / code</th>
+                  <td>{byFamily.map((x, i) => <b key={i} style={{ color: spec.clouds[i].color, opacity: hidden.includes(i) ? 0.3 : 1 }}>{x}{i < byFamily.length - 1 ? <i> → </i> : null}</b>)}</td>
+                </tr>
+              ) : (
+                <tr key={`${ri}-${d.key}`} data-same={same || undefined}>
                   <th>{d.label}{d.binary ? (d.ticks?.[1] ? `: ${d.ticks[d.ticks.length - 1]}` : "") : ""}</th>
-                  <td>{same ? <><b>{d.binary ? f(vals[0]) : fmtDim(d, vals[0])}</b> <em>unchanged</em></> : vals.map((x, i) => <b key={i} style={{ color: spec.clouds[i].color }}>{d.binary ? f(x) : fmtDim(d, x)}{i < vals.length - 1 ? <i> → </i> : null}</b>)}</td>
+                  <td>{same ? <><b>{d.binary ? f(vals[0]) : fmtDim(d, vals[0])}</b> <em>unchanged</em></> : vals.map((x, i) => <b key={i} style={{ color: spec.clouds[i].color, opacity: hidden.includes(i) ? 0.3 : 1 }}>{d.binary ? f(x) : fmtDim(d, x)}{i < vals.length - 1 ? <i> → </i> : null}</b>)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <small>Medians across {spec.clouds[0].rows.length} synthetic {spec.noun}s; lines join each task's three positions</small>
+          <small>Medians across {spec.clouds[0].rows.length} synthetic {spec.noun}s; lines join each task&apos;s three positions</small>
         </aside>
       </div>
       <div className="mf-controls">
@@ -339,7 +349,7 @@ export function Manifold({ dwell = 8000, active = true, compact = false, onRound
           {axes.map((k, i) => (
             <label key={i}><span>{["X", "Y", "Z"][i]}</span>
               <select value={k} onChange={(e) => { take(); setCustom(true); const next = [...axes] as [string, string, string]; next[i] = e.target.value; show(next); }}>
-                {spec.dims.map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
+                {spec.dims.map((d) => <option key={d.key} value={d.key} disabled={d.key !== k && axes.includes(d.key)}>{d.label}</option>)}
               </select>
             </label>
           ))}

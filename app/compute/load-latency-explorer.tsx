@@ -72,7 +72,7 @@ function QueueFigure({ runs, events, frame }: { runs: LabRun[]; events: ReturnTy
     </>}
     <circle data-ll-source cx="812" cy="358" r="11" fill="#241c35" stroke={VIOLET} /><text x="812" y="362" textAnchor="middle" fill={VIOLET} fontSize="13">{(complete ? finishes[0] === finishes[1] : states[0].waiting.length === states[1].waiting.length) ? "=" : "Δ"}</text>
     {[0, .25, .5, .75, 1].map(fraction => <text key={fraction} x={x(frame.horizon * fraction)} y="477" textAnchor="middle" className="ll-small">{number(frame.horizon * fraction, 0)} s</text>)}
-    <text x="410" y="510" textAnchor="middle" className="ll-axis">Elapsed workload time</text>
+    <text x="410" y="492" textAnchor="middle" className="ll-axis">Elapsed workload time</text>
     {frame.phase === "complete" && <g className="ll-completion-marker" pointerEvents="none">
       {runs.map((run, index) => { const finish = Math.max(...run.tasks.map(task => task.finish)); return <g key={index}>
         <path d={`M${x(finish)} 450v${index ? -30 : -58}`} stroke={index ? GREEN : BLUE} strokeWidth="2" />
@@ -144,7 +144,7 @@ function TailFigure({ runs, distributions, frame, selected, scanPos, onSelect }:
       <circle data-ll-source cx="812" cy="358" r="11" fill="#241c35" stroke={VIOLET} /><text x="812" y="362" textAnchor="middle" fill={VIOLET} fontSize="13">{Math.abs(picked[0].latency - picked[1].latency) < 1e-8 ? "=" : "Δ"}</text>
     </g>}
     {[0, 23, 47, 71, 95].filter(position => position < runs[0].n).map(position => <text key={position} x={x(position)} y="468" textAnchor="middle" className="ll-small">{position + 1}</text>)}
-    <text x="410" y="506" textAnchor="middle" className="ll-axis">{settled ? "Latency rank · fastest → slowest" : "Arrival order → latency rank"}</text>
+    <text x="410" y="492" textAnchor="middle" className="ll-axis">{settled ? "Latency rank · fastest → slowest" : "Arrival order → latency rank"}</text>
     <text x="22" y="280" transform="rotate(-90 22 280)" textAnchor="middle" className="ll-axis">Arrival → completion (seconds)</text>
   </svg>;
 }

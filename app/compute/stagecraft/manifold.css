@@ -34,3 +34,6 @@
 .mf-root[data-compact] .mf-axes select { max-width: 118px; }
 @media (max-width: 900px) { .mf-readout { position: static; width: auto; } .mf-axes { flex-wrap: wrap; } }
 @media (prefers-reduced-motion: reduce) { .mf-truth, .mf-views b { animation: none; } }
+
+/* The view line is plain white; the head keeps the only highlight. */
+.mf-truth .sm-hl, .mf-truth mark, .mf-truth [data-hl] { background: none !important; color: #fff; font-weight: 600; box-shadow: none !important; }

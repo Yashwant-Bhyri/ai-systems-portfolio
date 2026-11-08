@@ -418,3 +418,5 @@
     transition: none;
   }
 }
+/* The units sit beside their number, small; the head's number is the strongest row. */
+.vx-shell .rr-heading time small { display: inline; font-size: 11px; margin-left: 4px; }
