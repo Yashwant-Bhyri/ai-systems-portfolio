@@ -7350,7 +7350,7 @@ html {
 }
 
 .vx-role-why > strong > small {
-  max-width: 11ch;
+  max-width: 13ch;
   color: #7f8b96;
   font: 510 9.5px/1.3 var(--font-geist-mono), monospace;
   letter-spacing: 0;
@@ -7375,6 +7375,10 @@ html {
 .vx-role-map .op-svg {
   display: block;
 }
+
+/* An older five-column grid rule for .vx-role-map still matches; it squeezed the map into a 330 px column. */
+.vx-profile .vx-role-map { display: block; margin-top: 0; }
+.vx-profile .vx-role-map > .op-svg { width: 100%; height: 100%; }
 
 .vx-role-map svg:focus-visible {
   outline: 1px solid color-mix(in srgb, var(--vx-lime) 60%, transparent);

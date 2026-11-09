@@ -156,10 +156,10 @@ export function ProfileSection() {
           tabIndex={0}
           onKeyDown={handleRoleKeys}
         >
-          <text x={ROLE_X} y={18} className="lv-phase small">
+          <text x={ROLE_X} y={16} className="lv-phase small" style={{ fontSize: 12 }}>
             {profile.targetRolesLabel}
           </text>
-          <text x={PILLAR_X} y={18} className="lv-phase small">
+          <text x={PILLAR_X} y={16} className="lv-phase small" style={{ fontSize: 12 }}>
             {profile.pillarsLabel.replace("{total}", String(totalSkills))}
           </text>
 
@@ -219,12 +219,12 @@ export function ProfileSection() {
                     x={ROLE_X + 18}
                     y={y + 48 + lineIndex * 20}
                     className="svg-label"
-                    style={{ fontSize: 17, opacity: active ? 1 : 0.5 }}
+                    style={{ fontSize: 19, opacity: active ? 1 : 0.5 }}
                   >
                     {line}
                   </text>
                 ))}
-                <text x={ROLE_X + 18} y={y + 84} className="svg-sub tiny" style={{ opacity: active ? 0.9 : 0.4 }}>
+                <text x={ROLE_X + 18} y={y + 84} className="svg-sub tiny" style={{ fontSize: 12, opacity: active ? 0.9 : 0.4 }}>
                   {item.short}
                 </text>
               </g>
@@ -239,7 +239,7 @@ export function ProfileSection() {
                 <g className={`lv-node ${weight === 3 ? "is-live" : ""}`}>
                   <rect x={PILLAR_X} y={y} width={PILLAR_W} height={PILLAR_H} rx={10} style={{ opacity: weight === 1 ? 0.42 : 1 }} />
                 </g>
-                <text x={PILLAR_X + 18} y={y + 26} className="svg-label" style={{ fontSize: 15, opacity: weight === 1 ? 0.5 : 1 }}>
+                <text x={PILLAR_X + 18} y={y + 26} className="svg-label" style={{ fontSize: 17, opacity: weight === 1 ? 0.5 : 1 }}>
                   {pillar.label}
                 </text>
                 {/* Degree of responsibility this role places on the pillar. */}
@@ -259,9 +259,9 @@ export function ProfileSection() {
                   <text
                     key={skill}
                     x={PILLAR_X + 18 + (skillIndex % 2) * 372}
-                    y={y + 48 + Math.floor(skillIndex / 2) * 18}
+                    y={y + 50 + Math.floor(skillIndex / 2) * 18}
                     className="svg-mono tinytext"
-                    style={{ fontSize: 12.5, opacity: weight === 1 ? 0.34 : weight === 2 ? 0.72 : 1 }}
+                    style={{ fontSize: 13.5, opacity: weight === 1 ? 0.34 : weight === 2 ? 0.72 : 1 }}
                   >
                     {skill}
                   </text>

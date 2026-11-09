@@ -5,7 +5,8 @@
    so every scene paints in the owning chapter's accent.
    ============================================================ */
 
-.vx-live-stage {
+/* The profile map uses the same vocabulary, so it needs the same tokens (without them its text painted black). */
+.vx-live-stage, .vx-profile .vx-role-map {
   --accent: var(--active-accent, var(--vx-lime));
   --panel-line: var(--vx-line);
   --text-hi: var(--vx-ink);
@@ -15,6 +16,8 @@
   --cold: var(--vx-cyan);
   --fable-mono: var(--font-geist-mono), ui-monospace, monospace;
   --fable-sans: var(--font-geist-sans), system-ui, sans-serif;
+}
+.vx-live-stage {
   width: 100%;
   height: 100%;
   min-height: 0;

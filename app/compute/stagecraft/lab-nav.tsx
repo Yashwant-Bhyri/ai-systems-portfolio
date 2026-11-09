@@ -27,7 +27,11 @@ const DEFAULT: LabNav = "show";
 const listeners = new Set<() => void>();
 const valid = (v: string | null): v is LabNav => v === "show" || v === "top" || v === "side" || v === "dock" || v === "bar";
 
+/** Visitors always get the title show; the other layouts are for review on the dev server only. */
+const REVIEW = process.env.NODE_ENV !== "production";
+
 function read(): LabNav {
+  if (!REVIEW) return DEFAULT;
   try {
     const q = new URLSearchParams(window.location.search).get("labnav");
     if (valid(q)) return q;
@@ -57,6 +61,10 @@ export function useLabNav(): LabNav {
 
 /** A small review switcher that floats beside the laboratories while one is on screen. */
 export function LabNavSwitcher() {
+  return REVIEW ? <ReviewSwitcher /> : null;
+}
+
+function ReviewSwitcher() {
   const nav = useLabNav();
   const [visible, setVisible] = useState(false);
   useEffect(() => {
