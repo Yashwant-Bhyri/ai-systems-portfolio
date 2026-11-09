@@ -279,3 +279,18 @@ The seven larger items, done after (2026-11-10): the head follows the chosen che
 | Dial: the impact is squeezed inside the dial | Done: a large impact panel beside it, for each phase and each lever |
 | Jump into tail latency at 27 s; lag at the start of Policy × runtime and the replay | Seek moved under the introduction; heavy figures fetched while idle |
 | Summary rail: both sections as one index | Done |
+
+## Round 20 (2026-11-11)
+
+| Request | Status |
+|---|---|
+| Runtime / hydration errors in the browser | Fixed: title graphics used Math.sin, which differs between server and browser; now integer arithmetic and rounded coordinates. No console errors on home or either lab |
+| Blurred text screens: a touch skips and resumes, and presses nothing beneath | Done: introductions, the purpose card, the module-start note, in-figure moments, and the second page's opening |
+| A deep link to one module asks: just this, or the whole walk-through | Done |
+| Rename "Four training moves, measured" and "Harder tasks within reach" | "Post-training ablation", "Capability by difficulty" |
+| New graphics for "Batching, prefix caching, FP8" and the ablation | Done |
+| Elastic RL citation | Removed: "after QwenGyre, arXiv 2609.33848" could not be verified |
+| Home band without colour; inference split as real panels; jitter before the laboratory | Done: neutral band; pictured panels; live panels wait for the opening |
+| Home summary and target roles | Rewritten: what the four projects did; AI Systems Engineer, AI Application / Agent Engineer, AI Inference Engineer (EN and ZH) |
+| Lighter page | The laboratory and three.js load only on project pages and are prefetched from the second page; home bundle 695 → 309 KB; live panels unmount off screen; three.js at 1.5× density |
+| Push so the site is live | Waiting: there is no GitHub remote; both folders deploy to the Vercel project ai-systems-portfolio |
