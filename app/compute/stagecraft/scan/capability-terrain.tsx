@@ -48,6 +48,12 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
     return { h: solved ? 0.22 + Math.min(0.5, m) * 1.7 : regression ? 0.14 : 0.02, solved, regression };
   })), []);
   const solvedCounts = useMemo(() => STAGES.map((s) => simulateLab(s.policy, s.budget).correct), []);
+  // Accuracy, and accuracy on the hardest third of the tasks: where training matters most.
+  const P = (n: number, of = 96) => `${Math.round((100 * n) / of)}%`;
+  const hard = useMemo(() => {
+    const ids = new Set([...TASKS].sort((x, y) => y.difficulty - x.difficulty).slice(0, 32).map((t) => t.id));
+    return STAGES.map((s) => simulateLab(s.policy, s.budget).tasks.filter((t) => ids.has(t.id) && t.correct).length);
+  }, []);
 
   useEffect(() => {
     const host = relief.current;
@@ -125,30 +131,30 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
   useEffect(() => {
     if (!active || !finished) return;
     const a = solvedCounts[0], b = solvedCounts[STAGES.length - 1];
-    const on = window.setTimeout(() => emitFocus({ headline: `Training raised *${b - a} tasks* above the ground`, parts: [{ label: "base", value: `${a} of 96`, tone: "baseline" }, { label: "lean RL", value: `${b} of 96`, tone: "optimized" }], place: "bottom" }), 900);
+    const on = window.setTimeout(() => emitFocus({ headline: `Accuracy *${P(a)} → ${P(b)}*; on the hardest third of tasks, ${P(hard[0], 32)} → ${P(hard[STAGES.length - 1], 32)}`, parts: [{ label: "base", value: P(a), tone: "baseline" }, { label: "lean RL", value: P(b), tone: "optimized" }], place: "bottom" }), 900);
     const off = window.setTimeout(() => { emitFocus(null); root.current?.dispatchEvent(new CustomEvent("lab:module-round", { bubbles: true })); }, 5400);
     return () => { window.clearTimeout(on); window.clearTimeout(off); emitFocus(null); };
-  }, [active, finished, solvedCounts]);
+  }, [active, finished, solvedCounts, hard]);
 
-  const stageLine = finished ? `Finished: ${solvedCounts[0]} → ${solvedCounts[STAGES.length - 1]} tasks solved. Choose a stage to look again`
-    : stage === 0 ? `Base: ${solvedCounts[0]} of 96 tasks rise above the ground` : `${STAGES[stage].label}: ${solvedCounts[stage - 1]} → ${solvedCounts[stage]} tasks solved`;
+  const stageLine = finished ? `Finished: accuracy ${P(solvedCounts[0])} → ${P(solvedCounts[STAGES.length - 1])}. Choose a stage to look again`
+    : stage === 0 ? `Base model: ${P(solvedCounts[0])} accuracy; the ridge stands above the easy tasks only` : `${STAGES[stage].label}: accuracy ${P(solvedCounts[stage - 1])} → ${P(solvedCounts[stage])}, hardest third ${P(hard[stage - 1], 32)} → ${P(hard[stage], 32)}`;
   useEffect(() => { if (active) emitMeter({ text: stageLine, step: stage + 1, total: STAGES.length, tone: "optimized" }); }, [active, stageLine, stage]);
   return (
     <div ref={root} className="sc-root sc-rose">
       <header className="sc-head">
         <div>
-          <span className="sc-kicker">{tr("96 synthetic tasks · six checkpoints")}</span>
-          <h3>{tr("Capability terrain: each training step raises more of the land")}</h3>
+          <span className="sc-kicker">{tr("Six stages of training · synthetic tasks")}</span>
+          <h3>{tr("Each ridge is one stage of training: where it stands above a task, that task is solved")}</h3>
         </div>
         <div className="sc-count">
-          <b className="cx-hero-num" data-hero={stage === STAGES.length - 1 || undefined}>{solvedCounts[stage]}</b>
-          <small>{tr(`of 96 solved · ${STAGES[stage].label}`)}</small>
+          <b className="cx-hero-num" data-hero={stage === STAGES.length - 1 || undefined}>{P(solvedCounts[stage])}</b>
+          <small>{tr(`accuracy · ${STAGES[stage].label}`)}</small>
         </div>
       </header>
       <nav className="sc-steps" aria-label={tr("Training stages")}>
         {STAGES.map((s, i) => (
           <button key={s.label} type="button" aria-pressed={i === stage} data-done={i < stage || (finished && i <= stage) || undefined} onClick={() => { goal.current = i + 1; }}>
-            {tr(s.label)}<b>{solvedCounts[i]}</b>
+            {tr(s.label)}<b>{P(solvedCounts[i])}</b>
           </button>
         ))}
         <button type="button" className="sc-again" onClick={() => setRun((n) => n + 1)}>{tr("Raise it again")}</button>
@@ -162,8 +168,9 @@ export function CapabilityTerrain({ active }: { active: boolean }) {
         </svg>
       </div>
       <footer className="sc-legend">
-        <span>{tr("height = how far the checkpoint's ability clears the task's difficulty")}</span>
-        <span style={{ color: "#ff8f86" }}>{tr("red = a regression: ability clears the task, the answer still fails")}</span>
+        <span>{tr("height = how far the stage's ability clears the task's difficulty")}</span>
+        <span className="sc-hard">{tr(`hardest third of tasks: ${P(hard[0], 32)} → ${P(hard[STAGES.length - 1], 32)} solved`)}</span>
+        <span style={{ color: "#ff8f86" }}>{tr("red = solved at the stage before, failed at this one")}</span>
         <span>{tr("synthetic task set · simulated margins")}</span>
       </footer>
     </div>

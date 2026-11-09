@@ -15,6 +15,11 @@ const ROWS = [0, 1, 2, 3, 4, 5, 6, SLOWEST];
 const X0 = 230, SPAN = 4.4, PX = 660 / SPAN;
 const x = (m: number) => X0 + m * PX;
 const PROBLEM_MS = 11500, IDEA_MS = 12500;
+const ROLE = {
+  rollout: ["generating rollouts", "an agent works the task in its environment"],
+  train: ["training", "one update from every rollout in the step"],
+  sync: ["publishing weights", "the new policy is copied to every GPU"],
+} as const;
 
 function Rows({ segs, now, note }: { segs: Segment[]; now: number; note: (gpu: number) => string | null }) {
   return <g>
@@ -34,8 +39,9 @@ function Rows({ segs, now, note }: { segs: Segment[]; now: number; note: (gpu: n
     })}
     <path d={`M${x(Math.min(now, SPAN))} 60V${70 + ROWS.length * 38 + 4}`} stroke="#eef2f6" strokeOpacity={0.35} />
     {[0, 1, 2, 3, 4].map((m) => <text key={m} x={x(m)} y={70 + ROWS.length * 38 + 26} textAnchor="middle" className="ma-l">{m} min</text>)}
-    {(["rollout", "train", "sync"] as const).map((k, i) => <g key={k} transform={`translate(${X0 + i * 215} 418)`}><rect width={14} height={14} rx={2} fill={C[k]} /><text x={22} y={12} className="ma-l">{k === "rollout" ? "generating rollouts" : k === "train" ? "training" : "publishing weights"}</text></g>)}
-    <g transform={`translate(${X0 + 3 * 215} 418)`}><rect width={14} height={14} rx={2} fill="none" stroke={C.idle} strokeDasharray="3 2" /><text x={22} y={12} className="ma-l">waiting</text></g>
+    {/* What each role is, in a few words, so the idle time has a reason. */}
+    {(["rollout", "train", "sync"] as const).map((k, i) => <g key={k} transform={`translate(${X0 + i * 215} 412)`}><rect width={14} height={14} rx={2} fill={C[k]} /><text x={22} y={12} className="ma-l" style={{ fill: C.ink }}>{ROLE[k][0]}</text><text x={22} y={28} className="ma-l">{ROLE[k][1]}</text></g>)}
+    <g transform={`translate(${X0 + 3 * 215} 412)`}><rect width={14} height={14} rx={2} fill="none" stroke={C.idle} strokeDasharray="3 2" /><text x={22} y={12} className="ma-l" style={{ fill: C.ink }}>waiting</text><text x={22} y={28} className="ma-l">done, but the update needs all</text></g>
   </g>;
 }
 
@@ -44,19 +50,23 @@ const sweep = (t: number, ms: number) => ease.io(prog(t, 600, ms - 2600)) * SPAN
 function Problem({ t }: SceneProps) {
   const now = sweep(t, PROBLEM_MS);
   const barrier = A.segs.find((s) => s.gpu === SLOWEST && s.kind === "rollout" && s.step === 0)!.end;
-  return <svg viewBox="0 0 1100 440" role="img" aria-label="Synchronous RL: every GPU waits for the slowest rollout before anyone trains">
+  return <svg viewBox="0 0 1100 450" role="img" aria-label="Synchronous RL: every GPU waits for the slowest rollout before anyone trains">
     <text x={0} y={30} className="ma-k">8 of 64 GPUs · one RL step</text>
+    {/* Why they wait, said as the clock reaches each part. */}
+    <text x={0} y={52} className="ma-l" style={{ fill: C.ink }}>{now < barrier * 0.85
+      ? "Rollouts differ in length: some tasks take an agent many more steps in its environment"
+      : "Training can start only when every rollout is in: one update learns from all of them together"}</text>
     <Rows segs={A.segs} now={now} note={() => null} />
     {now >= barrier && <g opacity={prog(now, barrier, barrier + 0.3)}>
       <path d={`M${x(barrier)} 56V${70 + ROWS.length * 38}`} stroke={C.idle} strokeWidth={2} />
-      <text x={x(barrier) - 8} y={48} textAnchor="end" className="ma-n" style={{ fill: C.idle }}>{GPUS - 1} GPUs wait for GPU {SLOWEST + 1}</text>
+      <text x={x(barrier) + 8} y={78 + ROWS.length * 38} className="ma-n" style={{ fill: C.idle }}>{GPUS - 1} GPUs wait for GPU {SLOWEST + 1}</text>
     </g>}
   </svg>;
 }
 
 function Idea({ t }: SceneProps) {
   const now = sweep(t, IDEA_MS);
-  return <svg viewBox="0 0 1100 440" role="img" aria-label="Elastic roles: each GPU joins training the moment its own rollout ends; the straggler keeps generating for the next step">
+  return <svg viewBox="0 0 1100 450" role="img" aria-label="Elastic roles: each GPU joins training the moment its own rollout ends; the straggler keeps generating for the next step">
     <text x={0} y={30} className="ma-k">The same 8 GPUs, elastic roles</text>
     <text x={0} y={52} className="ma-l">after QwenGyre · arXiv 2609.33848</text>
     <Rows segs={B.segs} now={now} note={(g) => (g === SLOWEST ? "lands in the next step" : null)} />

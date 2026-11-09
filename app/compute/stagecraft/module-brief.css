@@ -76,3 +76,7 @@
 .pc-tech { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0; padding: 0; list-style: none; transition: opacity .7s; }
 .pc-tech:not([data-on]) { opacity: 0; }
 .pc-tech li { padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(230,237,244,.14); color: #eef2f6; font: 450 16px/20px var(--font-geist-sans), sans-serif; }
+
+/* How long this introduction stays: a thin line that runs out. */
+.mi-time { display: block; width: 220px; height: 2px; margin-top: 18px; border-radius: 1px; background: color-mix(in srgb, var(--active-accent, #ffc267) 80%, transparent); transform-origin: 0 50%; animation: mi-time linear both; }
+@keyframes mi-time { from { transform: scaleX(1); } to { transform: scaleX(0); } }

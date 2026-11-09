@@ -192,3 +192,10 @@
   color: #f6f8fa; font: 450 clamp(34px, 3.4vw, 52px)/1.2 var(--font-geist-sans), sans-serif; letter-spacing: -.026em; animation: tb-line 3.6s cubic-bezier(.22,1,.36,1) both; }
 @keyframes tb-line { 0% { opacity: 0; transform: translate(-50%, calc(-50% + 12px)); } 12%, 88% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, calc(-50% - 8px)); } }
 @media (prefers-reduced-motion: reduce) { .tb-line { animation: none; } }
+
+/* Each rail title carries its tiny picture, so the list can be scanned by eye. */
+.vx-shell .tr-tile { grid-template-columns: 28px minmax(0, 1fr); column-gap: 8px; }
+.tr-ico { display: block; width: 28px; height: 14px; opacity: .55; filter: saturate(.4); transition: opacity .2s, filter .2s; }
+.tr-tile[data-on] .tr-ico, .tr-tile:hover .tr-ico { opacity: 1; filter: none; }
+.tr-ico svg { animation-play-state: paused; }
+@media (max-width: 1380px) { .tr-ico { width: 34px; height: 17px; } .vx-shell .tr-tile { grid-template-columns: 1fr; } }

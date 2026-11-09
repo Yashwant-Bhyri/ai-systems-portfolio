@@ -47,3 +47,5 @@
 /* The struck word's room is reserved, so the answer never reflows as the scan reaches it. */
 .sc-tok s { opacity: 0; transition: opacity .3s; }
 .sc-tok s[data-on] { opacity: .9; }
+
+.sc-legend .sc-hard { color: #f3a0bc; font-weight: 500; }

@@ -75,6 +75,7 @@ import {
   GlyphBigPicture,
   GlyphManifold,
   GlyphDial,
+  GlyphLean,
   GlyphLearn,
   GlyphCapability,
   GlyphComposition,
@@ -508,27 +509,27 @@ const PURPOSE = {
   techniques: ["SFT + LoRA on verified solutions", "GRPO: learning from test outcomes", "A thinking budget at test time", "Lean RL: a cost for every token", "Elastic RL on 64 GPUs"],
 };
 const TRAINING_CLIPS: readonly Clip[] = [
-  { purpose: true, ms: 15000, line: `The goal: ${pct(T_.base.correct)} → ${pct(T_.lean.correct)} of tasks solved, and then the same answers for ${FEWER}% fewer tokens` },
-  intro("manifold", "Each dot is one task. *Lines join the same task across three models*; each view asks a different question"),
-  { key: "manifold", ms: 21600, line: `Every task, three models, six dimensions: ${T_.base.correct} → ${T_.lean.correct} of 96 cross from wrong to correct` },
+  { purpose: true, ms: 15000, line: `The goal: accuracy ${pct(T_.base.correct)} → ${pct(T_.lean.correct)}, then the same answers for ${FEWER}% fewer tokens` },
+  intro("manifold", "Each point is one task; each model is a cloud. *Lines join the same task across the three models*, and each view asks one question"),
+  { key: "manifold", ms: 21600, line: `A 3D view of every task across three models: accuracy ${pct(T_.base.correct)} → ${pct(T_.lean.correct)}` },
   intro("inside", "One coding task, watched *layer by layer* inside the model as it answers"),
-  { key: "inside", ms: 20500, line: "On one coding task: the layers that moved, and the words that changed" },
+  { key: "inside", ms: 20500, line: "On one coding task: the layers training changed, and the words they changed" },
   intro("learn", "Eight attempts at one task. *The tests decide which ones survive*"),
-  { key: "learn", ms: 17200, line: `Learning from outcomes: the tests decide which attempts survive, ${T_.sft.correct} → ${T_.rl.correct} of 96` },
-  intro("terrain", "All 96 tasks, at *six stages of training*"),
-  { key: "terrain", ms: 21000, line: `Six checkpoints: ${T_.base.correct} → ${T_.lean.correct} of 96 tasks solved` },
+  { key: "learn", ms: 17200, line: `GRPO: the tests decide which attempts survive. Accuracy ${pct(T_.sft.correct)} → ${pct(T_.rl.correct)}` },
+  intro("terrain", "Each ridge is one stage of training. *Where a ridge stands above a task, that task is solved*"),
+  { key: "terrain", ms: 21000, line: `Six stages of training: accuracy ${pct(T_.base.correct)} → ${pct(T_.lean.correct)}` },
   intro("frontier", "Accuracy up the side, *GPU time per correct answer* along the bottom"),
-  { key: "frontier", ms: 17400, line: `Five moves: ${T_.base.correct} → ${T_.lean.correct} of 96 solved, and the cost per correct answer brought back down` },
-  intro("curves", "Each checkpoint, given *more and more thinking budget*"),
-  { key: "curves", ms: 21500, line: `More thinking: Lean RL solves ${LEAN_1X} → ${LEAN_8X} of 96 from a 1× to an 8× budget` },
-  intro("film", "Reward correct answers, *charge for every token*", "Lean RL"),
-  { key: "film", title: "Lean RL", ms: 31000, film: { step: 4, frame: true }, line: `Lean RL: the same ${T_.lean.correct} tasks solved, ${FEWER}% fewer tokens` },
-  intro("fleet", "64 GPUs doing RL together. *Who waits for whom?*"),
-  ...arcClips("fleet", ["Problem: 64 GPUs wait at a barrier on every RL step", "Elastic RL: any free GPU takes any role", "Impact: almost twice the RL steps in the same time"], [11500, 12500, 9000]),
+  { key: "frontier", ms: 17400, line: `Five moves: accuracy ${pct(T_.base.correct)} → ${pct(T_.lean.correct)}, and the cost per correct answer brought back down` },
+  intro("curves", "Each checkpoint, given *more and more thinking* at answer time"),
+  { key: "curves", ms: 21500, line: `Test-time scaling: Lean RL ${pct(LEAN_1X)} → ${pct(LEAN_8X)} accuracy from a 1× to an 8× thinking budget` },
+  intro("film", "Reward correct answers, *charge for every token past a target*", "Lean RL"),
+  { key: "film", title: "Lean RL", ms: 31000, film: { step: 4, frame: true }, line: `Lean RL: the same accuracy, ${pct(T_.lean.correct)}, with ${FEWER}% fewer tokens` },
+  intro("fleet", "RL on 64 GPUs: every rollout must finish before training can start. *Who waits for whom?*"),
+  ...arcClips("fleet", ["Problem: training needs every rollout, so 64 GPUs wait for the slowest one", "Elastic RL: a GPU that finishes its rollout trains or publishes at once", "Impact: almost twice the RL steps in the same time"], [11500, 12500, 9000]),
   intro("map", "One square per task: *which ones changed, not only the score*"),
   { key: "map", ms: 21000, line: `Task by task: ${FLIPS2.gained.length} newly correct, ${FLIPS2.lost.length} lost, at a 2× thinking budget` },
   intro("audit", "A better score can hide a task that broke. *Each one is named*"),
-  { key: "audit", ms: 21000, line: `${FLIPS2.lost.length} tasks got worse on the way; each one is named` },
+  { key: "audit", ms: 21000, line: `Regression audit: ${FLIPS2.lost.length} tasks got worse on the way, each one named` },
 ];
 const boardAt = (clips: readonly Clip[]) => clips.findIndex((c) => c.board);
 /** The board itself still belongs to the first section: its titles fly out of the first section's rail. */
@@ -726,21 +727,21 @@ export function ComputeLabStudy({
   // The modules are the story, in the order it should be told. Each title says what improves.
   // Each project's one opening picture: post-training's manifold, inference's race on one clock.
   const manifoldItem: RailItem = training
-    ? { key: "manifold", title: "The manifold", term: "Every dimension at once", value: "6 dimensions", unit: "96 tasks, three models", Glyph: GlyphManifold, onOpen: openManifold, current: mode === "manifold" }
+    ? { key: "manifold", title: "The manifold", term: "Every task in 3D", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy, three models", Glyph: GlyphManifold, onOpen: openManifold, current: mode === "manifold" }
     : { key: "flow", title: "96 requests, one clock", term: "Where the time went", value: `${n0(FINISH(R_[0]))} → ${n0(FINISH(R_[3]))} s`, unit: "to answer all 96", Glyph: GlyphDial, onOpen: openManifold, current: mode === "manifold" };
   const railItems: RailItem[] = training
     ? [
         manifoldItem,
-        { key: "inside", title: "What changed inside the model", term: "Layer by layer", value: "7 of 50", unit: "words rewritten by training", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
-        { key: "learn", title: "Learning from outcomes", term: "GRPO", value: `${simulateLab(1, 1).correct} → ${simulateLab(2, 1).correct}`, unit: "of 96 tasks solved", Glyph: GlyphLearn, onOpen: () => openView(7), current: mode === "explore" && view === 7 },
-        { key: "terrain", title: "Skill gained at each step", term: "96 tasks, six checkpoints", value: `+${simulateLab(3, 4).correct - simulateLab(0, 1).correct}`, unit: "tasks solved, base to lean RL", Glyph: GlyphTerrain, onOpen: () => openView(6), current: mode === "explore" && view === 6 },
-        { key: "frontier", title: "Accuracy against GPU cost", term: "The frontier", value: "28 → 82", unit: "of 96 tasks solved", Glyph: GlyphFrontier, onOpen: () => openView(8), current: mode === "explore" && view === 8 },
-        { key: "curves", title: "What more thinking buys", term: "Compute curves", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thinking budget", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
-        { key: "fleet", title: "Almost twice the RL steps on 64 GPUs", term: "Elastic RL", value: "4 → 7", unit: "RL steps in 14 min", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
+        { key: "inside", title: "The layers that changed", term: "Inside the model", value: "7 of 50", unit: "words rewritten by training", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
+        { key: "learn", title: "GRPO", term: "Learning from test outcomes", value: `${pct(simulateLab(1, 1).correct)} → ${pct(simulateLab(2, 1).correct)}`, unit: "accuracy", Glyph: GlyphLearn, onOpen: () => openView(7), current: mode === "explore" && view === 7 },
+        { key: "terrain", title: "Skill gained at each step", term: "Six stages of training", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy, base to Lean RL", Glyph: GlyphTerrain, onOpen: () => openView(6), current: mode === "explore" && view === 6 },
+        { key: "frontier", title: "Accuracy against GPU cost", term: "The frontier", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy", Glyph: GlyphFrontier, onOpen: () => openView(8), current: mode === "explore" && view === 8 },
+        { key: "curves", title: "Test-time scaling", term: "Compute curves", value: pct(simulateLab(2, 8).correct), unit: "accuracy · RL checkpoint at 8× thinking", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "fleet", title: "Elastic RL on 64 GPUs", term: "No barrier between steps", value: "4 → 7", unit: "RL steps in 14 min", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
         { key: "map", title: "Task by task", term: "Capability map", value: `+${solvedGain}`, unit: `net tasks at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "film", title: "Four training moves, measured", term: "The experiment", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "film", title: "Four training moves, measured", term: "The experiment", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy, synthetic tasks", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "tasks", title: "Harder tasks within reach", term: "Easiest to hardest", value: `+${solvedGain}`, unit: `tasks solved at ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
-        { key: "audit", title: "What got worse", term: "Regression audit", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thinking budget`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "audit", title: "Regression audit", term: "What got worse", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thinking budget`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
         manifoldItem,
@@ -799,6 +800,8 @@ export function ComputeLabStudy({
     void auto;
     setStatus({ key, phase: "running" });
     touched.current = 0;
+    // A module opens playing, whatever was paused before it.
+    window.dispatchEvent(new Event("lab:resume"));
     if (!training && SERVING_RAIL.some((m) => m.key === key)) {
       setInferencePart("load");
       // The serving lab loads lazily; ask until it has mounted, unless the visitor has moved on.
@@ -840,7 +843,11 @@ export function ComputeLabStudy({
     [260, 900, 1700, 3000].forEach((ms) => window.setTimeout(() => { if (ms === 260 || c.beat !== undefined || c.metric) send(); }, ms));
   };
   /** Back, forward or a tick on the summary's bar. */
+  // Only the pause button stops anything. Every other move (a step, a jump, a module from the rail)
+  // plays, and lets go of a pause the figures were told about.
+  const letGo = () => { if (clipHeld) { setClipHeld(false); window.dispatchEvent(new Event("lab:release")); } };
   const goClip = (n: number) => {
+    letGo();
     const to = Math.max(0, Math.min(clips.length - 1, n));
     // jumping restarts the figure from the clip's own moment
     lastClipKey.current = clip !== null && clips[clip].key === clips[to].key ? clips[to].key ?? null : null;
@@ -855,7 +862,8 @@ export function ComputeLabStudy({
   const summaryRef = useRef({ on: false, held: false, hold: () => {} });
   useEffect(() => { summaryRef.current = { on: clip !== null, held: clipHeld, hold: () => { window.dispatchEvent(new Event("lab:hold")); if (clip !== null && (clips[clip].intro || clips[clip].purpose)) setClip(clip + 1); setClipHeld(true); } }; });
   const openKey = (key: string, auto = false) => {
-    if (key === "summary") { setLandingPhase((p) => (p === "on" ? "off" : p)); setBriefKey(null); setFork(null); setBoard(null); setClipHeld(false); lastClipKey.current = null; setClip(0); return; }
+    letGo();
+    if (key === "summary") { setLandingPhase((p) => (p === "on" ? "off" : p)); setBriefKey(null); setFork(null); setBoard(null); lastClipKey.current = null; setClip(0); return; }
     setClip(null);
     setFork(null);
     // The second section opens on the title board: the first folds to the left, the second takes the space.
@@ -917,7 +925,8 @@ export function ComputeLabStudy({
     const stage = stageRef.current;
     if (!stage || !show) return;
     // In the Summary a hand on the stage holds it there; elsewhere it gives the visitor time.
-    const touch = (e: Event) => { if (!e.isTrusted) return; if (summaryRef.current.on && !summaryRef.current.held) summaryRef.current.hold(); touched.current = performance.now(); setTouchTick((n) => n + 1); };
+    // A hand on the stage gives the visitor time; it never stops anything.
+    const touch = (e: Event) => { if (!e.isTrusted || summaryRef.current.on) return; touched.current = performance.now(); setTouchTick((n) => n + 1); };
     stage.addEventListener("pointerdown", touch, true);
     stage.addEventListener("keydown", touch, true);
     // Not on "input": re-rendering in the middle of a slider's event resets its value before React reads it.
@@ -1014,8 +1023,8 @@ export function ComputeLabStudy({
         ringKey={clip ?? undefined}
         ringDelay={clip !== null ? upNext(clips, clip).elapsed : 0}
         groups={[
-          { key: "summary", label: "Summary", onOpen: () => openKey("summary"), items: summaryTiles(clips).filter((c) => c.section === railSection).map((c) => ({ key: c.key, title: c.title ?? showItems.find((i) => i.key === c.key)?.title ?? c.key, section: twoSections ? pathways[railSection].short : undefined })), also: twoSections ? { label: pathways[1 - railSection].short, onOpen: () => goClip(railSection === 0 ? boardAt(clips) : 0) } : undefined, alsoFirst: railSection === 1, count: summaryTiles(clips).length },
-          { key: "detail", label: "In detail", onOpen: () => openKey(order[0]), items: showItems.map((i) => ({ key: i.key, title: i.title, section: training ? undefined : pathways[i.pathway].short })) },
+          { key: "summary", label: "Summary", onOpen: () => openKey("summary"), items: summaryTiles(clips).filter((c) => c.section === railSection).map((c) => ({ key: c.key, title: c.title ?? showItems.find((i) => i.key === c.key)?.title ?? c.key, section: twoSections ? pathways[railSection].short : undefined, Glyph: c.title === "Lean RL" ? GlyphLean : showItems.find((i) => i.key === c.key)?.Glyph })), also: twoSections ? { label: pathways[1 - railSection].short, onOpen: () => goClip(railSection === 0 ? boardAt(clips) : 0) } : undefined, alsoFirst: railSection === 1, count: summaryTiles(clips).length },
+          { key: "detail", label: "In detail", onOpen: () => openKey(order[0]), items: showItems.map((i) => ({ key: i.key, title: i.title, section: training ? undefined : pathways[i.pathway].short, Glyph: i.Glyph })) },
         ]}
         active={clip !== null || fork ? "summary" : "detail"}
         current={clip !== null ? clips.slice(0, clip + 1).reverse().find((c) => c.key)?.key ?? "" : currentKey}
@@ -1135,7 +1144,7 @@ export function ComputeLabStudy({
         {show && clip !== null && clips[clip].intro && (() => {
           const c = clips[clip], item = showItems.find((i) => i.key === c.key);
           // Only while the lab is on screen and playing: a fixed blur must never outlive its moment.
-          return item && labInView && !clipHeld ? <IntroCard brief={briefs[c.key!]} key={clip} item={c.title ? { ...item, title: c.title } : item} text={c.intro!} ms={c.ms} /> : null;
+          return item && labInView && !clipHeld ? <IntroCard brief={c.title ? undefined : briefs[c.key!]} key={clip} item={c.title ? { ...item, title: c.title, term: "Shorter traces, the same answers", Glyph: c.title === "Lean RL" ? GlyphLean : item.Glyph } : item} text={c.intro!} ms={c.ms} /> : null;
         })()}
         {show && fork && (
           <ChoiceCard

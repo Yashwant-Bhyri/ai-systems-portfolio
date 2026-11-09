@@ -195,7 +195,7 @@ export function TitleBoard({
    Summary is one part, made of the best moments. In detail is the other, with every module.
    The part you are in stays open; the other folds to its name. Beneath: stay, dive, or go on.
    Nothing here floats over the stage. */
-export type RailGroup = { key: string; label: string; items: readonly { key: string; title: string; section?: string }[]; onOpen: () => void; /** A section of this part that is not open now, and whether it comes first. */ also?: { label: string; onOpen: () => void }; alsoFirst?: boolean; count?: number };
+export type RailGroup = { key: string; label: string; items: readonly { key: string; title: string; section?: string; Glyph?: ComponentType }[]; onOpen: () => void; /** A section of this part that is not open now, and whether it comes first. */ also?: { label: string; onOpen: () => void }; alsoFirst?: boolean; count?: number };
 export type SummaryControls = { held: boolean; first: boolean; last: boolean; onBack: () => void; onToggle: () => void; onForward: () => void };
 export function TitleRail({
   groups, active, current, next, phase, countdownMs, last, afterLast, held, summary, ringKey, ringDelay = 0, from, onItem, onNext, onLanding, onStay, onKeepPlaying, onDive,
@@ -241,6 +241,8 @@ export function TitleRail({
       el.querySelector(".tr-label")?.animate([{ opacity: 0 }, { opacity: 0, offset: 0.75 }, { opacity: 1 }], { ...MOVE, delay: Math.min(i, 8) * 18, fill: "backwards" });
     });
   }, [from]);
+  // The rail's tiny pictures hold still: one frame each, so the list stays calm.
+  useEffect(() => { root.current?.querySelectorAll<SVGSVGElement>(".tr-ico svg").forEach((svg) => { if (svg.animationsPaused()) return; svg.pauseAnimations(); svg.setCurrentTime(5); }); });
   const state = phase === "taken" ? "Yours to explore" : phase === "done" ? (last ? "Finished" : "Finished, moving on") : "Playing";
   return (
     <aside ref={root} className="tr-rail" aria-label={tr("Laboratory modules")}>
@@ -256,6 +258,7 @@ export function TitleRail({
                 <div key={i.key}>
                   {i.section && i.section !== g.items[k - 1]?.section && <span className="tr-section">{tr(i.section)}</span>}
                   <button type="button" className="tr-tile" data-rail-key={i.key} data-on={i.key === current || undefined} title={tr(i.title)} onClick={() => onItem(i.key)} aria-current={i.key === current ? "step" : undefined}>
+                    {i.Glyph && <span className="tr-ico" aria-hidden="true"><i.Glyph /></span>}
                     <span className="tr-label">{tr(i.title)}</span>
                   </button>
                 </div>

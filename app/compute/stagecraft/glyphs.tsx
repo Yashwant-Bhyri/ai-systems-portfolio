@@ -280,17 +280,35 @@ export function GlyphCurves() {
     </g>)}
   </Svg>;
 }
-/** 64 GPUs: each one changes role as soon as it is free, so the whole grid stays busy. */
+/** Elastic RL. Above, synchronous: rollouts of different lengths, then every GPU waits at the barrier
+    before training. Below, elastic: a GPU that finishes its rollout trains at once; no gaps. */
 export function GlyphFleet() {
-  const cols = 16, rows = 4, roles = ["f-a", "f-p", "f-r"];
+  const sync = [120, 74, 98, 56], elastic = [[0, 50, 70, 114, 132], [0, 34, 54, 102, 120], [0, 62, 82, 128, 146], [0, 42, 62, 96, 116]];
   return <Svg>
-    {seq(cols * rows, (i) => {
-      const x = 10 + (i % cols) * 14, y = 8 + Math.floor(i / cols) * 27, d = (rnd(i) * 6).toFixed(2);
-      return <g key={i}>
-        <rect x={x} y={y} width={11.6} height={23} rx={2.5} className={roles[i % 3]} />
-        <rect x={x} y={y} width={11.6} height={23} rx={2.5} className={roles[(i + 1) % 3]}><animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.3;.4;.8;1" begin={`-${d}s`} {...loop(6)} /></rect>
-      </g>;
-    })}
+    {sync.map((w, i) => <g key={i}>
+      <rect x={12} y={8 + i * 12} width={w} height={8} rx={2} className="f-a" />
+      {w < 120 && <rect x={14 + w} y={8 + i * 12} width={120 - w - 2} height={8} rx={2} className="f-dim" />}
+      <rect x={138} y={8 + i * 12} width={34} height={8} rx={2} className="f-p" />
+    </g>)}
+    <rect x={133} y={4} width={2} height={50} rx={1} className="f-x"><animate attributeName="opacity" values="1;.3;1" {...loop(2.4)} /></rect>
+    <path d="M12 62H228" className="s-dim" strokeWidth={1} />
+    {elastic.map((xs, i) => <g key={i}>
+      {xs.slice(0, -1).map((x, k) => <rect key={k} x={12 + x} y={70 + i * 12} width={xs[k + 1] - x - 2} height={8} rx={2} className={k % 2 ? "f-p" : "f-a"} />)}
+    </g>)}
+    <rect y={66} width={2} height={52} rx={1} className="f-ink" x={12}><animate attributeName="x" values="12;170;170;12" keyTimes="0;.8;.95;1" {...loop(5)} /></rect>
+  </Svg>;
+}
+/** Lean RL: the same right answers, each trace cut back to the length target. */
+export function GlyphLean() {
+  const lens = [180, 132, 196, 110, 160];
+  return <Svg>
+    <path d="M112 4V116" className="s-a" strokeWidth={1.5} strokeDasharray="3 4" />
+    {lens.map((w, i) => <g key={i}>
+      <rect x={12} y={10 + i * 21} width={w} height={11} rx={3} className="f-r" opacity={0.85}>
+        <animate attributeName="width" values={`${w};${w};${Math.min(w, 100 + (w - 100) * 0.15)};${Math.min(w, 100 + (w - 100) * 0.15)};${w}`} keyTimes="0;.25;.55;.9;1" calcMode="spline" keySplines="0 0 1 1;.45 0 .2 1;0 0 1 1;.45 0 .55 1" {...loop(7)} />
+      </rect>
+      <circle cx={226} cy={15.5 + i * 21} r={4.5} className={i === 2 ? "f-x" : "f-t"} />
+    </g>)}
   </Svg>;
 }
 /** One square per task: green gained, coral lost, grey unchanged. */
