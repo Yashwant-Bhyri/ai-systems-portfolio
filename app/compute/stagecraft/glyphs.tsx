@@ -9,7 +9,11 @@ const VB = "0 0 240 120";
 const Svg = ({ children }: { children: React.ReactNode }) => <svg className="lg" viewBox={VB} preserveAspectRatio="xMidYMid meet">{children}</svg>;
 const seq = <T,>(n: number, f: (i: number) => T) => Array.from({ length: n }, (_, i) => f(i));
 /** A stable pseudo-random value in 0..1, so a graphic is the same on every render. */
-const rnd = (i: number) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+/* Integer arithmetic only: Math.sin can differ in its last digits between the server and the browser,
+   which breaks hydration. */
+const rnd = (i: number) => { let x = Math.imul(i + 1, 374761393); x = Math.imul(x ^ (x >>> 13), 1274126177); return ((x ^ (x >>> 16)) >>> 0) / 4294967296; };
+/** Coordinates are rounded so the server and the browser write the same numbers. */
+const q = (v: number) => Math.round(v * 100) / 100;
 const arc = (cx: number, cy: number, r: number, a0: number, a1: number) => {
   const p = (a: number) => `${(cx + r * Math.sin(a * Math.PI / 180)).toFixed(2)} ${(cy - r * Math.cos(a * Math.PI / 180)).toFixed(2)}`;
   return `M${p(a0)}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${p(a1)}`;
@@ -208,7 +212,7 @@ export function GlyphManifold() {
   const clouds = [[58, 78, 34, 20, "f-mid"], [122, 52, 30, 22, "f-b"], [186, 34, 34, 18, "f-a"]] as const;
   const pts = (c: number) => seq(14, (i) => {
     const [cx, cy, rx, ry] = clouds[c], a = rnd(i * 7 + c) * 6.283, k = Math.sqrt(rnd(i * 13 + c * 5));
-    return [cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k] as const;
+    return [q(cx + Math.cos(a) * rx * k), q(cy + Math.sin(a) * ry * k)] as const;
   });
   const P = [pts(0), pts(1), pts(2)];
   return <Svg>
@@ -260,7 +264,7 @@ export function GlyphTerrain() {
 export function GlyphFrontier() {
   const line = "M16 104C60 104 62 72 88 58S132 22 224 18";
   return <Svg>
-    {seq(36, (i) => <circle key={i} cx={22 + rnd(i) * 206} cy={26 + rnd(i + 91) * 80 + (1 - rnd(i)) * 10} r={1.8} className={rnd(i + 91) * 80 + (1 - rnd(i)) * 10 > (1 - rnd(i)) * 58 ? "f-dim" : "f-faint"} />)}
+    {seq(36, (i) => <circle key={i} cx={q(22 + rnd(i) * 206)} cy={q(26 + rnd(i + 91) * 80 + (1 - rnd(i)) * 10)} r={1.8} className={rnd(i + 91) * 80 + (1 - rnd(i)) * 10 > (1 - rnd(i)) * 58 ? "f-dim" : "f-faint"} />)}
     <path d={`${line}V112H16Z`} className="f-a" opacity={0.1} />
     <path d={line} className="s-a" strokeWidth={2.5} fill="none" strokeLinecap="round" />
     <circle r={7} className="f-ink"><animateMotion path={line} keyPoints="0;1;1;0" keyTimes="0;.7;.94;1" calcMode="linear" {...loop(8)} /></circle>
@@ -276,7 +280,7 @@ export function GlyphCurves() {
     {marks.map((u) => <path key={u} d={`M${X(u)} 6V110`} className="s-dim" strokeWidth={1} strokeDasharray="2 4" />)}
     {series.map(([a, g], k) => <g key={k}>
       <path d={seq(41, (i) => `${i ? "L" : "M"}${X(i / 40).toFixed(1)} ${y(a, g, i / 40).toFixed(1)}`).join("")} className={cls[k]} strokeWidth={2.2} fill="none" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1}><animate attributeName="stroke-dashoffset" values="1;0;0;1" keyTimes="0;.5;.94;1" {...loop(8)} /></path>
-      {marks.map((u) => <circle key={u} cx={X(u)} cy={y(a, g, u)} r={3.4} className={fill[k]} />)}
+      {marks.map((u) => <circle key={u} cx={q(X(u))} cy={q(y(a, g, u))} r={3.4} className={fill[k]} />)}
     </g>)}
   </Svg>;
 }
