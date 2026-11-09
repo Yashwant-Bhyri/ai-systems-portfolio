@@ -32,7 +32,7 @@ function collect(root: HTMLElement | null): Rects {
    The whole space belongs to one section at a time, its titles lit in turn. Then that block
    compresses into the left fifth of the screen, and the next section takes the other four fifths.
    Tiles keep one fixed size: only colour changes as they light, so nothing on the board shakes. */
-const CARD = 1500, QUICK = 900, SETTLE = 500, COMPRESS = 900;
+const CARD = 1500, QUICK = 900, SETTLE = 500, COMPRESS = 900, LINE_MS = 3600;
 const MOVE = { duration: 760, easing: "cubic-bezier(.65,0,.35,1)" } as const;
 
 export function rowsFor(n: number): number[] {
@@ -88,8 +88,10 @@ function BoardTile({ item, lit, compact, delay = 0, onOpen }: { item: ShowItem; 
 }
 
 export function TitleBoard({
-  pathways, items, start = 0, quick = false, overlay = false, from = null, threshold = 0.55, onStart, onEnd,
+  pathways, items, start = 0, quick = false, overlay = false, from = null, threshold = 0.55, lines = [], onStart, onEnd,
 }: {
+  /** Said first, over the muted board, one at a time. */
+  lines?: readonly string[];
   pathways: readonly Pathway[];
   items: readonly ShowItem[];
   /** Which section begins with the whole space. */
@@ -108,6 +110,8 @@ export function TitleBoard({
   const root = useRef<HTMLDivElement>(null);
   const [focus, setFocus] = useState(start);
   const [lit, setLit] = useState(-1);
+  // With opening lines, the board starts muted, so it never flashes before the first line.
+  const [line, setLine] = useState<string | null>(lines.length ? "" : null);
   const pending = useRef<Rects | null>(from);
   const endRef = useRef(onEnd);
   useEffect(() => { endRef.current = onEnd; });
@@ -126,6 +130,9 @@ export function TitleBoard({
       clear();
       const n = pathways.length, step = quick ? QUICK : CARD;
       let t = overlay ? 800 : 400;
+      // The board is muted while each opening line is said across it.
+      for (const l of lines) { const at = t; timers.push(window.setTimeout(() => setLine(l), at)); t += LINE_MS; }
+      if (lines.length) { timers.push(window.setTimeout(() => setLine(null), t)); t += 500; }
       for (let s = start; s < n; s++) {
         const own = itemsRef.current.filter((i) => i.pathway === s).map((i) => i.key);
         if (s > start) {
@@ -139,13 +146,16 @@ export function TitleBoard({
     };
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) run();
-      else { clear(); setFocus(start); setLit(-1); }
+      else { clear(); setFocus(start); setLit(-1); setLine(lines.length ? "" : null); }
     }, { threshold });
     io.observe(el);
     return () => { io.disconnect(); clear(); };
+    // the script is fixed for one board
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathways.length, quick, overlay, start, threshold]);
   return (
-    <div ref={root} className="tb-root" data-overlay={overlay || undefined} data-sections={pathways.length}>
+    <div ref={root} className="tb-root" data-overlay={overlay || undefined} data-sections={pathways.length} data-line={line !== null ? "" : undefined}>
+      {line && <p key={line} className="tb-line">{highlight(tr(line))}</p>}
       {pathways.map((p, pi) => {
         const own = items.filter((i) => i.pathway === pi);
         const mode = pi === focus ? "full" : pi < focus ? "compact" : "hidden";

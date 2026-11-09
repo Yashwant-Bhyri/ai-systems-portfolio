@@ -184,3 +184,11 @@
 .tb-head p { font-size: 20px; line-height: 28px; }
 .vx-shell .tr-next { height: 66px; min-height: 0; }
 .vx-shell .tr-next { overflow: hidden; }
+
+/* The opening lines: the board waits, muted, while each is said across the middle of the screen. */
+.tb-root[data-line] .tb-sec { filter: blur(10px) grayscale(.8) brightness(.4); opacity: .45; transition: filter .6s, opacity .6s; }
+.tb-sec { transition: filter .6s, opacity .6s; }
+.tb-line { position: absolute; z-index: 10; left: 50%; top: 46%; width: min(1080px, 90%); margin: 0; transform: translate(-50%, -50%); text-align: center; text-wrap: balance; pointer-events: none;
+  color: #f6f8fa; font: 450 clamp(34px, 3.4vw, 52px)/1.2 var(--font-geist-sans), sans-serif; letter-spacing: -.026em; animation: tb-line 3.6s cubic-bezier(.22,1,.36,1) both; }
+@keyframes tb-line { 0% { opacity: 0; transform: translate(-50%, calc(-50% + 12px)); } 12%, 88% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, calc(-50% - 8px)); } }
+@media (prefers-reduced-motion: reduce) { .tb-line { animation: none; } }

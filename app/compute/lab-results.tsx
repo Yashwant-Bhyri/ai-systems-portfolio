@@ -54,7 +54,7 @@ import { ModuleBar, type RailItem } from "./stagecraft/side-rail";
 import { ExplorationReel, type ReelItem } from "./stagecraft/reel";
 import { LabNavSwitcher, useLabNav } from "./stagecraft/lab-nav";
 import { TitleBoard, TitleRail, boardRects, railRects, type Pathway, type Rects, type ShowItem } from "./stagecraft/title-show";
-import { ChoiceCard, IntroCard, ModuleBrief, moduleBriefs } from "./stagecraft/module-brief";
+import { ChoiceCard, IntroCard, ModuleBrief, PurposeCard, moduleBriefs } from "./stagecraft/module-brief";
 import { BigPicture } from "./stagecraft/big-picture";
 import { Manifold } from "./stagecraft/manifold";
 import { ServingDial } from "./stagecraft/serving-dial";
@@ -434,6 +434,8 @@ const FEWER = Math.round(100 * (1 - T_.lean.tokens / T_.lean.n / (T_.rl4.tokens 
 const R_ = inferenceStoryRuns("shared-prefix");
 const PCT_LESS = Math.round(100 * (1 - R_[3].correctCost! / R_[0].correctCost!));
 const cost2 = (v: number) => v.toFixed(2);
+/** Share of the 96 tasks, as a percentage: easier to hold than a count. */
+const pct = (n: number) => `${Math.round((100 * n) / 96)}%`;
 const n0 = (v: number) => v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 const n2 = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const FINISH = (r: (typeof R_)[number]) => Math.max(...r.tasks.map((t) => t.finish));
@@ -445,6 +447,8 @@ const INFERENCE_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "Same intelligence at cheaper cost", short: "Same intelligence at cheaper cost", techniques: [], lead: `The same ${R_[3].correct} correct answers from the same model, with *${PCT_LESS}% less compute*: ${cost2(R_[0].correctCost!)} → ${cost2(R_[3].correctCost!)} GPU-seconds per correct answer` },
   { n: "02", title: "Serving under load", short: "Serving under load", techniques: [], lead: "Many requests share one GPU: *four techniques* keep every answer streaming, and the whole path on one clock" },
 ];
+const INFERENCE_OPENING = ["Inference optimization is *two problems*", "Serve the *same intelligence at cheaper cost*, and keep it fast when *serving under load*"];
+const TRAINING_OPENING = ["Take a small model, Qwen3-4B, and apply *advanced post-training*", "How far can it go on maths and coding: *more right answers, for less thinking*?"];
 const TRAINING_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "What did the model learn?", short: "In detail", techniques: [], lead: `One base model, trained step by step on maths and coding: *${T_.base.correct} → ${T_.lean.correct} of 96* tasks solved, and every result is here` },
 ];
@@ -453,10 +457,10 @@ const TRAINING_PATHWAYS: readonly Pathway[] = [
  * no clip leaves before its figure has finished, so these lengths follow the figures' own clocks.
  * Inference is two sections; between them the laboratory returns to the title board.
  */
-type Clip = { key?: string; title?: string; ms: number; line?: string; intro?: string; board?: boolean; beat?: number; speed?: number; film?: { step: number; at?: number; frame?: boolean }; seek?: number; metric?: string };
+type Clip = { key?: string; title?: string; ms: number; line?: string; intro?: string; purpose?: boolean; board?: boolean; beat?: number; speed?: number; film?: { step: number; at?: number; frame?: boolean }; seek?: number; metric?: string };
 const ARC_SPEED = 1.25, INTRO_MS = 3400;
 /** Long enough to read: the time follows the words. */
-const intro = (key: string, text: string, title?: string): Clip => ({ key, title, intro: text, ms: Math.max(INTRO_MS, 1800 + 150 * text.split(/\s+/).length) });
+const intro = (key: string, text: string, title?: string): Clip => ({ key, title, intro: text, ms: Math.max(INTRO_MS, 1800 + 150 * text.split(/\s+/).length) + 2600 });
 /** Problem, solution and impact, each to its end. A film keeps its own pace; drawn scenes play a little quicker. */
 const arcClips = (key: string, [problem, solution, impact]: readonly [string, string, string], [a, b, c]: readonly [number, number, number], filmB = false): Clip[] => [
   { key, beat: 0, speed: ARC_SPEED, ms: a / ARC_SPEED + 500, line: problem },
@@ -487,7 +491,24 @@ const INFERENCE_CLIPS: readonly Clip[] = [
   intro("overlap", "Between two GPU steps, the CPU prepares the next one. *The GPU waits for it*"),
   ...arcClips("overlap", ["Problem: the GPU waits while the CPU prepares the next step", "CPU/GPU overlap: prepare the next step during this one", `Impact: four decode steps in ${OVERLAP.baseline.finish} → ${OVERLAP.overlapped.finish} ms, the same GPU work`], [11000, 12500, 9000]),
 ];
+const TOK = (r: { tokens: number; n: number }) => Math.round(r.tokens / r.n);
+const BASE4 = simulateLab(0, 4);
+/** Post-training's purpose, before any figure: the model as released, then after post-training. */
+const PURPOSE = {
+  headline: "The goal: make a small model, Qwen3-4B, *reason better*, and then *think less* for the same answers",
+  before: { title: "Qwen3-4B, as released", rows: [
+    { label: "Tasks solved", value: pct(T_.base.correct), note: "96 synthetic maths, logic and coding tasks" },
+    { label: "With 4× more thinking", value: pct(BASE4.correct), note: "more test-time compute, no training" },
+  ] },
+  after: { title: "After advanced post-training", rows: [
+    { label: "Tasks solved, at 4× thinking", value: pct(T_.lean.correct), note: `+${Math.round((100 * (T_.lean.correct - BASE4.correct)) / 96)} points over the base model with the same thinking` },
+    { label: "Over the model as released", value: `+${Math.round((100 * (T_.lean.correct - T_.base.correct)) / 96)} pts` },
+    { label: "Then, thinking less", value: `${TOK(T_.rl4).toLocaleString("en-US")} → ${TOK(T_.lean).toLocaleString("en-US")}`, note: `tokens per task: Lean RL keeps the RL checkpoint's answers with ${FEWER}% fewer` },
+  ] },
+  techniques: ["SFT + LoRA on verified solutions", "GRPO: learning from test outcomes", "A thinking budget at test time", "Lean RL: a cost for every token", "Elastic RL on 64 GPUs"],
+};
 const TRAINING_CLIPS: readonly Clip[] = [
+  { purpose: true, ms: 15000, line: `The goal: ${pct(T_.base.correct)} → ${pct(T_.lean.correct)} of tasks solved, and then the same answers for ${FEWER}% fewer tokens` },
   intro("manifold", "Each dot is one task. *Lines join the same task across three models*; each view asks a different question"),
   { key: "manifold", ms: 21600, line: `Every task, three models, six dimensions: ${T_.base.correct} → ${T_.lean.correct} of 96 cross from wrong to correct` },
   intro("inside", "One coding task, watched *layer by layer* inside the model as it answers"),
@@ -717,8 +738,8 @@ export function ComputeLabStudy({
         { key: "curves", title: "What more thinking buys", term: "Compute curves", value: `${simulateLab(2, 8).correct}`, unit: "of 96 · RL checkpoint at 8× thinking budget", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "fleet", title: "Almost twice the RL steps on 64 GPUs", term: "Elastic RL", value: "4 → 7", unit: "RL steps in 14 min", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
         { key: "map", title: "Task by task", term: "Capability map", value: `+${solvedGain}`, unit: `net tasks at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "film", title: "Training, step by step", term: "The experiment", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
-        { key: "tasks", title: "Which tasks it can now solve", term: "Easiest to hardest", value: `+${solvedGain}`, unit: `tasks solved at ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
+        { key: "film", title: "Four training moves, measured", term: "The experiment", value: "28 → 82", unit: "of 96 synthetic tasks", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "tasks", title: "Harder tasks within reach", term: "Easiest to hardest", value: `+${solvedGain}`, unit: `tasks solved at ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
         { key: "audit", title: "What got worse", term: "Regression audit", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thinking budget`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
@@ -825,12 +846,14 @@ export function ComputeLabStudy({
     lastClipKey.current = clip !== null && clips[clip].key === clips[to].key ? clips[to].key ?? null : null;
     setClip(to);
   };
+  // Holding during an introduction skips the introduction: the visitor is held on the figure, not on a blurred screen.
   const toggleClipHold = () => {
     window.dispatchEvent(new Event(clipHeld ? "lab:release" : "lab:hold"));
+    if (!clipHeld && clip !== null && (clips[clip].intro || clips[clip].purpose)) setClip(clip + 1);
     setClipHeld(!clipHeld);
   };
   const summaryRef = useRef({ on: false, held: false, hold: () => {} });
-  useEffect(() => { summaryRef.current = { on: clip !== null, held: clipHeld, hold: () => { window.dispatchEvent(new Event("lab:hold")); setClipHeld(true); } }; });
+  useEffect(() => { summaryRef.current = { on: clip !== null, held: clipHeld, hold: () => { window.dispatchEvent(new Event("lab:hold")); if (clip !== null && (clips[clip].intro || clips[clip].purpose)) setClip(clip + 1); setClipHeld(true); } }; });
   const openKey = (key: string, auto = false) => {
     if (key === "summary") { setLandingPhase((p) => (p === "on" ? "off" : p)); setBriefKey(null); setFork(null); setBoard(null); setClipHeld(false); lastClipKey.current = null; setClip(0); return; }
     setClip(null);
@@ -954,7 +977,7 @@ export function ComputeLabStudy({
   };
   const landingOn = show && landingPhase === "on";
   // Under an introduction or a title board, a module waits to begin.
-  const veiled = !!briefKey || !!board || (clip !== null && !!clips[clip].intro);
+  const veiled = !!briefKey || !!board || (clip !== null && (!!clips[clip].intro || !!clips[clip].purpose));
 
   // The reel orientations keep the stage at its natural size; "bar" is the one-screen block.
   const block = labNav === "bar";
@@ -1095,7 +1118,7 @@ export function ComputeLabStudy({
       </div>
       <div className={block ? "lb-body" : "lf-body"} data-landing={landingOn || undefined}>
         {show && landingOn && (
-          <TitleBoard pathways={pathways} items={showItems} onStart={(key, from) => startShow(key, from)} onEnd={() => startShow("summary")} />
+          <TitleBoard pathways={pathways} items={showItems} lines={training ? TRAINING_OPENING : INFERENCE_OPENING} onStart={(key, from) => startShow(key, from)} onEnd={() => startShow("summary")} />
         )}
         {show && board && (
           <TitleBoard overlay quick start={1} threshold={0.2} from={board.from} pathways={pathways} items={showItems} onStart={(key, from) => { setRailFrom(from); setBoard(null); openKey(key); }} onEnd={() => board.then()} />
@@ -1105,18 +1128,24 @@ export function ComputeLabStudy({
             item={showItems.find((i) => i.key === briefKey)!}
             brief={briefs[briefKey]}
             path={pathways[showItems.find((i) => i.key === briefKey)?.pathway ?? 0].short}
-            onDone={endBrief}
+            away={!labInView} onDone={endBrief}
           />
         )}
+        {show && clip !== null && clips[clip].purpose && labInView && !clipHeld && <PurposeCard key={clip} ms={clips[clip].ms} {...PURPOSE} />}
         {show && clip !== null && clips[clip].intro && (() => {
           const c = clips[clip], item = showItems.find((i) => i.key === c.key);
-          return item ? <IntroCard key={clip} item={c.title ? { ...item, title: c.title } : item} text={c.intro!} ms={c.ms} /> : null;
+          // Only while the lab is on screen and playing: a fixed blur must never outlive its moment.
+          return item && labInView && !clipHeld ? <IntroCard brief={briefs[c.key!]} key={clip} item={c.title ? { ...item, title: c.title } : item} text={c.intro!} ms={c.ms} /> : null;
         })()}
         {show && fork && (
           <ChoiceCard
+            away={!labInView}
             auto
-            headline={training ? `Post-training, in summary: *${T_.base.correct} → ${T_.lean.correct} of 96* tasks solved` : `Inference optimization, in summary: the same ${R_[3].correct} correct answers for *${PCT_LESS}% less compute*`}
-            study={{ title: "Go through it in detail", detail: training ? "Every module in full: the figures, the methods and the training data" : "Every module in full: the figures and the method, then optimized serving under load", onPick: () => openKey(order[0]) }}
+            headline={training ? `Post-training, in summary: *${pct(T_.base.correct)} → ${pct(T_.lean.correct)}* of tasks solved` : `That is inference optimization, two ways: the same ${R_[3].correct} correct answers for *${PCT_LESS}% less compute*, and serving under load`}
+            study={training
+              ? { title: "Go through it in detail", detail: "Every module in full: the figures, the methods and the training data", onPick: () => openKey(order[0]) }
+              : { title: "Same intelligence at cheaper cost, in detail", detail: "The dial, the three levers, one request, the slowest requests", onPick: () => openKey(order[0]) }}
+            also={training ? undefined : { title: "Serving under load, in detail", detail: "Long prompts, draft models, cache-aware routing, CPU/GPU overlap", onPick: () => { carded.current = true; openKey("pressure"); } }}
             onward={training
               ? { title: "Next project: Inference optimization", detail: "The same intelligence served for less, and optimized under load", href: "/#inference" }
               : { title: "Next project: Medical AI", detail: "An evidence-grounded assistant for clinicians", href: "/#mindscape" }}

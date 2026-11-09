@@ -73,7 +73,8 @@ export function moduleBriefs(training: boolean, budget: number, chosen: { policy
 const END = 5600, OUT = 760, BACK = 520;
 const EASE = "cubic-bezier(.65,0,.35,1)";
 
-export function ModuleBrief({ item, brief, path, onDone }: { item: ShowItem; brief: Brief; path: string; onDone: () => void }) {
+/** `away`: the lab has scrolled off screen, so the fixed blur steps aside instead of covering other pages. */
+export function ModuleBrief({ item, brief, path, onDone, away = false }: { item: ShowItem; brief: Brief; path: string; onDone: () => void; away?: boolean }) {
   const tr = useTr();
   const done = useRef(onDone);
   useEffect(() => { done.current = onDone; });
@@ -115,7 +116,7 @@ export function ModuleBrief({ item, brief, path, onDone }: { item: ShowItem; bri
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return createPortal(
-    <div className={`mb-veil ${labAccent()}`} data-leaving={leaving || undefined} role="dialog" aria-label={`${tr(item.title)}: ${tr("what this is")}`} onClick={() => done.current()}>
+    <div hidden={away} className={`mb-veil ${labAccent()}`} data-leaving={leaving || undefined} role="dialog" aria-label={`${tr(item.title)}: ${tr("what this is")}`} onClick={() => done.current()}>
       <div ref={card} className="mb-card">
         <span className="ts-glyph rl-glyph mb-glyph" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
         <div className="mb-text">
@@ -134,9 +135,9 @@ export function ModuleBrief({ item, brief, path, onDone }: { item: ShowItem; bri
 
 /**
  * In the Summary, each module is introduced before it plays: its title steps out of the rail to the
- * middle of the screen, says in one sentence how to read what comes, and goes back.
+ * middle of the screen and says what it does, what it changed (the number highlighted), and how to read it.
  */
-export function IntroCard({ item, text, ms }: { item: ShowItem; text: string; ms: number }) {
+export function IntroCard({ item, text, ms, brief }: { item: ShowItem; text: string; ms: number; brief?: Brief }) {
   const tr = useTr();
   const card = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -145,15 +146,46 @@ export function IntroCard({ item, text, ms }: { item: ShowItem; text: string; ms
     const b = c.getBoundingClientRect(), a = tile?.getBoundingClientRect();
     const from = a ? `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width}, ${a.height / b.height})` : "translateY(12px) scale(.96)";
     c.animate([{ transformOrigin: "0 0", transform: from, opacity: 0.4 }, { transformOrigin: "0 0", transform: "none", opacity: 1 }], { duration: 620, easing: EASE, fill: "backwards" });
-    c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: ms - 300, fill: "forwards" });
   }, [item.key, ms]);
   return createPortal(
-    <div className={`mb-veil mb-intro ${labAccent()}`} aria-live="polite">
+    <div className={`mb-veil mb-intro ${labAccent()}`} aria-live="polite" style={{ animation: `mb-veil .4s cubic-bezier(.22,1,.36,1) both, mb-veil-out .35s ease-in ${Math.max(0, ms - 380)}ms forwards` }}>
       <div ref={card} className="mi-card">
         <span className="mi-art" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
         <h3>{tr(item.title)}</h3>
         {item.term && <em>{tr(item.term)}</em>}
-        <p>{highlight(tr(text))}</p>
+        {brief && <p className="mi-does">{tr(brief.does)}</p>}
+        {brief && <p className="mi-impact">{highlight(tr(brief.impact))}</p>}
+        <p className="mi-read">{highlight(tr(text))}</p>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/**
+ * Post-training's opening: what was done and why, before any figure. The model as released, then the
+ * same model after advanced post-training, then the techniques that did it. Every number is the lab's.
+ */
+export type PurposeSide = { title: string; rows: readonly { label: string; value: string; note?: string }[] };
+export function PurposeCard({ headline, before, after, techniques, ms }: { headline: string; before: PurposeSide; after: PurposeSide; techniques: readonly string[]; ms: number }) {
+  const tr = useTr();
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = [window.setTimeout(() => setStep(1), ms * 0.3), window.setTimeout(() => setStep(2), ms * 0.62)];
+    return () => t.forEach((x) => window.clearTimeout(x));
+  }, [ms]);
+  const side = (s: PurposeSide, tone: string, on: boolean) => (
+    <section className="pc-side" data-tone={tone} data-on={on || undefined}>
+      <h4>{tr(s.title)}</h4>
+      {s.rows.map((r) => <div key={r.label} className="pc-row"><span>{tr(r.label)}</span><b>{r.value}</b>{r.note && <small>{tr(r.note)}</small>}</div>)}
+    </section>
+  );
+  return createPortal(
+    <div className={`mb-veil mb-intro pc-veil ${labAccent()}`} aria-live="polite" style={{ animation: `mb-veil .4s cubic-bezier(.22,1,.36,1) both, mb-veil-out .35s ease-in ${Math.max(0, ms - 380)}ms forwards` }}>
+      <div className="pc-card">
+        <p className="pc-head">{highlight(tr(headline))}</p>
+        <div className="pc-split">{side(before, "base", true)}<i aria-hidden="true">→</i>{side(after, "after", step >= 1)}</div>
+        <ul className="pc-tech" data-on={step >= 2 || undefined}>{techniques.map((t) => <li key={t}>{tr(t)}</li>)}</ul>
       </div>
     </div>,
     document.body,
@@ -166,7 +198,7 @@ export function IntroCard({ item, text, ms }: { item: ShowItem; text: string; ms
  */
 export type ChoiceOption = { title: string; detail: string; href?: string; onPick?: () => void };
 const CHOICE_MS = 14000;
-export function ChoiceCard({ headline, study, onward, auto }: { headline: string; study: ChoiceOption; onward: ChoiceOption; auto: boolean }) {
+export function ChoiceCard({ headline, study, onward, auto, also, away = false }: { headline: string; study: ChoiceOption; onward: ChoiceOption; auto: boolean; also?: ChoiceOption; away?: boolean }) {
   const tr = useTr();
   const go = useRef(study.onPick);
   useEffect(() => { go.current = study.onPick; });
@@ -192,10 +224,10 @@ export function ChoiceCard({ headline, study, onward, auto }: { headline: string
       : <button key={o.title} type="button" className="mc-option" data-primary={primary || undefined} onClick={o.onPick}>{body}</button>;
   };
   return createPortal(
-    <div className={`mb-veil mc-veil ${labAccent()}`} role="dialog" aria-label={tr("Where to next")}>
+    <div hidden={away} className={`mb-veil mc-veil ${labAccent()}`} role="dialog" aria-label={tr("Where to next")}>
       <div className="mc-card" onPointerEnter={() => setHold(true)} onPointerLeave={() => setHold(false)}>
         <p className="mc-head">{highlight(tr(headline))}</p>
-        <div className="mc-options">{option(study, true)}{option(onward, false)}</div>
+        <div className="mc-options" data-count={also ? 3 : 2}>{option(study, true)}{also && option(also, false)}{option(onward, false)}</div>
       </div>
     </div>,
     document.body,
