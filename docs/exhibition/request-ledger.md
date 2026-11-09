@@ -252,3 +252,17 @@ The seven larger items, done after (2026-11-10): the head follows the chosen che
 | Title-to-title highlight that slides, on the board and the second page's cards; technique names lead | Done |
 | Inference: system glossary at the end, then in detail (either), the microscope, or the next project | Done |
 | Language pass over both presentations | Done for every Summary line and brief |
+
+## Round 18 (2026-11-10)
+
+| Request | Status |
+|---|---|
+| Manifold readout expanded beside the cube | Done: full-height column, larger numbers |
+| Post-training techniques grouped under their aims (more intelligence / less computation) | Done: second page intro, lab opening, purpose card |
+| Inference opens as two problems: zoom into one, back, zoom into two, both, then Summary | Done |
+| Technical names (Serving timeline, Batching/prefix caching/FP8, Request replay, Policy × runtime, Tail latency (p95), Lever ablation, Chunked prefill …) | Done in the lab and on the home page |
+| Dial: each lit phase shows baseline → optimized and the difference | Done, in the centre and the line |
+| Blur screens with numbered parts (three levers, four measures, four phases, four views) | Done |
+| Eye-catching title-to-title transition | Done: a sprung slide, a pulse on arrival, a sheen across the new title |
+| No "of 96" on the home page | Done: percentages throughout the second pages and their live panels |
+| Deep link sometimes landed on the architecture | Fixed: the landing is retried while the page settles |

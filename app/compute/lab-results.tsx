@@ -752,9 +752,9 @@ export function ComputeLabStudy({
         manifoldItem,
         { key: "setup", title: "Batching, prefix caching, FP8", term: "Three levers, the same answers", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphBigPicture, onOpen: openSetup, current: mode === "setup" },
         { key: "replay", title: "Request replay", term: "One request, four measures", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
-        { key: "composition", title: "Policy × runtime", term: "Training meets serving", value: `${simulateLab(0, budget, false, workload).correct} → ${rlFast.correct}`, unit: "of 96 correct", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "composition", title: "Policy × runtime", term: "Training meets serving", value: `${pct(simulateLab(0, budget, false, workload).correct)} → ${pct(rlFast.correct)}`, unit: "accuracy", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "latency", title: "Tail latency (p95)", term: "The slowest 5% of requests", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s, arrival to last word", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
-        { key: "film", title: "Lever ablation", term: "One lever at a time", value: "3 levers", unit: "each measured on the same 96", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "film", title: "Lever ablation", term: "One lever at a time", value: "3 levers", unit: "each measured on every request", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
       ];
   // Deep links from the project overview: #inference-study/replay opens that module.
   const railRef = useRef(railItems);
@@ -766,7 +766,7 @@ export function ComputeLabStudy({
       const [id, key] = window.location.hash.slice(1).split("/");
       if (id !== sectionId) return;
       // Arriving at the laboratory itself: bring it into view, and its opening plays.
-      if (!key) { window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "instant", block: "start" }), 60); return; }
+      if (!key) { [60, 700, 1800].forEach((ms) => window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "instant", block: "start" }), ms)); return; }
       setLandingPhase("off");
       if (!training && SERVING.includes(key)) {
         setInferencePart("load");
@@ -776,7 +776,8 @@ export function ComputeLabStudy({
         if (!training) setInferencePart("cheaper");
         railRef.current.find((item) => item.key === key)?.onOpen();
       }
-      window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "instant", block: "start" }), 60);
+      // On a cold load the page above is still settling: land again once it has.
+      [60, 700, 1800].forEach((ms) => window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "instant", block: "start" }), ms));
     };
     open();
     window.addEventListener("hashchange", open);
