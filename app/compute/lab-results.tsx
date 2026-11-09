@@ -58,6 +58,7 @@ import { ChoiceCard, IntroCard, ModuleBrief, PurposeCard, moduleBriefs } from ".
 import { BigPicture } from "./stagecraft/big-picture";
 import { Manifold } from "./stagecraft/manifold";
 import { ServingDial } from "./stagecraft/serving-dial";
+import { withBase } from "../base-path";
 import { CACHE_DELTA, OVERLAP, PRESSURE_GAP, SERVING_RAIL } from "./serving-rail-meta";
 import { TaskLanding } from "./stagecraft/task-landing";
 import { FleetModule } from "./stagecraft/fleet-module";
@@ -1074,7 +1075,7 @@ export function ComputeLabStudy({
         held={clipHeld}
         summary={clip !== null ? { held: clipHeld, first: clip === 0, last: clip === clips.length - 1, onBack: () => goClip(clip - 1), onToggle: toggleClipHold, onForward: () => goClip(clip + 1) } : undefined}
         last={clip === null && lastModule}
-        afterLast={training ? { title: "Inference optimization", href: "/#inference" } : { title: "Medical AI", href: "/#mindscape" }}
+        afterLast={training ? { title: "Inference optimization", href: withBase("/#inference") } : { title: "Medical AI", href: withBase("/#mindscape") }}
         countdownMs={clip !== null ? upNext(clips, clip).span : COUNTDOWN}
         onItem={(key) => {
           if (clip !== null) { const t = summaryTiles(clips).find((c) => c.key === key); if (t) goClip(t.first); return; }
@@ -1209,11 +1210,11 @@ export function ComputeLabStudy({
               : { title: "Same intelligence at cheaper cost, in detail", detail: "The dial, the three levers, one request, the slowest requests", onPick: () => openKey(order[0]) }}
             also={training ? [] : [
               { title: "Serving under load, in detail", detail: "Chunked prefill, speculative decoding, cache-aware routing, CPU/GPU overlap", onPick: () => { carded.current = true; openKey("pressure"); } },
-              { title: "Each component, in the microscope", detail: "Follow one request through the serving engine, part by part", href: "/inference#inference-microscope" },
+              { title: "Each component, in the microscope", detail: "Follow one request through the serving engine, part by part", href: withBase("/inference#inference-microscope") },
             ]}
             onward={training
-              ? { title: "Next project: Inference optimization", detail: "The same intelligence served for less, and optimized under load", href: "/#inference" }
-              : { title: "Next project: Medical AI", detail: "An evidence-grounded assistant for clinicians", href: "/#mindscape" }}
+              ? { title: "Next project: Inference optimization", detail: "The same intelligence served for less, and optimized under load", href: withBase("/#inference") }
+              : { title: "Next project: Medical AI", detail: "An evidence-grounded assistant for clinicians", href: withBase("/#mindscape") }}
           />
         )}
         {labNav !== "dock" && !landingOn && navNode}

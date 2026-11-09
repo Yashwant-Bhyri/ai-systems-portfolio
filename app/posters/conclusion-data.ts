@@ -4,6 +4,7 @@ import { rateCard, fmtMs } from "../compute/calibration";
 import { OVERLAP, PRESSURE_GAP, CACHE_DELTA } from "../compute/serving-rail-meta";
 import { FRONTIER_COST } from "../exhibit/policy/data.ts";
 import type { ConclusionSpec } from "../conclusion-board";
+import { withBase } from "../base-path";
 
 /* Every number comes from the same model as the laboratory. */
 const f = (v: number, d = 0) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -38,7 +39,7 @@ export const INFERENCE_CONCLUSION: ConclusionSpec = {
   ],
   learned: "Each lever moves a different number: scheduling removes the wait, reuse removes the prompt read, and only faster decode moves the bill, because writing answers is where the GPU time goes.",
   note: "96 synthetic requests; costs from a roofline calibrated on published H100 specs",
-  links: [{ title: "Watch the results", href: "/inference#inference-study" }],
+  links: [{ title: "Watch the results", href: withBase("/inference#inference-study") }],
 };
 
 const T = { base: simulateLab(0, 1), sft: simulateLab(1, 1), rl: simulateLab(2, 1), rl4: simulateLab(2, 4), lean: simulateLab(3, 4) };
@@ -68,5 +69,5 @@ export const TRAINING_CONCLUSION: ConclusionSpec = {
   ],
   learned: "Training raises what the model can do, the thinking budget lets it use that ability, and lean RL makes it affordable. Accuracy and cost have to be read together, so every step reports both.",
   note: "96 synthetic tasks on a simulated model; not a measured Qwen3-4B run",
-  links: [{ title: "Watch the results", href: "/post-training#post-training-study" }],
+  links: [{ title: "Watch the results", href: withBase("/post-training#post-training-study") }],
 };

@@ -39,7 +39,7 @@ export const ALSO: readonly { key: string; title: string; value: string }[] = [
   { key: "glossary", title: "Serving glossary", value: "nine terms, each with its number" },
 ];
 /** The deep route for each project: architecture → component microscope → laboratory. */
-export const DEPTH = { inference: "/inference", training: "/post-training" } as const;
+export const DEPTH = { inference: withBase("/inference"), training: withBase("/post-training") } as const;
 /** Where an inference card opens. */
 export const labHref = (key: string) => `${DEPTH.inference}#inference-study/${key}`;
 export const fmt = f;
@@ -47,6 +47,7 @@ export const fmt = f;
 const Pc = (n: number) => Math.round((100 * n) / 96);
 
 import type { LedgerSpec } from "./posters";
+import { withBase } from "../base-path";
 const PCT = Math.round(100 * (1 - COST.kernels / COST.base));
 export const INFERENCE_LEDGER: LedgerSpec = {
   domain: "inference", mode: "shrink",

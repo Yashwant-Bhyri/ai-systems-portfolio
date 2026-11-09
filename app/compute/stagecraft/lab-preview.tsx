@@ -7,6 +7,7 @@ import type { Pathway, ShowItem } from "./title-show";
 import { GlyphDial, GlyphManifold, GlyphBigPicture, GlyphLearn, GlyphComposition, GlyphCurves, GlyphExperiment, GlyphFleet, GlyphFrontier, GlyphInside, GlyphLatency, GlyphReplay, GlyphTasks, GlyphTerrain, GlyphAudit } from "./glyphs";
 import "./title-show.css";
 import "./stagecraft.css";
+import { withBase } from "../../base-path";
 
 /** The results laboratory's opening, looping, for the project's second page. */
 const f = (v: number, d = 2) => v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -59,7 +60,7 @@ export function LabPreview({ training }: { training: boolean }) {
     return () => window.clearInterval(t);
   }, [items.length]);
   const on = hover ?? lit, cur = items[on];
-  const href = (key: string) => `/${id}?labnav=show#${id}-study/${key}`;
+  const href = (key: string) => withBase(`/${id}?labnav=show#${id}-study/${key}`);
   return (
     <div className="lc-band">
       <div className="lc-blocks">

@@ -32,6 +32,7 @@ import { GlyphCurves, GlyphLean, GlyphBigPicture, GlyphServingMap } from "./comp
 import { LabPreview } from "./compute/stagecraft/lab-preview";
 import { ConclusionBoard, conclusionFromProof, type ConclusionSpec } from "./conclusion-board";
 import { INFERENCE_CONCLUSION, INFERENCE_SAVING, TRAINING_RESULT, TRAINING_CONCLUSION } from "./posters/conclusion-data";
+import { withBase } from "./base-path";
 
 const assetPath = (path: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 
@@ -1796,9 +1797,9 @@ function FlagshipChapter({
     return () => window.removeEventListener("cx:microscope", open);
   }, [controller, id]);
 
-  const deep = part === "overview" ? `/${id}` : "";
+  const deep = part === "overview" ? withBase(`/${id}`) : "";
   const selectArchitectureNode = useCallback((index: number) => {
-    if (part === "overview") { window.location.href = `/${id}?step=${index}#${id}-microscope`; return; }
+    if (part === "overview") { window.location.href = withBase(`/${id}?step=${index}#${id}-microscope`); return; }
     controller.choose(index);
     if ((id === "inference" || id === "post-training") && controller.autoplayEnabled) controller.toggle();
     moveToMicroscope();
@@ -1828,7 +1829,7 @@ function FlagshipChapter({
             />
           </div>
           {(id === "inference" || id === "post-training") ? (
-            <a className="vx-architecture-handoff" href={part === "overview" ? `/${id}?labnav=show#${id}-study` : `#${id}-study`}>
+            <a className="vx-architecture-handoff" href={part === "overview" ? withBase(`/${id}?labnav=show#${id}-study`) : `#${id}-study`}>
               <span>See what it achieved</span>
               <strong>Enter the results laboratory</strong>
               <i>{part === "overview" ? "↗" : "↓"}</i>
@@ -2337,7 +2338,7 @@ const INFERENCE_GUIDE: Guide = {
 function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
   const training = domain === "training";
   const id = training ? "post-training" : "inference";
-  const href = `/${id}`;
+  const href = withBase(`/${id}`);
   return (
     <ProjectSecondPage
       id={id}
