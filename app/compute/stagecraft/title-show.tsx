@@ -54,6 +54,20 @@ function flip(root: HTMLElement | null, before: Rects | null, stagger = 18) {
     el.querySelectorAll<HTMLElement>(".tb-text, .tb-art").forEach((c) => c.animate([{ opacity: 0 }, { opacity: 0, offset: 0.75 }, { opacity: 1 }], { ...MOVE, delay: Math.min(i, 8) * stagger, fill: "backwards" }));
   });
 }
+/** A frame that slides to whichever element is lit, inside a positioned container. */
+export function useSpot(container: React.RefObject<HTMLElement | null>, selector: string, dep: unknown) {
+  const spot = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const box = container.current, el = box?.querySelector<HTMLElement>(selector), s = spot.current;
+    if (!box || !s) return;
+    if (!el) { s.style.opacity = "0"; return; }
+    const a = box.getBoundingClientRect(), b = el.getBoundingClientRect();
+    s.style.opacity = "1";
+    s.style.width = `${b.width}px`; s.style.height = `${b.height}px`;
+    s.style.transform = `translate(${b.left - a.left}px, ${b.top - a.top}px)`;
+  }, [container, selector, dep]);
+  return spot;
+}
 export const boardRects = (): Rects => {
   const m: Rects = new Map();
   document.querySelectorAll<HTMLElement>(".tb-root [data-show-key]").forEach((el) => m.set(el.dataset.showKey!, el.getBoundingClientRect()));
@@ -113,6 +127,9 @@ export function TitleBoard({
   // With opening lines, the board starts muted, so it never flashes before the first line.
   const [line, setLine] = useState<string | null>(lines.length ? "" : null);
   const pending = useRef<Rects | null>(from);
+  // The light moves from title to title: one frame slides across the board to the lit card.
+  const gridRef = useRef<HTMLDivElement>(null);
+  const spot = useSpot(gridRef, '.tb-tile[data-lit="true"]', `${lit}-${focus}`);
   const endRef = useRef(onEnd);
   useEffect(() => { endRef.current = onEnd; });
   const itemsRef = useRef(items);
@@ -170,7 +187,8 @@ export function TitleBoard({
               </div>
             </header>
             {mode !== "hidden" && (
-              <div className="tb-grid">
+              <div className="tb-grid" ref={mode === "full" ? gridRef : undefined}>
+                {mode === "full" && <span ref={spot} className="tb-spot" aria-hidden="true" />}
                 {mode === "compact"
                   ? own.map((item) => <BoardTile key={item.key} item={item} compact lit={false} onOpen={(k) => onStart(k, collect(root.current))} />)
                   : counts.map((count, r) => {

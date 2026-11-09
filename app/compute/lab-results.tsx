@@ -448,8 +448,8 @@ const INFERENCE_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "Same intelligence at cheaper cost", short: "Same intelligence at cheaper cost", techniques: [], lead: `The same ${R_[3].correct} correct answers from the same model, with *${PCT_LESS}% less compute*: ${cost2(R_[0].correctCost!)} → ${cost2(R_[3].correctCost!)} GPU-seconds per correct answer` },
   { n: "02", title: "Serving under load", short: "Serving under load", techniques: [], lead: "Many requests share one GPU: *four techniques* keep every answer streaming, and the whole path on one clock" },
 ];
-const INFERENCE_OPENING = ["Inference optimization is *two problems*", "Serve the *same intelligence at cheaper cost*, and keep it fast when *serving under load*"];
-const TRAINING_OPENING = ["Take a small model, Qwen3-4B, and apply *advanced post-training*", "How far can it go on maths and coding: *more right answers, for less thinking*?"];
+const INFERENCE_OPENING = ["Inference optimization is *two problems*", "One: the same intelligence at cheaper cost. Two: serving under load"];
+const TRAINING_OPENING = ["In this project, we took a small model, Qwen3-4B, and applied *advanced post-training*: SFT, GRPO, test-time scaling and Lean RL", "To see how its behaviour scales on maths and coding: *higher accuracy*, then *fewer GPU-seconds*"];
 const TRAINING_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "What did the model learn?", short: "In detail", techniques: [], lead: `One base model, trained step by step on maths and coding: *${T_.base.correct} → ${T_.lean.correct} of 96* tasks solved, and every result is here` },
 ];
@@ -470,33 +470,35 @@ const arcClips = (key: string, [problem, solution, impact]: readonly [string, st
 ];
 const INFERENCE_CLIPS: readonly Clip[] = [
   intro("flow", "One full turn of the dial is the baseline's whole run. *Every request is drawn in colour, by what it is doing*"),
-  { key: "flow", ms: 42200, line: `${PCT_LESS}% less compute, the same ${R_[3].correct} correct answers: all 96 answered at ${n0(FINISH(R_[0]))} → ${n0(FINISH(R_[3]))} s` },
-  intro("setup", "Three levers act on the same 96 requests. *Watch whether any answer changes*"),
-  { key: "setup", ms: 32400, seek: 7000, line: "Three levers act on all 96 requests, and not one answer changes" },
+  { key: "flow", ms: 42200, line: `${PCT_LESS}% less compute for the same answers: every request answered by ${n0(FINISH(R_[3]))} s instead of ${n0(FINISH(R_[0]))} s` },
+  intro("setup", "Three levers act on every request. *Watch whether any answer changes*"),
+  { key: "setup", ms: 32400, seek: 7000, line: "Three levers act on every request, and not one answer changes" },
   intro("replay", "One request from arrival to last word, before and after, *measured four ways*"),
   { key: "replay", ms: 25000, metric: "latency", line: `Response latency, request 7: ${n2(R_[1].tasks[6].latency)} → ${n2(R_[3].tasks[6].latency)} s` },
   { key: "replay", ms: 13000, metric: "service", seek: 12000, line: `Total GPU work, request 7: ${n2(R_[1].tasks[6].gpuSeconds)} → ${n2(R_[3].tasks[6].gpuSeconds)} GPU-s` },
   { key: "replay", ms: 13000, metric: "prefill", seek: 12000, line: `Input processing, request 7: ${R_[1].tasks[6].prefill.toFixed(3)} → ${R_[3].tasks[6].prefill.toFixed(3)} GPU-s; the shared prefix is already in memory` },
   { key: "replay", ms: 13000, metric: "decode", seek: 12000, line: `Answer generation, request 7: ${n2(R_[1].tasks[6].decode)} → ${n2(R_[3].tasks[6].decode)} GPU-s; every step moves half the bytes` },
   intro("composition", "Two separate levers: *what the model knows, and how it is served*"),
-  { key: "composition", ms: 27000, seek: 0, line: `${BASE_CORRECT} → ${R_[3].correct} of 96 correct: training raises accuracy, faster serving takes back the extra cost` },
+  { key: "composition", ms: 27000, seek: 0, line: `Accuracy ${pct(BASE_CORRECT)} → ${pct(R_[3].correct)}: training raises it, and faster serving takes back the extra cost` },
   intro("latency", "Every request ranked by how long it took. *Look at the slowest 5%*"),
   { key: "latency", ms: 24500, seek: 27000, line: `The slowest 5% of requests: ${n0(P95(R_[1]))} → ${n0(P95(R_[3]))} s` },
   { board: true, ms: 0 },
   intro("pressure", "When a long prompt arrives, *what happens to the answers already streaming?*"),
   ...arcClips("pressure", ["Problem: one long prompt freezes every answer streaming on that GPU", "Chunked prefill: read the prompt in chunks, so answers keep streaming", `Impact: worst pause ${PRESSURE_GAP.whole.toFixed(1)} → ${PRESSURE_GAP.chunked.toFixed(1)} ms; the long prompt's first token comes later`], [11500, 13500, 9000]),
-  intro("draft", "The large model writes one word per full pass. *Can it check many words at once?*"),
-  ...arcClips("draft", ["Problem: the large model writes one word per full pass", "Speculative decoding: a small draft model predicts tokens, the large one verifies them", "Impact: 12 → 3 serial large-model calls, while the guesses are good"], [10500, 19000, 9000], true),
+  intro("draft", "The large model writes one token per full pass. *Can it check many tokens at once?*"),
+  ...arcClips("draft", ["Problem: the large model writes one token per full pass", "Speculative decoding: a small draft model guesses ahead, the large one checks every guess in one pass", "Impact: 12 → 3 serial large-model calls, while the guesses are good"], [10500, 19000, 9000], true),
   intro("cache", "Several replicas could take this request. *One already has its prompt in memory*"),
   ...arcClips("cache", ["Problem: routing by load ignores what is already in memory", "Cache-aware routing: send each request to where its prefix is cached", `Impact: first token ${CACHE_DELTA} ms sooner, until the wait for space outgrows the reuse`], [11000, 12500, 9000]),
   intro("overlap", "Between two GPU steps, the CPU prepares the next one. *The GPU waits for it*"),
   ...arcClips("overlap", ["Problem: the GPU waits while the CPU prepares the next step", "CPU/GPU overlap: prepare the next step during this one", `Impact: four decode steps in ${OVERLAP.baseline.finish} → ${OVERLAP.overlapped.finish} ms, the same GPU work`], [11000, 12500, 9000]),
+  intro("glossary", "Every component of the serving system, *one term at a time*"),
+  { key: "glossary", ms: 25500, line: "The whole serving system: every component, each tied to this project" },
 ];
 const TOK = (r: { tokens: number; n: number }) => Math.round(r.tokens / r.n);
 const BASE4 = simulateLab(0, 4);
 /** Post-training's purpose, before any figure: the model as released, then after post-training. */
 const PURPOSE = {
-  headline: "The goal: make a small model, Qwen3-4B, *reason better*, and then *think less* for the same answers",
+  headline: "A small model, Qwen3-4B: first *higher accuracy*, then the same answers for *fewer GPU-seconds*",
   before: { title: "Qwen3-4B, as released", rows: [
     { label: "Tasks solved", value: pct(T_.base.correct), note: "96 synthetic maths, logic and coding tasks" },
     { label: "With 4× more thinking", value: pct(BASE4.correct), note: "more test-time compute, no training" },
@@ -1150,11 +1152,14 @@ export function ComputeLabStudy({
           <ChoiceCard
             away={!labInView}
             auto
-            headline={training ? `Post-training, in summary: *${pct(T_.base.correct)} → ${pct(T_.lean.correct)}* of tasks solved` : `That is inference optimization, two ways: the same ${R_[3].correct} correct answers for *${PCT_LESS}% less compute*, and serving under load`}
+            headline={training ? `Post-training, in summary: accuracy *${pct(T_.base.correct)} → ${pct(T_.lean.correct)}*` : "That is the whole system, *two ways*: where would you like to go?"}
             study={training
               ? { title: "Go through it in detail", detail: "Every module in full: the figures, the methods and the training data", onPick: () => openKey(order[0]) }
               : { title: "Same intelligence at cheaper cost, in detail", detail: "The dial, the three levers, one request, the slowest requests", onPick: () => openKey(order[0]) }}
-            also={training ? undefined : { title: "Serving under load, in detail", detail: "Long prompts, draft models, cache-aware routing, CPU/GPU overlap", onPick: () => { carded.current = true; openKey("pressure"); } }}
+            also={training ? [] : [
+              { title: "Serving under load, in detail", detail: "Chunked prefill, speculative decoding, cache-aware routing, CPU/GPU overlap", onPick: () => { carded.current = true; openKey("pressure"); } },
+              { title: "Each component, in the microscope", detail: "Follow one request through the serving engine, part by part", href: "/inference#inference-microscope" },
+            ]}
             onward={training
               ? { title: "Next project: Inference optimization", detail: "The same intelligence served for less, and optimized under load", href: "/#inference" }
               : { title: "Next project: Medical AI", detail: "An evidence-grounded assistant for clinicians", href: "/#mindscape" }}

@@ -199,3 +199,10 @@
 .tr-tile[data-on] .tr-ico, .tr-tile:hover .tr-ico { opacity: 1; filter: none; }
 .tr-ico svg { animation-play-state: paused; }
 @media (max-width: 1380px) { .tr-ico { width: 34px; height: 17px; } .vx-shell .tr-tile { grid-template-columns: 1fr; } }
+
+/* The light slides from title to title. */
+.tb-grid { position: relative; }
+.tb-spot { position: absolute; left: 0; top: 0; z-index: 2; border-radius: 12px; pointer-events: none; opacity: 0;
+  box-shadow: inset 0 0 0 1.5px var(--active-accent), 0 0 0 4px color-mix(in srgb, var(--active-accent) 14%, transparent), 0 24px 60px -30px var(--active-accent);
+  transition: transform .62s cubic-bezier(.65,0,.35,1), width .62s cubic-bezier(.65,0,.35,1), height .62s cubic-bezier(.65,0,.35,1), opacity .4s; }
+@media (prefers-reduced-motion: reduce) { .tb-spot { transition: none; } }

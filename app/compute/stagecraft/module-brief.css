@@ -80,3 +80,4 @@
 /* How long this introduction stays: a thin line that runs out. */
 .mi-time { display: block; width: 220px; height: 2px; margin-top: 18px; border-radius: 1px; background: color-mix(in srgb, var(--active-accent, #ffc267) 80%, transparent); transform-origin: 0 50%; animation: mi-time linear both; }
 @keyframes mi-time { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.mc-options[data-count="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }

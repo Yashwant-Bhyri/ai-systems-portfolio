@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { simulateLab } from "../lab-simulation";
 import { SERVING_RAIL } from "../serving-rail-meta";
-import type { Pathway, ShowItem } from "./title-show";
+import { useSpot, type Pathway, type ShowItem } from "./title-show";
 import { GlyphDial, GlyphManifold, GlyphBigPicture, GlyphLearn, GlyphComposition, GlyphCurves, GlyphExperiment, GlyphFleet, GlyphFrontier, GlyphInside, GlyphLatency, GlyphReplay, GlyphTasks, GlyphTerrain, GlyphAudit } from "./glyphs";
 import "./title-show.css";
 import "./stagecraft.css";
@@ -33,7 +33,7 @@ const INFERENCE_ITEMS = (): ShowItem[] => {
     { key: "composition", title: "Training meets serving", value: `${o.correct} of 96`, Glyph: GlyphComposition, pathway: 0 },
     { key: "latency", title: "The slowest 5% of requests", value: `${f(s.p95, 0)} → ${f(o.p95, 0)} s`, Glyph: GlyphLatency, pathway: 0 },
     { key: "film", title: "One lever at a time", value: "3 levers", Glyph: GlyphExperiment, pathway: 0 },
-    ...SERVING_RAIL.filter((m) => m.key !== "glossary").map((m) => ({ key: m.key, title: m.title, value: m.value, unit: m.unit, Glyph: m.Glyph, pathway: 1 })),
+    ...SERVING_RAIL.filter((m) => m.key !== "glossary").map((m) => ({ key: m.key, title: m.title, term: m.term, value: m.value, unit: m.unit, Glyph: m.Glyph, pathway: 1 })),
   ];
 };
 const TRAINING_PATHS: readonly Pathway[] = [{ n: "01", title: "What did the model learn?", short: "Post-training", techniques: [] }];
@@ -55,8 +55,11 @@ export function LabPreview({ training }: { training: boolean }) {
     return () => window.clearInterval(t);
   }, [items.length]);
   const on = hover ?? lit;
+  const band = useRef<HTMLDivElement>(null);
+  const spot = useSpot(band, ".lc-card[data-lit]", on);
   return (
-    <div className="lc-band" data-cycling="">
+    <div ref={band} className="lc-band" data-cycling="">
+      <span ref={spot} className="lc-spot" aria-hidden="true" />
       {paths.map((p, pi) => (
         <section key={p.n} className="lc-sec" style={{ flexGrow: items.filter((i) => i.pathway === pi).length }}>
           <h4>{p.short === "Post-training" ? "Results laboratory" : pi === 0 ? `Results laboratory · ${p.short}` : p.short}</h4>
@@ -65,7 +68,9 @@ export function LabPreview({ training }: { training: boolean }) {
               <a key={i.key} className="lc-card" data-lit={items.indexOf(i) === on || undefined} onPointerEnter={() => setHover(items.indexOf(i))} onPointerLeave={() => setHover(null)} href={`/${id}?labnav=show#${id}-study/${i.key}`}>
                 <span className="lc-art" aria-hidden="true">{i.Glyph && <i.Glyph />}</span>
                 {i.value && <em className="lc-val">{i.value}</em>}
-                <strong>{i.title}</strong>
+                {/* A serving technique leads with its name; what it does is the small line. */}
+                <strong>{i.pathway === 1 && i.term ? i.term : i.title}</strong>
+                {i.pathway === 1 && i.term && <small className="lc-sub">{i.title}</small>}
               </a>
             ))}
           </div>

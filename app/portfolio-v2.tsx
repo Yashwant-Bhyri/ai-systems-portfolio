@@ -2306,19 +2306,25 @@ function MiniMicroscope({ id, accent, brand, steps, Visual, proof, conclusion }:
 }
 
 const TRAINING_GUIDE: Guide = {
-  intro: ["Advanced post-training does *two things*", "It makes a small model *get more answers right*, then *think less* for the same answers"],
+  intro: [
+    "In this project, we took a small model, Qwen3-4B, and applied *advanced post-training*: SFT, GRPO, test-time scaling and Lean RL",
+    { labels: ["Higher accuracy", "Fewer GPU-seconds (less computation)"] },
+  ],
   steps: [
     { text: "How does each step work? The *microscope* walks through every training step, live.", target: "microscope" },
-    { text: `What did each step give? *${TRAINING_RESULT.from} → ${TRAINING_RESULT.to} of 96* tasks solved, step by step.`, target: "poster" },
+    { text: "What did each step give? *Higher accuracy* at every step, then the same answers in fewer tokens.", target: "poster" },
     { text: "The *results laboratory* holds every figure: the manifold, the training film, every task that changed.", target: "lab" },
   ],
   cta: "Enter the *results laboratory* to explore the whole project in depth",
 };
 const INFERENCE_GUIDE: Guide = {
-  intro: ["Inference optimization is *two problems*", `Serve the *same intelligence for ${INFERENCE_SAVING}% less compute*, and keep it fast when *serving under load*`],
+  intro: [
+    "Inference optimization is *two problems*",
+    { labels: ["The same intelligence at cheaper cost", "Serving under load"] },
+  ],
   steps: [
     { text: "How is a request served? The *microscope* follows one, component by component.", target: "microscope" },
-    { text: `What did each lever save? *${INFERENCE_SAVING}% less GPU time* per correct answer, lever by lever.`, target: "poster" },
+    { text: "What did each lever save? *Less GPU time* per correct answer, lever by lever.", target: "poster" },
     { text: "The *results laboratory* holds every figure: the serving dial, the replay, the four serving techniques.", target: "lab" },
   ],
   cta: "Enter the *results laboratory* to explore the whole project in depth",

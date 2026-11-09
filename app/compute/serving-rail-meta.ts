@@ -21,5 +21,5 @@ export const SERVING_RAIL: readonly { key: ServingKey; title: string; term: stri
   { key: "cache", title: "Go where the prompt is cached", term: "Cache-aware routing", value: `${CACHE.cold.firstToken} → ${CACHE.warm.firstToken} ms`, unit: "to the first token, warm replica", Glyph: GlyphCacheRoute },
   { key: "overlap", title: "No idle GPU between steps", term: "CPU/GPU overlap", value: `${OVERLAP.baseline.finish} → ${OVERLAP.overlapped.finish} ms`, unit: "four decode steps, two streams", Glyph: GlyphOverlap },
   { key: "map", title: "The whole serving path", term: "System map", value: "10", unit: "mechanisms on one serving clock", Glyph: GlyphServingMap },
-  { key: "glossary", title: "Serving vocabulary", term: "Serving glossary", value: "9", unit: "serving terms, each linked to the microscope", Glyph: GlyphKVSizing },
+  { key: "glossary", title: "System glossary", term: "Every serving component", value: "9", unit: "serving terms, each linked to the microscope", Glyph: GlyphKVSizing },
 ];

@@ -41,9 +41,11 @@ function DoorView({ door, seen }: { door: Door; seen: boolean }) {
  * the rest of the page dims. It ends by blurring everything except the way into the results laboratory.
  */
 export type GuideStep = { text: string; target: "microscope" | "poster" | "lab" };
-export type Guide = { intro: readonly string[]; steps: readonly GuideStep[]; cta: string };
-const INTRO_MS = 3800, SAY_MS = 2200, SHOW_MS = 4200, CTA_MS = 12000;
-type Beat = { kind: "intro"; text: string } | { kind: "say" | "show"; step: number } | { kind: "cta" } | { kind: "rest" };
+/** An intro line is a sentence, or a row of numbered labels. */
+export type IntroLine = string | { labels: readonly string[] };
+export type Guide = { intro: readonly IntroLine[]; steps: readonly GuideStep[]; cta: string };
+const INTRO_MS = 3800, SAY_MS = 2200, SHOW_MS = 4200, CTA_BLUR_MS = 3000, CTA_GLOW_MS = 9000;
+type Beat = { kind: "intro"; line: IntroLine; n: number } | { kind: "say" | "show"; step: number } | { kind: "cta" } | { kind: "glow" } | { kind: "rest" };
 
 function useGuide(guide: Guide, on: boolean) {
   const [beat, setBeat] = useState<Beat>({ kind: "rest" });
@@ -53,9 +55,11 @@ function useGuide(guide: Guide, on: boolean) {
     const at = (ms: number, b: Beat) => timers.push(window.setTimeout(() => setBeat(b), ms));
     const walk = (t0: number, withIntro: boolean) => {
       let t = t0;
-      if (withIntro) for (const text of guide.intro) { at(t, { kind: "intro", text }); t += INTRO_MS; }
+      if (withIntro) guide.intro.forEach((line, n) => { at(t, { kind: "intro", line, n }); t += INTRO_MS; });
       guide.steps.forEach((_, i) => { at(t, { kind: "say", step: i }); t += SAY_MS; at(t, { kind: "show", step: i }); t += SHOW_MS; });
-      at(t, { kind: "cta" }); t += CTA_MS;
+      // The ending: a short blur that leaves only the way in sharp, then the page returns with the way in still lit.
+      at(t, { kind: "cta" }); t += CTA_BLUR_MS;
+      at(t, { kind: "glow" }); t += CTA_GLOW_MS;
       at(t, { kind: "rest" }); t += 600;
       timers.push(window.setTimeout(() => { timers = []; walk(0, false); }, t));
     };
@@ -79,7 +83,7 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
   }, []);
   const beat = useGuide(guide, inView);
   const step = beat.kind === "say" || beat.kind === "show" ? beat.step : -1;
-  const focus = beat.kind === "show" ? guide.steps[beat.step].target : beat.kind === "cta" ? "cta" : beat.kind === "intro" ? "intro" : undefined;
+  const focus = beat.kind === "show" ? guide.steps[beat.step].target : beat.kind === "cta" ? "cta" : beat.kind === "glow" ? "glow" : beat.kind === "intro" ? "intro" : undefined;
   return (
     <section ref={root} id={`${id}-second`} className={`sp-page vx-page vx-accent-${accent}`} data-vx-page data-layout="questions" data-focus={focus} data-saying={beat.kind === "say" || undefined}>
       <header className="sp-head">
@@ -93,10 +97,10 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
         <aside className="sp-guide" aria-live="polite">
           <ol>
             {guide.steps.map((s, i) => (
-              <li key={i} data-on={i === step || undefined} data-done={step > i || beat.kind === "cta" || undefined}>{highlight(s.text)}</li>
+              <li key={i} data-on={i === step || undefined} data-done={step > i || beat.kind === "cta" || beat.kind === "glow" || undefined}>{highlight(s.text)}</li>
             ))}
           </ol>
-          <p className="sp-guide-cta" data-on={beat.kind === "cta" || undefined}>{highlight(guide.cta)}</p>
+          <p className="sp-guide-cta" data-on={beat.kind === "cta" || beat.kind === "glow" || undefined}>{highlight(guide.cta)}</p>
         </aside>
         <div className="sp-right">
           <nav className="sp-questions" aria-label="How it works, and what it gave">
@@ -107,7 +111,11 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
       </div>
       {(beat.kind === "intro" || beat.kind === "cta") && (
         <div className="sp-veil" data-kind={beat.kind}>
-          {beat.kind === "intro" ? <p key={beat.text}>{highlight(beat.text)}</p> : <p key="cta">{highlight(guide.cta)}</p>}
+          {beat.kind === "intro"
+            ? typeof beat.line === "string"
+              ? <p key={beat.n}>{highlight(beat.line)}</p>
+              : <ul key={beat.n} className="sp-labels">{beat.line.labels.map((l, i) => <li key={l} style={{ animationDelay: `${i * 260}ms` }}><i>{i + 1}</i>{l}</li>)}</ul>
+            : <p key="cta">{highlight(guide.cta)}</p>}
         </div>
       )}
     </section>
