@@ -42,7 +42,9 @@ function DoorView({ door, seen }: { door: Door; seen: boolean }) {
  */
 export type GuideStep = { text: string; target: "microscope" | "poster" | "lab" };
 /** An intro line is a sentence, or a row of numbered labels. */
-export type IntroLine = string | { labels: readonly string[] };
+/** A label can carry the techniques that belong to it. */
+export type IntroLabel = string | { title: string; note?: string; items: readonly string[] };
+export type IntroLine = string | { labels: readonly IntroLabel[] };
 export type Guide = { intro: readonly IntroLine[]; steps: readonly GuideStep[]; cta: string };
 const INTRO_MS = 3800, SAY_MS = 2200, SHOW_MS = 4200, CTA_BLUR_MS = 3000, CTA_GLOW_MS = 9000;
 type Beat = { kind: "intro"; line: IntroLine; n: number } | { kind: "say" | "show"; step: number } | { kind: "cta" } | { kind: "glow" } | { kind: "rest" };
@@ -55,7 +57,8 @@ function useGuide(guide: Guide, on: boolean) {
     const at = (ms: number, b: Beat) => timers.push(window.setTimeout(() => setBeat(b), ms));
     const walk = (t0: number, withIntro: boolean) => {
       let t = t0;
-      if (withIntro) guide.intro.forEach((line, n) => { at(t, { kind: "intro", line, n }); t += INTRO_MS; });
+      // A row of labels holds more to read than a sentence, so it stays longer.
+      if (withIntro) guide.intro.forEach((line, n) => { at(t, { kind: "intro", line, n }); t += typeof line === "string" ? INTRO_MS : INTRO_MS * 1.9; });
       guide.steps.forEach((_, i) => { at(t, { kind: "say", step: i }); t += SAY_MS; at(t, { kind: "show", step: i }); t += SHOW_MS; });
       // The ending: a short blur that leaves only the way in sharp, then the page returns with the way in still lit.
       at(t, { kind: "cta" }); t += CTA_BLUR_MS;
@@ -114,7 +117,12 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
           {beat.kind === "intro"
             ? typeof beat.line === "string"
               ? <p key={beat.n}>{highlight(beat.line)}</p>
-              : <ul key={beat.n} className="sp-labels">{beat.line.labels.map((l, i) => <li key={l} style={{ animationDelay: `${i * 260}ms` }}><i>{i + 1}</i>{l}</li>)}</ul>
+              : <ul key={beat.n} className="sp-labels">{beat.line.labels.map((l, i) => typeof l === "string"
+                  ? <li key={l} style={{ animationDelay: `${i * 260}ms` }}><i>{i + 1}</i>{l}</li>
+                  : <li key={l.title} className="sp-group" style={{ animationDelay: `${i * 360}ms` }}>
+                      <span className="sp-group-head"><i>{i + 1}</i><span><b>{l.title}</b>{l.note && <small>{l.note}</small>}</span></span>
+                      <span className="sp-group-items">{l.items.map((x, k) => <em key={x} style={{ animationDelay: `${i * 360 + 500 + k * 180}ms` }}>{x}</em>)}</span>
+                    </li>)}</ul>
             : <p key="cta">{highlight(guide.cta)}</p>}
         </div>
       )}

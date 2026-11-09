@@ -72,3 +72,12 @@
 .sd-levers button i { margin-right: 6px; color: #93a0ae; font: 500 12.5px/1 var(--font-geist-mono), monospace; font-style: normal; }
 .sd-readout { left: 0; top: 0; bottom: auto; max-width: 340px; }
 .sd-readout span { white-space: nowrap; }
+
+/* One phase in focus: the centre reads it, before and after, with the difference. */
+.sd-center .sd-phase { display: none; flex-direction: column; align-items: center; gap: 4px; }
+.sd-center:not([data-phase=""]) .sd-phase { display: flex; }
+.sd-center:not([data-phase=""]) > :not(.sd-phase) { display: none; }
+.sd-phase small { color: #c9d2db; font: 500 15px/20px var(--font-geist-sans), sans-serif; }
+.sd-phase b { color: #fff; font: 500 22px/28px var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sd-phase em { color: #ffc267; font: 500 34px/40px var(--font-geist-mono), monospace; font-style: normal; }
+.sd-center:not([data-phase=""]) { width: 260px; }

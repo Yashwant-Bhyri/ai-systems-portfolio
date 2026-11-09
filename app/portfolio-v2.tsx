@@ -2307,8 +2307,11 @@ function MiniMicroscope({ id, accent, brand, steps, Visual, proof, conclusion }:
 
 const TRAINING_GUIDE: Guide = {
   intro: [
-    "In this project, we took a small model, Qwen3-4B, and applied *advanced post-training*: SFT, GRPO, test-time scaling and Lean RL",
-    { labels: ["Higher accuracy", "Fewer GPU-seconds (less computation)"] },
+    "In this project, we took a small model, Qwen3-4B, and applied *advanced post-training* to see how its behaviour scales on maths and coding",
+    { labels: [
+      { title: "More intelligence", note: "higher accuracy", items: ["SFT + LoRA", "GRPO", "Test-time scaling"] },
+      { title: "Less computation", note: "fewer GPU-seconds", items: ["Lean RL", "Elastic RL on 64 GPUs"] },
+    ] },
   ],
   steps: [
     { text: "How does each step work? The *microscope* walks through every training step, live.", target: "microscope" },
@@ -2320,7 +2323,10 @@ const TRAINING_GUIDE: Guide = {
 const INFERENCE_GUIDE: Guide = {
   intro: [
     "Inference optimization is *two problems*",
-    { labels: ["The same intelligence at cheaper cost", "Serving under load"] },
+    { labels: [
+      { title: "The same intelligence at cheaper cost", items: ["Continuous batching", "Prefix caching", "FP8 prefill & decode"] },
+      { title: "Serving under load", items: ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"] },
+    ] },
   ],
   steps: [
     { text: "How is a request served? The *microscope* follows one, component by component.", target: "microscope" },
@@ -2338,7 +2344,7 @@ function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
       id={id}
       accent={training ? "rose" : "amber"}
       name={training ? "Advanced post-training" : "Inference optimization"}
-      title={training ? `From ${TRAINING_RESULT.from} to ${TRAINING_RESULT.to} of 96 tasks solved, then kept with ${TRAINING_RESULT.fewer}% fewer tokens` : `Same intelligence at ${INFERENCE_SAVING}% less compute, optimized under load`}
+      title={training ? `Accuracy ${Math.round((100 * TRAINING_RESULT.from) / 96)}% → ${Math.round((100 * TRAINING_RESULT.to) / 96)}%, then the same answers with ${TRAINING_RESULT.fewer}% fewer tokens` : `Same intelligence at ${INFERENCE_SAVING}% less compute, optimized under load`}
       enter={`${href}?labnav=show#${id}-study`}
       lab={<LabPreview training={training} />}
       guide={training ? TRAINING_GUIDE : INFERENCE_GUIDE}

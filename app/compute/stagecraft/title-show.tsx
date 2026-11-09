@@ -32,7 +32,7 @@ function collect(root: HTMLElement | null): Rects {
    The whole space belongs to one section at a time, its titles lit in turn. Then that block
    compresses into the left fifth of the screen, and the next section takes the other four fifths.
    Tiles keep one fixed size: only colour changes as they light, so nothing on the board shakes. */
-const CARD = 1500, QUICK = 900, SETTLE = 500, COMPRESS = 900, LINE_MS = 3600;
+const CARD = 1500, QUICK = 900, SETTLE = 500, COMPRESS = 900, LINE_MS = 3600, OVERVIEW = 2600, PICK = 1700;
 const MOVE = { duration: 760, easing: "cubic-bezier(.65,0,.35,1)" } as const;
 
 export function rowsFor(n: number): number[] {
@@ -62,9 +62,16 @@ export function useSpot(container: React.RefObject<HTMLElement | null>, selector
     if (!box || !s) return;
     if (!el) { s.style.opacity = "0"; return; }
     const a = box.getBoundingClientRect(), b = el.getBoundingClientRect();
+    const was = s.style.opacity === "1";
     s.style.opacity = "1";
     s.style.width = `${b.width}px`; s.style.height = `${b.height}px`;
     s.style.transform = `translate(${b.left - a.left}px, ${b.top - a.top}px)`;
+    // Arriving: a soft pulse goes out from the frame and a sheen sweeps across the newly lit title.
+    if (was && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      s.animate([{ filter: "brightness(1)" }, { filter: "brightness(1.9)", offset: 0.55 }, { filter: "brightness(1)" }], { duration: 900, easing: "ease-out" });
+      s.querySelector(".spot-pulse")?.animate([{ opacity: 0.7, transform: "scale(1)" }, { opacity: 0, transform: "scale(1.06)" }], { duration: 900, delay: 420, easing: "cubic-bezier(.22,1,.36,1)", fill: "backwards" });
+      s.querySelector(".spot-sheen")?.animate([{ transform: "translateX(-110%) skewX(-18deg)", opacity: 0 }, { opacity: 0.9, offset: 0.35 }, { transform: "translateX(110%) skewX(-18deg)", opacity: 0 }], { duration: 1000, delay: 380, easing: "cubic-bezier(.4,0,.2,1)", fill: "backwards" });
+    }
   }, [container, selector, dep]);
   return spot;
 }
@@ -122,7 +129,10 @@ export function TitleBoard({
 }) {
   const tr = useTr();
   const root = useRef<HTMLDivElement>(null);
-  const [focus, setFocus] = useState(start);
+  // Two sections, opened fresh: they start side by side, and each is zoomed into in turn.
+  const tour = pathways.length === 2 && !overlay;
+  const [focus, setFocus] = useState(tour ? -1 : start);
+  const [pick, setPick] = useState(-1);
   const [lit, setLit] = useState(-1);
   // With opening lines, the board starts muted, so it never flashes before the first line.
   const [line, setLine] = useState<string | null>(lines.length ? "" : null);
@@ -150,35 +160,48 @@ export function TitleBoard({
       // The board is muted while each opening line is said across it.
       for (const l of lines) { const at = t; timers.push(window.setTimeout(() => setLine(l), at)); t += LINE_MS; }
       if (lines.length) { timers.push(window.setTimeout(() => setLine(null), t)); t += 500; }
-      for (let s = start; s < n; s++) {
+      const go = (fn: () => void) => timers.push(window.setTimeout(() => { pending.current = collect(root.current); fn(); }, t));
+      const light = (s: number) => {
         const own = itemsRef.current.filter((i) => i.pathway === s).map((i) => i.key);
-        if (s > start) {
-          timers.push(window.setTimeout(() => { pending.current = collect(root.current); setLit(-1); setFocus(s); }, t));
-          t += COMPRESS;
-        }
         own.forEach((key, i) => timers.push(window.setTimeout(() => setLit(itemsRef.current.findIndex((x) => x.key === key)), t + i * step)));
         t += own.length * step + SETTLE;
+      };
+      if (tour) {
+        // Both problems side by side; then each one is picked out, zoomed into, and its titles lit; then both again.
+        t += OVERVIEW;
+        for (let s = 0; s < n; s++) {
+          timers.push(window.setTimeout(() => setPick(s), t)); t += PICK;
+          go(() => { setLit(-1); setPick(-1); setFocus(s); }); t += COMPRESS;
+          light(s);
+          go(() => { setLit(-1); setFocus(-1); }); t += COMPRESS;
+        }
+        t += OVERVIEW;
+      } else {
+        for (let s = start; s < n; s++) {
+          if (s > start) { go(() => { setLit(-1); setFocus(s); }); t += COMPRESS; }
+          light(s);
+        }
       }
       timers.push(window.setTimeout(() => endRef.current(), t));
     };
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) run();
-      else { clear(); setFocus(start); setLit(-1); setLine(lines.length ? "" : null); }
+      else { clear(); setFocus(tour ? -1 : start); setPick(-1); setLit(-1); setLine(lines.length ? "" : null); }
     }, { threshold });
     io.observe(el);
     return () => { io.disconnect(); clear(); };
     // the script is fixed for one board
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathways.length, quick, overlay, start, threshold]);
+  }, [pathways.length, quick, overlay, start, threshold, tour]);
   return (
     <div ref={root} className="tb-root" data-overlay={overlay || undefined} data-sections={pathways.length} data-line={line !== null ? "" : undefined}>
       {line && <p key={line} className="tb-line">{highlight(tr(line))}</p>}
       {pathways.map((p, pi) => {
         const own = items.filter((i) => i.pathway === pi);
-        const mode = pi === focus ? "full" : pi < focus ? "compact" : "hidden";
+        const mode = focus === -1 ? "half" : pi === focus ? "full" : overlay && pi < focus ? "compact" : "hidden";
         const counts = rowsFor(own.length);
         return (
-          <section key={p.n} className="tb-sec" data-mode={mode} data-dense={counts.length > 2 || undefined}>
+          <section key={p.n} className="tb-sec" data-mode={mode} data-pick={pick === pi || undefined} data-unpicked={pick !== -1 && pick !== pi || undefined} data-dense={counts.length > 2 || undefined}>
             <header className="tb-head">
               <i>{p.n}</i>
               <div>
@@ -188,7 +211,7 @@ export function TitleBoard({
             </header>
             {mode !== "hidden" && (
               <div className="tb-grid" ref={mode === "full" ? gridRef : undefined}>
-                {mode === "full" && <span ref={spot} className="tb-spot" aria-hidden="true" />}
+                {mode === "full" && <span ref={spot} className="tb-spot" aria-hidden="true"><i className="spot-pulse" /><i className="spot-sheen" /></span>}
                 {mode === "compact"
                   ? own.map((item) => <BoardTile key={item.key} item={item} compact lit={false} onOpen={(k) => onStart(k, collect(root.current))} />)
                   : counts.map((count, r) => {

@@ -267,6 +267,7 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
           return { ...s, answered, correct };
         };
         const a = sum(phases[0]), b = sum(B), n = phases[0].length;
+        const fm = (p: Phase, d: number) => `${f(tot0[p] / (p === "wait" ? n : 1), d)} → ${f(totB[p] / (p === "wait" ? n : 1), d)}`;
         const gpu0 = tot0.read + tot0.reason + tot0.write;
         if (t < T - 1) put("clock", `${f(t)} s`);
         put("a-ans", String(a.answered));
@@ -318,9 +319,16 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
         const done = t >= T - 1, centre = cells.current.centre;
         if (centre && centre.dataset.done !== String(done)) centre.dataset.done = String(done);
         if (done) put("clock", `${f(T)} → ${f(endB)} s`);
+        // While one phase is lit, the centre reads that phase: baseline → optimized, and the difference.
+        const ph = focus ?? "", unit = (p: Phase) => (p === "wait" ? "s per request" : "GPU-s");
+        if (centre && centre.dataset.phase !== ph) centre.dataset.phase = ph;
+        if (focus) {
+          put("ph-name", NAME[focus]);
+          put("ph-vals", `${fm(focus, focus === "read" ? 1 : 0)} ${unit(focus)}`);
+          put("ph-delta", less(tot0[focus], totB[focus]));
+        }
         // the sentence on top
         const correctB = B.filter((q) => q.correct).length;
-        const fm = (p: Phase, d: number) => `${f(tot0[p] / (p === "wait" ? n : 1), d)} → ${f(totB[p] / (p === "wait" ? n : 1), d)}`;
         const saved = gpu0 - (totB.read + totB.reason + totB.write), lv = shownLever.current;
         const leverLine = lv === 0 ? `Free-worker scheduling alone: the same GPU work, waiting *${fm("wait", 0)} s*`
           : lv === 1 ? `Add prefix reuse: reading the prompt *${fm("read", 1)} GPU-s*, under 1% of all compute`
@@ -332,10 +340,10 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
           : t < endB ? "The violet rim is the queue: how many requests are waiting right now"
           : t < T ? `The optimized run answered all 96 at *${f(endB)} s*; the baseline is still working`
           : film < TOURED ? `Both runs gave the same ${correctB} correct answers; the optimized run used *${f(saved)} fewer GPU-seconds*`
-          : toured === "wait" ? `Waiting: *${fm("wait", 0)} s* per request`
-          : toured === "read" ? `Reading the prompt: *${fm("read", 1)} GPU-s*, the shared prefix is read once`
-          : toured === "reason" ? `Reasoning: *${fm("reason", 0)} GPU-s*, every step moves half the bytes`
-          : toured === "write" ? `Writing the answer: *${fm("write", 0)} GPU-s*, for the same answers`
+          : toured === "wait" ? `Waiting: *${fm("wait", 0)} s* per request, ${less(tot0.wait, totB.wait)}: free workers start the next request at once`
+          : toured === "read" ? `Reading the prompt: *${fm("read", 1)} GPU-s*, ${less(tot0.read, totB.read)}: the shared prefix is read once`
+          : toured === "reason" ? `Reasoning: *${fm("reason", 0)} GPU-s*, ${less(tot0.reason, totB.reason)}: every step moves half the bytes`
+          : toured === "write" ? `Writing the answer: *${fm("write", 0)} GPU-s*, ${less(tot0.write, totB.write)}, for the same answers`
           : leverLine;
         if (next !== lastLine) { lastLine = next; setLine(next); }
         if (slider.current && !dragging.current) slider.current.value = String(Math.round(t));
@@ -360,10 +368,11 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
       <div className="sd-main">
         <div className="sd-dial">
           <canvas ref={canvas} className="sd-canvas" style={{ cursor: "crosshair" }} role="img" aria-label="A dial on one clock: the baseline's two GPUs on the outer rings, the optimized run's on the inner rings; each request is a block coloured by phase, and the rims show the queue" onPointerMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); hover.current = { x: e.clientX - r.left, y: e.clientY - r.top }; }} onPointerLeave={() => { hover.current = null; }} />
-          <div className="sd-center" data-k="centre" data-done="false">
+          <div className="sd-center" data-k="centre" data-done="false" data-phase="">
             <b data-k="clock">0 s</b>
             <span className="sd-live">answered, of 96</span>
-            <span className="sd-end">to answer all 96: baseline → optimized</span>
+            <span className="sd-end">to answer every request: baseline → optimized</span>
+            <span className="sd-phase"><small data-k="ph-name" /><b data-k="ph-vals" /><em data-k="ph-delta" /></span>
             <div className="sd-duel"><i data-tone="base" data-k="a-ans">0</i><i data-tone="opt" data-k="b-ans">0</i></div>
             <div className="sd-names"><small>baseline</small><small>optimized</small></div>
           </div>

@@ -81,3 +81,17 @@
 .mi-time { display: block; width: 220px; height: 2px; margin-top: 18px; border-radius: 1px; background: color-mix(in srgb, var(--active-accent, #ffc267) 80%, transparent); transform-origin: 0 50%; animation: mi-time linear both; }
 @keyframes mi-time { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 .mc-options[data-count="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.pc-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; transition: opacity .7s; }
+.pc-groups:not([data-on]) { opacity: 0; }
+.pc-group { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border-radius: 14px; background: rgba(10,14,19,.7); box-shadow: inset 0 0 0 1px rgba(230,237,244,.1); }
+.pc-group h5 { display: flex; align-items: center; gap: 10px; margin: 0; color: #fff; font: 500 19px/24px var(--font-geist-sans), sans-serif; }
+.pc-group h5 i { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--active-accent, #ffc267); color: #0b1016; font: 600 15px/1 var(--font-geist-mono), monospace; font-style: normal; }
+.pc-group .pc-tech { justify-content: flex-start; }
+
+/* The parts of a module, numbered, one after another. */
+.mi-labels { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+.mi-labels li { display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 10px; border-radius: 14px; background: rgba(10,14,19,.86); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--active-accent, #ffc267) 60%, transparent);
+  color: #fff; font: 500 17px/22px var(--font-geist-sans), sans-serif; animation: mi-label .5s cubic-bezier(.22,1,.36,1) both; }
+.mi-labels li i { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--active-accent, #ffc267); color: #0b1016; font: 600 14px/1 var(--font-geist-mono), monospace; font-style: normal; }
+@keyframes mi-label { from { opacity: 0; transform: translateY(8px); } }

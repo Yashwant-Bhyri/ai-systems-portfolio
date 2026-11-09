@@ -449,7 +449,7 @@ const INFERENCE_PATHWAYS: readonly Pathway[] = [
   { n: "02", title: "Serving under load", short: "Serving under load", techniques: [], lead: "Many requests share one GPU: *four techniques* keep every answer streaming, and the whole path on one clock" },
 ];
 const INFERENCE_OPENING = ["Inference optimization is *two problems*", "One: the same intelligence at cheaper cost. Two: serving under load"];
-const TRAINING_OPENING = ["In this project, we took a small model, Qwen3-4B, and applied *advanced post-training*: SFT, GRPO, test-time scaling and Lean RL", "To see how its behaviour scales on maths and coding: *higher accuracy*, then *fewer GPU-seconds*"];
+const TRAINING_OPENING = ["In this project, we took a small model, Qwen3-4B, and applied *advanced post-training* to see how its behaviour scales on maths and coding", "Two aims: *more intelligence*, through SFT, GRPO and test-time scaling, and *less computation*, through Lean RL and Elastic RL"];
 const TRAINING_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "What did the model learn?", short: "In detail", techniques: [], lead: `One small model, trained step by step on maths and coding: accuracy *${pct(T_.base.correct)} → ${pct(T_.lean.correct)}*, and every result is here` },
 ];
@@ -458,10 +458,10 @@ const TRAINING_PATHWAYS: readonly Pathway[] = [
  * no clip leaves before its figure has finished, so these lengths follow the figures' own clocks.
  * Inference is two sections; between them the laboratory returns to the title board.
  */
-type Clip = { key?: string; title?: string; ms: number; line?: string; intro?: string; purpose?: boolean; board?: boolean; beat?: number; speed?: number; film?: { step: number; at?: number; frame?: boolean }; seek?: number; metric?: string };
+type Clip = { key?: string; title?: string; ms: number; line?: string; intro?: string; labels?: readonly string[]; purpose?: boolean; board?: boolean; beat?: number; speed?: number; film?: { step: number; at?: number; frame?: boolean }; seek?: number; metric?: string };
 const ARC_SPEED = 1.25, INTRO_MS = 3400;
 /** Long enough to read: the time follows the words. */
-const intro = (key: string, text: string, title?: string): Clip => ({ key, title, intro: text, ms: Math.max(INTRO_MS, 1800 + 150 * text.split(/\s+/).length) + 2600 });
+const intro = (key: string, text: string, title?: string, labels?: readonly string[]): Clip => ({ key, title, intro: text, labels, ms: Math.max(INTRO_MS, 1800 + 150 * text.split(/\s+/).length) + 2600 + (labels?.length ?? 0) * 900 });
 /** Problem, solution and impact, each to its end. A film keeps its own pace; drawn scenes play a little quicker. */
 const arcClips = (key: string, [problem, solution, impact]: readonly [string, string, string], [a, b, c]: readonly [number, number, number], filmB = false): Clip[] => [
   { key, beat: 0, speed: ARC_SPEED, ms: a / ARC_SPEED + 500, line: problem },
@@ -469,11 +469,11 @@ const arcClips = (key: string, [problem, solution, impact]: readonly [string, st
   { key, beat: 3, speed: ARC_SPEED, ms: c / ARC_SPEED + 500, line: impact },
 ];
 const INFERENCE_CLIPS: readonly Clip[] = [
-  intro("flow", "One full turn of the dial is the baseline's whole run. *Every request is drawn in colour, by what it is doing*"),
+  intro("flow", "One full turn of the dial is the baseline's whole run. *Every request is drawn in colour, by what it is doing*", undefined, ["Waiting for a GPU", "Reading the prompt", "Reasoning", "Writing the answer"]),
   { key: "flow", ms: 42200, line: `${PCT_LESS}% less compute for the same answers: every request answered by ${n0(FINISH(R_[3]))} s instead of ${n0(FINISH(R_[0]))} s` },
-  intro("setup", "Three levers act on every request. *Watch whether any answer changes*"),
+  intro("setup", "Three levers decide what every answer costs. *Watch whether any answer changes*", undefined, ["Continuous batching: a free worker takes the next request", "Prefix caching: a shared document is read once", "FP8 prefill and decode: half the bytes per step"]),
   { key: "setup", ms: 32400, seek: 7000, line: "Three levers act on every request, and not one answer changes" },
-  intro("replay", "One request from arrival to last word, before and after, *measured four ways*"),
+  intro("replay", "One request from arrival to last word, before and after, *measured four ways*", undefined, ["Response latency", "Total GPU work", "Input processing", "Answer generation"]),
   { key: "replay", ms: 25000, metric: "latency", line: `Response latency, request 7: ${n2(R_[1].tasks[6].latency)} → ${n2(R_[3].tasks[6].latency)} s` },
   { key: "replay", ms: 13000, metric: "service", seek: 12000, line: `Total GPU work, request 7: ${n2(R_[1].tasks[6].gpuSeconds)} → ${n2(R_[3].tasks[6].gpuSeconds)} GPU-s` },
   { key: "replay", ms: 13000, metric: "prefill", seek: 12000, line: `Input processing, request 7: ${R_[1].tasks[6].prefill.toFixed(3)} → ${R_[3].tasks[6].prefill.toFixed(3)} GPU-s; the shared prefix is already in memory` },
@@ -508,11 +508,14 @@ const PURPOSE = {
     { label: "Over the model as released", value: `+${Math.round((100 * (T_.lean.correct - T_.base.correct)) / 96)} pts` },
     { label: "Then, thinking less", value: `${TOK(T_.rl4).toLocaleString("en-US")} → ${TOK(T_.lean).toLocaleString("en-US")}`, note: `tokens per task: Lean RL keeps the RL checkpoint's answers with ${FEWER}% fewer` },
   ] },
-  techniques: ["SFT + LoRA on verified solutions", "GRPO: learning from test outcomes", "A thinking budget at test time", "Lean RL: a cost for every token", "Elastic RL on 64 GPUs"],
+  techniques: [
+    { title: "More intelligence: higher accuracy", items: ["SFT + LoRA", "GRPO", "Test-time scaling"] },
+    { title: "Less computation: fewer GPU-seconds", items: ["Lean RL", "Elastic RL on 64 GPUs"] },
+  ],
 };
 const TRAINING_CLIPS: readonly Clip[] = [
   { purpose: true, ms: 15000, line: `The goal: accuracy ${pct(T_.base.correct)} → ${pct(T_.lean.correct)}, then the same answers for ${FEWER}% fewer tokens` },
-  intro("manifold", "Each point is one task; each model is a cloud. *Lines join the same task across the three models*, and each view asks one question"),
+  intro("manifold", "Each point is one task; each model is a cloud. *Lines join the same task across the three models*, and each view asks one question", undefined, ["The skill", "The cost of thinking", "Lean RL", "The families"]),
   { key: "manifold", ms: 21600, line: `A 3D view of every task across three models: accuracy ${pct(T_.base.correct)} → ${pct(T_.lean.correct)}` },
   intro("inside", "One coding task, watched *layer by layer* inside the model as it answers"),
   { key: "inside", ms: 20500, line: "On one coding task: the layers training changed, and the words they changed" },
@@ -730,7 +733,7 @@ export function ComputeLabStudy({
   // Each project's one opening picture: post-training's manifold, inference's race on one clock.
   const manifoldItem: RailItem = training
     ? { key: "manifold", title: "The manifold", term: "Every task in 3D", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy, three models", Glyph: GlyphManifold, onOpen: openManifold, current: mode === "manifold" }
-    : { key: "flow", title: "96 requests, one clock", term: "Where the time went", value: `${n0(FINISH(R_[0]))} → ${n0(FINISH(R_[3]))} s`, unit: "to answer all 96", Glyph: GlyphDial, onOpen: openManifold, current: mode === "manifold" };
+    : { key: "flow", title: "Serving timeline", term: "Every request, phase by phase", value: `${n0(FINISH(R_[0]))} → ${n0(FINISH(R_[3]))} s`, unit: "to answer all 96", Glyph: GlyphDial, onOpen: openManifold, current: mode === "manifold" };
   const railItems: RailItem[] = training
     ? [
         manifoldItem,
@@ -747,11 +750,11 @@ export function ComputeLabStudy({
       ]
     : [
         manifoldItem,
-        { key: "setup", title: "Three levers, same answers", term: "The big picture", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphBigPicture, onOpen: openSetup, current: mode === "setup" },
-        { key: "replay", title: "How one request was served", term: "Execution replay", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
-        { key: "composition", title: "Training meets serving", term: "Policy × runtime", value: `${simulateLab(0, budget, false, workload).correct} → ${rlFast.correct}`, unit: "of 96 correct", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "latency", title: "The slowest 5% of requests", term: "Queue & latency", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s, arrival to last word", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
-        { key: "film", title: "One lever at a time", term: "The experiment", value: "3 levers", unit: "each measured on the same 96", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
+        { key: "setup", title: "Batching, prefix caching, FP8", term: "Three levers, the same answers", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphBigPicture, onOpen: openSetup, current: mode === "setup" },
+        { key: "replay", title: "Request replay", term: "One request, four measures", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "composition", title: "Policy × runtime", term: "Training meets serving", value: `${simulateLab(0, budget, false, workload).correct} → ${rlFast.correct}`, unit: "of 96 correct", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "latency", title: "Tail latency (p95)", term: "The slowest 5% of requests", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s, arrival to last word", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "film", title: "Lever ablation", term: "One lever at a time", value: "3 levers", unit: "each measured on the same 96", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
       ];
   // Deep links from the project overview: #inference-study/replay opens that module.
   const railRef = useRef(railItems);
@@ -1146,7 +1149,7 @@ export function ComputeLabStudy({
         {show && clip !== null && clips[clip].intro && (() => {
           const c = clips[clip], item = showItems.find((i) => i.key === c.key);
           // Only while the lab is on screen and playing: a fixed blur must never outlive its moment.
-          return item && labInView && !clipHeld ? <IntroCard brief={c.title ? undefined : briefs[c.key!]} key={clip} item={c.title ? { ...item, title: c.title, term: "Shorter traces, the same answers", Glyph: c.title === "Lean RL" ? GlyphLean : item.Glyph } : item} text={c.intro!} ms={c.ms} /> : null;
+          return item && labInView && !clipHeld ? <IntroCard labels={c.labels} brief={c.title ? undefined : briefs[c.key!]} key={clip} item={c.title ? { ...item, title: c.title, term: "Shorter traces, the same answers", Glyph: c.title === "Lean RL" ? GlyphLean : item.Glyph } : item} text={c.intro!} ms={c.ms} /> : null;
         })()}
         {show && fork && (
           <ChoiceCard

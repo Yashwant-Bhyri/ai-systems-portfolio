@@ -94,7 +94,7 @@ export function Manifold({ dwell = 8000, active = true, compact = false, onRound
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(30, el.clientWidth / el.clientHeight, 0.1, 50);
     // the object sits left of centre; its readings are on the right
-    const offset = () => camera.setViewOffset(el.clientWidth, el.clientHeight, el.clientWidth * 0.1, 0, el.clientWidth, el.clientHeight);
+    const offset = () => camera.setViewOffset(el.clientWidth, el.clientHeight, el.clientWidth * 0.13, 0, el.clientWidth, el.clientHeight);
     offset();
 
     // the cube the points live in

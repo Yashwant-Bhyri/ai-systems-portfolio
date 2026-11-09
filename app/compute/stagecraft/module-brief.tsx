@@ -139,7 +139,8 @@ export function ModuleBrief({ item, brief, path, onDone, away = false }: { item:
  * In the Summary, each module is introduced before it plays: its title steps out of the rail to the
  * middle of the screen and says what it does, what it changed (the number highlighted), and how to read it.
  */
-export function IntroCard({ item, text, ms, brief }: { item: ShowItem; text: string; ms: number; brief?: Brief }) {
+/** `labels`: the parts of the module, numbered, appearing one by one. */
+export function IntroCard({ item, text, ms, brief, labels }: { item: ShowItem; text: string; ms: number; brief?: Brief; labels?: readonly string[] }) {
   const tr = useTr();
   const card = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -158,6 +159,7 @@ export function IntroCard({ item, text, ms, brief }: { item: ShowItem; text: str
         {brief && <p className="mi-does">{tr(brief.does)}</p>}
         {brief && <p className="mi-impact">{highlight(tr(brief.impact))}</p>}
         <p className="mi-read">{highlight(tr(text))}</p>
+        {labels && <ol className="mi-labels">{labels.map((l, i) => <li key={l} style={{ animationDelay: `${700 + i * 450}ms` }}><i>{i + 1}</i>{tr(l)}</li>)}</ol>}
         <i className="mi-time" aria-hidden="true" style={{ animationDuration: `${ms}ms` }} />
       </div>
     </div>,
@@ -170,7 +172,8 @@ export function IntroCard({ item, text, ms, brief }: { item: ShowItem; text: str
  * same model after advanced post-training, then the techniques that did it. Every number is the lab's.
  */
 export type PurposeSide = { title: string; rows: readonly { label: string; value: string; note?: string }[] };
-export function PurposeCard({ headline, before, after, techniques, ms }: { headline: string; before: PurposeSide; after: PurposeSide; techniques: readonly string[]; ms: number }) {
+export type TechGroup = { title: string; items: readonly string[] };
+export function PurposeCard({ headline, before, after, techniques, ms }: { headline: string; before: PurposeSide; after: PurposeSide; techniques: readonly TechGroup[]; ms: number }) {
   const tr = useTr();
   const [step, setStep] = useState(0);
   useEffect(() => {
@@ -188,7 +191,11 @@ export function PurposeCard({ headline, before, after, techniques, ms }: { headl
       <div className="pc-card">
         <p className="pc-head">{highlight(tr(headline))}</p>
         <div className="pc-split">{side(before, "base", true)}<i aria-hidden="true">→</i>{side(after, "after", step >= 1)}</div>
-        <ul className="pc-tech" data-on={step >= 2 || undefined}>{techniques.map((t) => <li key={t}>{tr(t)}</li>)}</ul>
+        <div className="pc-groups" data-on={step >= 2 || undefined}>
+          {techniques.map((g, i) => (
+            <section key={g.title} className="pc-group"><h5><i>{i + 1}</i>{tr(g.title)}</h5><ul className="pc-tech" data-on="">{g.items.map((t) => <li key={t}>{tr(t)}</li>)}</ul></section>
+          ))}
+        </div>
       </div>
     </div>,
     document.body,

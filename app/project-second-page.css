@@ -113,3 +113,12 @@
 .sp-labels li i { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--active-accent); color: #0b1016; font: 600 20px/1 var(--font-geist-mono), monospace; font-style: normal; }
 /* After the short blur, the way in stays lit while the page comes back. */
 .sp-page[data-focus="glow"] .sp-cta { animation: sp-glow 1.6s ease-in-out infinite; }
+
+/* A label with the techniques that belong to it. */
+.sp-labels li.sp-group { flex-direction: column; align-items: stretch; gap: 16px; padding: 22px 26px; min-width: 340px; }
+.sp-group-head { display: flex; align-items: center; gap: 14px; }
+.sp-group-head > span { display: flex; flex-direction: column; gap: 2px; }
+.sp-group-head b { font-weight: 500; }
+.sp-group-head small { color: #aab6c2; font: 400 17px/22px var(--font-geist-sans), sans-serif; letter-spacing: 0; }
+.sp-group-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.sp-group-items em { padding: 6px 12px; border-radius: 14px; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(230,237,244,.16); color: #eef2f6; font: 450 16px/20px var(--font-geist-sans), sans-serif; font-style: normal; letter-spacing: 0; animation: sp-veil-in .5s both; }

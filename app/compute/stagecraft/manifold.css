@@ -40,3 +40,12 @@
 .mf-readout > small { font-size: 12.5px; line-height: 16px; }
 .mf-root .mf-truth .hl { color: #fff !important; -webkit-text-fill-color: #fff; background: none !important; }
 .mf-root .mf-truth .hl::before, .mf-root .mf-truth .hl::after { display: none !important; }
+/* The readout is a column beside the cube, its whole height: larger numbers, nothing floating. */
+.mf-readout { top: 12px; bottom: 12px; width: 300px; gap: 0; justify-content: space-between; padding: 18px 18px 14px; }
+.mf-readout table, .mf-readout tbody { display: flex; flex-direction: column; gap: 14px; }
+.mf-readout tr { display: block; padding-bottom: 12px; border-bottom: 1px solid rgba(230,237,244,.07); }
+.mf-readout th { padding-top: 0; color: #c9d2db; font-size: 14.5px; line-height: 20px; }
+.mf-readout td { font-size: 20px; line-height: 28px; }
+.mf-readout td em { font-size: 14px; }
+.mf-readout .mf-legend button { font-size: 14px; }
+.mf-readout > small { font-size: 12.5px; line-height: 17px; }

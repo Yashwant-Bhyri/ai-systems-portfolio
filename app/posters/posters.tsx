@@ -34,6 +34,8 @@ export type LedgerSpec = {
   /** shrink: the bar loses its slices (less work); grow: the bar gains them (more solved). */
   mode: "shrink" | "grow";
   scale: number; start: number; end: number; digits: number; unit: string;
+  /** Written after the big number, e.g. "%". */
+  suffix?: string;
   slices: readonly Slice[];
   note?: { title: string; text: string };
   measuresTitle: string;
@@ -70,7 +72,7 @@ export function LedgerPoster({ spec, live = false }: { spec: LedgerSpec; live?: 
       </header>
       <div className="pa-ledger">
         <div className="pa-row">
-          <b className="pa-num cx-hero-num" data-base={shrink || undefined} data-hero={(!shrink && phase >= spec.slices.length + 1) || undefined}>{fmt(shrink ? spec.start : shown, spec.digits)}</b>
+          <b className="pa-num cx-hero-num" data-base={shrink || undefined} data-hero={(!shrink && phase >= spec.slices.length + 1) || undefined}>{fmt(shrink ? spec.start : shown, spec.digits)}{spec.suffix}</b>
           <div className="pa-bar" style={{ ["--pa-keep" as string]: pct(keepTo) }}>
             <i className="pa-keep" style={{ width: pct(keepTo) }} />
             {spec.slices.map((sl, i) => (
@@ -88,7 +90,7 @@ export function LedgerPoster({ spec, live = false }: { spec: LedgerSpec; live?: 
         )}
         {shrink && (
           <div className="pa-row pa-after">
-            <b className="pa-num cx-hero-num" data-hero={phase >= 4 || undefined}>{fmt(spec.end, spec.digits)}</b>
+            <b className="pa-num cx-hero-num" data-hero={phase >= 4 || undefined}>{fmt(spec.end, spec.digits)}{spec.suffix}</b>
             <div className="pa-bar"><i className="pa-keep pa-keep-after" style={{ width: pct(spec.end) }} /></div>
           </div>
         )}

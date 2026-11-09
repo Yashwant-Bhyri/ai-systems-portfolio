@@ -43,6 +43,8 @@ export const DEPTH = { inference: "/inference", training: "/post-training" } as 
 /** Where an inference card opens. */
 export const labHref = (key: string) => `${DEPTH.inference}#inference-study/${key}`;
 export const fmt = f;
+/** A count of the 96 tasks as a whole percentage. */
+const Pc = (n: number) => Math.round((100 * n) / 96);
 
 import type { LedgerSpec } from "./posters";
 const PCT = Math.round(100 * (1 - COST.kernels / COST.base));
@@ -69,20 +71,21 @@ const flips = compareTasks(simulateLab(0, 2), simulateLab(2, 2));
 export const TRAINING_LEDGER: LedgerSpec = {
   domain: "training", mode: "grow",
   title: "Advanced post-training",
-  claim: `A 4B model goes from ${T[0].correct} to ${T[3].correct} of 96 tasks, then keeps them with ${Math.round(100 * (1 - perTask(T[4]) / perTask(T[3])))}% fewer tokens.`,
+  claim: `A 4B model goes from ${Pc(T[0].correct)}% to ${Pc(T[3].correct)}% accuracy, then keeps it with ${Math.round(100 * (1 - perTask(T[4]) / perTask(T[3])))}% fewer tokens.`,
   cta: "Explore the training in depth",
-  scale: 96, start: T[0].correct, end: T[3].correct, digits: 0,
-  unit: "of 96 tasks solved",
+  // On the home page, accuracy in percent: never a count out of 96.
+  scale: 100, start: Pc(T[0].correct), end: Pc(T[3].correct), digits: 0, suffix: "%",
+  unit: "accuracy on the synthetic maths and coding tasks",
   slices: [
-    { key: "film", title: "SFT + LoRA", delta: `+${T[1].correct - T[0].correct} tasks`, cause: "trained on verified worked solutions", from: T[0].correct, to: T[1].correct, color: "#c7a6ff" },
-    { key: "film", title: "Correctness RL", delta: `+${T[2].correct - T[1].correct} tasks`, cause: "rewarded for answers that pass", from: T[1].correct, to: T[2].correct, color: "#f3a0bc" },
-    { key: "film", title: "4× thinking budget", delta: `+${T[3].correct - T[2].correct} tasks`, cause: "more room to reason at test time", from: T[2].correct, to: T[3].correct, color: "#ffc267" },
+    { key: "film", title: "SFT + LoRA", delta: `+${Pc(T[1].correct) - Pc(T[0].correct)} points`, cause: "trained on verified worked solutions", from: Pc(T[0].correct), to: Pc(T[1].correct), color: "#c7a6ff" },
+    { key: "film", title: "GRPO", delta: `+${Pc(T[2].correct) - Pc(T[1].correct)} points`, cause: "rewarded for answers that pass", from: Pc(T[1].correct), to: Pc(T[2].correct), color: "#f3a0bc" },
+    { key: "film", title: "Test-time scaling", delta: `+${Pc(T[3].correct) - Pc(T[2].correct)} points`, cause: "more room to reason at test time", from: Pc(T[2].correct), to: Pc(T[3].correct), color: "#ffc267" },
   ],
-  note: { title: "Base Qwen3-4B", text: `${T[0].correct} tasks solved before any training` },
+  note: { title: "Base Qwen3-4B", text: `${Pc(T[0].correct)}% accuracy before any training` },
   measuresTitle: "Inside the training",
   measures: [
     { key: "fleet", title: "Elastic RL on 64 GPUs", from: "4", to: "7", unit: "RL steps in the same 14 minutes", a: 4, b: 7 },
-    { key: "film", title: "Lean RL", from: f(perTask(T[3]), 0), to: f(perTask(T[4]), 0), unit: `tokens per task, still ${T[4].correct} solved`, a: perTask(T[3]), b: perTask(T[4]) },
+    { key: "film", title: "Lean RL", from: f(perTask(T[3]), 0), to: f(perTask(T[4]), 0), unit: "tokens per task, the same accuracy", a: perTask(T[3]), b: perTask(T[4]) },
     { key: "inside", title: "Inside the model", to: "7 of 50", unit: "words the base model would have written differently" },
     { key: "audit", title: "Regression audit", to: `+${flips.gained.length} / −${flips.lost.length}`, unit: "tasks gained and lost, base vs RL at the same 2× budget" },
   ],
