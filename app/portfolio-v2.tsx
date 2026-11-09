@@ -2175,10 +2175,28 @@ function ResearchSection() {
   );
 }
 
+/** Pages that carry their own controls in the top-right corner; the dock steps aside while one fills the screen. */
+const OWN_CORNER = ["inference-study", "post-training-study", "inference-second", "post-training-second"];
+
 function ContactDock() {
   const [open, setOpen] = useState(false);
+  const [aside, setAside] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const seen = new Map<Element, boolean>();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => seen.set(e.target, e.intersectionRatio > 0.35 || e.intersectionRect.height > window.innerHeight * 0.5));
+      setAside([...seen.values()].some(Boolean));
+    }, { threshold: [0, 0.2, 0.35, 0.5, 0.8] });
+    const watch = () => OWN_CORNER.forEach((id) => { const el = document.getElementById(id); if (el && !seen.has(el)) { seen.set(el, false); io.observe(el); } });
+    watch();
+    // the laboratory is lazy: watch for it arriving
+    const mo = new MutationObserver(watch);
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => { io.disconnect(); mo.disconnect(); };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -2198,7 +2216,7 @@ function ContactDock() {
   }, [open]);
 
   return (
-    <aside className="vx-contact-dock" data-open={open} aria-label="Contact Yashwant">
+    <aside className="vx-contact-dock" data-open={open} data-aside={(aside && !open) || undefined} aria-label="Contact Yashwant">
       {open ? (
         <div
           ref={drawerRef}

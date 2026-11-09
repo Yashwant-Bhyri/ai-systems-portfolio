@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { highlight } from "./compute/stagecraft/stage-meter";
 import "./project-second-page.css";
+import { IntroLabels, type IntroLine } from "./compute/stagecraft/intro-labels";
 
 /**
  * A project's second page takes people into its depth: the two questions people come with, each
@@ -41,10 +42,8 @@ function DoorView({ door, seen }: { door: Door; seen: boolean }) {
  * the rest of the page dims. It ends by blurring everything except the way into the results laboratory.
  */
 export type GuideStep = { text: string; target: "microscope" | "poster" | "lab" };
-/** An intro line is a sentence, or a row of numbered labels. */
-/** A label can carry the techniques that belong to it. */
-export type IntroLabel = string | { title: string; note?: string; items: readonly string[]; Glyph?: ComponentType };
-export type IntroLine = string | { labels: readonly IntroLabel[] };
+/** An intro line is a sentence, or a row of numbered aims, each with its picture. */
+export type { IntroLabel, IntroLine } from "./compute/stagecraft/intro-labels";
 export type Guide = { intro: readonly IntroLine[]; steps: readonly GuideStep[]; cta: string };
 const INTRO_MS = 3800, SAY_MS = 2200, SHOW_MS = 4200, CTA_BLUR_MS = 3000, CTA_GLOW_MS = 9000;
 type Beat = { kind: "intro"; line: IntroLine; n: number } | { kind: "say" | "show"; step: number } | { kind: "cta" } | { kind: "glow" } | { kind: "rest" };
@@ -124,13 +123,7 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
           {beat.kind === "intro"
             ? typeof beat.line === "string"
               ? <p key={beat.n}>{highlight(beat.line)}</p>
-              : <ul key={beat.n} className="sp-labels">{beat.line.labels.map((l, i) => typeof l === "string"
-                  ? <li key={l} style={{ animationDelay: `${i * 260}ms` }}><i>{i + 1}</i>{l}</li>
-                  : <li key={l.title} className="sp-group" style={{ animationDelay: `${i * 360}ms` }}>
-                      {l.Glyph && <span className="sp-group-art" aria-hidden="true"><l.Glyph /></span>}
-                      <span className="sp-group-head"><i>{i + 1}</i><span><b>{l.title}</b>{l.note && <small>{l.note}</small>}</span></span>
-                      <span className="sp-group-items">{l.items.map((x, k) => <em key={x} style={{ animationDelay: `${i * 360 + 500 + k * 180}ms` }}>{x}</em>)}</span>
-                    </li>)}</ul>
+              : <IntroLabels key={beat.n} labels={beat.line.labels} />
             : <p key="cta">{highlight(guide.cta)}</p>}
         </div>
       )}

@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from
 import { useTr } from "../../exhibit/i18n";
 import { highlight } from "./stage-meter";
 import "./title-show.css";
+import { IntroLabels, type IntroLine } from "./intro-labels";
 
 /**
  * The laboratory's titles. They open on a full-screen board, one section at a time; when a module
@@ -34,7 +35,7 @@ function collect(root: HTMLElement | null): Rects {
    Tiles keep one fixed size: only colour changes as they light, so nothing on the board shakes. */
 /** The reel's highlight: the lit title grows to this share of its row. */
 const GROW = 2;
-const CARD = 1500, QUICK = 900, SETTLE = 500, COMPRESS = 900, LINE_MS = 3600, OVERVIEW = 2600, PICK = 1700;
+const CARD = 1500, QUICK = 900, SETTLE = 500, COMPRESS = 900, LINE_MS = 3600, PICTURED_MS = 7000, OVERVIEW = 2600, PICK = 1700;
 const MOVE = { duration: 760, easing: "cubic-bezier(.65,0,.35,1)" } as const;
 
 export function rowsFor(n: number): number[] {
@@ -93,7 +94,7 @@ export function TitleBoard({
   pathways, items, start = 0, quick = false, overlay = false, from = null, threshold = 0.55, lines = [], onStart, onEnd,
 }: {
   /** Said first, over the muted board, one at a time. */
-  lines?: readonly string[];
+  lines?: readonly IntroLine[];
   pathways: readonly Pathway[];
   items: readonly ShowItem[];
   /** Which section begins with the whole space. */
@@ -116,7 +117,7 @@ export function TitleBoard({
   const [pick, setPick] = useState(-1);
   const [lit, setLit] = useState(-1);
   // With opening lines, the board starts muted, so it never flashes before the first line.
-  const [line, setLine] = useState<string | null>(lines.length ? "" : null);
+  const [line, setLine] = useState<number | null>(lines.length ? -1 : null);
   const pending = useRef<Rects | null>(from);
   const endRef = useRef(onEnd);
   useEffect(() => { endRef.current = onEnd; });
@@ -136,7 +137,7 @@ export function TitleBoard({
       const n = pathways.length, step = quick ? QUICK : CARD;
       let t = overlay ? 800 : 400;
       // The board is muted while each opening line is said across it.
-      for (const l of lines) { const at = t; timers.push(window.setTimeout(() => setLine(l), at)); t += LINE_MS; }
+      lines.forEach((l, i) => { const at = t; timers.push(window.setTimeout(() => setLine(i), at)); t += typeof l === "string" ? LINE_MS : PICTURED_MS; });
       if (lines.length) { timers.push(window.setTimeout(() => setLine(null), t)); t += 500; }
       const go = (fn: () => void) => timers.push(window.setTimeout(() => { pending.current = collect(root.current); fn(); }, t));
       const light = (s: number) => {
@@ -164,7 +165,7 @@ export function TitleBoard({
     };
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) run();
-      else { clear(); setFocus(tour ? -1 : start); setPick(-1); setLit(-1); setLine(lines.length ? "" : null); }
+      else { clear(); setFocus(tour ? -1 : start); setPick(-1); setLit(-1); setLine(lines.length ? -1 : null); }
     }, { threshold });
     io.observe(el);
     return () => { io.disconnect(); clear(); };
@@ -173,7 +174,9 @@ export function TitleBoard({
   }, [pathways.length, quick, overlay, start, threshold, tour]);
   return (
     <div ref={root} className="tb-root" data-overlay={overlay || undefined} data-sections={pathways.length} data-line={line !== null ? "" : undefined}>
-      {line && <p key={line} className="tb-line">{highlight(tr(line))}</p>}
+      {line !== null && line >= 0 && (typeof lines[line] === "string"
+        ? <p key={line} className="tb-line">{highlight(tr(lines[line] as string))}</p>
+        : <div key={line} className="tb-line tb-line-pictured"><IntroLabels labels={(lines[line] as { labels: Parameters<typeof IntroLabels>[0]["labels"] }).labels} tr={tr} /></div>)}
       {pathways.map((p, pi) => {
         const own = items.filter((i) => i.pathway === pi);
         const mode = focus === -1 ? "half" : pi === focus ? "full" : overlay && pi < focus ? "compact" : "hidden";

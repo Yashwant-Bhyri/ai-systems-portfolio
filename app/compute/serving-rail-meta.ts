@@ -14,12 +14,14 @@ export const PRESSURE_GAP = { whole: gap("whole"), chunked: gap("chunked") };
 export const OVERLAP = overlapStudy("balanced", 4);
 export const CACHE = cacheRoutingStudy();
 export const CACHE_DELTA = CACHE.delta;
+/** Before the Summary only percentages are shown; the raw values live inside each module. */
+export const less = (from: number, to: number) => `−${Math.round(100 * (1 - to / from))}%`;
 export type ServingKey = "pressure" | "draft" | "cache" | "overlap" | "map" | "glossary";
 export const SERVING_RAIL: readonly { key: ServingKey; title: string; term: string; value: string; unit: string; Glyph: ComponentType }[] = [
-  { key: "pressure", title: "Chunked prefill", term: "Long prompts, no stalls", value: `${PRESSURE_GAP.whole.toFixed(1)} → ${PRESSURE_GAP.chunked.toFixed(1)} ms`, unit: "worst pause in request 1's answer", Glyph: GlyphChunked },
-  { key: "draft", title: "Speculative decoding", term: "A draft model writes ahead", value: "12 → 3", unit: "serial target-model calls", Glyph: GlyphDraft },
-  { key: "cache", title: "Cache-aware routing", term: "Go where the prompt is cached", value: `${CACHE.cold.firstToken} → ${CACHE.warm.firstToken} ms`, unit: "to the first token, warm replica", Glyph: GlyphCacheRoute },
-  { key: "overlap", title: "CPU/GPU overlap", term: "No idle GPU between steps", value: `${OVERLAP.baseline.finish} → ${OVERLAP.overlapped.finish} ms`, unit: "four decode steps, two streams", Glyph: GlyphOverlap },
+  { key: "pressure", title: "Chunked prefill", term: "Long prompts, no stalls", value: less(PRESSURE_GAP.whole, PRESSURE_GAP.chunked), unit: "worst pause in a streaming answer", Glyph: GlyphChunked },
+  { key: "draft", title: "Speculative decoding", term: "A draft model writes ahead", value: less(12, 3), unit: "serial target-model calls", Glyph: GlyphDraft },
+  { key: "cache", title: "Cache-aware routing", term: "Go where the prompt is cached", value: less(CACHE.cold.firstToken, CACHE.warm.firstToken), unit: "time to the first token", Glyph: GlyphCacheRoute },
+  { key: "overlap", title: "CPU/GPU overlap", term: "No idle GPU between steps", value: less(OVERLAP.baseline.finish, OVERLAP.overlapped.finish), unit: "time for four decode steps", Glyph: GlyphOverlap },
   { key: "map", title: "System map", term: "The whole serving path", value: "10", unit: "mechanisms on one serving clock", Glyph: GlyphServingMap },
   { key: "glossary", title: "System glossary", term: "Every serving component", value: "9", unit: "serving terms, each linked to the microscope", Glyph: GlyphKVSizing },
 ];

@@ -59,7 +59,8 @@ import { BigPicture } from "./stagecraft/big-picture";
 import { Manifold } from "./stagecraft/manifold";
 import { ServingDial } from "./stagecraft/serving-dial";
 import { withBase } from "../base-path";
-import { CACHE_DELTA, OVERLAP, PRESSURE_GAP, SERVING_RAIL } from "./serving-rail-meta";
+import type { IntroLine } from "./stagecraft/intro-labels";
+import { CACHE_DELTA, OVERLAP, PRESSURE_GAP, SERVING_RAIL, less } from "./serving-rail-meta";
 import { TaskLanding } from "./stagecraft/task-landing";
 import { FleetModule } from "./stagecraft/fleet-module";
 import { ModuleArc } from "./stagecraft/module-arc";
@@ -74,6 +75,7 @@ import { GhostCursor, type CursorStep } from "./stagecraft/ghost-cursor";
 import {
   GlyphAudit,
   GlyphBigPicture,
+  GlyphServingMap,
   GlyphManifold,
   GlyphDial,
   GlyphLean,
@@ -446,11 +448,17 @@ const BASE_CORRECT = simulateLab(0, 2, false, "shared-prefix").correct;
 const FLIPS2 = compareTasks(simulateLab(0, 2), simulateLab(2, 2));
 const LEAN_1X = simulateLab(3, 1).correct, LEAN_8X = simulateLab(3, 8).correct;
 const INFERENCE_PATHWAYS: readonly Pathway[] = [
-  { n: "01", title: "Same intelligence at cheaper cost", short: "Same intelligence at cheaper cost", techniques: [], lead: `The same ${R_[3].correct} correct answers from the same model, with *${PCT_LESS}% less compute*: ${cost2(R_[0].correctCost!)} → ${cost2(R_[3].correctCost!)} GPU-seconds per correct answer` },
+  { n: "01", title: "Same intelligence at cheaper cost", short: "Same intelligence at cheaper cost", techniques: [], lead: `The same answers from the same model, with *${PCT_LESS}% less compute* per correct answer` },
   { n: "02", title: "Serving under load", short: "Serving under load", techniques: [], lead: "Many requests share one GPU: *four techniques* keep every answer streaming, and the whole path on one clock" },
 ];
-const INFERENCE_OPENING = ["Inference optimization is *two problems*", "One: the same intelligence at cheaper cost. Two: serving under load"];
-const TRAINING_OPENING = ["In this project, we took a small model, Qwen3-4B, and applied *advanced post-training* to see how its behaviour scales on maths and coding", "Two aims: *more intelligence*, through SFT, GRPO and test-time scaling, and *less computation*, through Lean RL and Elastic RL"];
+const INFERENCE_OPENING: readonly IntroLine[] = ["Inference optimization is *two problems*", { labels: [
+  { title: "The same intelligence at cheaper cost", items: ["Continuous batching", "Prefix caching", "FP8 prefill & decode"], Glyph: GlyphBigPicture },
+  { title: "Serving under load", items: ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"], Glyph: GlyphServingMap },
+] }];
+const TRAINING_OPENING: readonly IntroLine[] = ["In this project, we took a small model, Qwen3-4B, and applied *advanced post-training* to see how its behaviour scales on maths and coding", { labels: [
+  { title: "More intelligence", note: "higher accuracy", items: ["SFT + LoRA", "GRPO", "Test-time scaling"], Glyph: GlyphCurves },
+  { title: "Less computation", note: "fewer GPU-seconds", items: ["Lean RL", "Elastic RL on 64 GPUs"], Glyph: GlyphLean },
+] }];
 const TRAINING_PATHWAYS: readonly Pathway[] = [
   { n: "01", title: "What did the model learn?", short: "In detail", techniques: [], lead: `One small model, trained step by step on maths and coding: accuracy *${pct(T_.base.correct)} → ${pct(T_.lean.correct)}*, and every result is here` },
 ];
@@ -752,27 +760,27 @@ export function ComputeLabStudy({
   // Each project's one opening picture: post-training's manifold, inference's race on one clock.
   const manifoldItem: RailItem = training
     ? { key: "manifold", title: "The manifold", term: "Every task in 3D", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy, three models", Glyph: GlyphManifold, onOpen: openManifold, current: mode === "manifold" }
-    : { key: "flow", title: "Serving timeline", term: "Every request, phase by phase", value: `${n0(FINISH(R_[0]))} → ${n0(FINISH(R_[3]))} s`, unit: "to answer all 96", Glyph: GlyphDial, onOpen: openManifold, current: mode === "manifold" };
+    : { key: "flow", title: "Serving timeline", term: "Every request, phase by phase", value: less(FINISH(R_[0]), FINISH(R_[3])), unit: "time to answer every request", Glyph: GlyphDial, onOpen: openManifold, current: mode === "manifold" };
   const railItems: RailItem[] = training
     ? [
         manifoldItem,
-        { key: "inside", title: "The layers that changed", term: "Inside the model", value: "7 of 50", unit: "words rewritten by training", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
+        { key: "inside", title: "The layers that changed", term: "Inside the model", value: "14%", unit: "of the words rewritten by training", Glyph: GlyphInside, onOpen: () => openView(5), current: mode === "explore" && view === 5 },
         { key: "learn", title: "GRPO", term: "Learning from test outcomes", value: `${pct(simulateLab(1, 1).correct)} → ${pct(simulateLab(2, 1).correct)}`, unit: "accuracy", Glyph: GlyphLearn, onOpen: () => openView(7), current: mode === "explore" && view === 7 },
         { key: "terrain", title: "Skill gained at each step", term: "Six stages of training", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy, base to Lean RL", Glyph: GlyphTerrain, onOpen: () => openView(6), current: mode === "explore" && view === 6 },
         { key: "frontier", title: "Accuracy against GPU cost", term: "The frontier", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy", Glyph: GlyphFrontier, onOpen: () => openView(8), current: mode === "explore" && view === 8 },
         { key: "curves", title: "Test-time scaling", term: "Compute curves", value: pct(simulateLab(2, 8).correct), unit: "accuracy · RL checkpoint at 8× thinking", Glyph: GlyphCurves, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
-        { key: "fleet", title: "Elastic RL on 64 GPUs", term: "No barrier between steps", value: "4 → 7", unit: "RL steps in 14 min", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
-        { key: "map", title: "Task by task", term: "Capability map", value: `+${solvedGain}`, unit: `net tasks at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
+        { key: "fleet", title: "Elastic RL on 64 GPUs", term: "No barrier between steps", value: "+75%", unit: "RL steps in the same time", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
+        { key: "map", title: "Task by task", term: "Capability map", value: `+${Math.round((100 * solvedGain) / 96)} pts`, unit: `accuracy at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "film", title: "Post-training ablation", term: "Four moves, each measured", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy, synthetic tasks", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "tasks", title: "Capability by difficulty", term: "How hard a task it can solve", value: `${pct(baseRun.correct)} → ${pct(rlRun.correct)}`, unit: `accuracy at a ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
-        { key: "audit", title: "Regression audit", term: "What got worse", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thinking budget`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "audit", title: "Regression audit", term: "What got worse", value: `${pct(rlFlips.gained.length)} / ${pct(rlFlips.lost.length)}`, unit: `of tasks gained / lost at ${budget}×`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
         manifoldItem,
-        { key: "setup", title: "Batching, prefix caching, FP8", term: "Three levers, the same answers", value: `${fmt(rlStatic.correctCost!)} → ${fmt(rlFast.correctCost!)}`, unit: "GPU-s per correct answer", Glyph: GlyphBigPicture, onOpen: openSetup, current: mode === "setup" },
-        { key: "replay", title: "Request replay", term: "One request, four measures", value: `${fmt(rlStatic.tasks[6].gpuSeconds)} → ${fmt(rlFast.tasks[6].gpuSeconds)}`, unit: "GPU-s · request 7", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
+        { key: "setup", title: "Batching, prefix caching, FP8", term: "Three levers, the same answers", value: less(rlStatic.correctCost!, rlFast.correctCost!), unit: "GPU time per correct answer", Glyph: GlyphBigPicture, onOpen: openSetup, current: mode === "setup" },
+        { key: "replay", title: "Request replay", term: "One request, four measures", value: less(rlStatic.tasks[6].gpuSeconds, rlFast.tasks[6].gpuSeconds), unit: "GPU time for one request", Glyph: GlyphReplay, onOpen: () => openView(1), current: mode === "explore" && view === 1 },
         { key: "composition", title: "Policy × runtime", term: "Training meets serving", value: `${pct(simulateLab(0, budget, false, workload).correct)} → ${pct(rlFast.correct)}`, unit: "accuracy", Glyph: GlyphComposition, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
-        { key: "latency", title: "Tail latency (p95)", term: "The slowest 5% of requests", value: `${fmt(p95(rlStatic), 0)} → ${fmt(p95(rlFast), 0)}`, unit: "s, arrival to last word", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "latency", title: "Tail latency (p95)", term: "The slowest 5% of requests", value: less(p95(rlStatic), p95(rlFast)), unit: "wait for the slowest 5%", Glyph: GlyphLatency, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
         { key: "film", title: "Lever ablation", term: "One lever at a time", value: "3 levers", unit: "each measured on every request", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
       ];
   // Deep links from the project overview: #inference-study/replay opens that module.
@@ -1145,7 +1153,7 @@ export function ComputeLabStudy({
             </div>
           );
         })()}
-        {!training && (
+        {!training && !show && (
           <div className="br-fork" role="group" aria-label={tr("Two branches of inference optimization")}>
             {([
               ["cheaper", "01", "Same intelligence, cheaper execution", ["Free-worker scheduling", "Prefix reuse (KV cache)", "Faster prefill & decode rates"]],

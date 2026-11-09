@@ -7430,3 +7430,8 @@ html {
 .vx-conclusion-focus > p { font-size: 16px; }
 .vx-conclusion-rail button { color: #93a0ae; }
 .vx-conclusion-rail button > i, .vx-conclusion-rail button > span { font: 400 13px/16px var(--font-geist-sans), sans-serif; }
+
+/* While a laboratory or a project's second page fills the screen, its own controls own the top-right corner. */
+.vx-contact-dock { transition: opacity .35s ease, transform .35s ease; }
+.vx-contact-dock[data-aside] { opacity: 0; transform: translateY(-6px); visibility: hidden; }
+.vx-contact-dock[data-aside] * { pointer-events: none !important; }
