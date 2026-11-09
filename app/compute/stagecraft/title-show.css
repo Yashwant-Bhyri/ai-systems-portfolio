@@ -233,3 +233,4 @@
 .tb-tile .tb-text strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tb-tile[data-lit="true"] .tb-text strong { white-space: normal; }
 .tb-spot { display: none; }
+.lab-flow-show .br-fork { display: none; }
