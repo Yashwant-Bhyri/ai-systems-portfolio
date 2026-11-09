@@ -489,7 +489,7 @@ const INFERENCE_CLIPS: readonly Clip[] = [
   { key: "replay", ms: 13000, metric: "prefill", seek: 12000, line: `Input processing, request 7: ${R_[1].tasks[6].prefill.toFixed(3)} → ${R_[3].tasks[6].prefill.toFixed(3)} GPU-s; the shared prefix is already in memory` },
   { key: "replay", ms: 13000, metric: "decode", seek: 12000, line: `Answer generation, request 7: ${n2(R_[1].tasks[6].decode)} → ${n2(R_[3].tasks[6].decode)} GPU-s; every step moves half the bytes` },
   intro("composition", "Two separate levers: *what the model knows, and how it is served*"),
-  { key: "composition", ms: 27000, seek: 0, line: `Accuracy ${pct(BASE_CORRECT)} → ${pct(R_[3].correct)}: training raises it, and faster serving takes back the extra cost` },
+  { key: "composition", ms: 24700, seek: 0, line: `Accuracy ${pct(BASE_CORRECT)} → ${pct(R_[3].correct)}: training raises it, and faster serving takes back the extra cost` },
   // The figure is moved to its moment under the introduction, so nothing jumps in view.
   { ...intro("latency", "Every request ranked by how long it took. *Look at the slowest 5%*"), preSeek: 27000 },
   { key: "latency", ms: 20500, line: `The slowest 5% of requests: ${n0(P95(R_[1]))} → ${n0(P95(R_[3]))} s` },

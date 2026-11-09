@@ -6,10 +6,11 @@ registerHooks({ resolve(specifier, context, next) {
   return next(specifier, context);
 } });
 const { labComposition } = await import("../app/compute/lab-simulation.ts");
-const { compositionComparison, compositionMechanisms, compositionPhase, compositionMotion, compositionMoment, COMPOSITION_FILM_MS } = await import("../app/compute/composition-comparison.ts");
+const { compositionComparison, compositionMechanisms, compositionPhase, compositionMotion, compositionMoment, COMPOSITION_FILM_MS, COMPOSITION_PHASE_START } = await import("../app/compute/composition-comparison.ts");
 test("five held composition stages expose each contribution before the final comparison", () => {
-  assert.equal(COMPOSITION_FILM_MS, 17500);
-  assert.deepEqual([0, 3500, 7000, 10500, 14000, 17500].map(compositionPhase), [0, 1, 2, 3, 4, 4]);
+  assert.equal(COMPOSITION_FILM_MS, 15200);
+  assert.deepEqual([0, ...COMPOSITION_PHASE_START.slice(1), COMPOSITION_FILM_MS].map(compositionPhase), [0, 1, 2, 3, 4, 4]);
+  assert.ok(COMPOSITION_PHASE_START[1] <= 1500, "the first lever moves within a second and a half");
   assert.equal(compositionPhase(-10), 0);
 });
 
@@ -77,7 +78,7 @@ test("invalid composition selection fails instead of silently comparing unrelate
 
 test("each intervention traces first, arrives, reveals the result, then holds", () => {
   for (const phase of [1, 2]) {
-    const start = phase * 3500;
+    const start = COMPOSITION_PHASE_START[phase];
     assert.equal(compositionMotion(start).traceProgress, 0);
     assert.equal(compositionMotion(start + 350).traceProgress, 0);
     let previous = 0;
@@ -96,7 +97,7 @@ test("each intervention traces first, arrives, reveals the result, then holds", 
   }
 });
 test("composition seeking is finite, reversible and has settled manual shortcuts", () => {
-  for (const t of [0, 4100, 7300, 16500, 7800, 3800, 17500]) {
+  for (const t of [0, 4100, 7300, 14500, 7800, 3800, COMPOSITION_FILM_MS]) {
     const frame = compositionMotion(t);
     assert.equal(frame.cursor, t);
     assert.equal(frame.phase, compositionPhase(t));

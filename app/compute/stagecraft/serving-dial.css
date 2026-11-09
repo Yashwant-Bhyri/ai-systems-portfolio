@@ -90,3 +90,17 @@
 .sd-impact em { color: #ffc267; font: 500 48px/52px var(--font-geist-mono), monospace; font-style: normal; letter-spacing: -.03em; }
 .sd-impact b { color: #c9d2db; font: 400 15px/20px var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums; }
 .sd-center[data-phase] .sd-live { display: revert; }
+
+/* Round 21: nothing is written over the rings. The impact of what is lit takes the dial's centre,
+   and the finish gap is said there too, under the two finish times. */
+.sd-impact { left: 50%; top: 50%; width: 236px; align-items: center; gap: 4px; padding: 0; border-radius: 0; background: none; box-shadow: none; text-align: center;
+  transform: translate(-50%, calc(-50% + 6px)); }
+.sd-impact[data-on="true"] { transform: translate(-50%, -50%); }
+.sd-impact small { font-size: 15px; line-height: 20px; }
+.sd-impact em { font-size: 44px; line-height: 48px; }
+.sd-impact b { font-size: 14px; line-height: 18px; white-space: nowrap; }
+.sd-center { transition: opacity .3s; }
+.sd-center[data-impact="true"] { opacity: 0; }
+.sd-center[data-done="true"] .sd-gap { display: block; margin-top: 2px; color: #ffc267; font: 500 17px/22px var(--font-geist-sans), sans-serif; font-style: normal; }
+.sd-center[data-done="true"] { width: 236px; }
+.sd-center[data-done="true"][data-phase=""] .sd-live { display: none; }

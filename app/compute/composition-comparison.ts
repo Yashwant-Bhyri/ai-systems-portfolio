@@ -8,9 +8,15 @@ import {
 export type CompositionLens = "runtime" | "policy" | "combined";
 export type CompositionRuns = ReturnType<typeof labComposition>;
 export const COMPOSITION_HOLD_MS = 3500;
-export const COMPOSITION_FILM_MS = COMPOSITION_HOLD_MS * 5;
+/** The baseline is only where the comparison starts: it is shown briefly, then the first lever moves. */
+export const COMPOSITION_OPEN_MS = 1200;
+/** When each of the five phases begins. */
+export const COMPOSITION_PHASE_START = [0, 1, 2, 3, 4].map((p) => (p === 0 ? 0 : COMPOSITION_OPEN_MS + (p - 1) * COMPOSITION_HOLD_MS));
+export const COMPOSITION_FILM_MS = COMPOSITION_OPEN_MS + COMPOSITION_HOLD_MS * 4;
 export function compositionPhase(time: number) {
-  return Math.max(0, Math.min(4, Math.floor(time / COMPOSITION_HOLD_MS)));
+  let p = 0;
+  for (let i = 1; i < 5; i++) if (time >= COMPOSITION_PHASE_START[i]) p = i;
+  return p;
 }
 
 /** Authored presentation only: intermediate cursor locations are not additional runs. */
@@ -19,7 +25,7 @@ export function compositionMotion(time: number) {
     throw new RangeError("Composition time must be finite");
   const cursor = Math.max(0, Math.min(COMPOSITION_FILM_MS, time));
   const phase = compositionPhase(cursor);
-  const local = cursor - phase * COMPOSITION_HOLD_MS;
+  const local = cursor - COMPOSITION_PHASE_START[phase];
   const ramp = (start: number, end: number) =>
     Math.max(0, Math.min(1, (local - start) / (end - start)));
   const intervention = phase === 1 || phase === 2;
@@ -42,7 +48,7 @@ export function compositionMotion(time: number) {
 export function compositionMoment(phase: number) {
   if (!Number.isInteger(phase) || phase < 0 || phase > 4)
     throw new RangeError("Unknown composition phase");
-  return phase * COMPOSITION_HOLD_MS + 2200;
+  return phase === 0 ? COMPOSITION_OPEN_MS / 2 : COMPOSITION_PHASE_START[phase] + 2200;
 }
 
 /** Ordered counterfactuals, not independent percentages that can be summed in any order. */

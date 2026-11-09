@@ -112,7 +112,7 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
         const g = c.getContext("2d")!;
         g.setTransform(dpr, 0, 0, dpr, 0, 0);
         g.clearRect(0, 0, w, h);
-        const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 26;
+        const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 40; // room for the time labels outside the rings
         const rad = (v: number) => (v / T) * Math.PI * 2 - Math.PI / 2;
         const band = (r0: number, r1: number, a: number, b: number, ink: string, alpha = 1) => {
           if (b <= a) return;
@@ -201,13 +201,6 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
           g.beginPath(); g.arc(cx, cy, 0.58 * R, rad(endB) + 0.01, rad(T) - 0.01); g.stroke();
           g.globalAlpha = u; g.strokeStyle = "#ffc267"; g.lineWidth = 1;
           g.beginPath(); g.arc(cx, cy, 0.665 * R, rad(endB) + 0.01, rad(T) - 0.01); g.stroke();
-          if (!focus) {
-            const mid = rad((endA + endB) / 2), x = cx + Math.cos(mid) * 0.7 * R, y = cy + Math.sin(mid) * 0.7 * R;
-            g.font = "500 20px ui-sans-serif, -apple-system, sans-serif";
-            const label = `${f(endA - endB)} s sooner`, tw = g.measureText(label).width;
-            g.fillStyle = "rgba(7,10,14,.9)"; g.beginPath(); g.roundRect(x - tw / 2 - 8, y - 14, tw + 16, 28, 14); g.fill();
-            g.fillStyle = "#ffc267"; g.fillText(label, x, y);
-          }
           g.globalAlpha = 1;
         }
         // the clock hand, with a fading trail
@@ -318,7 +311,7 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
         // the centre: the race while it runs; both finish times once it is over
         const done = t >= T - 1, centre = cells.current.centre;
         if (centre && centre.dataset.done !== String(done)) centre.dataset.done = String(done);
-        if (done) put("clock", `${f(T)} → ${f(endB)} s`);
+        if (done) { put("clock", `${f(T)} → ${f(endB)} s`); put("gap", `${f(T - endB)} s sooner`); }
         // While one phase is lit, the centre reads that phase: baseline → optimized, and the difference.
         // The impact of what is lit (a phase, or the lever being shown) is said large, beside the dial.
         const unit = (p: Phase) => (p === "wait" ? "s per request" : "GPU-s");
@@ -329,7 +322,7 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
         else if (leverShown === 0) im = ["Free-worker scheduling", `waiting ${fm("wait", 0)} s per request`, less(tot0.wait, totB.wait)];
         else if (leverShown === 1) im = ["+ Prefix reuse", `reading the prompt ${fm("read", 1)} GPU-s`, less(tot0.read, totB.read)];
         else if (leverShown === 2) im = ["+ Faster prefill & decode", `all GPU work ${f(gpu0)} → ${f(totB.read + totB.reason + totB.write)} GPU-s`, less(gpu0, totB.read + totB.reason + totB.write)];
-        if (panel) { const onNow = im ? "true" : "false"; if (panel.dataset.on !== onNow) panel.dataset.on = onNow; }
+        if (panel) { const onNow = im ? "true" : "false"; if (panel.dataset.on !== onNow) { panel.dataset.on = onNow; if (centre) centre.dataset.impact = onNow; } }
         if (im) { put("im-name", im[0]); put("im-vals", im[1]); put("im-delta", im[2]); }
         // the sentence on top
         const correctB = B.filter((q) => q.correct).length;
@@ -375,6 +368,7 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
           <div className="sd-center" data-k="centre" data-done="false" data-phase="">
             <b data-k="clock">0 s</b>
             <span className="sd-live">answered, of 96</span>
+            <em className="sd-end sd-gap" data-k="gap" />
             <span className="sd-end">to answer every request: baseline → optimized</span>
 
             <div className="sd-duel"><i data-tone="base" data-k="a-ans">0</i><i data-tone="opt" data-k="b-ans">0</i></div>

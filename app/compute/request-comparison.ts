@@ -2,6 +2,8 @@ import type { LabRun, LabTask } from "./lab-simulation";
 
 export type RequestMeasure = "service" | "prefill" | "decode" | "latency";
 export const REQUEST_FILM_MS = 20000;
+/** The clock starts almost at once: a long still opening reads as nothing happening. */
+export const REQUEST_LEAD_MS = 300;
 
 export function matchedRequestComparison(
   baseline: LabRun,
@@ -85,10 +87,10 @@ export function requestComparisonFrame(
   const first = Math.min(before, after),
     last = Math.max(before, after);
   const cursor =
-    time <= 1500
+    time <= REQUEST_LEAD_MS
       ? 0
       : time < 8500
-        ? (first * (time - 1500)) / 7000
+        ? (first * (time - REQUEST_LEAD_MS)) / (8500 - REQUEST_LEAD_MS)
         : time < 12000
           ? first
           : time < 16000
