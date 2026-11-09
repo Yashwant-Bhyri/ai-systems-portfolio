@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { simulateLab } from "../lab-simulation";
 import { SERVING_RAIL } from "../serving-rail-meta";
 import type { Pathway, ShowItem } from "./title-show";
@@ -46,14 +46,23 @@ const INFERENCE_PATHS: readonly Pathway[] = [
 export function LabPreview({ training }: { training: boolean }) {
   const items = useMemo(() => (training ? TRAINING_ITEMS() : INFERENCE_ITEMS()), [training]);
   const paths = training ? TRAINING_PATHS : INFERENCE_PATHS, id = training ? "post-training" : "inference";
+  // One card is lit at a time and the light moves on; a hover takes it.
+  const [lit, setLit] = useState(0);
+  const [hover, setHover] = useState<number | null>(null);
+  useEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = window.setInterval(() => setLit((n) => (n + 1) % items.length), 1800);
+    return () => window.clearInterval(t);
+  }, [items.length]);
+  const on = hover ?? lit;
   return (
-    <div className="lc-band">
+    <div className="lc-band" data-cycling="">
       {paths.map((p, pi) => (
         <section key={p.n} className="lc-sec" style={{ flexGrow: items.filter((i) => i.pathway === pi).length }}>
           <h4>{p.short === "Post-training" ? "Results laboratory" : pi === 0 ? `Results laboratory · ${p.short}` : p.short}</h4>
-          <div className="lc-row">
+          <div className="lc-row" style={{ ["--cols" as string]: Math.ceil(items.filter((i) => i.pathway === pi).length / 2) }}>
             {items.filter((i) => i.pathway === pi).map((i) => (
-              <a key={i.key} className="lc-card" href={`/${id}?labnav=show#${id}-study/${i.key}`}>
+              <a key={i.key} className="lc-card" data-lit={items.indexOf(i) === on || undefined} onPointerEnter={() => setHover(items.indexOf(i))} onPointerLeave={() => setHover(null)} href={`/${id}?labnav=show#${id}-study/${i.key}`}>
                 <span className="lc-art" aria-hidden="true">{i.Glyph && <i.Glyph />}</span>
                 {i.value && <em className="lc-val">{i.value}</em>}
                 <strong>{i.title}</strong>

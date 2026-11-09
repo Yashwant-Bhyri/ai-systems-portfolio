@@ -29,7 +29,7 @@ import { COMPUTE_PROJECTS, INFERENCE_STEPS, TRAINING_STEPS, INFERENCE_PROOF, TRA
 import { InferenceOverview, TrainingOverview, InferenceVisual, TrainingVisual, ComputeProjectPreview } from "./compute-visuals";
 import { ComputeStudy } from "./compute-study";
 import { ProjectPoster } from "./posters/posters";
-import { ProjectSecondPage } from "./project-second-page";
+import { ProjectSecondPage, type Guide } from "./project-second-page";
 import { LabPreview } from "./compute/stagecraft/lab-preview";
 import { ConclusionBoard, conclusionFromProof, type ConclusionSpec } from "./conclusion-board";
 import { INFERENCE_CONCLUSION, INFERENCE_SAVING, TRAINING_RESULT, TRAINING_CONCLUSION } from "./posters/conclusion-data";
@@ -2305,6 +2305,24 @@ function MiniMicroscope({ id, accent, brand, steps, Visual, proof, conclusion }:
   );
 }
 
+const TRAINING_GUIDE: Guide = {
+  intro: ["Advanced post-training does *two things*", "It makes a small model *get more answers right*, then *think less* for the same answers"],
+  steps: [
+    { text: "How does each step work? The *microscope* walks through every training step, live.", target: "microscope" },
+    { text: `What did each step give? *${TRAINING_RESULT.from} → ${TRAINING_RESULT.to} of 96* tasks solved, step by step.`, target: "poster" },
+    { text: "The *results laboratory* holds every figure: the manifold, the training film, every task that changed.", target: "lab" },
+  ],
+  cta: "Enter the *results laboratory* to explore the whole project in depth",
+};
+const INFERENCE_GUIDE: Guide = {
+  intro: ["Inference optimization is *two problems*", `Serve the *same intelligence for ${INFERENCE_SAVING}% less compute*, and keep it fast when *serving under load*`],
+  steps: [
+    { text: "How is a request served? The *microscope* follows one, component by component.", target: "microscope" },
+    { text: `What did each lever save? *${INFERENCE_SAVING}% less GPU time* per correct answer, lever by lever.`, target: "poster" },
+    { text: "The *results laboratory* holds every figure: the serving dial, the replay, the four serving techniques.", target: "lab" },
+  ],
+  cta: "Enter the *results laboratory* to explore the whole project in depth",
+};
 function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
   const training = domain === "training";
   const id = training ? "post-training" : "inference";
@@ -2317,6 +2335,7 @@ function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
       title={training ? `From ${TRAINING_RESULT.from} to ${TRAINING_RESULT.to} of 96 tasks solved, then kept with ${TRAINING_RESULT.fewer}% fewer tokens` : `Same intelligence at ${INFERENCE_SAVING}% less compute, optimized under load`}
       enter={`${href}?labnav=show#${id}-study`}
       lab={<LabPreview training={training} />}
+      guide={training ? TRAINING_GUIDE : INFERENCE_GUIDE}
       doors={[
         { key: "microscope", question: training ? "How does each training step work?" : "How is a request actually served?", name: training ? "Step by step, in the microscope" : "Request by request, in the microscope", href: `${href}#${id}-microscope`, node: training
           ? <MiniMicroscope id={id} accent="rose" brand="ADVANCED POST-TRAINING" steps={TRAINING_STEPS} Visual={TrainingVisual} proof={TRAINING_PROOF} conclusion={TRAINING_CONCLUSION} />
