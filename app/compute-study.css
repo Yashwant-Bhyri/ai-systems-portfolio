@@ -1463,3 +1463,7 @@
 .vx-shell .rs-policy-strip button { font-size: 13px; min-height: 32px; }
 .vx-shell :is(.rs-lab-metrics span, .rs-lab-metrics i, .rs-readout-label) { font-size: 12.5px; }
 .vx-shell .rs-lab-metrics > div:first-child strong { font-size: 24px; }
+/* In the post-training lab a figure's panel fills the stage, its content centred: spare room is shared, never left at the bottom. */
+.lab-flow-show.vx-accent-rose .rs-exhibit { min-height: var(--lf-room, 700px); box-sizing: border-box; display: flex; flex-direction: column; }
+.lab-flow-show.vx-accent-rose .rs-exhibit > .rs-stage { flex: 1 1 auto; align-content: center; }
+.lab-flow-show .rs-capability-plot { max-height: none; }

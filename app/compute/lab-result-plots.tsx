@@ -71,7 +71,7 @@ export function CapabilityShiftPlot({
     color = POLICIES[after.policyIndex].color;
   return (
     <svg
-      viewBox="0 0 1140 394"
+      viewBox="0 0 1140 640"
       className="rs-plot rs-capability-plot"
       role="group"
       aria-labelledby={`${id}-title`}
@@ -83,14 +83,15 @@ export function CapabilityShiftPlot({
       <text x="36" y="28" className="rs-figure-label">
         Each square is one task; select one
       </text>
-      <text x="390" y="65" textAnchor="middle" className="rs-axis">
+      {/* Family names sit above their grids, so the squares can take the full width and the stage's height. */}
+      <text x="244" y="66" textAnchor="middle" className="rs-axis">
         Base checkpoint
       </text>
-      <text x="832" y="65" textAnchor="middle" className="rs-axis">
+      <text x="826" y="66" textAnchor="middle" className="rs-axis">
         {POLICIES[after.policyIndex].name}
       </text>
       {FAMILIES.map((family, f) => {
-        const startY = 94 + f * 88,
+        const startY = 128 + f * 172,
           items = after.tasks.filter((t) => t.family === f),
           a = before.tasks.filter((t) => t.family === f && t.correct).length,
           b = items.filter((t) => t.correct).length;
@@ -98,16 +99,8 @@ export function CapabilityShiftPlot({
           lost = items.filter((t) => flips.lost.includes(t.id)).length;
         return (
           <g key={family}>
-            <text
-              x="36"
-              y={startY + 25}
-              className="rs-point-name"
-              fill="#c2d2e1"
-            >
-              {family}
-            </text>
-            <text x="36" y={startY + 48} className="rs-tick">
-              32 synthetic tasks
+            <text x="36" y={startY - 14} className="rs-point-name" fill="#c2d2e1">
+              {family} <tspan className="rs-tick" dx="8">32 synthetic tasks</tspan>
             </text>
             {[false, true].map((trained) => (
               <g key={String(trained)}>
@@ -117,8 +110,8 @@ export function CapabilityShiftPlot({
                       : before.tasks[t.id].correct,
                     positive = trained && flips.gained.includes(t.id),
                     negative = trained && flips.lost.includes(t.id);
-                  const x = (trained ? 713 : 271) + (i % 16) * 15,
-                    y = startY + Math.floor(i / 16) * 21;
+                  const x = (trained ? 618 : 36) + (i % 16) * 26,
+                    y = startY + Math.floor(i / 16) * 32;
                   return (
                     <g
                       key={t.id}
@@ -137,16 +130,16 @@ export function CapabilityShiftPlot({
                       <rect
                         x={x - 2}
                         y={y - 3}
-                        width="15"
-                        height="20"
+                        width="26"
+                        height="32"
                         fill="transparent"
                       />
                       <rect
                         x={x}
                         y={y}
-                        width="11"
-                        height="14"
-                        rx="1"
+                        width="22"
+                        height="26"
+                        rx="2"
                         fill={
                           positive
                             ? color
@@ -168,7 +161,7 @@ export function CapabilityShiftPlot({
                       />
                       {negative ? (
                         <path
-                          d={`M${x + 2} ${y + 4}l7 7m0-7l-7 7`}
+                          d={`M${x + 6} ${y + 8}l10 10m0-10l-10 10`}
                           stroke="#07111b"
                           strokeWidth="1.2"
                         />
@@ -177,10 +170,10 @@ export function CapabilityShiftPlot({
                   );
                 })}
                 {/* The score that changes with the checkpoint gets a box that blinks, so the eye goes there. */}
-                {trained && <rect key={b} x={968} y={startY - 6} width={92} height={42} rx={7} className="rs-score-box" stroke={color} />}
+                {trained && <rect key={b} x={1046} y={startY + 6} width={90} height={46} rx={7} className="rs-score-box" stroke={color} />}
                 <text
-                  x={trained ? 980 : 530}
-                  y={startY + 24}
+                  x={trained ? 1058 : 470}
+                  y={startY + 39}
                   className="rs-score"
                   fill={trained ? color : "#a9b6c7"}
                 >
@@ -190,42 +183,37 @@ export function CapabilityShiftPlot({
               </g>
             ))}
             <path
-              d={`M600 ${startY + 18}H675l-7-5m7 5l-7 5`}
+              d={`M548 ${startY + 29}H604l-7-5m7 5l-7 5`}
               fill="none"
               stroke={color}
               strokeOpacity=".6"
             />
             <path
               className="rs-flow"
-              d={`M600 ${startY + 18}H675`}
+              d={`M548 ${startY + 29}H604`}
               stroke={color}
               strokeDasharray="4 14"
             />
             <text
-              x="628"
-              y={startY + 43}
+              x="576"
+              y={startY + 54}
               textAnchor="middle"
               className="rs-tick"
             >
-              {lost ? `+${gained} / −${lost}` : `+${gained}, none lost`}
+              <tspan x="576">+{gained}</tspan>
+              <tspan x="576" dy="15">{lost ? `${lost} lost` : "none lost"}</tspan>
             </text>
           </g>
         );
       })}
-      <rect x="272" y="365" width="9" height="11" fill={color} />
-      <text x="290" y="376" className="rs-tick">
-        Newly correct
-      </text>
-      <rect x="455" y="365" width="9" height="11" fill="#ff8176" />
-      <text x="473" y="376" className="rs-tick">
-        Negative flip
-      </text>
-      <rect x="629" y="365" width="9" height="11" fill="#91a8bb" />
-      <text x="647" y="376" className="rs-tick">
-        Remains correct
-      </text>
-      <text x="882" y="376" className="rs-tick">
-        Same {after.budget}× thought
+      {[[color, "Newly correct"], ["#ff8176", "Broke (was right)"], ["#91a8bb", "Still right"], ["#182633", "Not solved"]].map(([c, label], k) => (
+        <g key={label}>
+          <rect x={36 + k * 200} y="604" width="14" height="16" rx="2" fill={c} stroke="#385064" strokeWidth=".6" />
+          <text x={58 + k * 200} y="617" className="rs-tick">{label}</text>
+        </g>
+      ))}
+      <text x="1136" y="617" textAnchor="end" className="rs-tick">
+        Both at a {after.budget}× budget
       </text>
     </svg>
   );
@@ -409,7 +397,7 @@ export function LabScalingPlot({
             <circle cx={a[0]} cy={a[1]} r={9} fill="none" stroke="#9cc5f5" strokeWidth="2" />
             <text x={a[0] + 14} y={a[1] + 26} fill="#9cc5f5" fontSize="15">Base, {budget}× budget: {from.accuracy.toFixed(1)}%</text>
             <path d={`M${a[0] + 10} ${a[1] - 4}L${b[0] - 22} ${b[1] + 8}`} stroke="#ffd6e4" strokeWidth="2.5" markerEnd={`url(#${id}-arrow)`} fill="none" />
-            <text x={b[0] + 26} y={b[1] + 30} fill="#ffd6e4" fontSize="17" fontWeight="500">+{gain.toFixed(1)} pp, {tasks >= 0 ? "+" : "−"}{Math.abs(tasks)} tasks</text>
+            <text x={b[0] + 26} y={b[1] + 30} fill="#ffd6e4" fontSize="17" fontWeight="500">+{gain.toFixed(1)} points, {tasks >= 0 ? "+" : "−"}{Math.abs(tasks)} tasks</text>
             <text x={b[0] + 26} y={b[1] + 50} fill="#c9d2db" fontSize="14">from {how}</text>
           </g>
         );

@@ -1331,7 +1331,7 @@ export function ComputeLabStudy({
               aria-label={views[view].name}
             >
               {training && (
-                <GhostCursor key={view} root={exhibitRef} script={view === 1 ? CURVES_DEMO : MAP_DEMO} enabled={mode === "explore" && (view === 0 || view === 1)} startDelay={2500} restDelay={2200} loop={!show} />
+                <GhostCursor key={view} root={exhibitRef} script={view === 1 ? CURVES_DEMO : MAP_DEMO} enabled={mode === "explore" && (view === 0 || view === 1) && !veiled} startDelay={2500} restDelay={2200} loop={!show} />
               )}
               <div className={training ? "rs-context-bar rs-budget-bar" : "rs-context-bar"} hidden={training && view >= 4}>
                 <span className="rs-status rs-status-scenario">
