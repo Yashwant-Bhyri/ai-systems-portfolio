@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useTr } from "../../exhibit/i18n";
 import { highlight } from "./stage-meter";
 import type { ShowItem } from "./title-show";
-import { POLICIES, simulateLab } from "../lab-simulation";
+import { POLICIES, simulateLab, type Workload } from "../lab-simulation";
 import { FRONTIER_COST } from "../../exhibit/policy/data.ts";
 import { latencyDistribution } from "../load-latency-model";
 import { CACHE_DELTA, OVERLAP, PRESSURE_GAP } from "../serving-rail-meta";
@@ -25,10 +25,15 @@ const f = (v: number, d = 0) => v.toLocaleString("en-US", { minimumFractionDigit
 const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return (s[47] + s[48]) / 2; };
 
 /** Every number is read from the lab's own model, so a brief cannot drift from its module. */
-export function moduleBriefs(training: boolean, budget: number): Record<string, Brief> {
+/**
+ * The head reads the figure as the visitor has set it: their checkpoint, their workload.
+ * Left unset, it is the RL checkpoint on the shared-document workload, as the modules open.
+ */
+export function moduleBriefs(training: boolean, budget: number, chosen: { policy?: number; workload?: Workload } = {}): Record<string, Brief> {
+  const policy = chosen.policy ?? 2, workload = chosen.workload ?? "shared-prefix";
   if (training) {
     const base1 = simulateLab(0, 1), lean = simulateLab(3, 4), base = simulateLab(0, budget), rl = simulateLab(2, budget);
-    const r8 = simulateLab(2, 8), lean8 = simulateLab(3, 8);
+    const r8 = simulateLab(2, 8), lean8 = simulateLab(3, 8), picked = simulateLab(policy, budget);
     return {
       manifold: { does: "Every task, three models, six dimensions", dealing: "All 96 tasks at once", goal: "See what training changed, and what it did not", impact: `*${base1.correct} → ${lean.correct} of 96* correct`, why: "drag to turn it, or choose any three axes" },
       inside: { does: "Where training changed how the model reasons", dealing: "The model's 36 layers, while it answers one coding task", goal: "See where training really changed how it reasons", impact: "*7 of 50 words* now differ from the base model", why: "the layers that moved most are the ones writing the words that changed" },
@@ -37,14 +42,14 @@ export function moduleBriefs(training: boolean, budget: number): Record<string, 
       frontier: { does: "Accuracy rises, then serving brings the cost back down", dealing: "Accuracy against GPU time per correct answer, move by move", goal: "Three times the answers without three times the cost", impact: `*${base1.correct} → ${lean.correct} of 96*, at ${f(FRONTIER_COST.start, 2)} → ${f(FRONTIER_COST.runtime, 2)} GPU-s per correct answer`, why: "training raises accuracy, then the serving runtime takes the cost back down" },
       curves: { does: "How much each model gains from more thinking", dealing: `${POLICIES.length} checkpoints, each given more and more GPU time`, goal: "The most correct answers for the least compute", impact: `*${r8.correct} of 96* for the RL checkpoint at 8× thinking budget`, why: `Lean RL reaches the same ${r8.correct} of 96 for ${lean8.meanCost.toFixed(0)} GPU-s a task, not ${r8.meanCost.toFixed(0)}` },
       fleet: { does: "Any free GPU takes any role, so nobody waits", dealing: "64 GPUs doing RL, stopping at a barrier every step", goal: "Let any free GPU take any role, so nobody waits", impact: "*4 → 7 RL steps* in the same 14 minutes", why: "no barrier: each GPU keeps its identity and changes role" },
-      map: { does: "Which tasks each checkpoint solves", dealing: "One square per task, at every checkpoint", goal: "See which tasks changed, not only the score", impact: `*+${rl.correct - base.correct} tasks*, net, at ${budget}× thinking budget`, why: "maths, multi-step logic and repository tasks all gain" },
+      map: { does: "Which tasks each checkpoint solves", dealing: "One square per task, at every checkpoint", goal: "See which tasks changed, not only the score", impact: policy === 0 ? "*Pick a trained checkpoint* to see which tasks it changed" : `*${picked.correct - base.correct >= 0 ? "+" : ""}${picked.correct - base.correct} tasks*, net, ${POLICIES[policy].name} at ${budget}× thinking budget`, why: "maths, multi-step logic and repository tasks all gain" },
       film: { does: "Four moves, each shown and then measured", dealing: "One base model and four training moves", goal: "Smarter first, then leaner", impact: `*${base1.correct} → ${lean.correct} of 96* solved, step by step`, why: "each move shown, then measured on the same 96 tasks" },
       tasks: { does: "How far up the difficulty the model reaches", dealing: "Every task, stacked from easiest to hardest", goal: "Raise the model's ability past more of them", impact: `*+${rl.correct - base.correct} tasks* within reach`, why: "ability rises, so harder tasks fall below it" },
       audit: { does: "Every task that broke, named", dealing: "Every gain and every loss, task by task", goal: "Catch any task that training broke", impact: "*Each lost task* is named, not averaged away", why: "a better score can hide a task that broke" },
     };
   }
-  const baseStatic = simulateLab(0, budget, false, "shared-prefix");
-  const rlStatic = simulateLab(2, budget, false, "shared-prefix"), rlFast = simulateLab(2, budget, true, "shared-prefix");
+  const baseStatic = simulateLab(0, budget, false, workload);
+  const rlStatic = simulateLab(policy, budget, false, workload), rlFast = simulateLab(policy, budget, true, workload);
   const p95 = (r: typeof rlFast) => latencyDistribution(r, 95).threshold.latency;
   const med = (r: typeof rlFast) => median(r.tasks.map((t) => t.latency));
   const costPct = Math.round((100 * (rlFast.correctCost! - baseStatic.correctCost!)) / baseStatic.correctCost!);

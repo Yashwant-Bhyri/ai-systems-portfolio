@@ -158,18 +158,22 @@ function alignBlock(inside: Element | null) {
 }
 
 /* Post-training explorers tour themselves, briskly: every checkpoint, then every thinking budget. */
-const TRAINING_DEMO: readonly CursorStep[] = [
-  { target: ".rs-policy-strip button:nth-of-type(1)", label: "Base checkpoint", hold: 1500 },
-  { target: ".rs-policy-strip button:nth-of-type(2)", label: "After SFT", hold: 1500 },
-  { target: ".rs-policy-strip button:nth-of-type(3)", label: "RL checkpoint", hold: 1700 },
-  { target: ".rs-policy-strip button:nth-of-type(4)", label: "Lean RL", hold: 1700 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(1)", label: "1× thinking budget", hold: 1500 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(3)", label: "4× thinking budget", hold: 1500 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(4)", label: "8× thinking budget", hold: 1500 },
-  { target: ".rs-context-bar .rs-segmented button:nth-of-type(2)", label: "Back to 2×", hold: 1200 },
-  { target: ".rs-policy-strip button:nth-of-type(3)", label: "RL checkpoint", hold: 1200 },
-]
-
+/** Each figure gets its own walk, slow enough to read, ending on what that figure is for. */
+const PICK = (n: number) => `.rs-policy-strip button:nth-of-type(${n})`, BUDGET = (n: number) => `.rs-context-bar .rs-segmented button:nth-of-type(${n})`;
+// Curves: more thinking for the RL checkpoint, then the same answers from Lean RL for less.
+const CURVES_DEMO: readonly CursorStep[] = [
+  { target: PICK(3), label: "RL checkpoint", hold: 2600 },
+  { target: BUDGET(1), label: "1× thinking budget", hold: 2600 },
+  { target: BUDGET(3), label: "4× thinking budget", hold: 2600 },
+  { target: BUDGET(4), label: "8× thinking budget", hold: 3200 },
+  { target: PICK(4), label: "Lean RL: the same answers, less GPU time", hold: 4500 },
+];
+// Map: each training step's squares, one at a time, ending on the RL checkpoint the head line describes.
+const MAP_DEMO: readonly CursorStep[] = [
+  { target: PICK(2), label: "After SFT", hold: 3200 },
+  { target: PICK(4), label: "Lean RL", hold: 3200 },
+  { target: PICK(3), label: "RL checkpoint: which tasks changed", hold: 4500 },
+];
 const INFERENCE_VIEWS = [
   { name: "Policy × runtime", detail: "Compare cost & accuracy", symbol: "↖" },
   {
@@ -763,7 +767,8 @@ export function ComputeLabStudy({
   const nextKey = order[(order.indexOf(currentKey) + 1) % order.length];
   const lastModule = order.indexOf(currentKey) === order.length - 1;
   const phase = status.key === currentKey ? status.phase : "running";
-  const briefs = useMemo(() => moduleBriefs(training, budget), [training, budget]);
+  // Cheap: a handful of 96-task runs, read fresh so the head always matches the figure as set.
+  const briefs = moduleBriefs(training, budget, { policy: run.policyIndex, workload });
   const openSeq = useRef(0);
   const touched = useRef(0);
   const reveal = (key: string, auto: boolean) => {
@@ -1326,7 +1331,7 @@ export function ComputeLabStudy({
               aria-label={views[view].name}
             >
               {training && (
-                <GhostCursor root={exhibitRef} script={TRAINING_DEMO} enabled={mode === "explore" && view < 3} startDelay={2500} restDelay={2200} loop={!show} />
+                <GhostCursor key={view} root={exhibitRef} script={view === 1 ? CURVES_DEMO : MAP_DEMO} enabled={mode === "explore" && (view === 0 || view === 1)} startDelay={2500} restDelay={2200} loop={!show} />
               )}
               <div className={training ? "rs-context-bar rs-budget-bar" : "rs-context-bar"} hidden={training && view >= 4}>
                 <span className="rs-status rs-status-scenario">
