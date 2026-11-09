@@ -87,7 +87,7 @@ export function Manifold({ dwell = 8000, active = true, compact = false, onRound
     if (!el || !active) return;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    const px = Math.min(2, window.devicePixelRatio || 1);
+    const px = Math.min(1.5, window.devicePixelRatio || 1); // sharp on retina, about half the pixels of 2×
     renderer.setPixelRatio(px);
     renderer.setSize(el.clientWidth, el.clientHeight);
     el.appendChild(renderer.domElement);

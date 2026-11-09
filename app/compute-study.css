@@ -1467,3 +1467,5 @@
 .lab-flow-show.vx-accent-rose .rs-exhibit { min-height: var(--lf-room, 700px); box-sizing: border-box; display: flex; flex-direction: column; }
 .lab-flow-show.vx-accent-rose .rs-exhibit > .rs-stage { flex: 1 1 auto; align-content: center; }
 .lab-flow-show .rs-capability-plot { max-height: none; }
+/* While the laboratory's code arrives, its place keeps its size, so nothing below jumps. */
+.lab-pending { min-height: 100svh; }

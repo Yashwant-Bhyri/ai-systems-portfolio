@@ -27,7 +27,8 @@ export type ReliefSpec = {
 export function mountRelief(host: HTMLElement, spec: ReliefSpec) {
   const width = host.clientWidth, height = host.clientHeight;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  // 1.5× is sharp on a retina screen and draws about half the pixels of 2×.
+  renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
   renderer.setSize(width, height);
   host.appendChild(renderer.domElement);
   const scene = new THREE.Scene();

@@ -2,15 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ComponentType,
-  type CSSProperties,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type CSSProperties, lazy, Suspense } from "react";
 import {
   AntigravityOverview,
   FilmoraOverview,
@@ -27,7 +19,13 @@ import { useT } from "./i18n";
 import { LangSwitch } from "./i18n/lang-switch";
 import { COMPUTE_PROJECTS, INFERENCE_STEPS, TRAINING_STEPS, INFERENCE_PROOF, TRAINING_PROOF } from "./compute-projects";
 import { InferenceOverview, TrainingOverview, InferenceVisual, TrainingVisual, ComputeProjectPreview } from "./compute-visuals";
-import { ComputeStudy } from "./compute-study";
+// The results laboratory (and three.js with it) loads only on a project's own page, never with the home page.
+const ComputeStudy = lazy(() => import("./compute-study").then((m) => ({ default: m.ComputeStudy })));
+const LabSlot = ({ domain }: { domain: "inference" | "training" }) => (
+  <Suspense fallback={<section className="lab-pending" id={domain === "inference" ? "inference-study" : "post-training-study"} aria-busy="true" />}>
+    <ComputeStudy domain={domain} />
+  </Suspense>
+);
 import { ProjectPoster } from "./posters/posters";
 import { ProjectSecondPage, type Guide } from "./project-second-page";
 import { GlyphCurves, GlyphLean, GlyphBigPicture, GlyphServingMap } from "./compute/stagecraft/glyphs";
@@ -2416,7 +2414,7 @@ export function ProjectDepthPage({ domain }: { domain: "inference" | "training" 
         <a className="vx-header-resume" href={assetPath("/yashwant-bhyri-resume.pdf")} target="_blank" rel="noreferrer">{t.resume}</a>
         <LangSwitch />
       </header>
-      {domain === "inference" ? <InferenceChapter results={<ComputeStudy domain={domain} />} /> : <TrainingChapter results={<ComputeStudy domain={domain} />} />}
+      {domain === "inference" ? <InferenceChapter results={<LabSlot domain={domain} />} /> : <TrainingChapter results={<LabSlot domain={domain} />} />}
       <ContactDock />
     </main>
   );

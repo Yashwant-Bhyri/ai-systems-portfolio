@@ -81,12 +81,15 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
   useEffect(() => {
     const el = root.current;
     if (!el) return;
-    const near = new IntersectionObserver(([e]) => { if (e.isIntersecting) setSeen(true); }, { threshold: 0, rootMargin: "100% 0px" });
+    // The live panels exist only while the page is near the screen: far away, they cost nothing.
+    const near = new IntersectionObserver(([e]) => setSeen(e.isIntersecting), { threshold: 0, rootMargin: "100% 0px" });
     const here = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.6 });
     near.observe(el); here.observe(el);
     return () => { near.disconnect(); here.disconnect(); };
   }, []);
   const [beat, skip] = useGuide(guide, inView);
+  // Near this page, the laboratory's code is fetched quietly, so "Enter the results laboratory" opens at once.
+  useEffect(() => { if (seen) void import("./compute-study"); }, [seen]);
   const step = beat.kind === "say" || beat.kind === "show" ? beat.step : -1;
   const [introDone, setIntroDone] = useState(false);
   useEffect(() => { if (beat.kind !== "intro" && beat.kind !== "rest" && !introDone) { const id = window.setTimeout(() => setIntroDone(true), 0); return () => window.clearTimeout(id); } }, [beat.kind, introDone]);
