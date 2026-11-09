@@ -219,3 +219,19 @@ Target viewport stays 1512×860.
 Nine review agents each owned one page (two second pages, two Summaries, five groups of modules) and reported findings with screenshots. Applied: second pages (clickable, uncropped, readable live panels; result titles), dial (end state, colour roles, scrubber, lever demo, ledger), Summary (hand holds it, numbers in head lines, readable intros, ticks, transport), serving (explorer hand-over, formats, green results), post-training Summary and manifold, inference figures, curves, map and audit.
 
 The seven larger items, done after (2026-11-10): the head follows the chosen checkpoint and workload; curves and map have their own guided tours that wait for the introduction, and the audit has none; map, curves and audit fill the stage (the map re-laid out with family names above larger squares); the microscope panel shows the picture and the step's title; Lean RL in its own colour; manifold labels never overlap or leave the frame (measured over 14 s of turning); film chapter 05 leads with all three levers, 41.40 → 26.62.
+
+## Round 16 (2026-11-10)
+
+| Request | Status |
+|---|---|
+| Blur stays stuck between Summary modules; blur over other pages | Fixed: holding during an introduction skips it, cards fade out with their moment, fixed blurs step aside when the lab is off screen |
+| Second page: empty bottom in the live panels | Fixed: the panels fill their windows |
+| Second page: lab cards lit one at a time | Done, in two rows |
+| Second page narrated: intro on the blur, left fifth says and lights, ends on "Enter the results laboratory" | Done, both projects |
+| Lab openings: a muted screen says the idea first | Done: inference's two problems; post-training's purpose |
+| Post-training purpose and before/after before the manifold | Done, in percentages from the lab model |
+| Artificial-Analysis-style index | Not done: no real evaluation exists; inventing an index would break the "numbers from the lab" rule |
+| Introductions say what, impact and number | Done |
+| Rename "Training, step by step", "Which tasks it can now solve" | "Four training moves, measured"; "Harder tasks within reach" |
+| Inference: both summaries, then "go deeper into either, or next project" | Done: a three-way choice |
+| Lean RL shown visually, like speculative decoding | Done: agents, tests, length charge, update, a second round |

@@ -77,15 +77,14 @@
 .sp-page[data-focus="microscope"] .sp-door[data-door="microscope"] .sp-window,
 .sp-page[data-focus="poster"] .sp-door[data-door="poster"] .sp-window { box-shadow: inset 0 0 0 2px var(--active-accent), 0 30px 70px -40px var(--active-accent); }
 /* The opening, and the ending: the page blurs; at the end only the way in stays sharp. */
-.sp-veil { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 0 10%; background: rgba(5,8,12,.62); -webkit-backdrop-filter: blur(16px) saturate(.5); backdrop-filter: blur(16px) saturate(.5); animation: mb-veil .5s both; pointer-events: none; }
-.sp-veil p { margin: 0; color: #f6f8fa; text-align: center; text-wrap: balance; font: 450 clamp(30px, 3vw, 46px)/1.22 var(--font-geist-sans), sans-serif; letter-spacing: -.024em; animation: tb-line 3.8s cubic-bezier(.22,1,.36,1) both; }
+.sp-veil { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 0 10%; background: rgba(5,8,12,.62); -webkit-backdrop-filter: blur(16px) saturate(.5); backdrop-filter: blur(16px) saturate(.5); animation: sp-veil-in .5s both; pointer-events: none; }
+@keyframes sp-veil-in { from { opacity: 0; } }
+.sp-veil p { margin: 0; color: #f6f8fa; text-align: center; text-wrap: balance; font: 450 clamp(30px, 3vw, 46px)/1.22 var(--font-geist-sans), sans-serif; letter-spacing: -.024em; animation: sp-line 3.8s cubic-bezier(.22,1,.36,1) both; }
 .sp-veil[data-kind="cta"] { align-items: flex-end; padding-bottom: 22vh; }
-.sp-veil[data-kind="cta"] p { animation: ts-fade .6s both; font-size: clamp(26px, 2.4vw, 36px); }
+.sp-veil[data-kind="cta"] p { animation: sp-veil-in .6s both; font-size: clamp(26px, 2.4vw, 36px); }
 .sp-page[data-focus="cta"] .sp-cta { position: relative; z-index: 21; animation: sp-glow 1.6s ease-in-out infinite; }
 @keyframes sp-glow { 50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--active-accent) 22%, transparent), 0 0 60px color-mix(in srgb, var(--active-accent) 55%, transparent); } }
-@keyframes mb-veil { from { opacity: 0; } }
-@keyframes tb-line { 0% { opacity: 0; transform: translateY(12px); } 12%, 88% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-8px); } }
-@keyframes ts-fade { from { opacity: 0; transform: translateY(6px); } }
+@keyframes sp-line { 0% { opacity: 0; transform: translateY(12px); } 12%, 88% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-8px); } }
 .sp-page { position: relative; }
 /* The live panels fill their windows to the bottom. */
 .pa[data-live] { height: 860px; min-height: 0; justify-content: space-between; }

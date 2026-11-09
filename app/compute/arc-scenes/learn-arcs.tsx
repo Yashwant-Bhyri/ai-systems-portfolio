@@ -112,27 +112,83 @@ function Budget({ t }: SceneProps) {
   </svg>;
 }
 
-/* ── Lean RL: correctness first, then a charge per token ───────────────── */
+/* ── Lean RL, shown on agents ───────────────────────────────────────────
+   Eight agents attempt the same task, each streaming its reasoning trace token by token. The tests
+   mark each answer; tokens past the length target are charged against the reward; the rewards flow
+   back as an update; and the next round writes the same answers in fewer tokens. The traces are
+   illustrative; the totals at the end are the lab's own. */
+const AGENTS = [
+  { len: 40, ok: 1 }, { len: 27, ok: 1 }, { len: 44, ok: 0 }, { len: 19, ok: 1 },
+  { len: 36, ok: 1 }, { len: 48, ok: 1 }, { len: 23, ok: 0 }, { len: 31, ok: 1 },
+] as const;
+const TARGET = 24, LAMBDA = 0.5, TOK = 11, TX0 = 150, GATE = 712;
+const leaner = (len: number) => Math.round(len <= TARGET ? len : TARGET + (len - TARGET) * 0.2);
+const rewardOf = (len: number, ok: number) => (ok ? 1 - (LAMBDA * Math.max(0, len - TARGET)) / TARGET : 0);
+const LEAN_MS = 15000;
 function Lean({ t }: SceneProps) {
-  const LAMBDA = 0.3, X = 230, PX = 600;
-  const rows = [
-    { name: "Long and correct", len: 1, ok: 1 },
-    { name: "Short and correct", len: 0.5, ok: 1 },
-    { name: "Short and wrong", len: 0.4, ok: 0 },
-  ];
-  const k = ease.out(prog(t, 500, 2500)), charge = prog(t, 3400, 4600), update = ease.io(prog(t, 7000, 9000));
-  return <svg viewBox="0 0 1100 340" role="img" aria-label="Lean RL adds a charge per token to the reward, so among correct answers the shorter one gets the higher reward">
-    <text x={X} y={24} className="sb-ls">Tokens in the answer</text>
-    <text x={X + PX + 20} y={24} className="sb-rl" opacity={charge}>reward = correct − {LAMBDA} × length</text>
-    {rows.map((r, i) => {
-      const y = 44 + i * 82, reward = r.ok - LAMBDA * r.len * (r.ok ? 1 : 0);
-      return <g key={r.name}>
-        <text x={0} y={y + 26} className="sb-rl">{r.name}</text>
-        <rect x={X} y={y} width={r.len * PX * k * (1 - (i === 0 ? 0.22 * update : 0))} height={38} rx={4} fill={r.ok ? C.rose : "#6c5560"} />
-        <g opacity={charge} data-focus-spot><text x={X + PX + 20} y={y + 27} className="sb-v" style={{ fill: r.ok ? C.ok : C.bad, fontSize: 21 }}>{reward.toFixed(2)}</text></g>
+  const second = t >= 8600;
+  const stream = second ? prog(t, 8600, 11400) : prog(t, 300, 3200);
+  const marks = second ? prog(t, 11500, 12500) : prog(t, 3200, 4500);
+  const charge = second ? prog(t, 11800, 12600) : prog(t, 4600, 5600);
+  const update = prog(t, 6600, 8200), fadeOut = 1 - prog(t, 8200, 8600);
+  const result = prog(t, 12800, 13600);
+  const lens = AGENTS.map((a) => (second ? leaner(a.len) : a.len));
+  const mean = Math.round(lens.reduce((x, l) => x + l, 0) / lens.length);
+  const mean1 = Math.round(AGENTS.reduce((x, a) => x + a.len, 0) / AGENTS.length);
+  const tx = (u: number) => TX0 + u * TOK;
+  const yOf = (i: number) => 30 + i * 34;
+  return <svg viewBox="0 0 1100 340" role="img" aria-label="Eight agents write reasoning traces; the tests mark each answer; tokens past a length target are charged; the update makes short correct traces more likely, and the next round gives the same answers in fewer tokens">
+    {/* the prompt, and the eight agents it goes to */}
+    <circle cx={34} cy={163} r={14} fill={C.ink} />
+    <text x={34} y={196} textAnchor="middle" className="sb-ls">task</text>
+    {AGENTS.map((_, i) => <path key={i} d={`M48 163C80 163 84 ${yOf(i) + 10} 112 ${yOf(i) + 10}`} stroke="rgba(230,237,244,.18)" fill="none" />)}
+    {/* the length target */}
+    <g opacity={Math.max(prog(t, 4200, 4800), second ? 1 : 0)}>
+      <path d={`M${tx(TARGET)} 18V300`} stroke={C.amber} strokeDasharray="3 5" />
+      <text x={tx(TARGET)} y={14} textAnchor="middle" className="sb-ls" style={{ fill: C.amber }}>length target</text>
+    </g>
+    {AGENTS.map((a, i) => {
+      const y = yOf(i), len = lens[i], shown = Math.floor(len * stream);
+      const rw = rewardOf(len, a.ok);
+      return <g key={i} opacity={second ? 1 : fadeOut > 0 ? 1 : 0}>
+        <circle cx={124} cy={y + 10} r={8} fill={C.rose} opacity={0.9} />
+        <text x={124} y={y + 14} textAnchor="middle" style={{ fill: "#0b1016", font: "600 10px ui-monospace, monospace" }}>{i + 1}</text>
+        {Array.from({ length: shown }, (_, k) => {
+          const over = k >= TARGET && charge > 0;
+          return <rect key={k} x={tx(k)} y={y + 3} width={TOK - 2} height={14} rx={2} fill={over ? C.bad : C.rose} opacity={over ? 0.55 + 0.45 * charge : 0.85} />;
+        })}
+        {/* the tests: right or wrong */}
+        <g opacity={marks}>
+          <path d={`M${tx(len) + 4} ${y + 10}H${GATE - 6}`} stroke="rgba(230,237,244,.14)" strokeDasharray="2 4" />
+          <text x={GATE + 6} y={y + 16} className="sb-v" style={{ fill: a.ok ? C.ok : C.bad, fontSize: 18 }}>{a.ok ? "✓" : "✗"}</text>
+        </g>
+        {/* the reward: correct, minus a charge for every token past the target */}
+        <g opacity={charge}>
+          <rect x={GATE + 36} y={y + 4} width={Math.max(2, rw * 110)} height={12} rx={3} fill={a.ok ? C.ok : C.dim} opacity={0.85} />
+          <text x={GATE + 156} y={y + 15} className="sb-ls" style={{ fill: a.ok ? C.ok : C.bad }}>{rw.toFixed(2)}</text>
+        </g>
+        {/* the update flows back to the agent that wrote it */}
+        {!second && update > 0 && update < 1 && (
+          <circle r={4} fill={a.ok ? C.ok : C.dim} cx={GATE + 36 - (GATE + 36 - 124) * update} cy={y + 10 + Math.sin(update * Math.PI) * -12} />
+        )}
       </g>;
     })}
-    <text x={0} y={322} className="sb-ls" opacity={prog(t, 7000, 7600)}>A wrong answer earns nothing however short it is, so correctness stays first; among correct answers, the shorter one wins.</text>
+    <path d={`M${GATE} 18V300`} stroke="rgba(230,237,244,.4)" strokeWidth={2} />
+    <text x={GATE} y={14} textAnchor="middle" className="sb-ls">tests</text>
+    <text x={GATE + 36} y={14} className="sb-ls" opacity={Math.max(charge, second ? 1 : 0)}>reward = right − {LAMBDA} × tokens past the target</text>
+    {/* the round, and what it costs */}
+    <g transform="translate(940 40)">
+      <text x={0} y={0} className="sb-ls">{second ? "Round 2, after the update" : "Round 1"}</text>
+      <text x={0} y={34} className="sb-v" style={{ fontSize: 30, fill: C.ink }}>{Math.round(mean * stream)}</text>
+      <text x={0} y={50} className="sb-ls">tokens per trace, mean</text>
+      <text x={0} y={84} className="sb-v" style={{ fontSize: 22, fill: C.ok }}>{AGENTS.filter((a) => a.ok).length} of 8</text>
+      <text x={0} y={104} className="sb-ls">answers right</text>
+      {second && <text x={0} y={136} className="sb-ls" style={{ fill: C.amber }}>was {mean1}</text>}
+    </g>
+    <text x={0} y={322} className="sb-ls" opacity={update > 0 && !second ? Math.min(1, update * 2) : 0}>The update makes the short, right traces more likely; a wrong answer earns nothing however short it is.</text>
+    <g opacity={result}>
+      <text x={0} y={322} className="sb-ls" style={{ fill: C.ink }}>{`Across all 96 tasks: ${f(perTask(RUN.rl4))} → ${f(perTask(RUN.lean))} tokens per answer, and still ${RUN.lean.correct} solved.`}</text>
+    </g>
   </svg>;
 }
 
@@ -164,9 +220,9 @@ export const LEARN_ARCS: Record<number, { name: string; mechanism: ArcBeat }> = 
   4: {
     name: "Lean RL",
     mechanism: {
-      label: "how it learns", title: "Lean RL: reward correct answers, charge for every token", ms: 10500, Scene: Lean,
+      label: "how it learns", title: "Lean RL: reward correct answers, charge for every token", ms: LEAN_MS, Scene: Lean,
       bottleneck: { at: 0, headline: `thinking works, but answers now run to ${f(perTask(RUN.rl4))} tokens each, and every token costs GPU time.`, effect: "Most of that length does not change whether the answer is right." },
-      meter: [[0, "Three kinds of answer, measured in tokens"], [3400, "The reward now charges for length"], [7000, "Training moves the policy towards the short correct answers"]],
+      meter: [[0, "Eight agents attempt the same task, each writing its reasoning trace"], [3200, "The tests mark each answer right or wrong"], [4600, "Tokens past the length target are charged against the reward"], [6600, "The update makes short, right traces more likely"], [8600, "The next round: the same answers, in fewer tokens"], [12800, `All 96 tasks: ${f(perTask(RUN.rl4))} → ${f(perTask(RUN.lean))} tokens per answer, still ${RUN.lean.correct} solved`]],
     },
   },
 };

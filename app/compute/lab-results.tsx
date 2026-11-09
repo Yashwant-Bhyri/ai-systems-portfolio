@@ -522,7 +522,7 @@ const TRAINING_CLIPS: readonly Clip[] = [
   intro("curves", "Each checkpoint, given *more and more thinking budget*"),
   { key: "curves", ms: 21500, line: `More thinking: Lean RL solves ${LEAN_1X} → ${LEAN_8X} of 96 from a 1× to an 8× budget` },
   intro("film", "Reward correct answers, *charge for every token*", "Lean RL"),
-  { key: "film", title: "Lean RL", ms: 22000, film: { step: 4 }, line: `Lean RL: the same ${T_.lean.correct} tasks solved, ${FEWER}% fewer tokens` },
+  { key: "film", title: "Lean RL", ms: 31000, film: { step: 4, frame: true }, line: `Lean RL: the same ${T_.lean.correct} tasks solved, ${FEWER}% fewer tokens` },
   intro("fleet", "64 GPUs doing RL together. *Who waits for whom?*"),
   ...arcClips("fleet", ["Problem: 64 GPUs wait at a barrier on every RL step", "Elastic RL: any free GPU takes any role", "Impact: almost twice the RL steps in the same time"], [11500, 12500, 9000]),
   intro("map", "One square per task: *which ones changed, not only the score*"),
