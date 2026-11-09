@@ -14,11 +14,66 @@ const SLOWEST = A.segs.filter((s) => s.step === 0 && s.kind === "rollout").reduc
 const ROWS = [0, 1, 2, 3, 4, 5, 6, SLOWEST];
 const X0 = 230, SPAN = 4.4, PX = 660 / SPAN;
 const x = (m: number) => X0 + m * PX;
-const PROBLEM_MS = 11500, IDEA_MS = 12500;
+/** Each of the first two beats opens on a worked example, then shows the GPUs. */
+const EXAMPLE_MS = 8000;
+const PROBLEM_MS = 11500 + EXAMPLE_MS, IDEA_MS = 12500 + EXAMPLE_MS;
+/* ── The worked example: four agents, four environments, one RL step ──
+   Each agent acts in its own environment until its task is done; the episode is its rollout. The
+   environments need very different numbers of steps. A synchronous update needs every rollout, so the
+   agents that finish early wait; with elastic roles a GPU trains the moment its rollout is in. */
+const ENVS = [
+  { name: "Maths checker", what: "answer, then check", steps: 3 },
+  { name: "Code sandbox", what: "write, run the tests, fix", steps: 5 },
+  { name: "Tool use", what: "search, read, call, answer", steps: 8 },
+  { name: "Long proof", what: "many steps of reasoning", steps: 12 },
+] as const;
+const STEP = 0.42, EX0 = 0.6, TRAIN = 1.3;
+function EnvExample({ t, elastic: el }: { t: number; elastic: boolean }) {
+  const s = t / 1000, X0 = 250, X1 = 560, tx = (k: number, n: number) => X0 + (k / n) * (X1 - X0);
+  const doneAt = ENVS.map((e) => EX0 + e.steps * STEP), allIn = Math.max(...doneAt);
+  const inNow = doneAt.filter((d) => s >= d).length;
+  const syncTrain = prog(s, allIn, allIn + TRAIN), publish = prog(s, allIn + TRAIN, allIn + TRAIN + 0.6);
+  const caption = el
+    ? s < allIn ? "Elastic roles: a GPU that finishes its rollout starts training at once" : "The slow rollout is not waited for: it joins the next update"
+    : s < doneAt[0] ? "Each agent acts in its own environment until its task is done: that episode is its rollout"
+    : s < allIn ? "The update needs every rollout, so the agents that finished early sit idle"
+    : s < allIn + TRAIN ? "Only now can training start: one update learns from all four rollouts" : "The new weights go back to every agent, and the next step begins";
+  return <g>
+    <text x={0} y={30} className="ma-k" style={{ fontSize: 20 }}>{el ? "The same four agents, elastic roles" : "Four agents, four environments, one RL step"}</text>
+    <text x={0} y={58} className="ma-l" style={{ fill: C.ink, fontSize: 17 }}>{caption}</text>
+    {ENVS.map((e, i) => {
+      const y = 108 + i * 84, d = doneAt[i], k = Math.max(0, Math.min(e.steps, Math.floor((s - EX0) / STEP))), done = s >= d;
+      const training = el && done && s < d + TRAIN, waiting = !el && done && s < allIn + TRAIN;
+      return <g key={e.name}>
+        <rect x={0} y={y - 24} width={230} height={60} rx={10} fill="rgba(255,255,255,.03)" stroke="rgba(230,237,244,.16)" />
+        <text x={14} y={y} className="ma-n" style={{ fontSize: 19 }}>{e.name}</text>
+        <text x={14} y={y + 22} className="ma-l" style={{ fontSize: 14 }}>{e.steps} steps: {e.what}</text>
+        {/* the episode: one tick per step in the environment */}
+        <path d={`M${X0} ${y + 6}H${X1}`} stroke="rgba(230,237,244,.14)" />
+        {Array.from({ length: e.steps + 1 }, (_, j) => <circle key={j} cx={tx(j, e.steps)} cy={y + 6} r={4} fill={j <= k ? C.rollout : "rgba(230,237,244,.2)"} />)}
+        {!done && s > EX0 && <circle cx={tx(Math.min(e.steps, (s - EX0) / STEP), e.steps)} cy={y + 6} r={9} fill={C.rollout} />}
+        {/* finished: its GPU waits, or trains at once */}
+        {waiting && <g><rect x={X1 + 16} y={y - 10} width={130} height={32} rx={6} fill="none" stroke={C.idle} strokeDasharray="4 3" /><text x={X1 + 81} y={y + 11} textAnchor="middle" className="ma-l" style={{ fill: C.idle, fontSize: 15 }}>idle, waiting</text></g>}
+        {training && <g><rect x={X1 + 16} y={y - 10} width={130} height={32} rx={6} fill={C.train} opacity={0.9} /><text x={X1 + 81} y={y + 11} textAnchor="middle" className="ma-l" style={{ fill: "#0b1016", fontSize: 15 }}>training</text></g>}
+        {el && !done && i === ENVS.length - 1 && s > doneAt[2] && <text x={X1 + 16} y={y + 11} className="ma-l" style={{ fill: C.rollout, fontSize: 14 }}>joins the next step</text>}
+      </g>;
+    })}
+    {/* the trainer */}
+    {!el && <g transform="translate(740 130)">
+      <rect width={170} height={220} rx={14} fill="rgba(255,255,255,.03)" stroke={syncTrain > 0 ? C.train : "rgba(230,237,244,.2)"} strokeWidth={syncTrain > 0 ? 2 : 1} />
+      <text x={85} y={36} textAnchor="middle" className="ma-n" style={{ fontSize: 20 }}>Update</text>
+      <text x={85} y={60} textAnchor="middle" className="ma-l" style={{ fontSize: 14 }}>needs every rollout</text>
+      <text x={85} y={120} textAnchor="middle" className="ma-n" style={{ fontSize: 40, fill: inNow === 4 ? C.train : C.ink }}>{inNow} of 4</text>
+      <text x={85} y={146} textAnchor="middle" className="ma-l" style={{ fontSize: 14 }}>rollouts in</text>
+      <rect x={20} y={168} width={130 * syncTrain} height={10} rx={5} fill={C.train} />
+      {publish > 0 && <text x={85} y={202} textAnchor="middle" className="ma-l" style={{ fill: C.sync, fontSize: 14 }} opacity={publish}>publish new weights</text>}
+    </g>}
+  </g>;
+}
 const ROLE = {
-  rollout: ["generating rollouts", "an agent works the task in its environment"],
-  train: ["training", "one update from every rollout in the step"],
-  sync: ["publishing weights", "the new policy is copied to every GPU"],
+  rollout: ["generating rollouts", "an agent works its task"],
+  train: ["training", "one update from all rollouts"],
+  sync: ["publishing weights", "new policy to every GPU"],
 } as const;
 
 function Rows({ segs, now, note }: { segs: Segment[]; now: number; note: (gpu: number) => string | null }) {
@@ -41,14 +96,16 @@ function Rows({ segs, now, note }: { segs: Segment[]; now: number; note: (gpu: n
     {[0, 1, 2, 3, 4].map((m) => <text key={m} x={x(m)} y={70 + ROWS.length * 38 + 26} textAnchor="middle" className="ma-l">{m} min</text>)}
     {/* What each role is, in a few words, so the idle time has a reason. */}
     {(["rollout", "train", "sync"] as const).map((k, i) => <g key={k} transform={`translate(${X0 + i * 215} 412)`}><rect width={14} height={14} rx={2} fill={C[k]} /><text x={22} y={12} className="ma-l" style={{ fill: C.ink }}>{ROLE[k][0]}</text><text x={22} y={28} className="ma-l">{ROLE[k][1]}</text></g>)}
-    <g transform={`translate(${X0 + 3 * 215} 412)`}><rect width={14} height={14} rx={2} fill="none" stroke={C.idle} strokeDasharray="3 2" /><text x={22} y={12} className="ma-l" style={{ fill: C.ink }}>waiting</text><text x={22} y={28} className="ma-l">done, but the update needs all</text></g>
+    <g transform={`translate(${X0 + 3 * 215} 412)`}><rect width={14} height={14} rx={2} fill="none" stroke={C.idle} strokeDasharray="3 2" /><text x={22} y={12} className="ma-l" style={{ fill: C.ink }}>waiting</text><text x={22} y={28} className="ma-l">finished, waiting for all</text></g>
   </g>;
 }
 
 const sweep = (t: number, ms: number) => ease.io(prog(t, 600, ms - 2600)) * SPAN;
 
-function Problem({ t }: SceneProps) {
-  const now = sweep(t, PROBLEM_MS);
+function Problem({ t: t0 }: SceneProps) {
+  if (t0 < EXAMPLE_MS) return <svg viewBox="0 0 920 460" role="img" aria-label="Four agents in four environments: the update needs every rollout, so agents that finish early wait"><EnvExample t={t0} elastic={false} /></svg>;
+  const t = t0 - EXAMPLE_MS;
+  const now = sweep(t, PROBLEM_MS - EXAMPLE_MS);
   const barrier = A.segs.find((s) => s.gpu === SLOWEST && s.kind === "rollout" && s.step === 0)!.end;
   return <svg viewBox="0 0 1100 450" role="img" aria-label="Synchronous RL: every GPU waits for the slowest rollout before anyone trains">
     <text x={0} y={30} className="ma-k">8 of 64 GPUs · one RL step</text>
@@ -64,8 +121,10 @@ function Problem({ t }: SceneProps) {
   </svg>;
 }
 
-function Idea({ t }: SceneProps) {
-  const now = sweep(t, IDEA_MS);
+function Idea({ t: t0 }: SceneProps) {
+  if (t0 < EXAMPLE_MS) return <svg viewBox="0 0 920 460" role="img" aria-label="The same agents with elastic roles: a GPU trains as soon as its rollout is in"><EnvExample t={t0} elastic /></svg>;
+  const t = t0 - EXAMPLE_MS;
+  const now = sweep(t, IDEA_MS - EXAMPLE_MS);
   return <svg viewBox="0 0 1100 450" role="img" aria-label="Elastic roles: each GPU joins training the moment its own rollout ends; the straggler keeps generating for the next step">
     <text x={0} y={30} className="ma-k">The same 8 GPUs, elastic roles</text>
     <text x={0} y={52} className="ma-l">after QwenGyre · arXiv 2609.33848</text>
@@ -105,12 +164,12 @@ export const FLEET_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat;
   labels: FLEET_LABELS,
   problem: {
     label: "Problem / Bottleneck", title: "Synchronous RL: every GPU waits for the slowest rollout before anyone trains", ms: PROBLEM_MS, Scene: Problem,
-    meter: [[0, "Each GPU writes its rollouts; answers vary a lot in length"], [3200, "Faster GPUs finish first, and then they wait"], [7200, `GPU ${SLOWEST + 1} is the slowest, so 63 GPUs wait for it`]],
+    meter: [[0, "Four agents, four environments: every episode is a rollout, and they differ in length"], [EXAMPLE_MS, "Each GPU writes its rollouts; answers vary a lot in length"], [EXAMPLE_MS + 3200, "Faster GPUs finish first, and then they wait"], [EXAMPLE_MS + 7200, `GPU ${SLOWEST + 1} is the slowest, so 63 GPUs wait for it`]],
     bottleneck: { at: PROBLEM_MS - 3200, headline: `64 GPUs sit idle *${idlePct}% of the time*`, effect: "One barrier per step: the slowest rollout sets the pace for all of them" },
   },
   mechanism: {
     label: "Elastic RL: the idea", title: "Elastic RL, after QwenGyre (arXiv 2609.33848): a GPU that finishes its rollout starts training at once", ms: IDEA_MS, Scene: Idea,
-    meter: [[0, "No barrier: each GPU keeps its identity and changes role"], [3000, "A finished GPU moves straight from writing rollouts to training"], [7000, "Weights are published to the fleet as they are ready"], [9500, "A straggler's rollout simply lands in the next step"]],
+    meter: [[0, "Elastic roles: a GPU that finishes its rollout trains at once"], [EXAMPLE_MS, "No barrier: each GPU keeps its identity and changes role"], [EXAMPLE_MS + 3000, "A finished GPU moves straight from writing rollouts to training"], [EXAMPLE_MS + 7000, "Weights are published to the fleet as they are ready"], [EXAMPLE_MS + 9500, "A straggler's rollout simply lands in the next step"]],
   },
   systemTitle: "What we built: 64 GPUs on one wall clock",
   systemMs: (13100 + 2600) * 2,

@@ -266,3 +266,16 @@ The seven larger items, done after (2026-11-10): the head follows the chosen che
 | Eye-catching title-to-title transition | Done: a sprung slide, a pulse on arrival, a sheen across the new title |
 | No "of 96" on the home page | Done: percentages throughout the second pages and their live panels |
 | Deep link sometimes landed on the architecture | Fixed: the landing is retried while the page settles |
+
+## Round 19 (2026-11-11)
+
+| Request | Status |
+|---|---|
+| Elastic RL: show why there is a wait, with RL across several environments, and how elastic roles remove it | Done: a worked example opens the problem and the idea beats (four agents, four environments) |
+| Home page lab cards: titles not placed, SVGs tiny | Redone: small blocks with the reel's highlight, and the lit title large on the right |
+| The reel's title highlight everywhere (muted; the lit title grows and comes into colour) | Done: board, system glossary, home cards; the sliding frame is gone |
+| Introductions: a visible time bar and click to skip | Done |
+| The three levers shown once the module starts, not in its introduction | Done: a blur over the module's own stage with the numbered levers |
+| Dial: the impact is squeezed inside the dial | Done: a large impact panel beside it, for each phase and each lever |
+| Jump into tail latency at 27 s; lag at the start of Policy × runtime and the replay | Seek moved under the introduction; heavy figures fetched while idle |
+| Summary rail: both sections as one index | Done |

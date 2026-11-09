@@ -532,7 +532,7 @@ const TRAINING_CLIPS: readonly Clip[] = [
   intro("film", "Reward correct answers, *charge for every token past a target*", "Lean RL"),
   { key: "film", title: "Lean RL", ms: 31000, film: { step: 4, frame: true }, line: `Lean RL: the same accuracy, ${pct(T_.lean.correct)}, with ${FEWER}% fewer tokens` },
   intro("fleet", "RL on 64 GPUs: every rollout must finish before training can start. *Who waits for whom?*"),
-  ...arcClips("fleet", ["Problem: training needs every rollout, so 64 GPUs wait for the slowest one", "Elastic RL: a GPU that finishes its rollout trains or publishes at once", "Impact: almost twice the RL steps in the same time"], [11500, 12500, 9000]),
+  ...arcClips("fleet", ["Problem: training needs every rollout, so 64 GPUs wait for the slowest one", "Elastic RL: a GPU that finishes its rollout trains or publishes at once", "Impact: almost twice the RL steps in the same time"], [19500, 20500, 9000]),
   intro("map", "One square per task: *which ones changed, not only the score*"),
   { key: "map", ms: 21000, line: `Task by task: ${FLIPS2.gained.length} newly correct, ${FLIPS2.lost.length} lost, at a 2× thinking budget` },
   intro("audit", "A better score can hide a task that broke. *Each one is named*"),
