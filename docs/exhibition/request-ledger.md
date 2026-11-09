@@ -235,3 +235,20 @@ The seven larger items, done after (2026-11-10): the head follows the chosen che
 | Rename "Training, step by step", "Which tasks it can now solve" | "Four training moves, measured"; "Harder tasks within reach" |
 | Inference: both summaries, then "go deeper into either, or next project" | Done: a three-way choice |
 | Lean RL shown visually, like speculative decoding | Done: agents, tests, length charge, update, a second round |
+
+## Round 17 (2026-11-10)
+
+| Request | Status |
+|---|---|
+| Nothing stops unless the pause button is pressed; a step, a jump or a module plays | Done: stage touches never hold; any move lets go of a pause; modules open playing |
+| Show how long an introduction stays | Done: a thin time line on each card |
+| Elastic RL: why GPUs sit idle; what rollouts, training and publishing are | Done: role legend and a caption that runs with the sweep |
+| Better names: manifold explanation, The layers that changed, GRPO, Test-time scaling, Elastic RL on 64 GPUs, Regression audit | Done |
+| Terrain: what a ridge means, the hard tasks marked, accuracy not "raised" | Done: hardest third shown, all in accuracy |
+| Percentages, not "of 96" | Done for post-training headlines, rail values and introductions |
+| Tiny title icons in the rail | Done, held still |
+| New Lean RL and Elastic RL title graphics | Done |
+| Second page: labels for what the project improves; short ending blur then the way in stays lit; no raw numbers in the guide; "In this project, we took…" | Done |
+| Title-to-title highlight that slides, on the board and the second page's cards; technique names lead | Done |
+| Inference: system glossary at the end, then in detail (either), the microscope, or the next project | Done |
+| Language pass over both presentations | Done for every Summary line and brief |

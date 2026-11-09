@@ -451,7 +451,7 @@ const INFERENCE_PATHWAYS: readonly Pathway[] = [
 const INFERENCE_OPENING = ["Inference optimization is *two problems*", "One: the same intelligence at cheaper cost. Two: serving under load"];
 const TRAINING_OPENING = ["In this project, we took a small model, Qwen3-4B, and applied *advanced post-training*: SFT, GRPO, test-time scaling and Lean RL", "To see how its behaviour scales on maths and coding: *higher accuracy*, then *fewer GPU-seconds*"];
 const TRAINING_PATHWAYS: readonly Pathway[] = [
-  { n: "01", title: "What did the model learn?", short: "In detail", techniques: [], lead: `One base model, trained step by step on maths and coding: *${T_.base.correct} → ${T_.lean.correct} of 96* tasks solved, and every result is here` },
+  { n: "01", title: "What did the model learn?", short: "In detail", techniques: [], lead: `One small model, trained step by step on maths and coding: accuracy *${pct(T_.base.correct)} → ${pct(T_.lean.correct)}*, and every result is here` },
 ];
 /**
  * The Summary. Every module is introduced, then plays through to the end of what it has to say:
@@ -742,7 +742,7 @@ export function ComputeLabStudy({
         { key: "fleet", title: "Elastic RL on 64 GPUs", term: "No barrier between steps", value: "4 → 7", unit: "RL steps in 14 min", Glyph: GlyphFleet, onOpen: () => openView(4), current: mode === "explore" && view === 4 },
         { key: "map", title: "Task by task", term: "Capability map", value: `+${solvedGain}`, unit: `net tasks at ${budget}× thinking budget`, Glyph: GlyphCapability, onOpen: () => openView(0), current: mode === "explore" && view === 0 },
         { key: "film", title: "Four training moves, measured", term: "The experiment", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy, synthetic tasks", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
-        { key: "tasks", title: "Harder tasks within reach", term: "Easiest to hardest", value: `+${solvedGain}`, unit: `tasks solved at ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
+        { key: "tasks", title: "Harder tasks within reach", term: "Easiest to hardest", value: `${pct(baseRun.correct)} → ${pct(rlRun.correct)}`, unit: `accuracy at a ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
         { key: "audit", title: "Regression audit", term: "What got worse", value: `${rlFlips.gained.length} / ${rlFlips.lost.length}`, unit: `gained / lost at ${budget}× thinking budget`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
       ]
     : [
