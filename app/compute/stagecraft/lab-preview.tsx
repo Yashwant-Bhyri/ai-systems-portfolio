@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { simulateLab } from "../lab-simulation";
 import { SERVING_RAIL } from "../serving-rail-meta";
-import { useSpot, type Pathway, type ShowItem } from "./title-show";
+import type { Pathway, ShowItem } from "./title-show";
 import { GlyphDial, GlyphManifold, GlyphBigPicture, GlyphLearn, GlyphComposition, GlyphCurves, GlyphExperiment, GlyphFleet, GlyphFrontier, GlyphInside, GlyphLatency, GlyphReplay, GlyphTasks, GlyphTerrain, GlyphAudit } from "./glyphs";
 import "./title-show.css";
 import "./stagecraft.css";
@@ -44,40 +44,53 @@ const INFERENCE_PATHS: readonly Pathway[] = [
   { n: "02", title: "Serving under load", short: "Serving under load", techniques: [] },
 ];
 
-/** A project's second page: every laboratory title as a small card, in its sections. */
+/**
+ * A project's second page: the laboratory's titles as small blocks, with the reel's highlight (all muted,
+ * the lit one grows and comes into colour) moving from one to the next; the lit title is shown large on the right.
+ */
 export function LabPreview({ training }: { training: boolean }) {
   const items = useMemo(() => (training ? TRAINING_ITEMS() : INFERENCE_ITEMS()), [training]);
   const paths = training ? TRAINING_PATHS : INFERENCE_PATHS, id = training ? "post-training" : "inference";
-  // One card is lit at a time and the light moves on; a hover takes it.
   const [lit, setLit] = useState(0);
   const [hover, setHover] = useState<number | null>(null);
   useEffect(() => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = window.setInterval(() => setLit((n) => (n + 1) % items.length), 1800);
+    const t = window.setInterval(() => setLit((n) => (n + 1) % items.length), 2200);
     return () => window.clearInterval(t);
   }, [items.length]);
-  const on = hover ?? lit;
-  const band = useRef<HTMLDivElement>(null);
-  const spot = useSpot(band, ".lc-card[data-lit]", on);
+  const on = hover ?? lit, cur = items[on];
+  const href = (key: string) => `/${id}?labnav=show#${id}-study/${key}`;
   return (
-    <div ref={band} className="lc-band" data-cycling="">
-      <span ref={spot} className="lc-spot" aria-hidden="true"><i className="spot-pulse" /><i className="spot-sheen" /></span>
-      {paths.map((p, pi) => (
-        <section key={p.n} className="lc-sec" style={{ flexGrow: items.filter((i) => i.pathway === pi).length }}>
-          <h4>{p.short === "Post-training" ? "Results laboratory" : pi === 0 ? `Results laboratory · ${p.short}` : p.short}</h4>
-          <div className="lc-row" style={{ ["--cols" as string]: Math.ceil(items.filter((i) => i.pathway === pi).length / 2) }}>
-            {items.filter((i) => i.pathway === pi).map((i) => (
-              <a key={i.key} className="lc-card" data-lit={items.indexOf(i) === on || undefined} onPointerEnter={() => setHover(items.indexOf(i))} onPointerLeave={() => setHover(null)} href={`/${id}?labnav=show#${id}-study/${i.key}`}>
-                <span className="lc-art" aria-hidden="true">{i.Glyph && <i.Glyph />}</span>
-                {i.value && <em className="lc-val">{i.value}</em>}
-                {/* A serving technique leads with its name; what it does is the small line. */}
-                <strong>{i.title}</strong>
-                {i.term && <small className="lc-sub">{i.term}</small>}
-              </a>
-            ))}
-          </div>
-        </section>
-      ))}
+    <div className="lc-band">
+      <div className="lc-blocks">
+        {paths.map((p, pi) => {
+          const own = items.filter((i) => i.pathway === pi), cols = Math.ceil(own.length / 2);
+          return (
+            <section key={p.n} className="lc-sec" style={{ flexGrow: own.length }}>
+              <h4>{p.short === "Post-training" ? "Results laboratory" : pi === 0 ? `Results laboratory · ${p.short}` : p.short}</h4>
+              {[own.slice(0, cols), own.slice(cols)].map((row, r) => (
+                <div key={r} className="lc-row">
+                  {row.map((i) => {
+                    const k = items.indexOf(i), isLit = k === on;
+                    return (
+                      <a key={i.key} className="lc-block" data-lit={isLit} style={{ flexGrow: isLit ? 1.9 : 1 }} href={href(i.key)} onPointerEnter={() => setHover(k)} onPointerLeave={() => setHover(null)}>
+                        <span className="lc-art" aria-hidden="true">{i.Glyph && <i.Glyph />}</span>
+                        <strong>{i.title}</strong>
+                      </a>
+                    );
+                  })}
+                </div>
+              ))}
+            </section>
+          );
+        })}
+      </div>
+      <a key={cur.key} className="lc-preview" href={href(cur.key)}>
+        <span className="lc-preview-art" aria-hidden="true">{cur.Glyph && <cur.Glyph />}</span>
+        <strong>{cur.title}</strong>
+        {cur.term && <em>{cur.term}</em>}
+        {cur.value && <span className="lc-preview-value"><mark>{cur.value}</mark>{cur.unit && <small>{cur.unit}</small>}</span>}
+      </a>
     </div>
   );
 }

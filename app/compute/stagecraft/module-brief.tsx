@@ -140,7 +140,7 @@ export function ModuleBrief({ item, brief, path, onDone, away = false }: { item:
  * middle of the screen and says what it does, what it changed (the number highlighted), and how to read it.
  */
 /** `labels`: the parts of the module, numbered, appearing one by one. */
-export function IntroCard({ item, text, ms, brief, labels }: { item: ShowItem; text: string; ms: number; brief?: Brief; labels?: readonly string[] }) {
+export function IntroCard({ item, text, ms, brief, labels, onSkip }: { item: ShowItem; text: string; ms: number; brief?: Brief; labels?: readonly string[]; onSkip?: () => void }) {
   const tr = useTr();
   const card = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -151,7 +151,8 @@ export function IntroCard({ item, text, ms, brief, labels }: { item: ShowItem; t
     c.animate([{ transformOrigin: "0 0", transform: from, opacity: 0.4 }, { transformOrigin: "0 0", transform: "none", opacity: 1 }], { duration: 620, easing: EASE, fill: "backwards" });
   }, [item.key, ms]);
   return createPortal(
-    <div className={`mb-veil mb-intro ${labAccent()}`} aria-live="polite" style={{ animation: `mb-veil .4s cubic-bezier(.22,1,.36,1) both, mb-veil-out .35s ease-in ${Math.max(0, ms - 380)}ms forwards` }}>
+    <div className={`mb-veil mb-intro ${labAccent()}`} aria-live="polite" data-skip={onSkip ? "" : undefined} onClick={onSkip} style={{ animation: `mb-veil .4s cubic-bezier(.22,1,.36,1) both, mb-veil-out .35s ease-in ${Math.max(0, ms - 380)}ms forwards` }}>
+      {onSkip && <span className="mb-skip">Click anywhere to skip</span>}
       <div ref={card} className="mi-card">
         <span className="mi-art" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
         <h3>{tr(item.title)}</h3>
@@ -173,7 +174,7 @@ export function IntroCard({ item, text, ms, brief, labels }: { item: ShowItem; t
  */
 export type PurposeSide = { title: string; rows: readonly { label: string; value: string; note?: string }[] };
 export type TechGroup = { title: string; items: readonly string[] };
-export function PurposeCard({ headline, before, after, techniques, ms }: { headline: string; before: PurposeSide; after: PurposeSide; techniques: readonly TechGroup[]; ms: number }) {
+export function PurposeCard({ headline, before, after, techniques, ms, onSkip }: { headline: string; before: PurposeSide; after: PurposeSide; techniques: readonly TechGroup[]; ms: number; onSkip?: () => void }) {
   const tr = useTr();
   const [step, setStep] = useState(0);
   useEffect(() => {
@@ -187,7 +188,8 @@ export function PurposeCard({ headline, before, after, techniques, ms }: { headl
     </section>
   );
   return createPortal(
-    <div className={`mb-veil mb-intro pc-veil ${labAccent()}`} aria-live="polite" style={{ animation: `mb-veil .4s cubic-bezier(.22,1,.36,1) both, mb-veil-out .35s ease-in ${Math.max(0, ms - 380)}ms forwards` }}>
+    <div className={`mb-veil mb-intro pc-veil ${labAccent()}`} aria-live="polite" data-skip={onSkip ? "" : undefined} onClick={onSkip} style={{ animation: `mb-veil .4s cubic-bezier(.22,1,.36,1) both, mb-veil-out .35s ease-in ${Math.max(0, ms - 380)}ms forwards` }}>
+      {onSkip && <span className="mb-skip">Click anywhere to skip</span>}
       <div className="pc-card">
         <p className="pc-head">{highlight(tr(headline))}</p>
         <div className="pc-split">{side(before, "base", true)}<i aria-hidden="true">→</i>{side(after, "after", step >= 1)}</div>

@@ -458,7 +458,7 @@ const TRAINING_PATHWAYS: readonly Pathway[] = [
  * no clip leaves before its figure has finished, so these lengths follow the figures' own clocks.
  * Inference is two sections; between them the laboratory returns to the title board.
  */
-type Clip = { key?: string; title?: string; ms: number; line?: string; intro?: string; labels?: readonly string[]; purpose?: boolean; board?: boolean; beat?: number; speed?: number; film?: { step: number; at?: number; frame?: boolean }; seek?: number; metric?: string };
+type Clip = { key?: string; title?: string; ms: number; line?: string; intro?: string; preSeek?: number; labels?: readonly string[]; note?: boolean; purpose?: boolean; board?: boolean; beat?: number; speed?: number; film?: { step: number; at?: number; frame?: boolean }; seek?: number; metric?: string };
 const ARC_SPEED = 1.25, INTRO_MS = 3400;
 /** Long enough to read: the time follows the words. */
 const intro = (key: string, text: string, title?: string, labels?: readonly string[]): Clip => ({ key, title, intro: text, labels, ms: Math.max(INTRO_MS, 1800 + 150 * text.split(/\s+/).length) + 2600 + (labels?.length ?? 0) * 900 });
@@ -471,7 +471,8 @@ const arcClips = (key: string, [problem, solution, impact]: readonly [string, st
 const INFERENCE_CLIPS: readonly Clip[] = [
   intro("flow", "One full turn of the dial is the baseline's whole run. *Every request is drawn in colour, by what it is doing*", undefined, ["Waiting for a GPU", "Reading the prompt", "Reasoning", "Writing the answer"]),
   { key: "flow", ms: 42200, line: `${PCT_LESS}% less compute for the same answers: every request answered by ${n0(FINISH(R_[3]))} s instead of ${n0(FINISH(R_[0]))} s` },
-  intro("setup", "Three levers decide what every answer costs. *Watch whether any answer changes*", undefined, ["Continuous batching: a free worker takes the next request", "Prefix caching: a shared document is read once", "FP8 prefill and decode: half the bytes per step"]),
+  intro("setup", "Three levers decide what every answer costs. *Watch whether any answer changes*"),
+  { key: "setup", note: true, ms: 5600, line: "Three levers decide what every answer costs" },
   { key: "setup", ms: 32400, seek: 7000, line: "Three levers act on every request, and not one answer changes" },
   intro("replay", "One request from arrival to last word, before and after, *measured four ways*", undefined, ["Response latency", "Total GPU work", "Input processing", "Answer generation"]),
   { key: "replay", ms: 25000, metric: "latency", line: `Response latency, request 7: ${n2(R_[1].tasks[6].latency)} → ${n2(R_[3].tasks[6].latency)} s` },
@@ -480,8 +481,9 @@ const INFERENCE_CLIPS: readonly Clip[] = [
   { key: "replay", ms: 13000, metric: "decode", seek: 12000, line: `Answer generation, request 7: ${n2(R_[1].tasks[6].decode)} → ${n2(R_[3].tasks[6].decode)} GPU-s; every step moves half the bytes` },
   intro("composition", "Two separate levers: *what the model knows, and how it is served*"),
   { key: "composition", ms: 27000, seek: 0, line: `Accuracy ${pct(BASE_CORRECT)} → ${pct(R_[3].correct)}: training raises it, and faster serving takes back the extra cost` },
-  intro("latency", "Every request ranked by how long it took. *Look at the slowest 5%*"),
-  { key: "latency", ms: 24500, seek: 27000, line: `The slowest 5% of requests: ${n0(P95(R_[1]))} → ${n0(P95(R_[3]))} s` },
+  // The figure is moved to its moment under the introduction, so nothing jumps in view.
+  { ...intro("latency", "Every request ranked by how long it took. *Look at the slowest 5%*"), preSeek: 27000 },
+  { key: "latency", ms: 20500, line: `The slowest 5% of requests: ${n0(P95(R_[1]))} → ${n0(P95(R_[3]))} s` },
   { board: true, ms: 0 },
   intro("pressure", "When a long prompt arrives, *what happens to the answers already streaming?*"),
   ...arcClips("pressure", ["Problem: one long prompt freezes every answer streaming on that GPU", "Chunked prefill: read the prompt in chunks, so answers keep streaming", `Impact: worst pause ${PRESSURE_GAP.whole.toFixed(1)} → ${PRESSURE_GAP.chunked.toFixed(1)} ms; the long prompt's first token comes later`], [11500, 13500, 9000]),
@@ -536,6 +538,8 @@ const TRAINING_CLIPS: readonly Clip[] = [
   intro("audit", "A better score can hide a task that broke. *Each one is named*"),
   { key: "audit", ms: 21000, line: `Regression audit: ${FLIPS2.lost.length} tasks got worse on the way, each one named` },
 ];
+/** Said over a module as it starts: its parts, numbered. */
+const SETUP_NOTE = { title: "Three levers decide what every answer costs", labels: ["Continuous batching: a free worker takes the next request", "Prefix caching: a shared document is read once", "FP8 prefill and decode: half the bytes per step"] };
 const boardAt = (clips: readonly Clip[]) => clips.findIndex((c) => c.board);
 /** The board itself still belongs to the first section: its titles fly out of the first section's rail. */
 const sectionOf = (clips: readonly Clip[], i: number) => { const b = boardAt(clips); return b >= 0 && i > b ? 1 : 0; };
@@ -596,6 +600,13 @@ export function ComputeLabStudy({
       null,
     );
   const exhibitRef = useRef<HTMLElement>(null);
+  // Fetch the heavy figures while the browser is idle, so a module never starts with a stall.
+  useEffect(() => {
+    const load = () => { void import("./composition-explorer"); void import("./request-replay-explorer"); void import("./load-latency-explorer"); void import("./serving-under-load"); void import("./inference-figure-tour"); };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    const id = w.requestIdleCallback ? w.requestIdleCallback(load) : window.setTimeout(load, 1500);
+    return () => { if (!w.requestIdleCallback) window.clearTimeout(id); };
+  }, []);
   const stageRef = useRef<HTMLDivElement>(null);
   const fitRef = useRef<HTMLDivElement>(null);
   // Title show: the landing (inference only), the flight from it, and which module is telling its story.
@@ -603,6 +614,8 @@ export function ComputeLabStudy({
   // The title board over the laboratory, between its two sections; and where the rail's titles fly in from.
   const [board, setBoard] = useState<{ from: Rects | null; then: () => void } | null>(null);
   const [railFrom, setRailFrom] = useState<Rects | null>(null);
+  // In detail, a module can open with its parts said over its own stage for a moment.
+  const [note, setNote] = useState(false);
   // Before a module opens for the first time, the whole screen says what it is.
   const [briefKey, setBriefKey] = useState<string | null>(null);
   const pendingOpen = useRef<{ key: string; auto: boolean } | null>(null);
@@ -808,6 +821,7 @@ export function ComputeLabStudy({
     touched.current = 0;
     // A module opens playing, whatever was paused before it.
     window.dispatchEvent(new Event("lab:resume"));
+    if (key === "setup" && !training) { setNote(true); window.setTimeout(() => setNote(false), 5200); }
     if (!training && SERVING_RAIL.some((m) => m.key === key)) {
       setInferencePart("load");
       // The serving lab loads lazily; ask until it has mounted, unless the visitor has moved on.
@@ -845,7 +859,10 @@ export function ComputeLabStudy({
       if (c.metric) window.dispatchEvent(new CustomEvent("lab:replay-metric", { detail: { id: `${n}-${seq}`, metric: c.metric, seek: c.seek } }));
     };
     // The introduction opens the module under the blur; the module plays once the introduction has gone.
-    if (c.intro) return;
+    if (c.intro) {
+      if (c.preSeek !== undefined) [400, 1200].forEach((ms) => window.setTimeout(() => { if (openSeq.current === seq) window.dispatchEvent(new CustomEvent("lab:figure-seek", { detail: c.preSeek })); }, ms));
+      return;
+    }
     [260, 900, 1700, 3000].forEach((ms) => window.setTimeout(() => { if (ms === 260 || c.beat !== undefined || c.metric) send(); }, ms));
   };
   /** Back, forward or a tick on the summary's bar. */
@@ -992,7 +1009,8 @@ export function ComputeLabStudy({
   };
   const landingOn = show && landingPhase === "on";
   // Under an introduction or a title board, a module waits to begin.
-  const veiled = !!briefKey || !!board || (clip !== null && (!!clips[clip].intro || !!clips[clip].purpose));
+  const noteOn = note || (clip !== null && !!clips[clip].note);
+  const veiled = !!briefKey || !!board || noteOn || (clip !== null && (!!clips[clip].intro || !!clips[clip].purpose));
 
   // The reel orientations keep the stage at its natural size; "bar" is the one-screen block.
   const block = labNav === "bar";
@@ -1007,7 +1025,7 @@ export function ComputeLabStudy({
       ))}
     </span>
   ) : null;
-  const railSection = clip !== null ? sectionOf(clips, clip) : 0, twoSections = boardAt(clips) >= 0;
+  const twoSections = boardAt(clips) >= 0;
   const clipNext = clip !== null ? upNext(clips, clip).next : null;
   const railNext = clip === null
     ? showItems.find((i) => i.key === nextKey)?.title ?? ""
@@ -1029,7 +1047,7 @@ export function ComputeLabStudy({
         ringKey={clip ?? undefined}
         ringDelay={clip !== null ? upNext(clips, clip).elapsed : 0}
         groups={[
-          { key: "summary", label: "Summary", onOpen: () => openKey("summary"), items: summaryTiles(clips).filter((c) => c.section === railSection).map((c) => ({ key: c.key, title: c.title ?? showItems.find((i) => i.key === c.key)?.title ?? c.key, section: twoSections ? pathways[railSection].short : undefined, Glyph: c.title === "Lean RL" ? GlyphLean : showItems.find((i) => i.key === c.key)?.Glyph })), also: twoSections ? { label: pathways[1 - railSection].short, onOpen: () => goClip(railSection === 0 ? boardAt(clips) : 0) } : undefined, alsoFirst: railSection === 1, count: summaryTiles(clips).length },
+          { key: "summary", label: "Summary", onOpen: () => openKey("summary"), items: summaryTiles(clips).map((c) => ({ key: c.key, title: c.title ?? showItems.find((i) => i.key === c.key)?.title ?? c.key, section: twoSections ? pathways[c.section].short : undefined, Glyph: c.title === "Lean RL" ? GlyphLean : showItems.find((i) => i.key === c.key)?.Glyph })), count: summaryTiles(clips).length },
           { key: "detail", label: "In detail", onOpen: () => openKey(order[0]), items: showItems.map((i) => ({ key: i.key, title: i.title, section: training ? undefined : pathways[i.pathway].short, Glyph: i.Glyph })) },
         ]}
         active={clip !== null || fork ? "summary" : "detail"}
@@ -1146,11 +1164,11 @@ export function ComputeLabStudy({
             away={!labInView} onDone={endBrief}
           />
         )}
-        {show && clip !== null && clips[clip].purpose && labInView && !clipHeld && <PurposeCard key={clip} ms={clips[clip].ms} {...PURPOSE} />}
+        {show && clip !== null && clips[clip].purpose && labInView && !clipHeld && <PurposeCard key={clip} ms={clips[clip].ms} onSkip={() => goClip(clip + 1)} {...PURPOSE} />}
         {show && clip !== null && clips[clip].intro && (() => {
           const c = clips[clip], item = showItems.find((i) => i.key === c.key);
           // Only while the lab is on screen and playing: a fixed blur must never outlive its moment.
-          return item && labInView && !clipHeld ? <IntroCard labels={c.labels} brief={c.title ? undefined : briefs[c.key!]} key={clip} item={c.title ? { ...item, title: c.title, term: "Shorter traces, the same answers", Glyph: c.title === "Lean RL" ? GlyphLean : item.Glyph } : item} text={c.intro!} ms={c.ms} /> : null;
+          return item && labInView && !clipHeld ? <IntroCard onSkip={() => goClip(clip + 1)} labels={c.labels} brief={c.title ? undefined : briefs[c.key!]} key={clip} item={c.title ? { ...item, title: c.title, term: "Shorter traces, the same answers", Glyph: c.title === "Lean RL" ? GlyphLean : item.Glyph } : item} text={c.intro!} ms={c.ms} /> : null;
         })()}
         {show && fork && (
           <ChoiceCard
@@ -1173,6 +1191,12 @@ export function ComputeLabStudy({
         <div ref={stageRef} className={block ? "lb-stage" : "lf-stage"} hidden={landingOn}>
           {!block && (training || inferencePart === "cheaper") && mode === "watch" && <div className="lf-chapters">{chapterSlot}</div>}
         {show && <FocusCaption moduleKey={`${currentKey}|${chapter}|${clip}`} />}
+        {show && noteOn && (
+          <div className="lf-note" aria-live="polite">
+            <p>{tr(SETUP_NOTE.title)}</p>
+            <ol>{SETUP_NOTE.labels.map((l, i) => <li key={l} style={{ animationDelay: `${300 + i * 500}ms` }}><i>{i + 1}</i>{tr(l)}</li>)}</ol>
+          </div>
+        )}
         <div ref={fitRef} className="lf-fit">
       <RetainedLabPanel
         active={training || inferencePart === "cheaper"}

@@ -12,7 +12,7 @@ import "./glossary-figures.css";
  * After one pass the module reports it is done.
  */
 const STEP = 2600;
-const GROW = 2;
+const GROW = 2.6;
 const FIGURE_FROM = 2.8, FIGURE_REST = 5.4; // seconds into a figure's loop: labels are showing from here on
 
 export function GlossaryBoard({ items, active = true }: { items: readonly ReelItem[]; active?: boolean }) {

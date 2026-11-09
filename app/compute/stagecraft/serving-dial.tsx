@@ -320,13 +320,17 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
         if (centre && centre.dataset.done !== String(done)) centre.dataset.done = String(done);
         if (done) put("clock", `${f(T)} → ${f(endB)} s`);
         // While one phase is lit, the centre reads that phase: baseline → optimized, and the difference.
-        const ph = focus ?? "", unit = (p: Phase) => (p === "wait" ? "s per request" : "GPU-s");
-        if (centre && centre.dataset.phase !== ph) centre.dataset.phase = ph;
-        if (focus) {
-          put("ph-name", NAME[focus]);
-          put("ph-vals", `${fm(focus, focus === "read" ? 1 : 0)} ${unit(focus)}`);
-          put("ph-delta", less(tot0[focus], totB[focus]));
-        }
+        // The impact of what is lit (a phase, or the lever being shown) is said large, beside the dial.
+        const unit = (p: Phase) => (p === "wait" ? "s per request" : "GPU-s");
+        const panel = cells.current.impact;
+        const leverShown = film >= CLOSED ? shownLever.current : -1;
+        let im: [string, string, string] | null = null;
+        if (focus) im = [NAME[focus], `${fm(focus, focus === "read" ? 1 : 0)} ${unit(focus)}`, less(tot0[focus], totB[focus])];
+        else if (leverShown === 0) im = ["Free-worker scheduling", `waiting ${fm("wait", 0)} s per request`, less(tot0.wait, totB.wait)];
+        else if (leverShown === 1) im = ["+ Prefix reuse", `reading the prompt ${fm("read", 1)} GPU-s`, less(tot0.read, totB.read)];
+        else if (leverShown === 2) im = ["+ Faster prefill & decode", `all GPU work ${f(gpu0)} → ${f(totB.read + totB.reason + totB.write)} GPU-s`, less(gpu0, totB.read + totB.reason + totB.write)];
+        if (panel) { const onNow = im ? "true" : "false"; if (panel.dataset.on !== onNow) panel.dataset.on = onNow; }
+        if (im) { put("im-name", im[0]); put("im-vals", im[1]); put("im-delta", im[2]); }
         // the sentence on top
         const correctB = B.filter((q) => q.correct).length;
         const saved = gpu0 - (totB.read + totB.reason + totB.write), lv = shownLever.current;
@@ -372,10 +376,11 @@ export function ServingDial({ active = true, onRound }: { active?: boolean; onRo
             <b data-k="clock">0 s</b>
             <span className="sd-live">answered, of 96</span>
             <span className="sd-end">to answer every request: baseline → optimized</span>
-            <span className="sd-phase"><small data-k="ph-name" /><b data-k="ph-vals" /><em data-k="ph-delta" /></span>
+
             <div className="sd-duel"><i data-tone="base" data-k="a-ans">0</i><i data-tone="opt" data-k="b-ans">0</i></div>
             <div className="sd-names"><small>baseline</small><small>optimized</small></div>
           </div>
+          <div className="sd-impact" data-k="impact" data-on="false"><small data-k="im-name" /><em data-k="im-delta" /><b data-k="im-vals" /></div>
           <div className="sd-readout" hidden data-k="readout"><strong /><span /></div>
         </div>
         <aside className="sd-ledger">
