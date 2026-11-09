@@ -66,9 +66,10 @@ test("server-renders the recruiter-first portfolio", async () => {
   assert.match(html, /Real-time AI-Native Interviewing Platform/);
   // Filmora is set aside (round 6); each compute project shows its architecture and a poster here.
   assert.doesNotMatch(html, /href="#filmora"/);
-  assert.match(html, /id="inference-poster"/);
-  assert.match(html, /id="post-training-poster"/);
-  assert.match(html, /href="\/inference"/);
+  // Each project's second page leads into its results laboratory; its live panels mount near the screen.
+  assert.match(html, /id="inference-second"/);
+  assert.match(html, /id="post-training-second"/);
+  assert.match(html, /href="\/inference[?#]/);
   assert.match(html, /Medical AI Clinician-Support Product/);
   assert.match(html, /Open-Source, Research &amp; R&amp;D Experience/);
   assert.match(html, /PRODUCTION-GRADE SOFTWARE PRODUCT/);
@@ -119,22 +120,8 @@ test("renders both compute projects as complete, navigable flagship chapters", a
   assert.match(html, /First change the policy\. Then give it more room to think\./);
   assert.match(main, /cx-project-preview/);
   assert.match(html, /Illustrative replay/);
-  // The laboratory names its two branches and the techniques under each (round-4 copy).
-  assert.match(html, /Same intelligence, cheaper execution/);
-  assert.match(html, /Serving under load/);
-  assert.match(html, /Speculative decoding/);
-  assert.match(html, /ts-landing/); // the laboratory opens on both pathways
-  assert.match(html, /Illustrative, not measured/);
-  assert.match(html, /What did the model learn/);
-  assert.match(html, /Watch the experiment/);
-  assert.match(html, /Explore the figures/);
-  assert.match(html, /Execution story chapters/);
-  assert.match(html, /Learning story chapters/);
-  assert.match(html, /Chapter 3: KV prefix reuse/);
-  assert.match(html, /Chapter 4: Give it more thought/);
-  assert.match(html, /Inspect story task/);
-  assert.match(html, /Undo this step/);
-  assert.match(html, /Download synthetic run JSON/);
+  // The laboratory loads with its project page (round 20): the server keeps its place, the client fills it.
+  assert.match(html, /id="inference-study"/);
   assert.doesNotMatch(html, /Published reference · Xiaomi/);
 });
 
