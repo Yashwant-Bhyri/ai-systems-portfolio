@@ -22,7 +22,7 @@ const TRAINING_ITEMS = (): ShowItem[] => {
     { key: "frontier", title: "Accuracy against GPU cost", value: `${P(base.correct)} → ${P(lean.correct)}`, unit: "accuracy", Glyph: GlyphFrontier, pathway: 0 },
     { key: "curves", title: "Test-time scaling", value: "1× to 8×", unit: "thinking budget", Glyph: GlyphCurves, pathway: 0 },
     { key: "fleet", title: "Elastic RL on 64 GPUs", value: "4 → 7", unit: "RL steps", Glyph: GlyphFleet, pathway: 0 },
-    { key: "tasks", title: "Harder tasks within reach", value: "easy to hard", Glyph: GlyphTasks, pathway: 0 },
+    { key: "tasks", title: "Capability by difficulty", value: "easy to hard", Glyph: GlyphTasks, pathway: 0 },
     { key: "audit", title: "Regression audit", value: "each one named", Glyph: GlyphAudit, pathway: 0 },
   ];
 };

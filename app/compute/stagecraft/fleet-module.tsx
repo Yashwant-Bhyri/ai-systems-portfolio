@@ -5,7 +5,7 @@ import { ExhibitScene } from "./exhibit-host";
 import { PolicyFleet } from "../../exhibit/policy/fleet";
 
 /**
- * Elastic RL on 64 GPUs (after QwenGyre), as a laboratory module: the scene
+ * Elastic RL on 64 GPUs, as a laboratory module: the scene
  * loops on its own clock; only the pause button stops it.
  */
 const DURATION = 13100, REST = 2600;

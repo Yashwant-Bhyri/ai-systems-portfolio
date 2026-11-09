@@ -1,5 +1,5 @@
 /**
- * A deterministic RL-step scheduler model for 64 GPUs (design after QwenGyre's elastic cells).
+ * A deterministic RL-step scheduler model for 64 GPUs.
  * Rollout lengths are long-tailed; training is data-parallel over whichever GPUs are free.
  * Colocated: every GPU waits for the slowest rollout, then all train, then sync.
  * Elastic: a GPU that finishes its rollout joins training at once; stragglers keep generating

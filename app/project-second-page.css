@@ -151,3 +151,12 @@
 /* The blurred opening can be skipped with a touch; nothing beneath is pressed. */
 .sp-veil { pointer-events: auto; cursor: pointer; }
 .sp-veil[data-kind="cta"] { pointer-events: none; }
+
+/* Each aim as a panel with its own picture. */
+.sp-labels li.sp-group { min-width: 380px; }
+.sp-group-art { display: block; width: 100%; height: 120px; margin-bottom: 4px; }
+/* The laboratory band is neutral: the results above carry the colour. */
+.vx-shell .lc-block[data-lit="true"] { background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(230,237,244,.45); }
+.vx-shell .lc-preview { background: rgba(10,14,19,.9); box-shadow: inset 0 0 0 1px rgba(230,237,244,.2); }
+.lc-preview-value mark { color: #fff; }
+.lc-band .lg { --active-accent: #c9d2db; }

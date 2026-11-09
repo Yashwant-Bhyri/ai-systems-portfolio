@@ -4,8 +4,8 @@ import { FLEET, GPUS, colocated, elastic, type Segment } from "../../exhibit/pol
 import { ease, prog } from "../../exhibit/engine";
 import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
 
-/* Elastic RL on 64 GPUs, as a full circle: the barrier problem, QwenGyre's idea
-   (arXiv 2609.33848: a device keeps its identity while its role changes), what
+/* Elastic RL on 64 GPUs, as a full circle: the barrier problem, the idea (a device keeps its
+   identity while its role changes), what
    we built on that idea, and the result. Every segment is the lab's fleet model. */
 const C = { rollout: "#f3a0bc", train: "#ffc267", sync: "#63d4df", idle: "#ff8f86", ink: "#eef2f6" };
 const A = colocated(), B = elastic(9);
@@ -127,7 +127,6 @@ function Idea({ t: t0 }: SceneProps) {
   const now = sweep(t, IDEA_MS - EXAMPLE_MS);
   return <svg viewBox="0 0 1100 450" role="img" aria-label="Elastic roles: each GPU joins training the moment its own rollout ends; the straggler keeps generating for the next step">
     <text x={0} y={30} className="ma-k">The same 8 GPUs, elastic roles</text>
-    <text x={0} y={52} className="ma-l">after QwenGyre · arXiv 2609.33848</text>
     <Rows segs={B.segs} now={now} note={(g) => (g === SLOWEST ? "lands in the next step" : null)} />
   </svg>;
 }
@@ -168,7 +167,7 @@ export const FLEET_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat;
     bottleneck: { at: PROBLEM_MS - 3200, headline: `64 GPUs sit idle *${idlePct}% of the time*`, effect: "One barrier per step: the slowest rollout sets the pace for all of them" },
   },
   mechanism: {
-    label: "Elastic RL: the idea", title: "Elastic RL, after QwenGyre (arXiv 2609.33848): a GPU that finishes its rollout starts training at once", ms: IDEA_MS, Scene: Idea,
+    label: "Elastic RL: the idea", title: "Elastic RL: a GPU that finishes its rollout starts training at once", ms: IDEA_MS, Scene: Idea,
     meter: [[0, "Elastic roles: a GPU that finishes its rollout trains at once"], [EXAMPLE_MS, "No barrier: each GPU keeps its identity and changes role"], [EXAMPLE_MS + 3000, "A finished GPU moves straight from writing rollouts to training"], [EXAMPLE_MS + 7000, "Weights are published to the fleet as they are ready"], [EXAMPLE_MS + 9500, "A straggler's rollout simply lands in the next step"]],
   },
   systemTitle: "What we built: 64 GPUs on one wall clock",

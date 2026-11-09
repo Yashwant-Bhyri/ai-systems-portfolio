@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { highlight } from "./compute/stagecraft/stage-meter";
 import "./project-second-page.css";
 
@@ -43,7 +43,7 @@ function DoorView({ door, seen }: { door: Door; seen: boolean }) {
 export type GuideStep = { text: string; target: "microscope" | "poster" | "lab" };
 /** An intro line is a sentence, or a row of numbered labels. */
 /** A label can carry the techniques that belong to it. */
-export type IntroLabel = string | { title: string; note?: string; items: readonly string[] };
+export type IntroLabel = string | { title: string; note?: string; items: readonly string[]; Glyph?: ComponentType };
 export type IntroLine = string | { labels: readonly IntroLabel[] };
 export type Guide = { intro: readonly IntroLine[]; steps: readonly GuideStep[]; cta: string };
 const INTRO_MS = 3800, SAY_MS = 2200, SHOW_MS = 4200, CTA_BLUR_MS = 3000, CTA_GLOW_MS = 9000;
@@ -88,6 +88,8 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
   }, []);
   const [beat, skip] = useGuide(guide, inView);
   const step = beat.kind === "say" || beat.kind === "show" ? beat.step : -1;
+  const [introDone, setIntroDone] = useState(false);
+  useEffect(() => { if (beat.kind !== "intro" && beat.kind !== "rest" && !introDone) { const id = window.setTimeout(() => setIntroDone(true), 0); return () => window.clearTimeout(id); } }, [beat.kind, introDone]);
   const focus = beat.kind === "show" ? guide.steps[beat.step].target : beat.kind === "cta" ? "cta" : beat.kind === "glow" ? "glow" : beat.kind === "intro" ? "intro" : undefined;
   return (
     <section ref={root} id={`${id}-second`} className={`sp-page vx-page vx-accent-${accent}`} data-vx-page data-layout="questions" data-focus={focus} data-saying={beat.kind === "say" || undefined}>
@@ -109,7 +111,7 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
         </aside>
         <div className="sp-right">
           <nav className="sp-questions" aria-label="How it works, and what it gave">
-            {doors.map((d) => <DoorView key={d.key} door={d} seen={seen} />)}
+            {doors.map((d) => <DoorView key={d.key} door={d} seen={seen && introDone} />)}
           </nav>
           <div className="sp-band">{lab}</div>
         </div>
@@ -122,6 +124,7 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
               : <ul key={beat.n} className="sp-labels">{beat.line.labels.map((l, i) => typeof l === "string"
                   ? <li key={l} style={{ animationDelay: `${i * 260}ms` }}><i>{i + 1}</i>{l}</li>
                   : <li key={l.title} className="sp-group" style={{ animationDelay: `${i * 360}ms` }}>
+                      {l.Glyph && <span className="sp-group-art" aria-hidden="true"><l.Glyph /></span>}
                       <span className="sp-group-head"><i>{i + 1}</i><span><b>{l.title}</b>{l.note && <small>{l.note}</small>}</span></span>
                       <span className="sp-group-items">{l.items.map((x, k) => <em key={x} style={{ animationDelay: `${i * 360 + 500 + k * 180}ms` }}>{x}</em>)}</span>
                     </li>)}</ul>

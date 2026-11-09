@@ -30,6 +30,7 @@ import { InferenceOverview, TrainingOverview, InferenceVisual, TrainingVisual, C
 import { ComputeStudy } from "./compute-study";
 import { ProjectPoster } from "./posters/posters";
 import { ProjectSecondPage, type Guide } from "./project-second-page";
+import { GlyphCurves, GlyphLean, GlyphBigPicture, GlyphServingMap } from "./compute/stagecraft/glyphs";
 import { LabPreview } from "./compute/stagecraft/lab-preview";
 import { ConclusionBoard, conclusionFromProof, type ConclusionSpec } from "./conclusion-board";
 import { INFERENCE_CONCLUSION, INFERENCE_SAVING, TRAINING_RESULT, TRAINING_CONCLUSION } from "./posters/conclusion-data";
@@ -2309,8 +2310,8 @@ const TRAINING_GUIDE: Guide = {
   intro: [
     "In this project, we took a small model, Qwen3-4B, and applied *advanced post-training* to see how its behaviour scales on maths and coding",
     { labels: [
-      { title: "More intelligence", note: "higher accuracy", items: ["SFT + LoRA", "GRPO", "Test-time scaling"] },
-      { title: "Less computation", note: "fewer GPU-seconds", items: ["Lean RL", "Elastic RL on 64 GPUs"] },
+      { title: "More intelligence", note: "higher accuracy", items: ["SFT + LoRA", "GRPO", "Test-time scaling"], Glyph: GlyphCurves },
+      { title: "Less computation", note: "fewer GPU-seconds", items: ["Lean RL", "Elastic RL on 64 GPUs"], Glyph: GlyphLean },
     ] },
   ],
   steps: [
@@ -2324,8 +2325,8 @@ const INFERENCE_GUIDE: Guide = {
   intro: [
     "Inference optimization is *two problems*",
     { labels: [
-      { title: "The same intelligence at cheaper cost", items: ["Continuous batching", "Prefix caching", "FP8 prefill & decode"] },
-      { title: "Serving under load", items: ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"] },
+      { title: "The same intelligence at cheaper cost", items: ["Continuous batching", "Prefix caching", "FP8 prefill & decode"], Glyph: GlyphBigPicture },
+      { title: "Serving under load", items: ["Chunked prefill", "Speculative decoding", "Cache-aware routing", "CPU/GPU overlap"], Glyph: GlyphServingMap },
     ] },
   ],
   steps: [

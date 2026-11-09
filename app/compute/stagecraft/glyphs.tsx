@@ -41,19 +41,26 @@ export function GlyphDial() {
     <circle cx={120} cy={60} r={3.5} className="f-ink" />
   </Svg>;
 }
-/** Three levers move; the row of answers above them does not. */
+/** The three levers, one panel each: a batch that never has a gap, one prefix read once for three
+    requests, and the same weights in half the bytes. */
 export function GlyphBigPicture() {
-  const levers = [["f-w", 34, 150], ["f-p", 66, 178], ["f-t", 98, 118]] as const;
   return <Svg>
-    {seq(16, (i) => <circle key={i} cx={21 + i * 13.2} cy={12} r={3.2} className="f-t" />)}
-    {levers.map(([c, y, to], i) => {
-      const k = `0;${0.1 + i * 0.22};${0.28 + i * 0.22};.9;1`;
-      return <g key={c}>
-        <rect x={16} y={y - 1.5} width={208} height={3} rx={1.5} className="f-dim" />
-        <rect x={16} y={y - 1.5} height={3} rx={1.5} className={c} width={208}><animate attributeName="width" values={`208;208;${to - 16};${to - 16};208`} keyTimes={k} calcMode="spline" keySplines="0 0 1 1;.45 0 .2 1;0 0 1 1;.45 0 .55 1" {...loop(9)} /></rect>
-        <circle cy={y} r={7.5} className={c} cx={224}><animate attributeName="cx" values={`224;224;${to};${to};224`} keyTimes={k} calcMode="spline" keySplines="0 0 1 1;.45 0 .2 1;0 0 1 1;.45 0 .55 1" {...loop(9)} /></circle>
-      </g>;
-    })}
+    {/* continuous batching: every slot of the batch is filled the moment it frees */}
+    <rect x={6} y={10} width={70} height={100} rx={6} className="f-faint s-dim" strokeWidth={1} />
+    {seq(8, (i) => <rect key={i} x={14 + (i % 2) * 30} y={18 + Math.floor(i / 2) * 22} width={24} height={16} rx={3} className="f-w">
+      {i === 5 && <animate attributeName="opacity" values="1;1;.15;.15;1;1" keyTimes="0;.3;.36;.5;.56;1" {...loop(4)} />}
+    </rect>)}
+    {/* prefix caching: one shared prefix, read once, reused by three requests */}
+    <rect x={88} y={48} width={22} height={24} rx={4} className="f-p" />
+    {[22, 60, 98].map((y) => <g key={y}>
+      <path d={`M110 60C124 60 128 ${y} 140 ${y}`} className="s-dim" strokeWidth={1.5} fill="none" />
+      <rect x={142} y={y - 8} width={10} height={16} rx={2} className="f-p" opacity={0.45} />
+      <rect x={154} y={y - 8} width={12} height={16} rx={2} className="f-ink" opacity={0.75} />
+    </g>)}
+    <circle r={3.5} className="f-p"><animateMotion path="M110 60C124 60 128 22 140 22" {...loop(2.4)} /></circle>
+    {/* FP8: the same weights, half the bytes per step */}
+    <rect x={182} y={34} width={52} height={16} rx={3} className="f-b" />
+    <rect x={182} y={70} height={16} rx={3} className="f-t" width={26}><animate attributeName="width" values="52;52;26;26;52" keyTimes="0;.2;.5;.92;1" {...loop(5)} /></rect>
   </Svg>;
 }
 /** One request's whole life, before and after: waiting, reading, reasoning, writing. */
@@ -96,16 +103,19 @@ export function GlyphLatency() {
     <path d="M216 18V50" className="s-a" strokeWidth={2.5} strokeLinecap="round"><animate attributeName="opacity" values=".25;1;1;.25" keyTimes="0;.35;.8;1" {...loop(6)} /></path>
   </Svg>;
 }
-/** Chapters of one film, the same bar shorter in each: one change at a time. */
+/** An ablation: the cost bar, then the same bar as each lever is added in turn; what each removes is
+    left outlined in its own colour, and the row being measured is lit. */
 export function GlyphExperiment() {
-  const cuts = [78, 78, 74, 48];
+  const W = 216, rows = [[1, null], [0.86, "s-w"], [0.82, "s-p"], [0.56, "s-t"]] as const;
   return <Svg>
-    {cuts.map((h, i) => {
-      const x = 12 + i * 55, on = `0;${(i * 0.24 + 0.02).toFixed(2)};${(i * 0.24 + 0.05).toFixed(2)};${(i * 0.24 + 0.22).toFixed(2)};${(i * 0.24 + 0.25).toFixed(2)};1`;
+    {rows.map(([k, cut], i) => {
+      const y = 8 + i * 28, w = W * k, prev = i ? W * rows[i - 1][0] : W;
       return <g key={i}>
-        <rect x={x} y={8} width={51} height={104} rx={4} className="f-faint s-dim" strokeWidth={1} />
-        <rect x={x} y={8} width={51} height={104} rx={4} className="s-a" fill="none" strokeWidth={2} opacity={0}><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes={on} {...loop(10)} /></rect>
-        <rect x={x + 16} y={102 - h} width={19} height={h} rx={3} className={["f-mid", "f-w", "f-p", "f-t"][i]} />
+        <rect x={12} y={y} width={w} height={18} rx={4} className={i === 0 ? "f-mid" : "f-dim"} />
+        {cut && <rect x={12 + w + 1} y={y + 1} width={prev - w - 2} height={16} rx={3} fill="none" className={cut} strokeWidth={1.5} strokeDasharray="3 3" />}
+        <rect x={10} y={y - 2} width={W + 4} height={22} rx={5} fill="none" className="s-a" strokeWidth={1.5} opacity={0}>
+          <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes={`0;${(i * 0.24 + 0.01).toFixed(2)};${(i * 0.24 + 0.04).toFixed(2)};${(i * 0.24 + 0.2).toFixed(2)};${(i * 0.24 + 0.23).toFixed(2)};1`} {...loop(9)} />
+        </rect>
       </g>;
     })}
   </Svg>;
