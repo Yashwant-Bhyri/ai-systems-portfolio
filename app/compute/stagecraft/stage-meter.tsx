@@ -127,9 +127,17 @@ export function useFreezeMoments(moments: readonly FreezeMoment[], readTime: () 
       emitFocus(list[i]);
       setFrozen(true);
       let over = false;
-      const release = () => {
+      const release = (e?: Event) => {
         if (over) return;
         over = true;
+        // A touch on the blurred stage only ends the moment: it does not also press what lies beneath.
+        const target = e?.target as Element | null;
+        if (e && target?.closest?.(".lf-stage, .lb-stage") && !target.closest(".tr-rail")) {
+          e.preventDefault(); e.stopPropagation();
+          const swallow = (c: Event) => { c.preventDefault(); c.stopPropagation(); };
+          window.addEventListener("click", swallow, { capture: true, once: true });
+          window.setTimeout(() => window.removeEventListener("click", swallow, true), 600);
+        }
         window.clearTimeout(timer);
         window.removeEventListener("pointerdown", release, true);
         emitFocus(null);

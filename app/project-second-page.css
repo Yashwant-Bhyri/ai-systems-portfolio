@@ -147,3 +147,7 @@
 .lc-preview-value small { color: #aab6c2; font: 400 13px/18px var(--font-geist-sans), sans-serif; }
 .lc-spot { display: none; }
 @media (max-width: 1000px) { .lc-band { grid-template-columns: 1fr; } .lc-blocks { flex-direction: column; } }
+
+/* The blurred opening can be skipped with a touch; nothing beneath is pressed. */
+.sp-veil { pointer-events: auto; cursor: pointer; }
+.sp-veil[data-kind="cta"] { pointer-events: none; }

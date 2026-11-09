@@ -151,7 +151,7 @@ export function IntroCard({ item, text, ms, brief, labels, onSkip }: { item: Sho
     c.animate([{ transformOrigin: "0 0", transform: from, opacity: 0.4 }, { transformOrigin: "0 0", transform: "none", opacity: 1 }], { duration: 620, easing: EASE, fill: "backwards" });
   }, [item.key, ms]);
   return createPortal(
-    <div className={`mb-veil mb-intro ${labAccent()}`} aria-live="polite" data-skip={onSkip ? "" : undefined} onClick={onSkip} style={{ animation: `mb-veil .4s cubic-bezier(.22,1,.36,1) both, mb-veil-out .35s ease-in ${Math.max(0, ms - 380)}ms forwards` }}>
+    <div className={`mb-veil mb-intro ${labAccent()}`} aria-live="polite" data-skip={onSkip ? "" : undefined} onPointerDown={(e) => { if (!onSkip) return; e.preventDefault(); e.stopPropagation(); onSkip(); }} onClick={(e) => e.stopPropagation()} style={{ animation: `mb-veil .4s cubic-bezier(.22,1,.36,1) both, mb-veil-out .35s ease-in ${Math.max(0, ms - 380)}ms forwards` }}>
       {onSkip && <span className="mb-skip">Click anywhere to skip</span>}
       <div ref={card} className="mi-card">
         <span className="mi-art" aria-hidden="true">{item.Glyph && <item.Glyph />}</span>
@@ -188,7 +188,7 @@ export function PurposeCard({ headline, before, after, techniques, ms, onSkip }:
     </section>
   );
   return createPortal(
-    <div className={`mb-veil mb-intro pc-veil ${labAccent()}`} aria-live="polite" data-skip={onSkip ? "" : undefined} onClick={onSkip} style={{ animation: `mb-veil .4s cubic-bezier(.22,1,.36,1) both, mb-veil-out .35s ease-in ${Math.max(0, ms - 380)}ms forwards` }}>
+    <div className={`mb-veil mb-intro pc-veil ${labAccent()}`} aria-live="polite" data-skip={onSkip ? "" : undefined} onPointerDown={(e) => { if (!onSkip) return; e.preventDefault(); e.stopPropagation(); onSkip(); }} onClick={(e) => e.stopPropagation()} style={{ animation: `mb-veil .4s cubic-bezier(.22,1,.36,1) both, mb-veil-out .35s ease-in ${Math.max(0, ms - 380)}ms forwards` }}>
       {onSkip && <span className="mb-skip">Click anywhere to skip</span>}
       <div className="pc-card">
         <p className="pc-head">{highlight(tr(headline))}</p>

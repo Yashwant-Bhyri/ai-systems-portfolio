@@ -51,6 +51,8 @@ type Beat = { kind: "intro"; line: IntroLine; n: number } | { kind: "say" | "sho
 
 function useGuide(guide: Guide, on: boolean) {
   const [beat, setBeat] = useState<Beat>({ kind: "rest" });
+  // A touch on the blurred opening skips it: the walk restarts at its first sentence.
+  const [skipped, setSkipped] = useState(0);
   useEffect(() => {
     let timers: number[] = [];
     if (!on || matchMedia("(prefers-reduced-motion: reduce)").matches) { timers.push(window.setTimeout(() => setBeat({ kind: "rest" }), 0)); return () => timers.forEach((x) => window.clearTimeout(x)); }
@@ -66,10 +68,10 @@ function useGuide(guide: Guide, on: boolean) {
       at(t, { kind: "rest" }); t += 600;
       timers.push(window.setTimeout(() => { timers = []; walk(0, false); }, t));
     };
-    walk(300, true);
+    walk(skipped ? 0 : 300, !skipped);
     return () => timers.forEach((x) => window.clearTimeout(x));
-  }, [guide, on]);
-  return beat;
+  }, [guide, on, skipped]);
+  return [beat, () => setSkipped((n) => n + 1)] as const;
 }
 
 export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, guide }: { id: string; accent: string; name: string; title: string; enter: string; lab: ReactNode; doors: readonly Door[]; guide: Guide }) {
@@ -84,7 +86,7 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
     near.observe(el); here.observe(el);
     return () => { near.disconnect(); here.disconnect(); };
   }, []);
-  const beat = useGuide(guide, inView);
+  const [beat, skip] = useGuide(guide, inView);
   const step = beat.kind === "say" || beat.kind === "show" ? beat.step : -1;
   const focus = beat.kind === "show" ? guide.steps[beat.step].target : beat.kind === "cta" ? "cta" : beat.kind === "glow" ? "glow" : beat.kind === "intro" ? "intro" : undefined;
   return (
@@ -113,7 +115,7 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
         </div>
       </div>
       {(beat.kind === "intro" || beat.kind === "cta") && (
-        <div className="sp-veil" data-kind={beat.kind}>
+        <div className="sp-veil" data-kind={beat.kind} onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); skip(); }} onClick={(e) => e.stopPropagation()}>
           {beat.kind === "intro"
             ? typeof beat.line === "string"
               ? <p key={beat.n}>{highlight(beat.line)}</p>

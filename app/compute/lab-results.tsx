@@ -614,6 +614,8 @@ export function ComputeLabStudy({
   // The title board over the laboratory, between its two sections; and where the rail's titles fly in from.
   const [board, setBoard] = useState<{ from: Rects | null; then: () => void } | null>(null);
   const [railFrom, setRailFrom] = useState<Rects | null>(null);
+  // A deep link to one module waits for the visitor's choice: that module, or the whole walk-through.
+  const [ask, setAsk] = useState<string | null>(null);
   // In detail, a module can open with its parts said over its own stage for a moment.
   const [note, setNote] = useState(false);
   // Before a module opens for the first time, the whole screen says what it is.
@@ -636,6 +638,9 @@ export function ComputeLabStudy({
   const [filmRun, setFilmRun] = useState(0);
   const tr = useTr();
   const labNav = useLabNav();
+  const labNavRef = useRef(labNav);
+  const openModuleRef = useRef<(key: string) => void>(() => {});
+  useEffect(() => { labNavRef.current = labNav; });
   useStageFit(stageRef, fitRef, labNav === "show", `${mode}|${view}|${inferencePart}|${servingKey}`);
   // In the top orientation the reel condenses once the visitor scrolls into the stage.
   const [scrolledIn, setScrolledIn] = useState(false);
@@ -774,12 +779,23 @@ export function ComputeLabStudy({
   useEffect(() => { railRef.current = railItems; });
   useEffect(() => {
     const sectionId = training ? "post-training-study" : "inference-study";
-    const SERVING = ["pressure", "draft", "cache", "overlap", "map", "glossary"];
     const open = () => {
       const [id, key] = window.location.hash.slice(1).split("/");
       if (id !== sectionId) return;
       // Arriving at the laboratory itself: bring it into view, and its opening plays.
       if (!key) { [60, 700, 1800].forEach((ms) => window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "instant", block: "start" }), ms)); return; }
+      // Arriving at one module: first ask whether to see just that, or the whole walk-through.
+      if (labNavRef.current === "show") { setAsk(key); [60, 700, 1800].forEach((ms) => window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "instant", block: "start" }), ms)); return; }
+      openModuleRef.current(key);
+      [60, 700, 1800].forEach((ms) => window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "instant", block: "start" }), ms));
+    };
+    open();
+    window.addEventListener("hashchange", open);
+    return () => window.removeEventListener("hashchange", open);
+  }, [training]);
+  /** Open one module directly, as a deep link asks. */
+  const openModule = (key: string) => {
+      const SERVING = ["pressure", "draft", "cache", "overlap", "map", "glossary"];
       setLandingPhase("off");
       if (!training && SERVING.includes(key)) {
         setInferencePart("load");
@@ -789,13 +805,14 @@ export function ComputeLabStudy({
         if (!training) setInferencePart("cheaper");
         railRef.current.find((item) => item.key === key)?.onOpen();
       }
-      // On a cold load the page above is still settling: land again once it has.
-      [60, 700, 1800].forEach((ms) => window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "instant", block: "start" }), ms));
-    };
-    open();
-    window.addEventListener("hashchange", open);
-    return () => window.removeEventListener("hashchange", open);
-  }, [training]);
+  };
+  useEffect(() => { openModuleRef.current = openModule; });
+  const pickAsk = (direct: boolean) => {
+    const k = ask;
+    setAsk(null);
+    if (direct && k) openModuleRef.current(k);
+    else { setLandingPhase("on"); window.history.replaceState(null, "", `#${training ? "post-training-study" : "inference-study"}`); }
+  };
   // ── Title show ──
   const show = labNav === "show";
   const pathways = training ? TRAINING_PATHWAYS : INFERENCE_PATHWAYS;
@@ -1150,7 +1167,19 @@ export function ComputeLabStudy({
         )}
       </div>
       <div className={block ? "lb-body" : "lf-body"} data-landing={landingOn || undefined}>
-        {show && landingOn && (
+        {show && ask && (() => {
+          const item = showItems.find((i) => i.key === ask);
+          return (
+            <ChoiceCard
+              away={!labInView}
+              auto
+              headline={`You picked *${item?.title ?? "a module"}*. How would you like to see it?`}
+              study={{ title: `Open ${item?.title ?? "it"}`, detail: item?.term ? `Just this component: ${item.term.toLowerCase()}` : "Just this component", onPick: () => pickAsk(true) }}
+              onward={{ title: "Walk through the whole project", detail: "From the start: the opening, the summary, then every module", onPick: () => pickAsk(false) }}
+            />
+          );
+        })()}
+        {show && landingOn && !ask && (
           <TitleBoard pathways={pathways} items={showItems} lines={training ? TRAINING_OPENING : INFERENCE_OPENING} onStart={(key, from) => startShow(key, from)} onEnd={() => startShow("summary")} />
         )}
         {show && board && (
@@ -1192,7 +1221,7 @@ export function ComputeLabStudy({
           {!block && (training || inferencePart === "cheaper") && mode === "watch" && <div className="lf-chapters">{chapterSlot}</div>}
         {show && <FocusCaption moduleKey={`${currentKey}|${chapter}|${clip}`} />}
         {show && noteOn && (
-          <div className="lf-note" aria-live="polite">
+          <div className="lf-note" aria-live="polite" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); if (clip !== null && clips[clip].note) goClip(clip + 1); else setNote(false); }}>
             <p>{tr(SETUP_NOTE.title)}</p>
             <ol>{SETUP_NOTE.labels.map((l, i) => <li key={l} style={{ animationDelay: `${300 + i * 500}ms` }}><i>{i + 1}</i>{tr(l)}</li>)}</ol>
           </div>
