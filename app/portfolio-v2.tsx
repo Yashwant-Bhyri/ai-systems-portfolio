@@ -33,6 +33,7 @@ import { LabPreview } from "./compute/stagecraft/lab-preview";
 import { ConclusionBoard, conclusionFromProof, type ConclusionSpec } from "./conclusion-board";
 import { INFERENCE_CONCLUSION, INFERENCE_SAVING, TRAINING_RESULT, TRAINING_CONCLUSION } from "./posters/conclusion-data";
 import { withBase } from "./base-path";
+import { usePageHandoff } from "./page-handoff";
 
 const assetPath = (path: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 
@@ -1062,8 +1063,11 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
   const t = useT();
   const statements = t.hero.statements;
   const hero = useHeroChoreography(reducedMotion);
+  const heroRef = useRef<HTMLElement>(null);
+  // Once the introduction has been said, the walk moves on to what the roles and capabilities are.
+  usePageHandoff(heroRef, hero.ready, "profile", 2600);
   return (
-    <section id="top" className="vx-hero vx-page" data-vx-page data-phase={hero.phase}>
+    <section ref={heroRef} id="top" className="vx-hero vx-page" data-vx-page data-phase={hero.phase}>
       <GalaxyField reducedMotion={reducedMotion} />
       <div className="vx-hero-shell">
         <div className="vx-hero-credentials">
@@ -1191,6 +1195,7 @@ function ProjectIndex() {
   const visibleSubN = reducedMotion ? INDEX_SUB.length : subN;
   const sub = { visible: INDEX_SUB.slice(0, visibleSubN), done: visibleSubN >= INDEX_SUB.length };
   const [spot, setSpot] = useState(-1);
+  const [toured, setToured] = useState(false);
   const [manualSpot, setManualSpot] = useState<number | null>(null);
   useEffect(() => {
     if (!sub.done) return;
@@ -1201,6 +1206,7 @@ function ProjectIndex() {
       setSpot(step % PROJECTS.length);
       timer = window.setTimeout(() => {
         step += 1;
+        if (step === PROJECTS.length) setToured(true);
         tick();
       }, SPOT_DURATIONS[step % SPOT_DURATIONS.length]);
     };
@@ -1208,8 +1214,11 @@ function ProjectIndex() {
     return () => window.clearTimeout(timer);
   }, [reducedMotion, sub.done]);
   const currentSpot = manualSpot ?? (reducedMotion ? 0 : spot < 0 ? 0 : spot);
+  // After one pass over the four projects, the walk moves on to the first main project.
+  const indexRef = useRef<HTMLElement>(null);
+  usePageHandoff(indexRef, toured, "post-training", 900);
   return (
-    <section id="projects" className="vx-project-index cx-expanded-index vx-section-shell vx-page" data-vx-page>
+    <section ref={indexRef} id="projects" className="vx-project-index cx-expanded-index vx-section-shell vx-page" data-vx-page>
       <div className="vx-section-heading">
         <span>SELECTED WORK / FIVE CHAPTERS</span>
         <h2 ref={headingRef} className={`vx-typed-h ${hook.done ? "is-done" : ""}`} aria-label="So, what did I build?">
@@ -1763,6 +1772,8 @@ function FlagshipChapter({
   const controller = useAutoplaySequence(steps.length + 1, 11800, microscopeRef, reducedMotion, {
     observeSelector: ".vx-walkthrough",
   });
+  // On the home page the two main projects' architecture hands on to its second page once every step has been lit.
+  usePageHandoff(overviewRef, part === "overview" && compute && overviewController.complete, `${id}-second`, ARCH_STEP_MS + 600);
   const moveToMicroscope = useChapterHandoff({
     overviewRef,
     microscopeRef,
@@ -2366,6 +2377,7 @@ function ComputeSecondPage({ domain }: { domain: "inference" | "training" }) {
       enter={`${href}?labnav=show#${id}-study`}
       lab={<LabPreview training={training} />}
       guide={training ? TRAINING_GUIDE : INFERENCE_GUIDE}
+      next={training ? "inference" : "mindscape"}
       doors={[
         { key: "microscope", question: training ? "How does each training step work?" : "How is a request actually served?", name: training ? "Step by step, in the microscope" : "Request by request, in the microscope", href: `${href}#${id}-microscope`, node: training
           ? <MiniMicroscope id={id} accent="rose" brand="ADVANCED POST-TRAINING" steps={TRAINING_STEPS} Visual={TrainingVisual} proof={TRAINING_PROOF} conclusion={TRAINING_CONCLUSION} />

@@ -153,6 +153,8 @@ export type Dictionary = {
       lines: [string, string];
       short: string;
       why: string;
+      /** The capability this role opens on. */
+      focus: string;
     }[];
     pillars: {
       id: string;

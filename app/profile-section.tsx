@@ -3,6 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { useT } from "./i18n";
+import { usePageHandoff } from "./page-handoff";
+import { INFERENCE_SAVING, TRAINING_RESULT } from "./posters/conclusion-data";
 import "./live-scenes.css";
 import "./profile-section.css";
 
@@ -13,10 +15,15 @@ import "./profile-section.css";
  * draws more, and the rest of the stack steps back.
  */
 type Draw = 1 | 2 | 3;
-type TargetRole = { id: string; lines: readonly [string, string]; short: string; why: string };
+type TargetRole = { id: string; lines: readonly [string, string]; short: string; why: string; focus: string };
 type Pillar = { id: string; label: string; layer: string; skills: readonly string[]; draw: readonly [Draw, Draw, Draw]; proof: readonly string[] };
 
 const ROLE_ADVANCE_MS = 9600;
+/** Skills shown on a closed layer; the rest open when the layer is selected. */
+const SHOWN = 4;
+/** Results quoted in the roles come from the same lab model as the second pages, never typed in. */
+const pc = (n: number) => `${Math.round((100 * n) / 96)}%`;
+const fill = (s: string) => s.replace("{accFrom}", pc(TRAINING_RESULT.from)).replace("{accTo}", pc(TRAINING_RESULT.to)).replace(/\{saving\}/g, `${INFERENCE_SAVING}%`);
 
 const SR_ONLY_STYLE: CSSProperties = {
   position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0,
@@ -39,6 +46,8 @@ export function ProfileSection() {
   const [playing, setPlaying] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [wires, setWires] = useState<Wire[]>([]);
+  // The open layer: the one the visitor picked, else the one the role in focus is strongest in.
+  const [picked, setPicked] = useState<number | null>(null);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -59,11 +68,17 @@ export function ProfileSection() {
   const autoplaying = playing && !reducedMotion;
   const running = visible && autoplaying;
 
+  // After the last role has had its turn, the walk moves on to the projects instead of starting over.
+  const [toured, setToured] = useState(false);
   useEffect(() => {
     if (!running) return;
-    const timer = window.setInterval(() => setActiveRole((value) => (value + 1) % roles.length), ROLE_ADVANCE_MS);
+    const timer = window.setInterval(() => {
+      if (activeRole === roles.length - 1 && !toured) { setToured(true); return; }
+      setActiveRole((value) => (value + 1) % roles.length);
+    }, ROLE_ADVANCE_MS);
     return () => window.clearInterval(timer);
-  }, [running, roles.length, activeRole]);
+  }, [running, roles.length, activeRole, toured]);
+  usePageHandoff(sectionRef, toured, "projects", 300);
 
   // The wires run from the role in focus to every layer it draws on; measured, so they follow the layout.
   useLayoutEffect(() => {
@@ -91,8 +106,8 @@ export function ProfileSection() {
   }, [activeRole, pillars]);
 
   const role = roles[activeRole];
+  const openLayer = picked ?? Math.max(0, pillars.findIndex((pillar) => pillar.id === role.focus));
   const drawn = pillars.reduce((sum, pillar) => sum + (pillar.draw[activeRole] >= 2 ? pillar.skills.length : 0), 0);
-  const deep = pillars.filter((pillar) => pillar.draw[activeRole] === 3).length;
 
   function handleRoleKeys(event: KeyboardEvent<HTMLDivElement>) {
     if (!["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
@@ -144,11 +159,7 @@ export function ProfileSection() {
                 <small>{item.short}</small>
                 {active && (
                   <span className="pf-role-more" key={item.id}>
-                    <span className="pf-why">{item.why}</span>
-                    <span className="pf-cover">
-                      {profile.coverage.split(/(\{drawn\}|\{total\}|\{deep\})/).map((part, k) =>
-                        part === "{drawn}" ? <b key={k}>{drawn}</b> : part === "{total}" ? <b key={k}>{totalSkills}</b> : part === "{deep}" ? <b key={k}>{deep}</b> : part)}
-                    </span>
+                    <span className="pf-why">{fill(item.why)}</span>
                   </span>
                 )}
                 {active && running && <i className="pf-timer" key={`t${activeRole}`} style={{ animationDuration: `${ROLE_ADVANCE_MS}ms` }} aria-hidden="true" />}
@@ -166,21 +177,39 @@ export function ProfileSection() {
           ))}
         </svg>
 
-        <div className="pf-stack">
+        <div className="pf-stack" onPointerLeave={(e) => { if (e.pointerType === "mouse") setPicked(null); }}>
           <span className="pf-col-label">{profile.pillarsLabel.replace("{total}", String(totalSkills))}</span>
           {pillars.map((pillar, i) => {
             const weight = pillar.draw[activeRole];
+            const open = i === openLayer;
+            const more = pillar.skills.length - SHOWN;
             return (
-              <div key={pillar.id} ref={(node) => { layerRefs.current[i] = node; }} className="pf-layer" data-weight={weight}>
+              <div
+                key={pillar.id}
+                ref={(node) => { layerRefs.current[i] = node; }}
+                className="pf-layer"
+                data-weight={weight}
+                data-open={open || undefined}
+                role="button"
+                tabIndex={0}
+                aria-expanded={open}
+                onPointerEnter={(e) => { if (e.pointerType === "mouse") setPicked(i); }}
+                onFocus={() => setPicked(i)}
+                onClick={() => setPicked(i)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPicked(i); } }}
+              >
                 <div className="pf-layer-head">
                   <small>{pillar.layer}</small>
                   <strong>{pillar.label}</strong>
                   <span className="pf-depth" aria-label={`${weight} / 3`}>{[0, 1, 2].map((k) => <i key={k} data-on={k < weight || undefined} />)}</span>
                 </div>
-                <ul className="pf-skills">{pillar.skills.map((skill) => <li key={skill}>{skill}</li>)}</ul>
+                <ul className="pf-skills">
+                  {pillar.skills.map((skill, k) => <li key={skill} data-extra={k >= SHOWN || undefined} style={k >= SHOWN ? { transitionDelay: open ? `${(k - SHOWN) * 40}ms` : "0ms" } : undefined}>{skill}</li>)}
+                  {more > 0 && !open && <li className="pf-more">{profile.coverage.replace("{more}", String(more))}</li>}
+                </ul>
                 <div className="pf-proof">
                   <small>{profile.proofLabel}</small>
-                  {pillar.proof.map((id) => <a key={id} href={`#${id}`}>{profile.projectNames[id] ?? id}<i aria-hidden="true">↗</i></a>)}
+                  {pillar.proof.map((id) => <a key={id} href={`#${id}`} onClick={(e) => e.stopPropagation()}>{profile.projectNames[id] ?? id}<i aria-hidden="true">↗</i></a>)}
                 </div>
               </div>
             );

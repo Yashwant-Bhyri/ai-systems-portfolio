@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { highlight } from "./compute/stagecraft/stage-meter";
 import "./project-second-page.css";
+import { usePageHandoff } from "./page-handoff";
 import { IntroLabels, type IntroLine } from "./compute/stagecraft/intro-labels";
 
 /**
@@ -52,6 +53,8 @@ function useGuide(guide: Guide, on: boolean) {
   const [beat, setBeat] = useState<Beat>({ kind: "rest" });
   // A touch on the blurred opening skips it: the walk restarts at its first sentence.
   const [skipped, setSkipped] = useState(0);
+  // The first full walk has been said: the page may hand the visitor on.
+  const [passed, setPassed] = useState(false);
   useEffect(() => {
     let timers: number[] = [];
     if (!on || matchMedia("(prefers-reduced-motion: reduce)").matches) { timers.push(window.setTimeout(() => setBeat({ kind: "rest" }), 0)); return () => timers.forEach((x) => window.clearTimeout(x)); }
@@ -65,15 +68,15 @@ function useGuide(guide: Guide, on: boolean) {
       at(t, { kind: "cta" }); t += CTA_BLUR_MS;
       at(t, { kind: "glow" }); t += CTA_GLOW_MS;
       at(t, { kind: "rest" }); t += 600;
-      timers.push(window.setTimeout(() => { timers = []; walk(0, false); }, t));
+      timers.push(window.setTimeout(() => { setPassed(true); timers = []; walk(0, false); }, t));
     };
     walk(skipped ? 0 : 300, !skipped);
     return () => timers.forEach((x) => window.clearTimeout(x));
   }, [guide, on, skipped]);
-  return [beat, () => setSkipped((n) => n + 1)] as const;
+  return [beat, () => setSkipped((n) => n + 1), passed] as const;
 }
 
-export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, guide }: { id: string; accent: string; name: string; title: string; enter: string; lab: ReactNode; doors: readonly Door[]; guide: Guide }) {
+export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, guide, next }: { id: string; accent: string; name: string; title: string; enter: string; lab: ReactNode; doors: readonly Door[]; guide: Guide; next?: string }) {
   const root = useRef<HTMLElement>(null);
   const [seen, setSeen] = useState(false);
   const [inView, setInView] = useState(false);
@@ -86,7 +89,9 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
     near.observe(el); here.observe(el);
     return () => { near.disconnect(); here.disconnect(); };
   }, []);
-  const [beat, skip] = useGuide(guide, inView);
+  const [beat, skip, passed] = useGuide(guide, inView);
+  // After one full walk, the visitor is handed on to the next project.
+  usePageHandoff(root, !!next && passed, next ?? "", 400);
   // Near this page, the laboratory's code is fetched quietly, so "Enter the results laboratory" opens at once.
   useEffect(() => { if (seen) void import("./compute-study"); }, [seen]);
   const step = beat.kind === "say" || beat.kind === "show" ? beat.step : -1;

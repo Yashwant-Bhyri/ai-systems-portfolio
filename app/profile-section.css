@@ -83,3 +83,14 @@
 
 /* The layer name, its depth, then the skills on one line beneath */
 .pf-layer-head strong { white-space: nowrap; }
+
+/* A layer shows its first skills; selected, it opens to all of them and takes more room. */
+.pf-layer { cursor: pointer; transition: opacity 0.5s ease, background 0.5s ease, box-shadow 0.5s ease, flex-grow 0.6s cubic-bezier(0.65, 0, 0.35, 1); }
+.pf-layer[data-open] { flex-grow: 1.9; }
+.pf-layer:focus-visible { outline: 1px solid color-mix(in srgb, var(--vx-lime) 70%, transparent); outline-offset: 2px; }
+.pf-layer[data-weight="1"][data-open] { opacity: 0.85; }
+.pf-skills li[data-extra] { display: none; }
+.pf-layer[data-open] .pf-skills li[data-extra] { display: list-item; animation: pf-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: inherit; }
+.pf-skills li.pf-more { padding-left: 0; color: color-mix(in srgb, var(--vx-lime) 80%, white); font-weight: 500; }
+.pf-skills li.pf-more::before { display: none; }
+.pf-layer[data-open] { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--vx-lime) 75%, transparent), 0 18px 50px -32px color-mix(in srgb, var(--vx-lime) 70%, transparent); }
