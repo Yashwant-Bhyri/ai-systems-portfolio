@@ -294,3 +294,19 @@ The seven larger items, done after (2026-11-10): the head follows the chosen che
 | Home summary and target roles | Rewritten: what the four projects did; AI Systems Engineer, AI Application / Agent Engineer, AI Inference Engineer (EN and ZH) |
 | Lighter page | The laboratory and three.js load only on project pages and are prefetched from the second page; home bundle 695 → 309 KB; live panels unmount off screen; three.js at 1.5× density |
 | Push so the site is live | Waiting: there is no GitHub remote; both folders deploy to the Vercel project ai-systems-portfolio |
+
+## Round 21 (2026-11-11)
+
+| Request | Status |
+|---|---|
+| GitHub Pages: everything but the home page was a 404 | Fixed: in-site links now carry the /ai-systems-portfolio base path |
+| Home hero names skills, not projects | Multi-agent orchestration, memory, observability, post-training (SFT, GRPO, RL), serving at scale; background keywords to match (EN and ZH) |
+| What I'm built for: broken, then "elite" | Rebuilt: three roles beside a five-layer stack, each layer linked to the projects that prove it; the role in focus is wired to the layers it draws on |
+| Lab opening and both second pages: two problems as a block of text | Numbered panels with pictures, shared by the lab and the second page |
+| Raw numbers before the Summary | Board tiles, home preview and both posters now show percentage changes; raw values stay inside the modules |
+| Overlaps: top strip under Contact me; dial number over the rings; Policy × runtime headline cut off | Strip removed; contact dock steps aside on labs and second pages; impact box and finish gap inside the dial's centre; headline shortened |
+| Dead starts | Request replay's clock starts at 0.3 s (was 1.5 s); Policy × runtime leaves its baseline at 1.2 s (was 3.5 s) |
+| Blurred reveal ignores pause | Freeze moments hold while the Summary is paused; the rail's controls no longer end them |
+| Clicking the muted board during the opening opened modules | The board is veiled while the opening plays; a touch skips it |
+| Glossary transitions inconsistent; post-training glossary | Walk owns the highlight, the row opens with its card, words fade in with the grow, pause holds it; nine-term post-training glossary with its own figures |
+| Elastic RL example rebuilt | Four GPUs, one agent each, rollouts of 3/5/8/12 steps; barrier vs elastic on one large frame; legends on one line |

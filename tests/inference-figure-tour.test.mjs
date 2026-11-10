@@ -9,6 +9,7 @@ registerHooks({ resolve(specifier, context, next) {
   if (specifier === "./lab-simulation" && context.parentURL?.endsWith("/composition-comparison.ts") || ["./load-latency-model", "./composition-comparison"].includes(specifier) && context.parentURL?.endsWith("/inference-figure-tour-model.ts")) return next(`${specifier}.ts`, context);
   return next(specifier, context);
 } });
+const { COMPOSITION_PHASE_START } = await import("../app/compute/composition-comparison.ts");
 const { compositionComparison } = await import("../app/compute/composition-comparison.ts");
 const { FIGURE_TOUR_CHAPTERS, FIGURE_TOUR_MS, figureChapterTime, inferenceFigureFrame } = await import("../app/compute/inference-figure-tour-model.ts");
 
@@ -58,8 +59,9 @@ test("one contiguous clock holds baseline, both mechanisms, final condition and 
     assert.equal(inferenceFigureFrame(chapter.start, context).chapterIndex, index);
     assert.equal(inferenceFigureFrame(chapter.end - 1, context).chapterIndex, index);
     if (chapter.view === 0) for (let phase = 0; phase < 5; phase++) {
-      assert.equal(inferenceFigureFrame(chapter.start + phase * 3500, context).selection.state.phase, phase);
-      assert.equal(inferenceFigureFrame(chapter.start + (phase + 1) * 3500 - 1, context).selection.state.phase, phase);
+      const at = COMPOSITION_PHASE_START[phase], next = phase < 4 ? COMPOSITION_PHASE_START[phase + 1] : chapter.end - chapter.start;
+      assert.equal(inferenceFigureFrame(chapter.start + at, context).selection.state.phase, phase);
+      assert.equal(inferenceFigureFrame(chapter.start + next - 1, context).selection.state.phase, phase);
     }
     const settled = inferenceFigureFrame(figureChapterTime(index, true), context);
     assert.equal(settled.chapterIndex, index);
