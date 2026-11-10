@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 
 import { highlight } from "./compute/stagecraft/stage-meter";
 import "./project-second-page.css";
 import { usePageHandoff } from "./page-handoff";
+import { useTr } from "./exhibit/i18n";
 import { IntroLabels, type IntroLine } from "./compute/stagecraft/intro-labels";
 
 /**
@@ -89,6 +90,7 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
     near.observe(el); here.observe(el);
     return () => { near.disconnect(); here.disconnect(); };
   }, []);
+  const tr = useTr();
   const [beat, skip, passed] = useGuide(guide, inView);
   // After one full walk, the visitor is handed on to the next project.
   usePageHandoff(root, !!next && passed, next ?? "", 400);
@@ -111,10 +113,10 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
         <aside className="sp-guide" aria-live="polite">
           <ol>
             {guide.steps.map((s, i) => (
-              <li key={i} data-on={i === step || undefined} data-done={step > i || beat.kind === "cta" || beat.kind === "glow" || undefined}>{highlight(s.text)}</li>
+              <li key={i} data-on={i === step || undefined} data-done={step > i || beat.kind === "cta" || beat.kind === "glow" || undefined}>{highlight(tr(s.text))}</li>
             ))}
           </ol>
-          <p className="sp-guide-cta" data-on={beat.kind === "cta" || beat.kind === "glow" || undefined}>{highlight(guide.cta)}</p>
+          <p className="sp-guide-cta" data-on={beat.kind === "cta" || beat.kind === "glow" || undefined}>{highlight(tr(guide.cta))}</p>
         </aside>
         <div className="sp-right">
           <nav className="sp-questions" aria-label="How it works, and what it gave">
@@ -127,9 +129,9 @@ export function ProjectSecondPage({ id, accent, name, title, enter, lab, doors, 
         <div className="sp-veil" data-kind={beat.kind} onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); skip(); }} onClick={(e) => e.stopPropagation()}>
           {beat.kind === "intro"
             ? typeof beat.line === "string"
-              ? <p key={beat.n}>{highlight(beat.line)}</p>
-              : <IntroLabels key={beat.n} labels={beat.line.labels} />
-            : <p key="cta">{highlight(guide.cta)}</p>}
+              ? <p key={beat.n}>{highlight(tr(beat.line))}</p>
+              : <IntroLabels key={beat.n} labels={beat.line.labels} tr={tr} />
+            : <p key="cta">{highlight(tr(guide.cta))}</p>}
         </div>
       )}
     </section>

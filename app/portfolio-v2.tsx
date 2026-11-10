@@ -34,6 +34,7 @@ import { ConclusionBoard, conclusionFromProof, type ConclusionSpec } from "./con
 import { INFERENCE_CONCLUSION, INFERENCE_SAVING, TRAINING_RESULT, TRAINING_CONCLUSION } from "./posters/conclusion-data";
 import { withBase } from "./base-path";
 import { usePageHandoff } from "./page-handoff";
+import { useTr } from "./exhibit/i18n";
 
 const assetPath = (path: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 
@@ -882,7 +883,9 @@ function useHeroChoreography(reducedMotion: boolean) {
 
 /** Renders copy with ⟪accent⟫ markers as striking emphasised spans. */
 function Emph({ text }: { text: string }) {
-  const parts = text.split(/⟪|⟫/);
+  // Translated whole, before it is split into emphasis spans, so the Chinese keeps its own word order.
+  const tr = useTr();
+  const parts = tr(text).split(/⟪|⟫/);
   return (
     <>
       {parts.map((part, i) => (i % 2 === 1 ? <em key={i} className="vx-emph">{part}</em> : <span key={i}>{part}</span>))}
@@ -1148,9 +1151,11 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
 /** Types text once the element scrolls into view. Returns visible slice + done. */
 function useTypeOnView(
   ref: React.RefObject<HTMLElement | null>,
-  text: string,
+  source: string,
   cps = 34,
 ) {
+  // Typed in the visitor's language: a half-typed English line has no Chinese to swap in.
+  const text = useTr()(source);
   const reducedMotion = useReducedMotion();
   const [started, setStarted] = useState(false);
   const [n, setN] = useState(0);
@@ -1179,19 +1184,20 @@ function useTypeOnView(
 /** Spotlight cycle for the project cards: one quick lap, then a slow lap, looping. */
 const SPOT_DURATIONS = [3600, 3600, 3600, 3600];
 
-const INDEX_SUB = "Five project walkthroughs and a research collection, with the engineering visible.";
+const INDEX_SUB_EN = "Five project walkthroughs and a research collection, with the engineering visible.";
 
 function ProjectIndex() {
   const reducedMotion = useReducedMotion();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const hook = useTypeOnView(headingRef, "So, what did I build?", 22);
+  const INDEX_SUB = useTr()(INDEX_SUB_EN);
   const [subN, setSubN] = useState(0);
   useEffect(() => {
     if (reducedMotion) return;
     if (!hook.done || subN >= INDEX_SUB.length) return;
     const timer = window.setTimeout(() => setSubN((v) => v + 1), 24);
     return () => window.clearTimeout(timer);
-  }, [hook.done, reducedMotion, subN]);
+  }, [hook.done, reducedMotion, subN, INDEX_SUB.length]);
   const visibleSubN = reducedMotion ? INDEX_SUB.length : subN;
   const sub = { visible: INDEX_SUB.slice(0, visibleSubN), done: visibleSubN >= INDEX_SUB.length };
   const [spot, setSpot] = useState(-1);

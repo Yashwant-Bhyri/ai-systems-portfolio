@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { LanguageProvider } from "./i18n";
+import { Localizer } from "./i18n/localizer";
 import "./globals.css";
 import "./portfolio-v2.css";
 
@@ -42,7 +43,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body>
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider><Localizer />{children}</LanguageProvider>
       </body>
     </html>
   );
