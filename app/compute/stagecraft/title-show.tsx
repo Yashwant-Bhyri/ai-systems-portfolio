@@ -119,6 +119,7 @@ export function TitleBoard({
   // With opening lines, the board starts muted, so it never flashes before the first line.
   const [line, setLine] = useState<number | null>(lines.length ? -1 : null);
   const pending = useRef<Rects | null>(from);
+  const skipLines = useRef<() => void>(() => {});
   const endRef = useRef(onEnd);
   useEffect(() => { endRef.current = onEnd; });
   const itemsRef = useRef(items);
@@ -132,13 +133,14 @@ export function TitleBoard({
     if (!el) return;
     let timers: number[] = [];
     const clear = () => { timers.forEach((t) => window.clearTimeout(t)); timers = []; };
-    const run = () => {
+    const run = (noLines = false) => {
       clear();
       const n = pathways.length, step = quick ? QUICK : CARD;
       let t = overlay ? 800 : 400;
       // The board is muted while each opening line is said across it.
-      lines.forEach((l, i) => { const at = t; timers.push(window.setTimeout(() => setLine(i), at)); t += typeof l === "string" ? LINE_MS : PICTURED_MS; });
-      if (lines.length) { timers.push(window.setTimeout(() => setLine(null), t)); t += 500; }
+      if (noLines) setLine(null);
+      else lines.forEach((l, i) => { const at = t; timers.push(window.setTimeout(() => setLine(i), at)); t += typeof l === "string" ? LINE_MS : PICTURED_MS; });
+      if (lines.length && !noLines) { timers.push(window.setTimeout(() => setLine(null), t)); t += 500; }
       const go = (fn: () => void) => timers.push(window.setTimeout(() => { pending.current = collect(root.current); fn(); }, t));
       const light = (s: number) => {
         const own = itemsRef.current.filter((i) => i.pathway === s).map((i) => i.key);
@@ -163,6 +165,7 @@ export function TitleBoard({
       }
       timers.push(window.setTimeout(() => endRef.current(), t));
     };
+    skipLines.current = () => run(true);
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) run();
       else { clear(); setFocus(tour ? -1 : start); setPick(-1); setLit(-1); setLine(lines.length ? -1 : null); }
@@ -174,6 +177,8 @@ export function TitleBoard({
   }, [pathways.length, quick, overlay, start, threshold, tour]);
   return (
     <div ref={root} className="tb-root" data-overlay={overlay || undefined} data-sections={pathways.length} data-line={line !== null ? "" : undefined}>
+      {/* While the opening is said, the board beneath is not live: a touch skips the opening and presses nothing. */}
+      {line !== null && <div className="tb-veil" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); skipLines.current(); }} onClick={(e) => e.stopPropagation()} />}
       {line !== null && line >= 0 && (typeof lines[line] === "string"
         ? <p key={line} className="tb-line">{highlight(tr(lines[line] as string))}</p>
         : <div key={line} className="tb-line tb-line-pictured"><IntroLabels labels={(lines[line] as { labels: Parameters<typeof IntroLabels>[0]["labels"] }).labels} tr={tr} /></div>)}

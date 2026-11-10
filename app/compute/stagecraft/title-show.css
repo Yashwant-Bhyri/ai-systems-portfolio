@@ -237,3 +237,4 @@
 
 /* An opening line can be pictured: the numbered aims, each with its picture, held longer than a sentence. */
 .tb-line.tb-line-pictured { width: min(1100px, 94%); animation-duration: 7s; }
+.tb-veil { position: absolute; inset: 0; z-index: 9; cursor: pointer; background: transparent; }

@@ -107,6 +107,9 @@ export type FreezeMoment = NonNullable<FocusDetail> & { at: number; hold?: numbe
 export function useFreezeMoments(moments: readonly FreezeMoment[], readTime: () => number, running: boolean, pause: () => void, resume: () => void, runKey: unknown) {
   const passed = useRef(new Set<number>());
   const [frozen, setFrozen] = useState(false);
+  /** Ends an open moment without resuming, when the figure leaves the stage. */
+  const open = useRef<(() => void) | null>(null);
+  useEffect(() => () => open.current?.(), []);
   const live = useRef({ moments, readTime, pause, resume });
   useEffect(() => { live.current = { moments, readTime, pause, resume }; });
   useEffect(() => { passed.current = new Set(); }, [runKey]);
@@ -126,13 +129,30 @@ export function useFreezeMoments(moments: readonly FreezeMoment[], readTime: () 
       stop();
       emitFocus(list[i]);
       setFrozen(true);
-      let over = false;
+      let over = false, held = false, left = list[i].hold ?? 3400, since = Date.now();
+      let timer = 0;
+      const arm = () => { since = Date.now(); timer = window.setTimeout(() => release(), left); };
+      // The summary's pause holds the moment too: the blur and its number stay until the visitor resumes.
+      const onHold = () => { if (held) return; held = true; window.clearTimeout(timer); left = Math.max(400, left - (Date.now() - since)); };
+      const onRelease = () => { if (!held) return; held = false; live.current.pause(); arm(); };
       const release = (e?: Event) => {
         if (over) return;
+        const target = e?.target as Element | null;
+        // The rail's own controls (pause, back, forward) are controls, not a touch that skips the moment.
+        if (e && target?.closest?.(".tr-rail")) return;
+        // The figure's own play/pause toggles the moment: paused, the blur and its number stay; played, it carries on.
+        const toggle = target?.closest?.("button");
+        if (e && toggle && toggle.closest(".lf-stage, .lb-stage") && /pause|play|resume|Ⅱ|▶|⏸/i.test(`${toggle.getAttribute("aria-label") ?? ""} ${toggle.textContent ?? ""}`)) {
+          e.preventDefault(); e.stopPropagation();
+          const swallow = (c: Event) => { c.preventDefault(); c.stopPropagation(); };
+          window.addEventListener("click", swallow, { capture: true, once: true });
+          window.setTimeout(() => window.removeEventListener("click", swallow, true), 600);
+          if (held) { held = false; arm(); } else onHold();
+          return;
+        }
         over = true;
         // A touch on the blurred stage only ends the moment: it does not also press what lies beneath.
-        const target = e?.target as Element | null;
-        if (e && target?.closest?.(".lf-stage, .lb-stage") && !target.closest(".tr-rail")) {
+        if (e && target?.closest?.(".lf-stage, .lb-stage")) {
           e.preventDefault(); e.stopPropagation();
           const swallow = (c: Event) => { c.preventDefault(); c.stopPropagation(); };
           window.addEventListener("click", swallow, { capture: true, once: true });
@@ -140,12 +160,18 @@ export function useFreezeMoments(moments: readonly FreezeMoment[], readTime: () 
         }
         window.clearTimeout(timer);
         window.removeEventListener("pointerdown", release, true);
+        window.removeEventListener("lab:hold", onHold);
+        window.removeEventListener("lab:release", onRelease);
+        open.current = null;
         emitFocus(null);
         setFrozen(false);
-        live.current.resume();
+        if (!held) live.current.resume();
       };
-      const timer = window.setTimeout(release, list[i].hold ?? 3400);
-      // Touching anything ends the freeze at once, so a pause or a scrub is never swallowed.
+      open.current = () => { held = true; release(); };
+      arm();
+      window.addEventListener("lab:hold", onHold);
+      window.addEventListener("lab:release", onRelease);
+      // Touching anything else ends the freeze at once, so a scrub is never swallowed.
       window.addEventListener("pointerdown", release, true);
     }, 120);
     return () => window.clearInterval(id);
