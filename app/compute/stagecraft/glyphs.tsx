@@ -361,3 +361,14 @@ export function GlyphAudit() {
     })}
   </Svg>;
 }
+/** Nine terms on one board: the walk lights one card at a time. */
+export function GlyphGlossary() {
+  return <Svg>
+    {Array.from({ length: 9 }, (_, i) => {
+      const x = 14 + (i % 3) * 72, y = 10 + Math.floor(i / 3) * 34;
+      return <rect key={i} x={x} y={y} width={64} height={28} rx={5} className="f-dim">
+        <animate attributeName="opacity" values={Array.from({ length: 9 }, (_, k) => (k === i ? 1 : 0.35)).concat(i === 0 ? 1 : 0.35).join(";")} keyTimes={Array.from({ length: 10 }, (_, k) => q(k / 9)).join(";")} calcMode="discrete" {...loop(9)} />
+      </rect>;
+    })}
+  </Svg>;
+}

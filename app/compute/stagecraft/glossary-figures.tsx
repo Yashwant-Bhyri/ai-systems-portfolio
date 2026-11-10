@@ -6,21 +6,21 @@ import type { ReactNode } from "react";
 import { simulateStream } from "../stream-continuity-model";
 
 const VB = "0 0 400 120";
-const DUR = "6s";
-const r3 = (x: number) => Math.round(x * 1000) / 1000;
+export const DUR = "6s";
+export const r3 = (x: number) => Math.round(x * 1000) / 1000;
 const clampT = (t: number) => Math.min(0.995, Math.max(0.005, t));
 
 /** Visible from `a` to `b` (fractions of the loop), hidden otherwise. */
-function Win({ a, b, from = 0, to = 1 }: { a: number; b: number; from?: number; to?: number }) {
+export function Win({ a, b, from = 0, to = 1 }: { a: number; b: number; from?: number; to?: number }) {
   const t0 = clampT(a), t1 = clampT(Math.max(b, t0 + 0.01));
   return <animate attributeName="opacity" values={`${from};${from};${to};${to};${from};${from}`} keyTimes={`0;${r3(t0)};${r3(Math.min(t0 + 0.004, t1))};${r3(t1)};${r3(Math.min(t1 + 0.004, 0.999))};1`} dur={DUR} repeatCount="indefinite" />;
 }
 /** Animate one attribute from `v0` to `v1` between `a` and `b`, holding `v1` until `hold`, then back. */
-function Tween({ attr, v0, v1, a, b, hold = 0.96 }: { attr: string; v0: number | string; v1: number | string; a: number; b: number; hold?: number }) {
+export function Tween({ attr, v0, v1, a, b, hold = 0.96 }: { attr: string; v0: number | string; v1: number | string; a: number; b: number; hold?: number }) {
   const t0 = clampT(a), t1 = clampT(Math.max(b, t0 + 0.005)), t2 = clampT(Math.max(hold, t1 + 0.005));
   return <animate attributeName={attr} values={`${v0};${v0};${v1};${v1};${v0}`} keyTimes={`0;${r3(t0)};${r3(t1)};${r3(t2)};1`} dur={DUR} repeatCount="indefinite" />;
 }
-const Fig = ({ children, label }: { children: ReactNode; label: string }) => (
+export const Fig = ({ children, label }: { children: ReactNode; label: string }) => (
   <svg viewBox={VB} preserveAspectRatio="xMinYMid meet" className="gf" role="img" aria-label={label}>{children}</svg>
 );
 

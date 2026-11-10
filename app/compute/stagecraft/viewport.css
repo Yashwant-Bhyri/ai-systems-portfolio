@@ -362,3 +362,10 @@
 .vx-shell .gr-tile[data-lit="false"]:hover { filter: none; opacity: 1; }
 .vx-shell .gr-tile[data-lit="true"] { background: radial-gradient(120% 90% at 30% 0%, color-mix(in srgb, var(--active-accent) 9%, transparent), transparent 70%); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--active-accent) 34%, transparent), 0 18px 40px -24px color-mix(in srgb, var(--active-accent) 60%, transparent); }
 .gr-detail { transition: opacity .45s .15s, transform .45s .15s; }
+
+/* Round 21: every card of a glossary moves the same way. Its row opens with it; its words fade in
+   with the grow rather than popping in; nothing jumps when the highlight moves on. */
+.gr-row { transition: flex-grow .75s cubic-bezier(.65,0,.35,1); }
+.gr-detail { display: flex; max-height: 0; opacity: 0; transform: translateY(6px); overflow: hidden; transition: max-height .6s cubic-bezier(.65,0,.35,1), opacity .4s ease .25s, transform .4s ease .25s; }
+.gr-tile[data-lit="true"] .gr-detail { max-height: 64px; opacity: 1; transform: none; }
+.gr-tile[data-lit="false"] .gr-detail { transition: max-height .45s cubic-bezier(.65,0,.35,1), opacity .2s ease, transform .2s ease; }

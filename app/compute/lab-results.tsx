@@ -60,6 +60,8 @@ import { Manifold } from "./stagecraft/manifold";
 import { ServingDial } from "./stagecraft/serving-dial";
 import { withBase } from "../base-path";
 import type { IntroLine } from "./stagecraft/intro-labels";
+import { GlossaryBoard } from "./stagecraft/glossary-board";
+import { FigAudit, FigCuration, FigElastic, FigGRPO, FigLean, FigManifold, FigReward, FigSFT, FigTTS } from "./stagecraft/training-glossary";
 import { CACHE_DELTA, OVERLAP, PRESSURE_GAP, SERVING_RAIL, less } from "./serving-rail-meta";
 import { TaskLanding } from "./stagecraft/task-landing";
 import { FleetModule } from "./stagecraft/fleet-module";
@@ -91,6 +93,7 @@ import {
   GlyphLatency,
   GlyphReplay,
   GlyphTasks,
+  GlyphGlossary,
 } from "./stagecraft/glyphs";
 import { latencyDistribution } from "./load-latency-model";
 
@@ -197,6 +200,7 @@ const TRAINING_VIEWS = [
   { name: "Capability terrain", detail: "96 tasks × six checkpoints", symbol: "⛰" },
   { name: "Learning from outcomes", detail: "GRPO, iteration by iteration", symbol: "↗" },
   { name: "The frontier", detail: "Accuracy against GPU time per answer", symbol: "↖" },
+  { name: "Training glossary", detail: "Every post-training term", symbol: "≡" },
 ];
 const RESEARCH = [
   {
@@ -524,6 +528,10 @@ const PURPOSE = {
     { title: "Less computation: fewer GPU-seconds", items: ["Lean RL", "Elastic RL on 64 GPUs"] },
   ],
 };
+/** The training glossary's two figures that carry the lab's own numbers. */
+const TTS_POINTS = [1, 2, 4, 8].map((b) => (100 * simulateLab(3, b).correct) / 96);
+const GlyphTTSFig = () => <FigTTS points={TTS_POINTS} />;
+const GlyphLeanFig = () => <FigLean fewer={FEWER} />;
 const TRAINING_CLIPS: readonly Clip[] = [
   { purpose: true, ms: 15000, line: `The goal: accuracy ${pct(T_.base.correct)} → ${pct(T_.lean.correct)}, then the same answers for ${FEWER}% fewer tokens` },
   intro("manifold", "Each point is one task; each model is a cloud. *Lines join the same task across the three models*, and each view asks one question", undefined, ["The skill", "The cost of thinking", "Lean RL", "The families"]),
@@ -546,6 +554,8 @@ const TRAINING_CLIPS: readonly Clip[] = [
   { key: "map", ms: 21000, line: `Task by task: ${FLIPS2.gained.length} newly correct, ${FLIPS2.lost.length} lost, at a 2× thinking budget` },
   intro("audit", "A better score can hide a task that broke. *Each one is named*"),
   { key: "audit", ms: 21000, line: `Regression audit: ${FLIPS2.lost.length} tasks got worse on the way, each one named` },
+  intro("glossary", "Every term of post-training, *one at a time*, each with its own figure"),
+  { key: "glossary", ms: 25500, line: "The whole of post-training: every term, each tied to this project" },
 ];
 /** Said over a module as it starts: its parts, numbered. */
 const SETUP_NOTE = { title: "Three levers decide what every answer costs", labels: ["Continuous batching: a free worker takes the next request", "Prefix caching: a shared document is read once", "FP8 prefill and decode: half the bytes per step"] };
@@ -748,6 +758,18 @@ export function ComputeLabStudy({
     toStage();
   };
   const chapterSlot = <div id={`${domain}-chapters-slot`} className="sr-chapters" />;
+  // The post-training glossary: nine terms, each with its own figure and its number, each opening its module.
+  const trainingGlossary: ReelItem[] = [
+    { key: "g-curation", title: "Data curation", term: "schema · deduplicate · check the result", value: "verified", unit: "traces only, never a wrong worked solution", Glyph: FigCuration, onOpen: openFilm },
+    { key: "g-sft", title: "SFT + LoRA", term: "fine-tune on verified worked solutions, base weights frozen", value: `${pct(T_.base.correct)} → ${pct(T_.sft.correct)}`, unit: "accuracy", Glyph: FigSFT, onOpen: openFilm },
+    { key: "g-reward", title: "Verifiable rewards", term: "unit tests and exact answers, no judge model", value: "1 or 0", unit: "reward per attempt", Glyph: FigReward, onOpen: () => openView(7) },
+    { key: "g-grpo", title: "GRPO", term: "each attempt scored against its group's mean", value: `${pct(T_.sft.correct)} → ${pct(T_.rl.correct)}`, unit: "accuracy", Glyph: FigGRPO, onOpen: () => openView(7) },
+    { key: "g-tts", title: "Test-time scaling", term: "a larger thinking budget at answer time", value: `${pct(LEAN_1X)} → ${pct(LEAN_8X)}`, unit: "accuracy, 1× → 8× budget", Glyph: GlyphTTSFig, onOpen: () => openView(1) },
+    { key: "g-lean", title: "Lean RL", term: "tokens past a target are charged for", value: `−${FEWER}%`, unit: "tokens per task, the same accuracy", Glyph: GlyphLeanFig, onOpen: openFilm },
+    { key: "g-elastic", title: "Elastic RL", term: "no barrier between rollout and training", value: "+75%", unit: "RL steps in the same time", Glyph: FigElastic, onOpen: () => openView(4) },
+    { key: "g-audit", title: "Regression audit", term: "gains and losses counted apart", value: `+${pct(FLIPS2.gained.length)} / −${pct(FLIPS2.lost.length)}`, unit: "of tasks, base vs RL at 2×", Glyph: FigAudit, onOpen: () => openView(2) },
+    { key: "g-manifold", title: "The manifold", term: "every task a point, each model a cloud", value: "3", unit: "models, lines joining the same task", Glyph: FigManifold, onOpen: openManifold },
+  ];
   // Every tab value is computed from the same scenario its module opens on:
   // the RL checkpoint at the lab's thought allowance.
   const baseRun = simulateLab(0, budget), rlRun = simulateLab(2, budget);
@@ -774,6 +796,7 @@ export function ComputeLabStudy({
         { key: "film", title: "Post-training ablation", term: "Four moves, each measured", value: `${pct(simulateLab(0, 1).correct)} → ${pct(simulateLab(3, 4).correct)}`, unit: "accuracy, synthetic tasks", Glyph: GlyphExperiment, onOpen: openFilm, current: mode === "watch", children: chapterSlot },
         { key: "tasks", title: "Capability by difficulty", term: "How hard a task it can solve", value: `${pct(baseRun.correct)} → ${pct(rlRun.correct)}`, unit: `accuracy at a ${budget}× thinking budget`, Glyph: GlyphTasks, onOpen: () => openView(3), current: mode === "explore" && view === 3 },
         { key: "audit", title: "Regression audit", term: "What got worse", value: `${pct(rlFlips.gained.length)} / ${pct(rlFlips.lost.length)}`, unit: `of tasks gained / lost at ${budget}×`, Glyph: GlyphAudit, onOpen: () => openView(2), current: mode === "explore" && view === 2 },
+        { key: "glossary", title: "Training glossary", term: "Every post-training term", value: "9", unit: "terms, each with its own figure", Glyph: GlyphGlossary, onOpen: () => openView(9), current: mode === "explore" && view === 9 },
       ]
     : [
         manifoldItem,
@@ -1595,6 +1618,8 @@ export function ComputeLabStudy({
                 <ExhibitModule key="frontier" Scene={PolicyFrontierStory} duration={FRONTIER_STORY_MS} label="The frontier" active={mode === "explore" && view === 8 && !veiled} />
               ) : view === 4 ? (
                 <ModuleArc active={mode === "explore" && view === 4} {...FLEET_ARC}><FleetModule active={mode === "explore"} /></ModuleArc>
+              ) : view === 9 ? (
+                <div className="tg-board"><GlossaryBoard active={mode === "explore" && view === 9 && !veiled && labInView} items={trainingGlossary} total="Nine post-training terms, each one in this project" /></div>
               ) : (
                 <>
                   <p className="rs-pan-hint">
