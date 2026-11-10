@@ -157,9 +157,16 @@ export type Dictionary = {
     pillars: {
       id: string;
       label: string;
+      /** Where this sits in the stack: product, reliability, model or infrastructure. */
+      layer: string;
       skills: string[];
       draw: [number, number, number];
+      /** Home-page sections that prove it. */
+      proof: string[];
     }[];
+    proofLabel: string;
+    coverage: string;
+    projectNames: Record<string, string>;
   };
   projects: {
     indexHeading: string;

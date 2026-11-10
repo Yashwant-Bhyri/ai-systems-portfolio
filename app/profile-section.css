@@ -1,0 +1,85 @@
+/* What I'm built for: three roles beside one stack. The role in focus is wired to the layers it draws on. */
+.vx-profile.pf { gap: clamp(14px, 2vh, 22px); }
+
+.pf-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
+.pf-head > div { min-width: 0; }
+.pf-head .vx-lens-label { color: var(--vx-lime); }
+.pf-head h2 { margin: 10px 0 0; max-width: 30ch; color: var(--vx-ink); font-size: clamp(28px, 2.6vw, 40px); font-weight: 500; line-height: 1.08; letter-spacing: -0.035em; text-wrap: balance; }
+.pf-head > .vx-map-pause { flex: 0 0 auto; }
+
+.pf-body { position: relative; flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(280px, 320px) minmax(0, 1fr); column-gap: clamp(56px, 6vw, 96px); }
+.pf-col-label { display: block; margin: 0 0 10px; color: #7f8b96; font: 500 11px/14px var(--font-geist-mono), monospace; letter-spacing: 0.16em; text-transform: uppercase; }
+
+/* Roles */
+.pf-roles { position: relative; z-index: 2; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+.pf-roles .pf-col-label { margin-bottom: 4px; }
+.vx-shell .pf-role { position: relative; overflow: hidden; display: grid; gap: 4px; width: 100%; padding: 16px 18px 18px; border: 0; border-radius: 14px; text-align: left; color: inherit; cursor: pointer;
+  background: rgba(255, 255, 255, 0.022); box-shadow: inset 0 0 0 1px var(--vx-line);
+  transition: background 0.45s ease, box-shadow 0.45s ease, opacity 0.45s ease; }
+.vx-shell .pf-role:hover { background: rgba(255, 255, 255, 0.045); }
+.vx-shell .pf-role:focus-visible { outline: 1px solid color-mix(in srgb, var(--vx-lime) 70%, transparent); outline-offset: 3px; }
+.vx-shell .pf-role[data-active] { background: radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--vx-lime) 9%, transparent), rgba(10, 13, 17, 0.9) 70%);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--vx-lime) 68%, transparent), 0 22px 60px -34px color-mix(in srgb, var(--vx-lime) 80%, transparent); }
+.pf-role-n { color: #7f8b96; font: 500 11px/14px var(--font-geist-mono), monospace; letter-spacing: 0.1em; }
+.pf-role[data-active] .pf-role-n { color: var(--vx-lime); }
+.pf-role strong { color: #b7c0c9; font: 500 19px/24px var(--font-geist-sans), sans-serif; letter-spacing: -0.02em; transition: color 0.45s; }
+.pf-role[data-active] strong { color: var(--vx-ink); font-size: 23px; line-height: 28px; }
+.pf-role small { color: #8a96a2; font: 400 13.5px/18px var(--font-geist-sans), sans-serif; }
+.pf-role-more { display: grid; gap: 12px; margin-top: 8px; animation: pf-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.pf-why { color: #c9d2db; font: 400 14px/21px var(--font-geist-sans), sans-serif; text-wrap: pretty; }
+.pf-cover { color: #93a0ae; font: 400 12px/18px var(--font-geist-mono), monospace; }
+.pf-cover b { color: var(--vx-lime); font-weight: 600; }
+.pf-timer { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--vx-lime); transform-origin: 0 50%; animation-name: pf-timer; animation-timing-function: linear; animation-fill-mode: both; }
+@keyframes pf-timer { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes pf-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Wires from the role in focus to the layers it draws on */
+.pf-wires { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.pf-wire { fill: none; stroke: var(--vx-lime); stroke-linecap: round; animation: pf-draw 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; stroke-dasharray: 1200; }
+.pf-wires g[data-weight="3"] .pf-wire { stroke-width: 2.2; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--vx-lime) 55%, transparent)); }
+.pf-wires g[data-weight="2"] .pf-wire { stroke-width: 1.3; opacity: 0.42; }
+.pf-pulse { fill: var(--vx-lime); filter: drop-shadow(0 0 6px var(--vx-lime)); }
+.pf-wires g[data-weight="2"] .pf-pulse { opacity: 0.5; }
+@keyframes pf-draw { from { stroke-dashoffset: 1200; } to { stroke-dashoffset: 0; } }
+
+/* The stack: product at the top, infrastructure at the bottom */
+.pf-stack { position: relative; z-index: 2; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.pf-stack .pf-col-label { margin-bottom: 2px; }
+.pf-layer { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "head proof" "skills skills"; align-content: center; align-items: center; gap: 10px 20px; padding: 10px 20px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.018); box-shadow: inset 0 0 0 1px var(--vx-line); transition: opacity 0.5s ease, background 0.5s ease, box-shadow 0.5s ease; }
+.pf-layer[data-weight="3"] { background: color-mix(in srgb, var(--vx-lime) 5%, rgba(10, 13, 17, 0.9)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--vx-lime) 55%, transparent); }
+.pf-layer[data-weight="1"] { opacity: 0.38; }
+.pf-layer-head { grid-area: head; min-width: 0; display: grid; grid-template-columns: auto auto 1fr; align-items: center; row-gap: 2px; column-gap: 14px; }
+.pf-layer-head small { grid-column: 1 / -1; color: #7f8b96; font: 500 10.5px/13px var(--font-geist-mono), monospace; letter-spacing: 0.14em; }
+.pf-layer-head strong { color: var(--vx-ink); font: 500 17px/22px var(--font-geist-sans), sans-serif; letter-spacing: -0.015em; }
+.pf-depth { display: inline-flex; gap: 3px; }
+.pf-depth i { width: 12px; height: 5px; border-radius: 3px; background: rgba(230, 237, 244, 0.14); transition: background 0.4s; }
+.pf-depth i[data-on] { background: var(--vx-lime); }
+.pf-skills { grid-area: skills; min-width: 0; margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 22px; }
+.pf-skills li { white-space: nowrap; }
+.pf-skills li { position: relative; padding-left: 13px; color: #c9d2db; font: 400 13.5px/19px var(--font-geist-sans), sans-serif; }
+.pf-skills li::before { content: ""; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: color-mix(in srgb, var(--vx-lime) 70%, transparent); }
+.pf-proof { grid-area: proof; min-width: 0; display: flex; flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 6px; }
+.pf-proof small { margin-right: 4px; color: #7f8b96; font: 500 10.5px/13px var(--font-geist-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+.vx-shell .pf-proof a { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; color: #e9edf2; text-decoration: none; font: 450 13px/16px var(--font-geist-sans), sans-serif;
+  box-shadow: inset 0 0 0 1px var(--vx-line-strong); transition: background 0.2s, color 0.2s; }
+.vx-shell .pf-proof a:hover { background: var(--vx-lime); color: #071004; }
+.pf-proof a i { font-style: normal; opacity: 0.7; }
+
+
+@media (max-width: 900px) {
+  .vx-profile.pf { height: auto; min-height: 0; overflow: visible; }
+  .pf-body { grid-template-columns: minmax(0, 1fr); row-gap: 22px; }
+  .pf-wires { display: none; }
+  .pf-layer { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "skills" "proof"; gap: 10px; padding: 14px 16px; }
+  .pf-proof { justify-content: flex-start; flex-wrap: wrap; }
+  .pf-skills li { white-space: normal; }
+  .pf-skills { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pf-role-more, .pf-wire { animation: none; }
+  .pf-timer { display: none; }
+}
+
+/* The layer name, its depth, then the skills on one line beneath */
+.pf-layer-head strong { white-space: nowrap; }
