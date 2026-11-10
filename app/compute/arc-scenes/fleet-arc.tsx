@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { FLEET, GPUS, colocated, elastic, type Segment } from "../../exhibit/policy/fleet-model";
 import { ease, prog } from "../../exhibit/engine";
 import { makeImpact, type ArcBeat, type ArcLedger, type SceneProps } from "../stagecraft/module-arc";
@@ -12,121 +13,162 @@ const A = colocated(), B = elastic(9);
 /** Eight of the 64 GPUs, including the slowest rollout of the first step. */
 const SLOWEST = A.segs.filter((s) => s.step === 0 && s.kind === "rollout").reduce((a, b) => (b.end > a.end ? b : a)).gpu;
 const ROWS = [0, 1, 2, 3, 4, 5, 6, SLOWEST];
-const X0 = 230, SPAN = 4.4, PX = 660 / SPAN;
+const X0 = 160, SPAN = 4.4, PX = 820 / SPAN;
 const x = (m: number) => X0 + m * PX;
-/** Each of the first two beats opens on a worked example, then shows the GPUs. */
-const EXAMPLE_MS = 8000;
+/** Each of the first two beats opens on a worked example, then shows 8 of the 64 GPUs. */
+const EXAMPLE_MS = 11000;
 const PROBLEM_MS = 11500 + EXAMPLE_MS, IDEA_MS = 12500 + EXAMPLE_MS;
-/* ── The worked example: four agents, four environments, one RL step ──
-   Each agent acts in its own environment until its task is done; the episode is its rollout. The
-   environments need very different numbers of steps. A synchronous update needs every rollout, so the
-   agents that finish early wait; with elastic roles a GPU trains the moment its rollout is in. */
+
+/* ── The worked example: four GPUs, each running one agent in its own environment, one RL step ──
+   An agent's episode is its rollout: one block per step it takes in its environment. The environments
+   need 3, 5, 8 and 12 steps. Synchronous RL waits at a barrier for all four, then one update trains on
+   them; elastic RL lets a GPU train the moment its own rollout is in, and the slowest rollout simply
+   joins the next update. Time runs on one clock: one step = UNIT seconds of the scene. */
 const ENVS = [
-  { name: "Maths checker", what: "answer, then check", steps: 3 },
-  { name: "Code sandbox", what: "write, run the tests, fix", steps: 5 },
-  { name: "Tool use", what: "search, read, call, answer", steps: 8 },
-  { name: "Long proof", what: "many steps of reasoning", steps: 12 },
+  { name: "Maths checker", steps: 3 },
+  { name: "Code sandbox", steps: 5 },
+  { name: "Tool use", steps: 8 },
+  { name: "Long proof", steps: 12 },
 ] as const;
-const STEP = 0.42, EX0 = 0.6, TRAIN = 1.3;
-function EnvExample({ t, elastic: el }: { t: number; elastic: boolean }) {
-  const s = t / 1000, X0 = 250, X1 = 560, tx = (k: number, n: number) => X0 + (k / n) * (X1 - X0);
-  const doneAt = ENVS.map((e) => EX0 + e.steps * STEP), allIn = Math.max(...doneAt);
-  const inNow = doneAt.filter((d) => s >= d).length;
-  const syncTrain = prog(s, allIn, allIn + TRAIN), publish = prog(s, allIn + TRAIN, allIn + TRAIN + 0.6);
-  const caption = el
-    ? s < allIn ? "Elastic roles: a GPU that finishes its rollout starts training at once" : "The slow rollout is not waited for: it joins the next update"
-    : s < doneAt[0] ? "Each agent acts in its own environment until its task is done: that episode is its rollout"
-    : s < allIn ? "The update needs every rollout, so the agents that finished early sit idle"
-    : s < allIn + TRAIN ? "Only now can training start: one update learns from all four rollouts" : "The new weights go back to every agent, and the next step begins";
-  return <g>
-    <text x={0} y={30} className="ma-k" style={{ fontSize: 20 }}>{el ? "The same four agents, elastic roles" : "Four agents, four environments, one RL step"}</text>
-    <text x={0} y={58} className="ma-l" style={{ fill: C.ink, fontSize: 17 }}>{caption}</text>
-    {ENVS.map((e, i) => {
-      const y = 108 + i * 84, d = doneAt[i], k = Math.max(0, Math.min(e.steps, Math.floor((s - EX0) / STEP))), done = s >= d;
-      const training = el && done && s < d + TRAIN, waiting = !el && done && s < allIn + TRAIN;
-      return <g key={e.name}>
-        <rect x={0} y={y - 24} width={230} height={60} rx={10} fill="rgba(255,255,255,.03)" stroke="rgba(230,237,244,.16)" />
-        <text x={14} y={y} className="ma-n" style={{ fontSize: 19 }}>{e.name}</text>
-        <text x={14} y={y + 22} className="ma-l" style={{ fontSize: 14 }}>{e.steps} steps: {e.what}</text>
-        {/* the episode: one tick per step in the environment */}
-        <path d={`M${X0} ${y + 6}H${X1}`} stroke="rgba(230,237,244,.14)" />
-        {Array.from({ length: e.steps + 1 }, (_, j) => <circle key={j} cx={tx(j, e.steps)} cy={y + 6} r={4} fill={j <= k ? C.rollout : "rgba(230,237,244,.2)"} />)}
-        {!done && s > EX0 && <circle cx={tx(Math.min(e.steps, (s - EX0) / STEP), e.steps)} cy={y + 6} r={9} fill={C.rollout} />}
-        {/* finished: its GPU waits, or trains at once */}
-        {waiting && <g><rect x={X1 + 16} y={y - 10} width={130} height={32} rx={6} fill="none" stroke={C.idle} strokeDasharray="4 3" /><text x={X1 + 81} y={y + 11} textAnchor="middle" className="ma-l" style={{ fill: C.idle, fontSize: 15 }}>idle, waiting</text></g>}
-        {training && <g><rect x={X1 + 16} y={y - 10} width={130} height={32} rx={6} fill={C.train} opacity={0.9} /><text x={X1 + 81} y={y + 11} textAnchor="middle" className="ma-l" style={{ fill: "#0b1016", fontSize: 15 }}>training</text></g>}
-        {el && !done && i === ENVS.length - 1 && s > doneAt[2] && <text x={X1 + 16} y={y + 11} className="ma-l" style={{ fill: C.rollout, fontSize: 14 }}>joins the next step</text>}
-      </g>;
-    })}
-    {/* the trainer */}
-    {!el && <g transform="translate(740 130)">
-      <rect width={170} height={220} rx={14} fill="rgba(255,255,255,.03)" stroke={syncTrain > 0 ? C.train : "rgba(230,237,244,.2)"} strokeWidth={syncTrain > 0 ? 2 : 1} />
-      <text x={85} y={36} textAnchor="middle" className="ma-n" style={{ fontSize: 20 }}>Update</text>
-      <text x={85} y={60} textAnchor="middle" className="ma-l" style={{ fontSize: 14 }}>needs every rollout</text>
-      <text x={85} y={120} textAnchor="middle" className="ma-n" style={{ fontSize: 40, fill: inNow === 4 ? C.train : C.ink }}>{inNow} of 4</text>
-      <text x={85} y={146} textAnchor="middle" className="ma-l" style={{ fontSize: 14 }}>rollouts in</text>
-      <rect x={20} y={168} width={130 * syncTrain} height={10} rx={5} fill={C.train} />
-      {publish > 0 && <text x={85} y={202} textAnchor="middle" className="ma-l" style={{ fill: C.sync, fontSize: 14 }} opacity={publish}>publish new weights</text>}
-    </g>}
+const UNIT = 0.5, START = 0.6, HORIZON = 18;
+const SYNC = { barrier: 12, update: [12, 15], publish: [15, 16] } as const;
+const ELASTIC = { update: [3, 10], publish: [10, 11], late: 12 } as const;
+const LX = 230, LW = 640, u = LW / HORIZON, ux = (k: number) => LX + k * u;
+const LANE0 = 104, PITCH = 84, BAR = 44;
+const laneY = (i: number) => LANE0 + i * PITCH;
+const LANES_END = laneY(ENVS.length - 1) + BAR;
+const SYNC_IDLE = Math.round((100 * ENVS.reduce((a, e) => a + (SYNC.barrier - e.steps), 0)) / (ENVS.length * SYNC.barrier));
+
+/** A bar that grows with the clock, from k0 to k1 (in steps). */
+function Grow({ k0, k1, clock, y, h = BAR, fill, stroke, dash, opacity = 1, children }: { k0: number; k1: number; clock: number; y: number; h?: number; fill?: string; stroke?: string; dash?: string; opacity?: number; children?: React.ReactNode }) {
+  if (clock <= k0) return null;
+  const w = Math.max(0, (Math.min(clock, k1) - k0) * u - 3);
+  return <g opacity={opacity}>
+    <rect x={ux(k0) + 1.5} y={y} width={w} height={h} rx={5} fill={fill ?? "none"} stroke={stroke} strokeDasharray={dash} strokeWidth={stroke ? 1.6 : undefined} />
+    {clock >= k1 && children}
   </g>;
 }
-const ROLE = {
-  rollout: ["generating rollouts", "an agent works its task"],
-  train: ["training", "one update from all rollouts"],
-  sync: ["publishing weights", "new policy to every GPU"],
-} as const;
 
-function Rows({ segs, now, note }: { segs: Segment[]; now: number; note: (gpu: number) => string | null }) {
+function EnvExample({ t, elastic: el }: { t: number; elastic: boolean }) {
+  const clock = Math.max(0, Math.min(HORIZON, (t / 1000 - START) / UNIT));
+  const top = LANE0 - 14, bottom = LANES_END + 14;
+  const firstUpdate = el ? ELASTIC.publish[1] : SYNC.publish[1];
+  const said = clock >= firstUpdate;
   return <g>
-    {ROWS.map((g, r) => {
-      const y = 70 + r * 38;
-      return <g key={g}>
-        <text x={X0 - 14} y={y + 19} textAnchor="end" className="ma-l" style={{ fill: g === SLOWEST ? C.idle : undefined }}>GPU {g + 1}</text>
-        {segs.filter((s) => s.gpu === g && s.start < Math.min(now, SPAN)).map((s, i) => {
-          const b = Math.min(s.end, now, SPAN);
-          const w = Math.max(0, (b - s.start) * PX - 1.5);
-          return s.kind === "idle"
-            ? <rect key={i} x={x(s.start) + 1} y={y + 3} width={w} height={22} rx={3} fill="none" stroke={C.idle} strokeDasharray="4 3" />
-            : <rect key={i} x={x(s.start) + 1} y={y + 2} width={w} height={24} rx={3} fill={C[s.kind]} opacity={0.88} />;
-        })}
-        {note(g) && now > 1 && <text x={x(SPAN) + 10} y={y + 19} className="ma-l" opacity={prog(now, 1, 1.6)}>{note(g)}</text>}
+    <text x={LX} y={44} className="ma-k" style={{ fontSize: 18 }}>{el ? "The same four GPUs, elastic roles" : "Four GPUs, one agent each, one RL step"}</text>
+    <text x={LX + LW} y={44} textAnchor="end" className="ma-l" style={{ fontSize: 14 }}>time →</text>
+    {ENVS.map((e, i) => {
+      const y = laneY(i), done = e.steps;
+      return <g key={e.name}>
+        <text x={0} y={y + 19} className="ma-n" style={{ fontSize: 18 }}>GPU {i + 1}</text>
+        <text x={0} y={y + 40} className="ma-l" style={{ fontSize: 14 }}>{e.name} · {e.steps} steps</text>
+        <rect x={LX} y={y} width={LW} height={BAR} rx={6} fill="rgba(255,255,255,.025)" />
+        {/* the rollout: one block per step the agent takes in its environment */}
+        {Array.from({ length: e.steps }, (_, j) => <Grow key={j} k0={j} k1={j + 1} clock={clock} y={y + 6} h={BAR - 12} fill={C.rollout} opacity={0.9} />)}
+        {!el && <>
+          <Grow k0={done} k1={SYNC.barrier} clock={clock} y={y + 4} h={BAR - 8} stroke={C.idle} dash="5 4">
+            {(SYNC.barrier - done) * u > 70 && <text x={(ux(done) + ux(SYNC.barrier)) / 2} y={y + 28} textAnchor="middle" className="ma-l" style={{ fill: C.idle, fontSize: 15 }}>waiting</text>}
+          </Grow>
+          <Grow k0={SYNC.publish[1]} k1={HORIZON} clock={clock} y={y + 6} h={BAR - 12} fill={C.rollout} opacity={0.3} />
+        </>}
+        {el && i < 3 && <>
+          <Grow k0={done} k1={ELASTIC.update[1]} clock={clock} y={y + 6} h={BAR - 12} fill={C.train} opacity={0.92}>
+            {i === 0 && <text x={(ux(done) + ux(ELASTIC.update[1])) / 2} y={y + 28} textAnchor="middle" className="ma-l" style={{ fill: "#0b1016", fontSize: 15 }}>trains at once</text>}
+          </Grow>
+          <Grow k0={ELASTIC.publish[0]} k1={ELASTIC.publish[1]} clock={clock} y={y + 6} h={BAR - 12} fill={C.sync} />
+          <Grow k0={ELASTIC.publish[1]} k1={HORIZON} clock={clock} y={y + 6} h={BAR - 12} fill={C.rollout} opacity={0.3} />
+        </>}
+        {el && i === 3 && <>
+          <Grow k0={ELASTIC.late} k1={HORIZON} clock={clock} y={y + 6} h={BAR - 12} fill={C.train} opacity={0.55}>
+            <text x={(ux(ELASTIC.late) + ux(HORIZON)) / 2} y={y + 28} textAnchor="middle" className="ma-l" style={{ fill: "#0b1016", fontSize: 15 }}>joins update 2</text>
+          </Grow>
+        </>}
       </g>;
     })}
-    <path d={`M${x(Math.min(now, SPAN))} 60V${70 + ROWS.length * 38 + 4}`} stroke="#eef2f6" strokeOpacity={0.35} />
-    {[0, 1, 2, 3, 4].map((m) => <text key={m} x={x(m)} y={70 + ROWS.length * 38 + 26} textAnchor="middle" className="ma-l">{m} min</text>)}
-    {/* What each role is, in a few words, so the idle time has a reason. */}
-    {(["rollout", "train", "sync"] as const).map((k, i) => <g key={k} transform={`translate(${X0 + i * 215} 412)`}><rect width={14} height={14} rx={2} fill={C[k]} /><text x={22} y={12} className="ma-l" style={{ fill: C.ink }}>{ROLE[k][0]}</text><text x={22} y={28} className="ma-l">{ROLE[k][1]}</text></g>)}
-    <g transform={`translate(${X0 + 3 * 215} 412)`}><rect width={14} height={14} rx={2} fill="none" stroke={C.idle} strokeDasharray="3 2" /><text x={22} y={12} className="ma-l" style={{ fill: C.ink }}>waiting</text><text x={22} y={28} className="ma-l">finished, waiting for all</text></g>
+    {/* synchronous: one barrier, then one update across every GPU, then the new weights */}
+    {!el && clock >= SYNC.barrier && <g opacity={prog(clock, SYNC.barrier, SYNC.barrier + 0.6)}>
+      <path d={`M${ux(SYNC.barrier)} ${top}V${bottom}`} stroke={C.idle} strokeWidth={2.5} />
+      <text x={ux(SYNC.barrier) - 10} y={top - 10} textAnchor="end" className="ma-l" style={{ fill: C.idle, fontSize: 15 }}>barrier: the update needs all four rollouts</text>
+    </g>}
+    {!el && clock > SYNC.update[0] && <g>
+      <rect x={ux(SYNC.update[0]) + 2} y={LANE0} width={Math.max(0, (Math.min(clock, SYNC.update[1]) - SYNC.update[0]) * u - 4)} height={LANES_END - LANE0} rx={8} fill={C.train} opacity={0.92} />
+      {clock >= SYNC.update[1] - 0.4 && <>
+        <text x={(ux(SYNC.update[0]) + ux(SYNC.update[1])) / 2} y={(LANE0 + LANES_END) / 2 - 6} textAnchor="middle" className="ma-n" style={{ fill: "#0b1016", fontSize: 17 }}>update</text>
+        <text x={(ux(SYNC.update[0]) + ux(SYNC.update[1])) / 2} y={(LANE0 + LANES_END) / 2 + 16} textAnchor="middle" className="ma-l" style={{ fill: "#0b1016", fontSize: 13 }}>4 rollouts</text>
+      </>}
+    </g>}
+    {!el && clock > SYNC.publish[0] && <rect x={ux(SYNC.publish[0]) + 2} y={LANE0} width={Math.max(0, (Math.min(clock, SYNC.publish[1]) - SYNC.publish[0]) * u - 4)} height={LANES_END - LANE0} rx={6} fill={C.sync} />}
+    {el && clock >= 3 && <text x={ux(3)} y={top - 10} className="ma-l" style={{ fill: C.train, fontSize: 15 }} opacity={prog(clock, 3, 3.6)}>no barrier: a finished GPU starts training</text>}
+    {/* the result of this example, once its first update is out */}
+    <g opacity={said ? prog(clock, firstUpdate, firstUpdate + 0.8) : 0}>
+      <text x={LX} y={LANES_END + 62} className="ma-n" style={{ fontSize: 30, fill: el ? "#b8e986" : C.idle }}>{el ? "0%" : `${SYNC_IDLE}%`}</text>
+      <text x={LX + 70} y={LANES_END + 52} className="ma-l" style={{ fill: C.ink, fontSize: 15 }}>of GPU time spent waiting in this step</text>
+      <text x={LX + 70} y={LANES_END + 72} className="ma-l" style={{ fontSize: 14 }}>{el ? `update 1 is out at step ${ELASTIC.publish[1]}, not ${SYNC.publish[1]}` : `update 1 is out at step ${SYNC.publish[1]}`}</text>
+    </g>
+    {/* one legend line, every item spaced so nothing touches */}
+    {([["rollout step", C.rollout, false], ["waiting", C.idle, true], ["training", C.train, false], ["new weights", C.sync, false]] as const).map(([k, c, dashed], i) => (
+      <g key={k} transform={`translate(${LX + i * 160} ${LANES_END + 104})`}>
+        <rect width={16} height={16} rx={3} fill={dashed ? "none" : c} stroke={dashed ? c : undefined} strokeDasharray={dashed ? "3 2" : undefined} />
+        <text x={24} y={13} className="ma-l" style={{ fill: C.ink, fontSize: 14 }}>{k}</text>
+      </g>
+    ))}
+  </g>;
+}
+
+const ROLE_KEY = [["rollout", "generating a rollout"], ["train", "training"], ["sync", "publishing weights"]] as const;
+/** 8 of the 64 GPUs on the lab's fleet model. Labels sit above the rows and the key on one line beneath the axis. */
+function Rows({ segs, now, note }: { segs: Segment[]; now: number; note: (gpu: number) => string | null }) {
+  const RY = 84, RP = 36, axisY = RY + ROWS.length * RP + 22;
+  return <g>
+    {ROWS.map((g, r) => {
+      const y = RY + r * RP;
+      return <g key={g}>
+        <text x={X0 - 14} y={y + 19} textAnchor="end" className="ma-l" style={{ fontSize: 15, fill: g === SLOWEST ? C.idle : undefined }}>GPU {g + 1}</text>
+        {segs.filter((sg) => sg.gpu === g && sg.start < Math.min(now, SPAN)).map((sg, i) => {
+          const b = Math.min(sg.end, now, SPAN);
+          const w = Math.max(0, (b - sg.start) * PX - 1.5);
+          return sg.kind === "idle"
+            ? <rect key={i} x={x(sg.start) + 1} y={y + 3} width={w} height={22} rx={3} fill="none" stroke={C.idle} strokeDasharray="4 3" />
+            : <rect key={i} x={x(sg.start) + 1} y={y + 2} width={w} height={24} rx={3} fill={C[sg.kind]} opacity={0.88} />;
+        })}
+        {note(g) && now > 1 && <text x={x(SPAN) + 10} y={y + 19} className="ma-l" style={{ fontSize: 14 }} opacity={prog(now, 1, 1.6)}>{note(g)}</text>}
+      </g>;
+    })}
+    <path d={`M${x(Math.min(now, SPAN))} ${RY - 8}V${RY + ROWS.length * RP}`} stroke="#eef2f6" strokeOpacity={0.35} />
+    {[0, 1, 2, 3, 4].map((m) => <text key={m} x={x(m)} y={axisY} textAnchor="middle" className="ma-l" style={{ fontSize: 14 }}>{m} min</text>)}
+    {[...ROLE_KEY, ["idle", "finished, waiting"] as const].map(([k, label], i, all) => (
+      // each item starts after the one before it: its swatch, its words at 14 px mono, and a gap
+      <g key={k} transform={`translate(${X0 + all.slice(0, i).reduce((w, [, l]) => w + 24 + l.length * 8.6 + 40, 0)} ${axisY + 30})`}>
+        <rect width={16} height={16} rx={3} fill={k === "idle" ? "none" : C[k as "rollout" | "train" | "sync"]} stroke={k === "idle" ? C.idle : undefined} strokeDasharray={k === "idle" ? "3 2" : undefined} />
+        <text x={24} y={13} className="ma-l" style={{ fill: C.ink, fontSize: 14 }}>{label}</text>
+      </g>
+    ))}
   </g>;
 }
 
 const sweep = (t: number, ms: number) => ease.io(prog(t, 600, ms - 2600)) * SPAN;
 
 function Problem({ t: t0 }: SceneProps) {
-  if (t0 < EXAMPLE_MS) return <svg viewBox="0 0 920 460" role="img" aria-label="Four agents in four environments: the update needs every rollout, so agents that finish early wait"><EnvExample t={t0} elastic={false} /></svg>;
+  if (t0 < EXAMPLE_MS) return <svg viewBox="0 0 900 520" role="img" aria-label="Four GPUs, one agent each: the update needs every rollout, so the GPUs that finish early wait at a barrier"><EnvExample t={t0} elastic={false} /></svg>;
   const t = t0 - EXAMPLE_MS;
   const now = sweep(t, PROBLEM_MS - EXAMPLE_MS);
-  const barrier = A.segs.find((s) => s.gpu === SLOWEST && s.kind === "rollout" && s.step === 0)!.end;
-  return <svg viewBox="0 0 1100 450" role="img" aria-label="Synchronous RL: every GPU waits for the slowest rollout before anyone trains">
-    <text x={0} y={30} className="ma-k">8 of 64 GPUs · one RL step</text>
-    {/* Why they wait, said as the clock reaches each part. */}
-    <text x={0} y={52} className="ma-l" style={{ fill: C.ink }}>{now < barrier * 0.85
-      ? "Rollouts differ in length: some tasks take an agent many more steps in its environment"
-      : "Training can start only when every rollout is in: one update learns from all of them together"}</text>
+  const barrier = A.segs.find((sg) => sg.gpu === SLOWEST && sg.kind === "rollout" && sg.step === 0)!.end;
+  return <svg viewBox="0 0 1100 470" role="img" aria-label="Synchronous RL: every GPU waits for the slowest rollout before anyone trains">
+    <text x={X0} y={30} className="ma-k" style={{ fontSize: 18 }}>8 of the 64 GPUs · one RL step</text>
     <Rows segs={A.segs} now={now} note={() => null} />
     {now >= barrier && <g opacity={prog(now, barrier, barrier + 0.3)}>
-      <path d={`M${x(barrier)} 56V${70 + ROWS.length * 38}`} stroke={C.idle} strokeWidth={2} />
-      <text x={x(barrier) + 8} y={78 + ROWS.length * 38} className="ma-n" style={{ fill: C.idle }}>{GPUS - 1} GPUs wait for GPU {SLOWEST + 1}</text>
+      <path d={`M${x(barrier)} 66V${84 + ROWS.length * 36}`} stroke={C.idle} strokeWidth={2} />
+      <text x={x(barrier) - 10} y={60} textAnchor="end" className="ma-l" style={{ fill: C.idle, fontSize: 15 }}>{GPUS - 1} GPUs wait for GPU {SLOWEST + 1}</text>
     </g>}
   </svg>;
 }
 
 function Idea({ t: t0 }: SceneProps) {
-  if (t0 < EXAMPLE_MS) return <svg viewBox="0 0 920 460" role="img" aria-label="The same agents with elastic roles: a GPU trains as soon as its rollout is in"><EnvExample t={t0} elastic /></svg>;
+  if (t0 < EXAMPLE_MS) return <svg viewBox="0 0 900 520" role="img" aria-label="The same four GPUs with elastic roles: a GPU trains as soon as its rollout is in, and the slowest rollout joins the next update"><EnvExample t={t0} elastic /></svg>;
   const t = t0 - EXAMPLE_MS;
   const now = sweep(t, IDEA_MS - EXAMPLE_MS);
-  return <svg viewBox="0 0 1100 450" role="img" aria-label="Elastic roles: each GPU joins training the moment its own rollout ends; the straggler keeps generating for the next step">
-    <text x={0} y={30} className="ma-k">The same 8 GPUs, elastic roles</text>
+  return <svg viewBox="0 0 1100 470" role="img" aria-label="Elastic roles: each GPU joins training the moment its own rollout ends; the straggler keeps generating for the next step">
+    <text x={X0} y={30} className="ma-k" style={{ fontSize: 18 }}>The same 8 GPUs, elastic roles</text>
     <Rows segs={B.segs} now={now} note={(g) => (g === SLOWEST ? "lands in the next step" : null)} />
   </svg>;
 }
@@ -163,12 +205,12 @@ export const FLEET_ARC: { problem: ArcBeat; mechanism: ArcBeat; impact: ArcBeat;
   labels: FLEET_LABELS,
   problem: {
     label: "Problem / Bottleneck", title: "Synchronous RL: every GPU waits for the slowest rollout before anyone trains", ms: PROBLEM_MS, Scene: Problem,
-    meter: [[0, "Four agents, four environments: every episode is a rollout, and they differ in length"], [EXAMPLE_MS, "Each GPU writes its rollouts; answers vary a lot in length"], [EXAMPLE_MS + 3200, "Faster GPUs finish first, and then they wait"], [EXAMPLE_MS + 7200, `GPU ${SLOWEST + 1} is the slowest, so 63 GPUs wait for it`]],
+    meter: [[0, "Each GPU runs one agent in its own environment; the agent's episode is its rollout"], [2600, "The environments need 3, 5, 8 and 12 steps, so the rollouts finish at different times"], [5600, "The update needs every rollout: the GPUs that finished early wait at the barrier"], [7000, "Then one update trains on all four; the new weights go to every GPU"], [EXAMPLE_MS, "The same on 8 of the 64 GPUs: rollouts vary a lot in length"], [EXAMPLE_MS + 3200, "Faster GPUs finish first, and then they wait"], [EXAMPLE_MS + 7200, `GPU ${SLOWEST + 1} is the slowest, so 63 GPUs wait for it`]],
     bottleneck: { at: PROBLEM_MS - 3200, headline: `64 GPUs sit idle *${idlePct}% of the time*`, effect: "One barrier per step: the slowest rollout sets the pace for all of them" },
   },
   mechanism: {
     label: "Elastic RL: the idea", title: "Elastic RL: a GPU that finishes its rollout starts training at once", ms: IDEA_MS, Scene: Idea,
-    meter: [[0, "Elastic roles: a GPU that finishes its rollout trains at once"], [EXAMPLE_MS, "No barrier: each GPU keeps its identity and changes role"], [EXAMPLE_MS + 3000, "A finished GPU moves straight from writing rollouts to training"], [EXAMPLE_MS + 7000, "Weights are published to the fleet as they are ready"], [EXAMPLE_MS + 9500, "A straggler's rollout simply lands in the next step"]],
+    meter: [[0, "Elastic roles: the same four GPUs, no barrier"], [2200, "A GPU whose rollout is in starts training at once, on the rollouts already in"], [6200, "Update 1 is out at step 11, not 16; the long proof's rollout joins update 2"], [EXAMPLE_MS, "No barrier: each GPU keeps its identity and changes role"], [EXAMPLE_MS + 3000, "A finished GPU moves straight from writing rollouts to training"], [EXAMPLE_MS + 7000, "Weights are published to the fleet as they are ready"], [EXAMPLE_MS + 9500, "A straggler's rollout simply lands in the next step"]],
   },
   systemTitle: "What we built: 64 GPUs on one wall clock",
   systemMs: (13100 + 2600) * 2,
